@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { loadJwtToken } from './jwt-auth.mjs';
+import { loadSupabaseAccessToken } from './jwt-auth.mjs';
 
 const baseUrl = process.env.BASE_URL ?? 'http://localhost:3000';
 
@@ -119,10 +119,11 @@ async function loadAdminPropertySeed(token) {
 }
 
 async function main() {
-  const adminToken = await loadJwtToken({
+  const adminToken = await loadSupabaseAccessToken({
     label: 'admin',
-    argvValue: process.argv[2],
-    envNames: ['REALEST_ADMIN_JWT', 'SUPABASE_ADMIN_JWT', 'SUPABASE_ACCESS_TOKEN'],
+    emailEnvNames: ['ADMIN_EMAIL', 'SUPABASE_ADMIN_EMAIL', 'REALEST_ADMIN_EMAIL'],
+    passwordEnvNames: ['ADMIN_PASSWORD', 'SUPABASE_ADMIN_PASSWORD', 'REALEST_ADMIN_PASSWORD'],
+    refreshTokenEnvNames: ['ADMIN_REFRESH_TOKEN', 'SUPABASE_ADMIN_REFRESH_TOKEN', 'REALEST_ADMIN_REFRESH_TOKEN'],
   });
 
   const headers = { Authorization: `Bearer ${adminToken}` };
@@ -144,18 +145,22 @@ async function main() {
 
   let firstProperty = queueResult.body?.data?.[0];
   if (!firstProperty?.id) {
-    const ownerToken = await loadJwtToken({
+    const ownerToken = await loadSupabaseAccessToken({
       label: 'owner',
-      envNames: ['REALEST_OWNER_JWT'],
+      emailEnvNames: ['OWNER_EMAIL', 'SUPABASE_OWNER_EMAIL', 'REALEST_OWNER_EMAIL'],
+      passwordEnvNames: ['OWNER_PASSWORD', 'SUPABASE_OWNER_PASSWORD', 'REALEST_OWNER_PASSWORD'],
+      refreshTokenEnvNames: ['OWNER_REFRESH_TOKEN', 'SUPABASE_OWNER_REFRESH_TOKEN', 'REALEST_OWNER_REFRESH_TOKEN'],
     });
 
     try {
       firstProperty = await loadPropertySeed(ownerToken, 'owner');
     } catch (ownerError) {
       try {
-        const agentToken = await loadJwtToken({
+        const agentToken = await loadSupabaseAccessToken({
           label: 'agent',
-          envNames: ['REALEST_AGENT_JWT'],
+          emailEnvNames: ['AGENT_EMAIL', 'SUPABASE_AGENT_EMAIL', 'REALEST_AGENT_EMAIL'],
+          passwordEnvNames: ['AGENT_PASSWORD', 'SUPABASE_AGENT_PASSWORD', 'REALEST_AGENT_PASSWORD'],
+          refreshTokenEnvNames: ['AGENT_REFRESH_TOKEN', 'SUPABASE_AGENT_REFRESH_TOKEN', 'REALEST_AGENT_REFRESH_TOKEN'],
         });
 
         firstProperty = await loadPropertySeed(agentToken, 'agent');

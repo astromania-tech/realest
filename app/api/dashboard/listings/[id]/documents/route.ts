@@ -85,10 +85,20 @@ export async function GET(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Verify property ownership (unless admin)
+    // Verify property ownership or agent assignment (unless admin)
     if (userRow.role !== "admin") {
+      const accessFilter =
+        userRow.role === "agent"
+          ? {
+              OR: [
+                { owner_id: user.id },
+                { agent: { profile_id: user.id } },
+              ],
+            }
+          : { owner_id: user.id };
+
       const property = await prisma.properties.findFirst({
-        where: { id: propertyId, owner_id: user.id },
+        where: { id: propertyId, ...accessFilter },
         select: { id: true },
       });
       if (!property) {

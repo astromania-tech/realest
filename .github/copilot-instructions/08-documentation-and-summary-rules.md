@@ -1,372 +1,318 @@
 ---
 name: documentation-and-summary-rules
-version: 1.0.0
+version: 2.0.0
 category: Output & Artifact Management
 applies_to: "**/*.md, **/docs/**, **/*.ts, **/*.tsx"
-trigger: task-completion, documentation, summary-creation
+trigger: task-start, task-completion, documentation, summary-creation, doc-audit
 ---
 
-# 📋 STRICT DOCUMENTATION & SUMMARY FILE RULES
+# 📋 DOCUMENTATION INTEGRITY & LIFECYCLE RULES
 
 **Status:** ✅ MANDATORY & ENFORCED  
-**Violation Impact:** Commit rejection, task re-assignment
+**Violation Impact:** Commit rejection, misleading project state, cascading bugs  
+**Last Updated:** May 2026
 
-> **GOLDEN RULE:** One piece of information, one file. No duplication. No redundancy.
+> **CORE PRINCIPLE:** Docs must reflect *actual* state, not *intended* state.
+> A document that says "Complete" when work is incomplete is worse than no document at all —
+> it creates false confidence, blocks issue discovery, and misleads future development.
 
 ---
 
-## ❌ PROHIBITED BEHAVIORS
+## 🚦 PHASE 0: PRE-FLIGHT DOC AUDIT (REQUIRED BEFORE ANY DOC WORK)
 
-### 1. Creating Duplicate/Similar Summary Files
+**Before creating, editing, or referencing any documentation file, you MUST run a pre-flight audit:**
 
-**PROHIBITED:**
+### Step 1 — Search for existing docs on this topic
+
 ```
-docs/api-documentation-setup.md
-docs/api-documentation-setup-guide.md       ← ❌ DO NOT CREATE
-docs/api-documentation-complete.md           ← ❌ DO NOT CREATE
-docs/api-auto-update-implementation-complete.md ← ❌ DO NOT CREATE
+SEARCH CHECKLIST:
+☐ docs/ — root and all subdirectories
+☐ docs/done/ — archived "complete" files
+☐ .github/copilot-instructions/ — architecture rules
+☐ README.md — top-level references
 ```
 
-**WHY:** Creates confusion, breaks DRY principle, makes docs unsearchable
+### Step 2 — Read the existing file before touching it
 
-**CORRECT APPROACH:**
-- Update existing file: `docs/api-documentation.md`
-- OR consolidate into: `docs/01-api-setup.md` (ordered naming)
-- Never create new files for same topic
+- What status does it claim? (`✅ COMPLETE`, `🚧 IN PROGRESS`, `⚠️ BLOCKED`)
+- Does that status match the actual codebase? **Verify by checking the referenced files.**
+- Are there unchecked `[ ]` items? If yes, the task is **not complete** regardless of what the header says.
+- Are there placeholder implementations (e.g., `Math.random()`, `TODO:`, `// placeholder`)? If yes, the feature is **not production-ready**.
 
-### 2. Creating Per-Task Summary Documents
+### Step 3 — Correct false positives BEFORE adding new content
 
-**PROHIBITED:**
+If you find a doc that claims completion but is demonstrably incomplete:
+1. Change the status header **first**
+2. Add a `## ⚠️ Status Correction` section documenting what is actually pending
+3. Only then add your new content
+
+---
+
+## 📊 HONEST STATUS SYSTEM
+
+Every document MUST include a status block at the top. Use **only** these statuses:
+
+```markdown
+**Status:** 🔴 NOT STARTED
+**Status:** 🟡 IN PROGRESS — [X of Y tasks complete]
+**Status:** 🟠 BLOCKED — [reason]
+**Status:** 🔵 NEEDS TESTING — [implementation done, testing pending]
+**Status:** ✅ VERIFIED COMPLETE — [tested on: DATE]
+**Status:** ⚠️ PARTIAL — [what's done vs what's pending]
+**Status:** 🗄️ DEPRECATED — [superseded by: FILENAME]
 ```
+
+### ❌ BANNED STATUS PHRASES
+
+These are misleading and **must never appear** in a status line:
+
+| Banned | Why | Use Instead |
+|--------|-----|-------------|
+| `✅ IMPLEMENTATION COMPLETE` | Conflates code written with code working | `🔵 NEEDS TESTING` |
+| `✅ COMPLETE` (with unchecked `[ ]` items) | Direct contradiction | `🟡 IN PROGRESS` |
+| `✅ Production ready with placeholder ML` | Oxymoron | `🔵 NEEDS TESTING — placeholder ML only` |
+| `Ready for Integration Testing 🚀` | Optimism masking gaps | `🔵 NEEDS TESTING` |
+| `Phase X Status: ✅ COMPLETE` when target metrics unmet | False positive | `⚠️ PARTIAL` |
+| `DEPLOYMENT READY` without deployment verification | Unverified claim | `🔵 NEEDS TESTING` |
+
+---
+
+## 🧱 DOC CREATION RULES
+
+### Rule 1: ONE topic = ONE file
+
+Do not create new files that cover the same subject as an existing file.
+
+```
+❌ WRONG:
+docs/ml-validation-flow.md
+docs/ml-validation-implementation-checklist.md   ← DUPLICATE TOPIC
+docs/ml-validation-quick-reference.md            ← DUPLICATE TOPIC
+
+✅ RIGHT:
+docs/ml-validation.md
+  ## Overview
+  ## API Endpoints
+  ## Quick Reference
+  ## Testing Checklist
+  ## Deployment Checklist
+```
+
+### Rule 2: No per-session or per-task summary files
+
+Summary files create a graveyard of stale snapshots. They become the #1 source of false positives.
+
+```
+❌ NEVER CREATE:
 docs/session-completion-summary.md
-docs/ml-validation-implementation-checklist.md
+docs/phase-1-completion-summary.md
 docs/property-form-refactoring-complete.md
-docs/referral-waitlist-rewards-implementation-spec.md
+docs/IMPLEMENTATION_COMPLETE.md
+docs/done/AGENT_SIGNUP_COMMIT_SUCCESS.md
+
+✅ INSTEAD: Update the living feature doc with a timestamped changelog entry
 ```
 
-**WHY:** 
-- Each task creates NEW file instead of updating existing docs
-- Docs folder becomes unusable garbage heap
-- Team can't find information
+**Exception:** `ROADMAP.md` is the only "summary" file allowed — it tracks cross-feature progress over time.
 
-**CORRECT APPROACH:**
-- Update the SPECIFIC feature documentation, not create a summary
-- Example: Working on property form? Update `docs/form-patterns.md`
-- Example: ML validation? Update `docs/ml-validation.md` (single source of truth)
-- No new files allowed per task
+### Rule 3: No `done/` folder for completed tasks
 
-### 3. Creating Multiple Variations of Same Topic
+The `docs/done/` folder defeats the purpose of documentation — it hides information and implies tasks are fully resolved when they may not be. **Archive only with `🗄️ DEPRECATED` status in the file itself, not by moving it.**
 
-**PROHIBITED:**
-```
-docs/openapi-endpoint-template.md
-docs/api-workflow-add-new-endpoint.md
-docs/auto-document-apis.md
-docs/auto-documentation-system-overview.md
-docs/api-documentation-complete.md
-```
-
-**WHY:** 5 files about same topic = team doesn't know which to read
-
-**CORRECT APPROACH:**
-Create ONE master file with sections:
-- `docs/api-documentation.md` with:
-  - `## Quick Start` (template)
-  - `## Workflow` (step-by-step)
-  - `## System Overview` (how it works)
-  - `## Common Patterns` (examples)
-
----
-
-## ✅ CORRECT DOCUMENTATION PATTERNS
-
-### Pattern 1: Ordered Topic Files
+### Rule 4: Naming convention
 
 ```
-docs/
-  01-getting-started.md          (onboarding)
-  02-authentication.md            (auth patterns)
-  03-database-schema.md           (DB structure)
-  04-api-documentation.md         (API setup, workflow, templates, examples - ALL IN ONE)
-  05-component-library.md         (components)
-  ROADMAP.md                      (project timeline)
-  README.md                       (overview)
-```
+✅ Allowed:
+  01-getting-started.md         (numbered for ordered reading)
+  ml-validation.md              (descriptive, topic-based)
+  api-documentation.md          (descriptive)
+  ROADMAP.md                    (uppercase for special project files)
+  README.md
 
-**Rule:** Prefix with number for organization. One topic = one file.
-
-### Pattern 2: Existing File Updates
-
-When task affects existing documentation:
-```
-Task: "Add new API endpoint documentation workflow"
-
-WRONG:
-- Create docs/api-workflow-add-new-endpoint.md (NEW FILE)
-- Create docs/api-documentation-setup-guide.md (NEW FILE)
-
-CORRECT:
-- Find: docs/api-documentation.md (existing)
-- Update: Add "## Workflow" section
-- Update: Add "## Templates" section
-- Commit: Single file change
-```
-
-### Pattern 3: Cross-Cutting Concerns
-
-When a task spans multiple systems:
-```
-Task: "Setup API documentation for entire project"
-
-WRONG:
-- docs/api-setup.md
-- docs/api-workflow.md
-- docs/api-templates.md
-- docs/api-complete.md
-
-CORRECT:
-- Ensure: docs/api-documentation.md is COMPLETE
-- Sections:
-  1. Setup/Installation
-  2. Workflow
-  3. Templates
-  4. Examples
-  5. Troubleshooting
-```
-
-### Pattern 4: Ordered Architecture Docs
-
-```
-copilot-instructions/
-  00-architecture-overview.md     (start here)
-  01-design-system.md             (UI/styling)
-  02-component-library.md         (components)
-  03-typescript-types.md          (type safety)
-  04-authentication.md            (auth)
-  05-nigerian-market.md           (localization)
-  07-api-documentation.md         (APIs)
-  META-COGNITIVE-SYSTEM.md        (reasoning system)
-  AI-COMMIT-RULES.md              (commit rules)
-  PROMPTS.md                      (prompt templates)
-```
-
-**Rule:** Numbered 00-09 for ordered reading. Special files at end.
-
----
-
-## 🚫 RED FLAGS (Commit Will Be Rejected)
-
-**Agent creates file when it should update existing?**
-```bash
-# ❌ This will be rejected:
-- Created: docs/new-summary-about-task.md
-
-# ✅ This will be accepted:
-- Updated: docs/existing-feature.md
-```
-
-**Checklist before committing:**
-
-```
-☐ No duplicate files about same topic
-☐ One topic = one file
-☐ Updated existing docs instead of creating new?
-☐ No "summary" or "complete" files
-☐ No "implementation" files for already-documented features
-☐ No per-task documentation files
-☐ Files use consistent naming: ordered numbers or descriptive names
-☐ Cross-referenced from README.md or index
-☐ Consolidated similar content
+❌ Not allowed:
+  *-complete.md
+  *-summary.md
+  *-implementation-complete.md
+  *-setup-guide.md              (if setup already covered)
+  DEPLOYMENT-READY.md
+  session-*.md
+  phase-*-completion-*.md
 ```
 
 ---
 
-## 📁 Docs Cleanup Guide
+## ✅ CHECKLIST INTEGRITY RULES
 
-**Current State (CLUTTERED):**
+Checklists (`- [ ]` / `- [x]`) are the ground truth of completion. These rules govern them:
+
+### When writing a checklist:
+
+1. **Only check `[x]` items you have personally verified** — not items you believe are done
+2. If an item says "Test X" and you haven't run the test, it stays `[ ]`
+3. If an item involves a real service (ML, payment, email) and only a placeholder exists, it stays `[ ]`
+4. **Never check an entire section `[x]` based on the section above it being done**
+
+### Placeholder vs. Production distinction:
+
+```markdown
+## Checklist
+
+### Implementation
+- [x] Route created: /api/admin/validation/document
+- [x] Auth check implemented
+- [x] Zod schema validation
+
+### ML Integration  ← This is a SEPARATE phase
+- [ ] OCR service connected (currently: Math.random() placeholder)
+- [ ] Deepfake detection connected (currently: placeholder)
+- [ ] Confidence thresholds validated against real data
+
+### Testing
+- [ ] Manual test: document validation with sample PDF
+- [ ] Manual test: invalid file type rejection
+- [ ] Unit tests for auth layer
+```
+
+---
+
+## 🗑️ DOC OBSOLETION & CLEANUP PROTOCOL
+
+### When a doc becomes obsolete:
+
+A doc is obsolete when:
+- It describes a system that has been replaced
+- It references files that no longer exist
+- Its content is fully absorbed into another doc
+- It was a session summary that never should have existed
+
+### How to handle it:
+
+**Step 1:** Add this block to the TOP of the file:
+
+```markdown
+> [!CAUTION]
+> **🗄️ DEPRECATED** — This file is obsolete.  
+> **Superseded by:** [docs/feature-name.md](./feature-name.md)  
+> **Reason:** [brief reason]  
+> **Date deprecated:** YYYY-MM-DD  
+> **Action:** Safe to delete after confirming content is merged.
+```
+
+**Step 2:** Ensure the superseding file contains the relevant non-redundant content.
+
+**Step 3:** Delete the file in a dedicated `refactor: remove obsolete docs` commit.
+
+### Docs in this repo currently flagged for review:
+
+The following files should be audited and likely consolidated or deprecated:
+
+| File | Issue | Recommended Action |
+|------|-------|--------------------|
+| `docs/session-completion-summary.md` | Per-session dump, false ✅ COMPLETE | Merge useful content → feature docs, then delete |
+| `docs/phase-1-completion-summary.md` | Phase summary, per-task doc | Merge into ROADMAP.md, then delete |
+| `docs/phase-2-completion-summary.md` | Claims phase goals met; metrics show they aren't | Update ROADMAP.md with honest status, delete |
+| `docs/ml-validation-implementation-checklist.md` | Overlaps with `ml-validation-flow.md`; has unchecked items | Consolidate into `ml-validation.md`, delete |
+| `docs/ml-validation-quick-reference.md` | Subset of `ml-validation-flow.md` | Merge as `## Quick Reference` section, delete |
+| `docs/done/IMPLEMENTATION_COMPLETE.md` | In `done/` folder; testing items unchecked | Move honest status back to `property-vs-listing-implementation-plan.md` |
+| `docs/done/ADMIN_INVITATION_SYSTEM_COMPLETE.md` | Claims complete; verify against codebase | Audit, then either verify or flag partial |
+| `docs/api/api-documentation-complete.md` | Duplicate of other API docs | Consolidate into `docs/api-documentation.md` |
+| `docs/api/api-auto-update-implementation-complete.md` | Session artifact | Review and delete |
+| `docs/branch-quick-reference.md` | Likely subset of `branch-management.md` | Merge or verify it adds unique value |
+| `docs/referral-waitlist-rewards-e2e-checklist.md` | Likely overlaps with spec | Merge into spec doc |
+
+---
+
+## 📁 TARGET DOCS STRUCTURE
+
 ```
 docs/
-  api-documentation-setup.md
-  api-documentation-setup-guide.md          ← Duplicate!
-  api-documentation-complete.md             ← Duplicate!
-  api-auto-update-implementation-complete.md ← Duplicate!
-  auto-document-apis.md                     ← Duplicate!
-  auto-documentation-system-overview.md     ← Duplicate!
-  api-workflow-add-new-endpoint.md          ← Duplicate!
-  openapi-endpoint-template.md              ← Duplicate!
-  ... [40+ more files, many redundant]
-```
-
-**Target State (ORGANIZED):**
-```
-docs/
-  README.md                       (overview)
-  01-getting-started.md           (onboarding)
-  04-api-documentation.md         (setup + workflow + templates + examples)
-  05-form-patterns.md             (forms - consolidated)
-  ROADMAP.md                      (timeline)
+  README.md                         ← Project overview + links to all docs
+  ROADMAP.md                        ← Cross-feature progress tracker (living doc)
+  
+  01-getting-started.md             ← Dev onboarding, env setup
+  02-architecture.md                ← System design, DB schema, route structure
+  03-design-system.md               ← UI tokens, component strategy (70-25-5)
+  04-api-documentation.md           ← All API endpoints, templates, examples
+  05-ml-validation.md               ← ML pipeline: endpoints, checklist, integration
+  06-forms.md                       ← Form patterns
+  07-authentication.md              ← Auth flows
+  08-branch-management.md           ← Branch strategy, commit rules
+  
   design/
     realest-ng-design-architecture.md
     theme-system.md
-  deprecated/
-    [old files moved here]
-```
-
-**Action Steps:**
-1. For each "summary" file, identify what feature it covers
-2. Find the main feature doc (e.g., `04-api-documentation.md`)
-3. Merge content into main doc
-4. Delete the summary file
-5. Update cross-references
-6. Commit: "refactor: consolidate docs"
-
----
-
-## 🎯 Task Completion = Update Docs, Don't Create New Ones
-
-### Example 1: API Documentation Task
-
-**Task:** "Implement auto-documentation for new API endpoints"
-
-**WRONG Outcome:**
-- Created: `docs/api-documentation-setup.md`
-- Created: `docs/api-workflow-add-new-endpoint.md`
-- Created: `docs/api-auto-update-implementation-complete.md`
-- Created: `docs/API-DOCUMENTATION-DEPLOYMENT-READY.md`
-
-**RIGHT Outcome:**
-- Updated: `docs/04-api-documentation.md` with:
-  - `## Getting Started`
-  - `## Workflow`
-  - `## Templates`
-  - `## Testing`
-  - `## Troubleshooting`
-
-### Example 2: Component Task
-
-**Task:** "Create new form component for property verification"
-
-**WRONG Outcome:**
-- Created: `docs/property-form-refactoring-complete.md`
-- Created: `docs/property-form-implementation-spec.md`
-
-**RIGHT Outcome:**
-- Updated: `docs/05-form-patterns.md` with:
-  - New section: "## Property Verification Form"
-  - Include: pattern, example code, validation rules
-
----
-
-## 🔐 Enforcement Rules
-
-### For Agents:
-
-**Before creating ANY .md file:**
-```
-1. Does this documentation already exist?
-   - Search docs/ folder
-   - Check copilot-instructions/
-   - Check README.md references
-   
-2. If existing, UPDATE it
-   - Add new section
-   - Expand explanation
-   - Add examples
-   
-3. If NOT existing, CREATE only if:
-   - Core new feature (not a task variation)
-   - Multiple teams need it
-   - Can't fit in existing docs
-   
-4. Use naming convention:
-   - Ordered: 00-name.md
-   - Descriptive: feature-name.md
-   - NO summaries, NO "complete", NO "implementation"
-```
-
-### For Commit Reviews:
-
-**Reject if:**
-- New file duplicates existing topic
-- "summary" or "complete" in filename
-- More than 1 doc file per feature
-- Docs folder has >30 files
-- Files aren't consolidated
-
-**Accept if:**
-- Updates existing file
-- Ordered/descriptive naming
-- Cross-referenced from index
-- Consolidates similar content
-- Docs folder stays clean (<25 files for core docs)
-
----
-
-## ✅ CURRENT DOCS ORGANIZATION
-
-After cleanup, target structure:
-
-```
-docs/
-  README.md                           (Start here)
-  01-getting-started.md               (Onboarding)
-  02-architecture.md                  (System design)
-  03-design-system.md                 (UI/Styling)
-  04-components.md                    (Component library)
-  05-api-documentation.md             (APIs - complete)
-  06-forms.md                         (Form patterns)
-  07-authentication.md                (Auth)
-  08-database.md                      (Database schema)
-  09-deployment.md                    (Deployment)
-  ROADMAP.md                          (Project timeline)
+    branding.md
+  
   references/
     nigerian-market.md
     type-reference.md
-    color-tokens.md
-  examples/
-    property-form-example.md
-    api-endpoint-example.md
-  deprecated/
-    [old files archived here]
 ```
 
-**Benefits:**
-- ✅ Clear navigation
-- ✅ No duplication
-- ✅ Easy to find information
-- ✅ Scales with project
-- ✅ Team productivity +40%
+---
+
+## 🔄 LIVING DOCUMENT PROTOCOL
+
+Key docs are **living documents** — they evolve with the project. Follow this protocol:
+
+### When completing a task that affects an existing doc:
+
+```
+1. Open the existing doc
+2. Run pre-flight audit (Step 2 above)
+3. Update status block at top
+4. Add/update the relevant section
+5. Add a changelog entry at the bottom:
+
+---
+## Changelog
+- **2026-05-26**: Added document validation endpoints (routes created, placeholder ML)
+- **2026-05-24**: Initial structure and overview
+```
+
+### ROADMAP.md is the progress tracker
+
+Use `ROADMAP.md` for cross-phase progress. It should reflect **actual** progress, not planned progress. Use this format per phase item:
+
+```markdown
+- [x] **0.1 Supabase Initialization** — Schema live, RLS configured ✅
+- [/] **2.2 ML Document Validation** — Routes created, placeholder ML only 🟡
+- [ ] **4.1 Automated ML Integration** — Not started 🔴
+```
 
 ---
 
-## 🚀 Implementation
+## 🚫 ENFORCEMENT CHECKLIST (Before Committing)
 
-**For New Tasks:**
-1. Read this file before starting
-2. Search existing docs for related content
-3. Update instead of create
-4. Link from README.md
-5. Consolidate before committing
+```
+☐ Did I run the pre-flight doc audit?
+☐ Did I correct any false-positive status I found?
+☐ Does every doc I touched have an honest status block?
+☐ Are ALL unchecked [ ] items genuinely unchecked?
+☐ Did I avoid creating per-task/per-session summary files?
+☐ Did I update an existing file instead of creating a new one?
+☐ Does the doc name follow the naming convention? (no *-complete, *-summary)
+☐ If I deprecated something, did I mark it at the top of the file?
+☐ Did I update ROADMAP.md if a milestone changed?
+```
 
-**For Existing Docs:**
-1. Move files to `docs/deprecated/` (don't delete)
-2. Consolidate content into main files
-3. Update cross-references
-4. Commit: `refactor: consolidate documentation`
-
----
-
-## 📞 Questions?
-
-| Question | Answer |
-|----------|--------|
-| "Should I create a new file?" | Update existing file instead |
-| "This is a new topic!" | Still, find closest existing doc and add section |
-| "I need to document my task completion" | Update the feature docs, not create task summary |
-| "Multiple files for same topic?" | CONSOLIDATE into one |
+**Reject commit if:**
+- New file duplicates an existing topic
+- A doc says "COMPLETE" but has unchecked `[ ]` testing items
+- A doc says "production ready" with placeholder implementations
+- Filename contains: `complete`, `summary`, `session`, `deployment-ready`
+- `docs/done/` folder gains new files
 
 ---
 
-**Status:** ✅ ACTIVE ENFORCEMENT  
-**Violation Result:** Commit rejection + re-work  
-**Last Updated:** May 24, 2026
+## ❓ QUICK REFERENCE
+
+| Situation | Action |
+|-----------|--------|
+| Task finished but untested | Status: `🔵 NEEDS TESTING` |
+| Code written, real service not yet wired | Status: `⚠️ PARTIAL — placeholder only` |
+| All tests pass, verified in dev | Status: `✅ VERIFIED COMPLETE — tested: DATE` |
+| Want to document task completion | Update the **feature doc**, not a new summary |
+| Found a doc claiming ✅ COMPLETE that isn't | Fix the status **before** reading further — it's a false positive |
+| Two docs on the same topic | Merge the smaller into the larger, deprecate the smaller |
+| Doc references files that no longer exist | Mark `🗄️ DEPRECATED`, migrate live content, then delete |
+| Phase goal not met but doc says it is | Update ROADMAP.md with honest `⚠️ PARTIAL` and real metrics |

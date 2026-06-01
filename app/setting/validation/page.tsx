@@ -30,6 +30,7 @@ import {
   DollarSign,
   Lock,
 } from "lucide-react";
+import { ValidationQueuePanel } from "@/components/realest/validation/ValidationQueuePanel";
 
 // Mock data for validation metrics
 const validationData = {
@@ -470,6 +471,8 @@ export default function ValidationPage() {
               </div>
             </Card>
           </div>
+
+          <ValidationQueuePanel />
 
           {/* Geotag Accuracy Report */}
           <Card className="bg-gray-900/50 border-gray-800 p-6">

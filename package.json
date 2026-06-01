@@ -22,6 +22,7 @@
     "dev:demo": "NEXT_PUBLIC_APP_MODE=development npm run dev",
     "test:lockdown": "node scripts/test-route-lockdown.js",
     "test:validation": "node scripts/validation-smoke-test.mjs",
+    "test:listing:e2e": "node scripts/full-listing-e2e.mjs",
     "email:export": "npx react-email export --dir emails/templates",
     "email:dev": "npx react-email dev --dir emails/templates --port 3001",
     "icons:generate": "node scripts/generate-png-icons.js",
