@@ -1,14 +1,13 @@
 /**
  * Prisma Seed File — Bayelsa State Hotels & Event Centers
- * Targets the existing RealEST Connect agent account.
+ * Targets the current RealEST Connect agent account.
  *
  * Run with:
  *   npx ts-node --compiler-options '{"module":"CommonJS"}' prisma/seed.ts
  *   or via package.json prisma.seed script
  *
  * Agent account used:
- *   agents.id   : a1141b4b-4d96-47ea-a181-56ce2ad8ac53  (RealEST Connect)
- *   profile_id  : 19523e42-607c-4004-bbf2-1223de5de436  (info@connect.realest.ng)
+ *   email       : agent@connect.realest.ng
  */
 
 import { prisma } from "../lib/prisma";
@@ -18,7 +17,9 @@ import { prisma } from "../lib/prisma";
 // ---------------------------------------------------------------------------
 // EXISTING AGENT — RealEST Connect
 // ---------------------------------------------------------------------------
-const AGENT_ID = "a1141b4b-4d96-47ea-a181-56ce2ad8ac53";
+const AGENT_EMAIL = "agent@connect.realest.ng";
+
+let AGENT_ID = "";
 
 // ---------------------------------------------------------------------------
 // RAW DATA — Hotels & Event Centers in Bayelsa State
@@ -907,7 +908,23 @@ const venues: VenueData[] = [
 
 async function main() {
   console.log("🌱 Starting Bayelsa venues seed...");
-  console.log(`   Agent ID: ${AGENT_ID} (RealEST Connect)\n`);
+  console.log(`   Agent Email: ${AGENT_EMAIL} (RealEST Connect)\n`);
+
+  const existingAgent = await prisma.agents.findFirst({
+    where: { profiles: { email: AGENT_EMAIL } },
+    include: { profiles: { select: { full_name: true, email: true } } },
+  });
+
+  if (!existingAgent) {
+    throw new Error(
+      `Agent with email ${AGENT_EMAIL} not found. Run the app and complete onboarding for ${AGENT_EMAIL} first.`
+    );
+  }
+
+  AGENT_ID = existingAgent.id;
+
+  console.log(`✅ Found agent: ${existingAgent.profiles?.full_name} <${existingAgent.profiles?.email}>`);
+  console.log(`   Agent ID: ${AGENT_ID}\n`);
 
   // Clean up previously seeded properties (idempotent re-runs)
   const deletedCount = await prisma.properties.deleteMany({
@@ -917,19 +934,6 @@ async function main() {
     console.log(`   ♻️  Removed ${deletedCount.count} existing properties for clean re-seed.\n`);
   }
 
-  // Verify the agent account exists before proceeding
-  const existingAgent = await prisma.agents.findUnique({
-    where: { id: AGENT_ID },
-    include: { profiles: { select: { full_name: true, email: true } } },
-  });
-
-  if (!existingAgent) {
-    throw new Error(
-      `Agent with id ${AGENT_ID} not found. Run the app and complete onboarding for info@connect.realest.ng first.`
-    );
-  }
-
-  console.log(`✅ Found agent: ${existingAgent.profiles?.full_name} <${existingAgent.profiles?.email}>`);
   console.log(`   Agency: ${existingAgent.agency_name}\n`);
 
   // Seed each venue

@@ -269,7 +269,7 @@ export type ProfilesGroupByOutputType = {
   _max: ProfilesMaxAggregateOutputType | null
 }
 
-type GetProfilesGroupByPayload<T extends profilesGroupByArgs> = Prisma.PrismaPromise<
+export type GetProfilesGroupByPayload<T extends profilesGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<ProfilesGroupByOutputType, T['by']> &
       {
@@ -313,12 +313,16 @@ export type profilesWhereInput = {
   notifications?: Prisma.NotificationsListRelationFilter
   owners?: Prisma.XOR<Prisma.OwnersNullableScalarRelationFilter, Prisma.ownersWhereInput> | null
   payments?: Prisma.PaymentsListRelationFilter
-  users?: Prisma.XOR<Prisma.UsersScalarRelationFilter, Prisma.usersWhereInput>
-  property_documents?: Prisma.Property_documentsListRelationFilter
-  reviews?: Prisma.ReviewsListRelationFilter
-  saved_properties?: Prisma.Saved_propertiesListRelationFilter
   referrer?: Prisma.XOR<Prisma.ProfilesNullableScalarRelationFilter, Prisma.profilesWhereInput> | null
   referrals?: Prisma.ProfilesListRelationFilter
+  users?: Prisma.XOR<Prisma.UsersScalarRelationFilter, Prisma.usersWhereInput>
+  property_documents?: Prisma.Property_documentsListRelationFilter
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.Referral_eventsListRelationFilter
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.Referral_eventsListRelationFilter
+  reviews?: Prisma.ReviewsListRelationFilter
+  reward_entitlements?: Prisma.Reward_entitlementsListRelationFilter
+  reward_redemptions?: Prisma.Reward_redemptionsListRelationFilter
+  saved_properties?: Prisma.Saved_propertiesListRelationFilter
 }
 
 export type profilesOrderByWithRelationInput = {
@@ -347,12 +351,16 @@ export type profilesOrderByWithRelationInput = {
   notifications?: Prisma.notificationsOrderByRelationAggregateInput
   owners?: Prisma.ownersOrderByWithRelationInput
   payments?: Prisma.paymentsOrderByRelationAggregateInput
-  users?: Prisma.usersOrderByWithRelationInput
-  property_documents?: Prisma.property_documentsOrderByRelationAggregateInput
-  reviews?: Prisma.reviewsOrderByRelationAggregateInput
-  saved_properties?: Prisma.saved_propertiesOrderByRelationAggregateInput
   referrer?: Prisma.profilesOrderByWithRelationInput
   referrals?: Prisma.profilesOrderByRelationAggregateInput
+  users?: Prisma.usersOrderByWithRelationInput
+  property_documents?: Prisma.property_documentsOrderByRelationAggregateInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsOrderByRelationAggregateInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsOrderByRelationAggregateInput
+  reviews?: Prisma.reviewsOrderByRelationAggregateInput
+  reward_entitlements?: Prisma.reward_entitlementsOrderByRelationAggregateInput
+  reward_redemptions?: Prisma.reward_redemptionsOrderByRelationAggregateInput
+  saved_properties?: Prisma.saved_propertiesOrderByRelationAggregateInput
 }
 
 export type profilesWhereUniqueInput = Prisma.AtLeast<{
@@ -384,12 +392,16 @@ export type profilesWhereUniqueInput = Prisma.AtLeast<{
   notifications?: Prisma.NotificationsListRelationFilter
   owners?: Prisma.XOR<Prisma.OwnersNullableScalarRelationFilter, Prisma.ownersWhereInput> | null
   payments?: Prisma.PaymentsListRelationFilter
-  users?: Prisma.XOR<Prisma.UsersScalarRelationFilter, Prisma.usersWhereInput>
-  property_documents?: Prisma.Property_documentsListRelationFilter
-  reviews?: Prisma.ReviewsListRelationFilter
-  saved_properties?: Prisma.Saved_propertiesListRelationFilter
   referrer?: Prisma.XOR<Prisma.ProfilesNullableScalarRelationFilter, Prisma.profilesWhereInput> | null
   referrals?: Prisma.ProfilesListRelationFilter
+  users?: Prisma.XOR<Prisma.UsersScalarRelationFilter, Prisma.usersWhereInput>
+  property_documents?: Prisma.Property_documentsListRelationFilter
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.Referral_eventsListRelationFilter
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.Referral_eventsListRelationFilter
+  reviews?: Prisma.ReviewsListRelationFilter
+  reward_entitlements?: Prisma.Reward_entitlementsListRelationFilter
+  reward_redemptions?: Prisma.Reward_redemptionsListRelationFilter
+  saved_properties?: Prisma.Saved_propertiesListRelationFilter
 }, "id" | "referral_code">
 
 export type profilesOrderByWithAggregationInput = {
@@ -462,12 +474,16 @@ export type profilesCreateInput = {
   notifications?: Prisma.notificationsCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsCreateNestedManyWithoutProfilesInput
-  users: Prisma.usersCreateNestedOneWithoutProfilesInput
-  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
-  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
-  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
   referrer?: Prisma.profilesCreateNestedOneWithoutReferralsInput
   referrals?: Prisma.profilesCreateNestedManyWithoutReferrerInput
+  users: Prisma.usersCreateNestedOneWithoutProfilesInput
+  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesUncheckedCreateInput = {
@@ -496,10 +512,14 @@ export type profilesUncheckedCreateInput = {
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersUncheckedCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutProfilesInput
-  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
-  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
-  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
   referrals?: Prisma.profilesUncheckedCreateNestedManyWithoutReferrerInput
+  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesUpdateInput = {
@@ -526,12 +546,16 @@ export type profilesUpdateInput = {
   notifications?: Prisma.notificationsUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUpdateManyWithoutProfilesNestedInput
-  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
-  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
-  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
-  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
   referrer?: Prisma.profilesUpdateOneWithoutReferralsNestedInput
   referrals?: Prisma.profilesUpdateManyWithoutReferrerNestedInput
+  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
+  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesUncheckedUpdateInput = {
@@ -560,10 +584,14 @@ export type profilesUncheckedUpdateInput = {
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUncheckedUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutProfilesNestedInput
-  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
-  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
-  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
   referrals?: Prisma.profilesUncheckedUpdateManyWithoutReferrerNestedInput
+  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesCreateManyInput = {
@@ -974,6 +1002,70 @@ export type profilesUpdateOneRequiredWithoutEmail_campaignsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.profilesUpdateToOneWithWhereWithoutEmail_campaignsInput, Prisma.profilesUpdateWithoutEmail_campaignsInput>, Prisma.profilesUncheckedUpdateWithoutEmail_campaignsInput>
 }
 
+export type profilesCreateNestedOneWithoutReferral_events_referral_events_referred_profile_idToprofilesInput = {
+  create?: Prisma.XOR<Prisma.profilesCreateWithoutReferral_events_referral_events_referred_profile_idToprofilesInput, Prisma.profilesUncheckedCreateWithoutReferral_events_referral_events_referred_profile_idToprofilesInput>
+  connectOrCreate?: Prisma.profilesCreateOrConnectWithoutReferral_events_referral_events_referred_profile_idToprofilesInput
+  connect?: Prisma.profilesWhereUniqueInput
+}
+
+export type profilesCreateNestedOneWithoutReferral_events_referral_events_referrer_profile_idToprofilesInput = {
+  create?: Prisma.XOR<Prisma.profilesCreateWithoutReferral_events_referral_events_referrer_profile_idToprofilesInput, Prisma.profilesUncheckedCreateWithoutReferral_events_referral_events_referrer_profile_idToprofilesInput>
+  connectOrCreate?: Prisma.profilesCreateOrConnectWithoutReferral_events_referral_events_referrer_profile_idToprofilesInput
+  connect?: Prisma.profilesWhereUniqueInput
+}
+
+export type profilesUpdateOneWithoutReferral_events_referral_events_referred_profile_idToprofilesNestedInput = {
+  create?: Prisma.XOR<Prisma.profilesCreateWithoutReferral_events_referral_events_referred_profile_idToprofilesInput, Prisma.profilesUncheckedCreateWithoutReferral_events_referral_events_referred_profile_idToprofilesInput>
+  connectOrCreate?: Prisma.profilesCreateOrConnectWithoutReferral_events_referral_events_referred_profile_idToprofilesInput
+  upsert?: Prisma.profilesUpsertWithoutReferral_events_referral_events_referred_profile_idToprofilesInput
+  disconnect?: Prisma.profilesWhereInput | boolean
+  delete?: Prisma.profilesWhereInput | boolean
+  connect?: Prisma.profilesWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.profilesUpdateToOneWithWhereWithoutReferral_events_referral_events_referred_profile_idToprofilesInput, Prisma.profilesUpdateWithoutReferral_events_referral_events_referred_profile_idToprofilesInput>, Prisma.profilesUncheckedUpdateWithoutReferral_events_referral_events_referred_profile_idToprofilesInput>
+}
+
+export type profilesUpdateOneWithoutReferral_events_referral_events_referrer_profile_idToprofilesNestedInput = {
+  create?: Prisma.XOR<Prisma.profilesCreateWithoutReferral_events_referral_events_referrer_profile_idToprofilesInput, Prisma.profilesUncheckedCreateWithoutReferral_events_referral_events_referrer_profile_idToprofilesInput>
+  connectOrCreate?: Prisma.profilesCreateOrConnectWithoutReferral_events_referral_events_referrer_profile_idToprofilesInput
+  upsert?: Prisma.profilesUpsertWithoutReferral_events_referral_events_referrer_profile_idToprofilesInput
+  disconnect?: Prisma.profilesWhereInput | boolean
+  delete?: Prisma.profilesWhereInput | boolean
+  connect?: Prisma.profilesWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.profilesUpdateToOneWithWhereWithoutReferral_events_referral_events_referrer_profile_idToprofilesInput, Prisma.profilesUpdateWithoutReferral_events_referral_events_referrer_profile_idToprofilesInput>, Prisma.profilesUncheckedUpdateWithoutReferral_events_referral_events_referrer_profile_idToprofilesInput>
+}
+
+export type profilesCreateNestedOneWithoutReward_entitlementsInput = {
+  create?: Prisma.XOR<Prisma.profilesCreateWithoutReward_entitlementsInput, Prisma.profilesUncheckedCreateWithoutReward_entitlementsInput>
+  connectOrCreate?: Prisma.profilesCreateOrConnectWithoutReward_entitlementsInput
+  connect?: Prisma.profilesWhereUniqueInput
+}
+
+export type profilesUpdateOneWithoutReward_entitlementsNestedInput = {
+  create?: Prisma.XOR<Prisma.profilesCreateWithoutReward_entitlementsInput, Prisma.profilesUncheckedCreateWithoutReward_entitlementsInput>
+  connectOrCreate?: Prisma.profilesCreateOrConnectWithoutReward_entitlementsInput
+  upsert?: Prisma.profilesUpsertWithoutReward_entitlementsInput
+  disconnect?: Prisma.profilesWhereInput | boolean
+  delete?: Prisma.profilesWhereInput | boolean
+  connect?: Prisma.profilesWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.profilesUpdateToOneWithWhereWithoutReward_entitlementsInput, Prisma.profilesUpdateWithoutReward_entitlementsInput>, Prisma.profilesUncheckedUpdateWithoutReward_entitlementsInput>
+}
+
+export type profilesCreateNestedOneWithoutReward_redemptionsInput = {
+  create?: Prisma.XOR<Prisma.profilesCreateWithoutReward_redemptionsInput, Prisma.profilesUncheckedCreateWithoutReward_redemptionsInput>
+  connectOrCreate?: Prisma.profilesCreateOrConnectWithoutReward_redemptionsInput
+  connect?: Prisma.profilesWhereUniqueInput
+}
+
+export type profilesUpdateOneWithoutReward_redemptionsNestedInput = {
+  create?: Prisma.XOR<Prisma.profilesCreateWithoutReward_redemptionsInput, Prisma.profilesUncheckedCreateWithoutReward_redemptionsInput>
+  connectOrCreate?: Prisma.profilesCreateOrConnectWithoutReward_redemptionsInput
+  upsert?: Prisma.profilesUpsertWithoutReward_redemptionsInput
+  disconnect?: Prisma.profilesWhereInput | boolean
+  delete?: Prisma.profilesWhereInput | boolean
+  connect?: Prisma.profilesWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.profilesUpdateToOneWithWhereWithoutReward_redemptionsInput, Prisma.profilesUpdateWithoutReward_redemptionsInput>, Prisma.profilesUncheckedUpdateWithoutReward_redemptionsInput>
+}
+
 export type profilesCreateWithoutAdmin_audit_logInput = {
   email: string
   full_name?: string | null
@@ -997,12 +1089,16 @@ export type profilesCreateWithoutAdmin_audit_logInput = {
   notifications?: Prisma.notificationsCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsCreateNestedManyWithoutProfilesInput
-  users: Prisma.usersCreateNestedOneWithoutProfilesInput
-  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
-  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
-  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
   referrer?: Prisma.profilesCreateNestedOneWithoutReferralsInput
   referrals?: Prisma.profilesCreateNestedManyWithoutReferrerInput
+  users: Prisma.usersCreateNestedOneWithoutProfilesInput
+  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesUncheckedCreateWithoutAdmin_audit_logInput = {
@@ -1030,10 +1126,14 @@ export type profilesUncheckedCreateWithoutAdmin_audit_logInput = {
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersUncheckedCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutProfilesInput
-  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
-  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
-  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
   referrals?: Prisma.profilesUncheckedCreateNestedManyWithoutReferrerInput
+  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesCreateOrConnectWithoutAdmin_audit_logInput = {
@@ -1075,12 +1175,16 @@ export type profilesUpdateWithoutAdmin_audit_logInput = {
   notifications?: Prisma.notificationsUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUpdateManyWithoutProfilesNestedInput
-  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
-  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
-  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
-  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
   referrer?: Prisma.profilesUpdateOneWithoutReferralsNestedInput
   referrals?: Prisma.profilesUpdateManyWithoutReferrerNestedInput
+  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
+  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesUncheckedUpdateWithoutAdmin_audit_logInput = {
@@ -1108,10 +1212,14 @@ export type profilesUncheckedUpdateWithoutAdmin_audit_logInput = {
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUncheckedUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutProfilesNestedInput
-  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
-  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
-  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
   referrals?: Prisma.profilesUncheckedUpdateManyWithoutReferrerNestedInput
+  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesCreateWithoutAgentsInput = {
@@ -1137,12 +1245,16 @@ export type profilesCreateWithoutAgentsInput = {
   notifications?: Prisma.notificationsCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsCreateNestedManyWithoutProfilesInput
-  users: Prisma.usersCreateNestedOneWithoutProfilesInput
-  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
-  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
-  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
   referrer?: Prisma.profilesCreateNestedOneWithoutReferralsInput
   referrals?: Prisma.profilesCreateNestedManyWithoutReferrerInput
+  users: Prisma.usersCreateNestedOneWithoutProfilesInput
+  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesUncheckedCreateWithoutAgentsInput = {
@@ -1170,10 +1282,14 @@ export type profilesUncheckedCreateWithoutAgentsInput = {
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersUncheckedCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutProfilesInput
-  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
-  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
-  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
   referrals?: Prisma.profilesUncheckedCreateNestedManyWithoutReferrerInput
+  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesCreateOrConnectWithoutAgentsInput = {
@@ -1215,12 +1331,16 @@ export type profilesUpdateWithoutAgentsInput = {
   notifications?: Prisma.notificationsUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUpdateManyWithoutProfilesNestedInput
-  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
-  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
-  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
-  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
   referrer?: Prisma.profilesUpdateOneWithoutReferralsNestedInput
   referrals?: Prisma.profilesUpdateManyWithoutReferrerNestedInput
+  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
+  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesUncheckedUpdateWithoutAgentsInput = {
@@ -1248,10 +1368,14 @@ export type profilesUncheckedUpdateWithoutAgentsInput = {
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUncheckedUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutProfilesNestedInput
-  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
-  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
-  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
   referrals?: Prisma.profilesUncheckedUpdateManyWithoutReferrerNestedInput
+  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesCreateWithoutInquiries_inquiries_owner_idToprofilesInput = {
@@ -1277,12 +1401,16 @@ export type profilesCreateWithoutInquiries_inquiries_owner_idToprofilesInput = {
   notifications?: Prisma.notificationsCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsCreateNestedManyWithoutProfilesInput
-  users: Prisma.usersCreateNestedOneWithoutProfilesInput
-  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
-  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
-  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
   referrer?: Prisma.profilesCreateNestedOneWithoutReferralsInput
   referrals?: Prisma.profilesCreateNestedManyWithoutReferrerInput
+  users: Prisma.usersCreateNestedOneWithoutProfilesInput
+  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesUncheckedCreateWithoutInquiries_inquiries_owner_idToprofilesInput = {
@@ -1310,10 +1438,14 @@ export type profilesUncheckedCreateWithoutInquiries_inquiries_owner_idToprofiles
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersUncheckedCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutProfilesInput
-  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
-  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
-  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
   referrals?: Prisma.profilesUncheckedCreateNestedManyWithoutReferrerInput
+  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesCreateOrConnectWithoutInquiries_inquiries_owner_idToprofilesInput = {
@@ -1344,12 +1476,16 @@ export type profilesCreateWithoutInquiries_inquiries_sender_idToprofilesInput = 
   notifications?: Prisma.notificationsCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsCreateNestedManyWithoutProfilesInput
-  users: Prisma.usersCreateNestedOneWithoutProfilesInput
-  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
-  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
-  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
   referrer?: Prisma.profilesCreateNestedOneWithoutReferralsInput
   referrals?: Prisma.profilesCreateNestedManyWithoutReferrerInput
+  users: Prisma.usersCreateNestedOneWithoutProfilesInput
+  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesUncheckedCreateWithoutInquiries_inquiries_sender_idToprofilesInput = {
@@ -1377,10 +1513,14 @@ export type profilesUncheckedCreateWithoutInquiries_inquiries_sender_idToprofile
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersUncheckedCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutProfilesInput
-  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
-  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
-  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
   referrals?: Prisma.profilesUncheckedCreateNestedManyWithoutReferrerInput
+  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesCreateOrConnectWithoutInquiries_inquiries_sender_idToprofilesInput = {
@@ -1422,12 +1562,16 @@ export type profilesUpdateWithoutInquiries_inquiries_owner_idToprofilesInput = {
   notifications?: Prisma.notificationsUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUpdateManyWithoutProfilesNestedInput
-  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
-  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
-  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
-  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
   referrer?: Prisma.profilesUpdateOneWithoutReferralsNestedInput
   referrals?: Prisma.profilesUpdateManyWithoutReferrerNestedInput
+  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
+  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesUncheckedUpdateWithoutInquiries_inquiries_owner_idToprofilesInput = {
@@ -1455,10 +1599,14 @@ export type profilesUncheckedUpdateWithoutInquiries_inquiries_owner_idToprofiles
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUncheckedUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutProfilesNestedInput
-  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
-  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
-  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
   referrals?: Prisma.profilesUncheckedUpdateManyWithoutReferrerNestedInput
+  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesUpsertWithoutInquiries_inquiries_sender_idToprofilesInput = {
@@ -1495,12 +1643,16 @@ export type profilesUpdateWithoutInquiries_inquiries_sender_idToprofilesInput = 
   notifications?: Prisma.notificationsUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUpdateManyWithoutProfilesNestedInput
-  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
-  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
-  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
-  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
   referrer?: Prisma.profilesUpdateOneWithoutReferralsNestedInput
   referrals?: Prisma.profilesUpdateManyWithoutReferrerNestedInput
+  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
+  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesUncheckedUpdateWithoutInquiries_inquiries_sender_idToprofilesInput = {
@@ -1528,10 +1680,14 @@ export type profilesUncheckedUpdateWithoutInquiries_inquiries_sender_idToprofile
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUncheckedUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutProfilesNestedInput
-  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
-  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
-  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
   referrals?: Prisma.profilesUncheckedUpdateManyWithoutReferrerNestedInput
+  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesCreateWithoutKyc_requestsInput = {
@@ -1557,12 +1713,16 @@ export type profilesCreateWithoutKyc_requestsInput = {
   notifications?: Prisma.notificationsCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsCreateNestedManyWithoutProfilesInput
-  users: Prisma.usersCreateNestedOneWithoutProfilesInput
-  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
-  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
-  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
   referrer?: Prisma.profilesCreateNestedOneWithoutReferralsInput
   referrals?: Prisma.profilesCreateNestedManyWithoutReferrerInput
+  users: Prisma.usersCreateNestedOneWithoutProfilesInput
+  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesUncheckedCreateWithoutKyc_requestsInput = {
@@ -1590,10 +1750,14 @@ export type profilesUncheckedCreateWithoutKyc_requestsInput = {
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersUncheckedCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutProfilesInput
-  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
-  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
-  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
   referrals?: Prisma.profilesUncheckedCreateNestedManyWithoutReferrerInput
+  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesCreateOrConnectWithoutKyc_requestsInput = {
@@ -1635,12 +1799,16 @@ export type profilesUpdateWithoutKyc_requestsInput = {
   notifications?: Prisma.notificationsUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUpdateManyWithoutProfilesNestedInput
-  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
-  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
-  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
-  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
   referrer?: Prisma.profilesUpdateOneWithoutReferralsNestedInput
   referrals?: Prisma.profilesUpdateManyWithoutReferrerNestedInput
+  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
+  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesUncheckedUpdateWithoutKyc_requestsInput = {
@@ -1668,10 +1836,14 @@ export type profilesUncheckedUpdateWithoutKyc_requestsInput = {
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUncheckedUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutProfilesNestedInput
-  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
-  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
-  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
   referrals?: Prisma.profilesUncheckedUpdateManyWithoutReferrerNestedInput
+  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesCreateWithoutNotificationsInput = {
@@ -1697,12 +1869,16 @@ export type profilesCreateWithoutNotificationsInput = {
   kyc_requests?: Prisma.kyc_requestsCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsCreateNestedManyWithoutProfilesInput
-  users: Prisma.usersCreateNestedOneWithoutProfilesInput
-  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
-  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
-  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
   referrer?: Prisma.profilesCreateNestedOneWithoutReferralsInput
   referrals?: Prisma.profilesCreateNestedManyWithoutReferrerInput
+  users: Prisma.usersCreateNestedOneWithoutProfilesInput
+  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesUncheckedCreateWithoutNotificationsInput = {
@@ -1730,10 +1906,14 @@ export type profilesUncheckedCreateWithoutNotificationsInput = {
   kyc_requests?: Prisma.kyc_requestsUncheckedCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersUncheckedCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutProfilesInput
-  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
-  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
-  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
   referrals?: Prisma.profilesUncheckedCreateNestedManyWithoutReferrerInput
+  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesCreateOrConnectWithoutNotificationsInput = {
@@ -1775,12 +1955,16 @@ export type profilesUpdateWithoutNotificationsInput = {
   kyc_requests?: Prisma.kyc_requestsUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUpdateManyWithoutProfilesNestedInput
-  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
-  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
-  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
-  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
   referrer?: Prisma.profilesUpdateOneWithoutReferralsNestedInput
   referrals?: Prisma.profilesUpdateManyWithoutReferrerNestedInput
+  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
+  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesUncheckedUpdateWithoutNotificationsInput = {
@@ -1808,10 +1992,14 @@ export type profilesUncheckedUpdateWithoutNotificationsInput = {
   kyc_requests?: Prisma.kyc_requestsUncheckedUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUncheckedUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutProfilesNestedInput
-  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
-  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
-  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
   referrals?: Prisma.profilesUncheckedUpdateManyWithoutReferrerNestedInput
+  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesCreateWithoutOwnersInput = {
@@ -1837,12 +2025,16 @@ export type profilesCreateWithoutOwnersInput = {
   kyc_requests?: Prisma.kyc_requestsCreateNestedManyWithoutProfilesInput
   notifications?: Prisma.notificationsCreateNestedManyWithoutProfilesInput
   payments?: Prisma.paymentsCreateNestedManyWithoutProfilesInput
-  users: Prisma.usersCreateNestedOneWithoutProfilesInput
-  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
-  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
-  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
   referrer?: Prisma.profilesCreateNestedOneWithoutReferralsInput
   referrals?: Prisma.profilesCreateNestedManyWithoutReferrerInput
+  users: Prisma.usersCreateNestedOneWithoutProfilesInput
+  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesUncheckedCreateWithoutOwnersInput = {
@@ -1870,10 +2062,14 @@ export type profilesUncheckedCreateWithoutOwnersInput = {
   kyc_requests?: Prisma.kyc_requestsUncheckedCreateNestedManyWithoutProfilesInput
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutProfilesInput
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutProfilesInput
-  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
-  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
-  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
   referrals?: Prisma.profilesUncheckedCreateNestedManyWithoutReferrerInput
+  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesCreateOrConnectWithoutOwnersInput = {
@@ -1915,12 +2111,16 @@ export type profilesUpdateWithoutOwnersInput = {
   kyc_requests?: Prisma.kyc_requestsUpdateManyWithoutProfilesNestedInput
   notifications?: Prisma.notificationsUpdateManyWithoutProfilesNestedInput
   payments?: Prisma.paymentsUpdateManyWithoutProfilesNestedInput
-  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
-  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
-  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
-  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
   referrer?: Prisma.profilesUpdateOneWithoutReferralsNestedInput
   referrals?: Prisma.profilesUpdateManyWithoutReferrerNestedInput
+  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
+  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesUncheckedUpdateWithoutOwnersInput = {
@@ -1948,10 +2148,14 @@ export type profilesUncheckedUpdateWithoutOwnersInput = {
   kyc_requests?: Prisma.kyc_requestsUncheckedUpdateManyWithoutProfilesNestedInput
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutProfilesNestedInput
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutProfilesNestedInput
-  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
-  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
-  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
   referrals?: Prisma.profilesUncheckedUpdateManyWithoutReferrerNestedInput
+  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesCreateWithoutPaymentsInput = {
@@ -1977,12 +2181,16 @@ export type profilesCreateWithoutPaymentsInput = {
   kyc_requests?: Prisma.kyc_requestsCreateNestedManyWithoutProfilesInput
   notifications?: Prisma.notificationsCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersCreateNestedOneWithoutProfilesInput
-  users: Prisma.usersCreateNestedOneWithoutProfilesInput
-  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
-  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
-  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
   referrer?: Prisma.profilesCreateNestedOneWithoutReferralsInput
   referrals?: Prisma.profilesCreateNestedManyWithoutReferrerInput
+  users: Prisma.usersCreateNestedOneWithoutProfilesInput
+  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesUncheckedCreateWithoutPaymentsInput = {
@@ -2010,10 +2218,14 @@ export type profilesUncheckedCreateWithoutPaymentsInput = {
   kyc_requests?: Prisma.kyc_requestsUncheckedCreateNestedManyWithoutProfilesInput
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersUncheckedCreateNestedOneWithoutProfilesInput
-  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
-  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
-  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
   referrals?: Prisma.profilesUncheckedCreateNestedManyWithoutReferrerInput
+  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesCreateOrConnectWithoutPaymentsInput = {
@@ -2055,12 +2267,16 @@ export type profilesUpdateWithoutPaymentsInput = {
   kyc_requests?: Prisma.kyc_requestsUpdateManyWithoutProfilesNestedInput
   notifications?: Prisma.notificationsUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUpdateOneWithoutProfilesNestedInput
-  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
-  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
-  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
-  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
   referrer?: Prisma.profilesUpdateOneWithoutReferralsNestedInput
   referrals?: Prisma.profilesUpdateManyWithoutReferrerNestedInput
+  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
+  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesUncheckedUpdateWithoutPaymentsInput = {
@@ -2088,10 +2304,14 @@ export type profilesUncheckedUpdateWithoutPaymentsInput = {
   kyc_requests?: Prisma.kyc_requestsUncheckedUpdateManyWithoutProfilesNestedInput
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUncheckedUpdateOneWithoutProfilesNestedInput
-  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
-  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
-  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
   referrals?: Prisma.profilesUncheckedUpdateManyWithoutReferrerNestedInput
+  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesCreateWithoutReferralsInput = {
@@ -2118,11 +2338,15 @@ export type profilesCreateWithoutReferralsInput = {
   notifications?: Prisma.notificationsCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsCreateNestedManyWithoutProfilesInput
+  referrer?: Prisma.profilesCreateNestedOneWithoutReferralsInput
   users: Prisma.usersCreateNestedOneWithoutProfilesInput
   property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
   reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsCreateNestedManyWithoutProfilesInput
   saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
-  referrer?: Prisma.profilesCreateNestedOneWithoutReferralsInput
 }
 
 export type profilesUncheckedCreateWithoutReferralsInput = {
@@ -2152,7 +2376,11 @@ export type profilesUncheckedCreateWithoutReferralsInput = {
   owners?: Prisma.ownersUncheckedCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutProfilesInput
   property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
   reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedCreateNestedManyWithoutProfilesInput
   saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
 }
 
@@ -2185,11 +2413,15 @@ export type profilesCreateWithoutReferrerInput = {
   notifications?: Prisma.notificationsCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsCreateNestedManyWithoutProfilesInput
+  referrals?: Prisma.profilesCreateNestedManyWithoutReferrerInput
   users: Prisma.usersCreateNestedOneWithoutProfilesInput
   property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
   reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsCreateNestedManyWithoutProfilesInput
   saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
-  referrals?: Prisma.profilesCreateNestedManyWithoutReferrerInput
 }
 
 export type profilesUncheckedCreateWithoutReferrerInput = {
@@ -2217,10 +2449,14 @@ export type profilesUncheckedCreateWithoutReferrerInput = {
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersUncheckedCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutProfilesInput
-  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
-  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
-  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
   referrals?: Prisma.profilesUncheckedCreateNestedManyWithoutReferrerInput
+  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesCreateOrConnectWithoutReferrerInput = {
@@ -2268,11 +2504,15 @@ export type profilesUpdateWithoutReferralsInput = {
   notifications?: Prisma.notificationsUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUpdateManyWithoutProfilesNestedInput
+  referrer?: Prisma.profilesUpdateOneWithoutReferralsNestedInput
   users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
   property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
   reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUpdateManyWithoutProfilesNestedInput
   saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
-  referrer?: Prisma.profilesUpdateOneWithoutReferralsNestedInput
 }
 
 export type profilesUncheckedUpdateWithoutReferralsInput = {
@@ -2302,7 +2542,11 @@ export type profilesUncheckedUpdateWithoutReferralsInput = {
   owners?: Prisma.ownersUncheckedUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutProfilesNestedInput
   property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
   reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedUpdateManyWithoutProfilesNestedInput
   saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
 }
 
@@ -2368,11 +2612,15 @@ export type profilesCreateWithoutProperty_documentsInput = {
   notifications?: Prisma.notificationsCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsCreateNestedManyWithoutProfilesInput
-  users: Prisma.usersCreateNestedOneWithoutProfilesInput
-  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
-  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
   referrer?: Prisma.profilesCreateNestedOneWithoutReferralsInput
   referrals?: Prisma.profilesCreateNestedManyWithoutReferrerInput
+  users: Prisma.usersCreateNestedOneWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesUncheckedCreateWithoutProperty_documentsInput = {
@@ -2401,9 +2649,13 @@ export type profilesUncheckedCreateWithoutProperty_documentsInput = {
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersUncheckedCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutProfilesInput
-  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
-  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
   referrals?: Prisma.profilesUncheckedCreateNestedManyWithoutReferrerInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesCreateOrConnectWithoutProperty_documentsInput = {
@@ -2446,11 +2698,15 @@ export type profilesUpdateWithoutProperty_documentsInput = {
   notifications?: Prisma.notificationsUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUpdateManyWithoutProfilesNestedInput
-  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
-  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
-  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
   referrer?: Prisma.profilesUpdateOneWithoutReferralsNestedInput
   referrals?: Prisma.profilesUpdateManyWithoutReferrerNestedInput
+  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesUncheckedUpdateWithoutProperty_documentsInput = {
@@ -2479,9 +2735,13 @@ export type profilesUncheckedUpdateWithoutProperty_documentsInput = {
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUncheckedUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutProfilesNestedInput
-  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
-  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
   referrals?: Prisma.profilesUncheckedUpdateManyWithoutReferrerNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesCreateWithoutReviewsInput = {
@@ -2508,11 +2768,15 @@ export type profilesCreateWithoutReviewsInput = {
   notifications?: Prisma.notificationsCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsCreateNestedManyWithoutProfilesInput
-  users: Prisma.usersCreateNestedOneWithoutProfilesInput
-  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
-  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
   referrer?: Prisma.profilesCreateNestedOneWithoutReferralsInput
   referrals?: Prisma.profilesCreateNestedManyWithoutReferrerInput
+  users: Prisma.usersCreateNestedOneWithoutProfilesInput
+  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reward_entitlements?: Prisma.reward_entitlementsCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesUncheckedCreateWithoutReviewsInput = {
@@ -2541,9 +2805,13 @@ export type profilesUncheckedCreateWithoutReviewsInput = {
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersUncheckedCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutProfilesInput
-  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
-  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
   referrals?: Prisma.profilesUncheckedCreateNestedManyWithoutReferrerInput
+  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesCreateOrConnectWithoutReviewsInput = {
@@ -2586,11 +2854,15 @@ export type profilesUpdateWithoutReviewsInput = {
   notifications?: Prisma.notificationsUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUpdateManyWithoutProfilesNestedInput
-  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
-  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
-  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
   referrer?: Prisma.profilesUpdateOneWithoutReferralsNestedInput
   referrals?: Prisma.profilesUpdateManyWithoutReferrerNestedInput
+  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
+  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesUncheckedUpdateWithoutReviewsInput = {
@@ -2619,9 +2891,13 @@ export type profilesUncheckedUpdateWithoutReviewsInput = {
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUncheckedUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutProfilesNestedInput
-  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
-  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
   referrals?: Prisma.profilesUncheckedUpdateManyWithoutReferrerNestedInput
+  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesCreateWithoutSaved_propertiesInput = {
@@ -2648,11 +2924,15 @@ export type profilesCreateWithoutSaved_propertiesInput = {
   notifications?: Prisma.notificationsCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsCreateNestedManyWithoutProfilesInput
-  users: Prisma.usersCreateNestedOneWithoutProfilesInput
-  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
-  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
   referrer?: Prisma.profilesCreateNestedOneWithoutReferralsInput
   referrals?: Prisma.profilesCreateNestedManyWithoutReferrerInput
+  users: Prisma.usersCreateNestedOneWithoutProfilesInput
+  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesUncheckedCreateWithoutSaved_propertiesInput = {
@@ -2681,9 +2961,13 @@ export type profilesUncheckedCreateWithoutSaved_propertiesInput = {
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersUncheckedCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutProfilesInput
-  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
-  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
   referrals?: Prisma.profilesUncheckedCreateNestedManyWithoutReferrerInput
+  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesCreateOrConnectWithoutSaved_propertiesInput = {
@@ -2726,11 +3010,15 @@ export type profilesUpdateWithoutSaved_propertiesInput = {
   notifications?: Prisma.notificationsUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUpdateManyWithoutProfilesNestedInput
-  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
-  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
-  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
   referrer?: Prisma.profilesUpdateOneWithoutReferralsNestedInput
   referrals?: Prisma.profilesUpdateManyWithoutReferrerNestedInput
+  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
+  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesUncheckedUpdateWithoutSaved_propertiesInput = {
@@ -2759,9 +3047,13 @@ export type profilesUncheckedUpdateWithoutSaved_propertiesInput = {
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUncheckedUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutProfilesNestedInput
-  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
-  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
   referrals?: Prisma.profilesUncheckedUpdateManyWithoutReferrerNestedInput
+  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesCreateWithoutUsersInput = {
@@ -2788,11 +3080,15 @@ export type profilesCreateWithoutUsersInput = {
   notifications?: Prisma.notificationsCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsCreateNestedManyWithoutProfilesInput
-  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
-  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
-  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
   referrer?: Prisma.profilesCreateNestedOneWithoutReferralsInput
   referrals?: Prisma.profilesCreateNestedManyWithoutReferrerInput
+  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesUncheckedCreateWithoutUsersInput = {
@@ -2820,10 +3116,14 @@ export type profilesUncheckedCreateWithoutUsersInput = {
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersUncheckedCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutProfilesInput
-  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
-  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
-  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
   referrals?: Prisma.profilesUncheckedCreateNestedManyWithoutReferrerInput
+  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesCreateOrConnectWithoutUsersInput = {
@@ -2866,11 +3166,15 @@ export type profilesUpdateWithoutUsersInput = {
   notifications?: Prisma.notificationsUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUpdateManyWithoutProfilesNestedInput
-  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
-  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
-  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
   referrer?: Prisma.profilesUpdateOneWithoutReferralsNestedInput
   referrals?: Prisma.profilesUpdateManyWithoutReferrerNestedInput
+  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesUncheckedUpdateWithoutUsersInput = {
@@ -2898,10 +3202,14 @@ export type profilesUncheckedUpdateWithoutUsersInput = {
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUncheckedUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutProfilesNestedInput
-  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
-  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
-  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
   referrals?: Prisma.profilesUncheckedUpdateManyWithoutReferrerNestedInput
+  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesCreateWithoutEmail_campaignsInput = {
@@ -2927,12 +3235,16 @@ export type profilesCreateWithoutEmail_campaignsInput = {
   notifications?: Prisma.notificationsCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsCreateNestedManyWithoutProfilesInput
-  users: Prisma.usersCreateNestedOneWithoutProfilesInput
-  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
-  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
-  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
   referrer?: Prisma.profilesCreateNestedOneWithoutReferralsInput
   referrals?: Prisma.profilesCreateNestedManyWithoutReferrerInput
+  users: Prisma.usersCreateNestedOneWithoutProfilesInput
+  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesUncheckedCreateWithoutEmail_campaignsInput = {
@@ -2960,10 +3272,14 @@ export type profilesUncheckedCreateWithoutEmail_campaignsInput = {
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutProfilesInput
   owners?: Prisma.ownersUncheckedCreateNestedOneWithoutProfilesInput
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutProfilesInput
-  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
-  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
-  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
   referrals?: Prisma.profilesUncheckedCreateNestedManyWithoutReferrerInput
+  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
 }
 
 export type profilesCreateOrConnectWithoutEmail_campaignsInput = {
@@ -3005,12 +3321,16 @@ export type profilesUpdateWithoutEmail_campaignsInput = {
   notifications?: Prisma.notificationsUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUpdateManyWithoutProfilesNestedInput
-  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
-  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
-  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
-  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
   referrer?: Prisma.profilesUpdateOneWithoutReferralsNestedInput
   referrals?: Prisma.profilesUpdateManyWithoutReferrerNestedInput
+  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
+  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesUncheckedUpdateWithoutEmail_campaignsInput = {
@@ -3038,10 +3358,638 @@ export type profilesUncheckedUpdateWithoutEmail_campaignsInput = {
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUncheckedUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutProfilesNestedInput
-  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
-  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
-  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
   referrals?: Prisma.profilesUncheckedUpdateManyWithoutReferrerNestedInput
+  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
+}
+
+export type profilesCreateWithoutReferral_events_referral_events_referred_profile_idToprofilesInput = {
+  email: string
+  full_name?: string | null
+  avatar_url?: string | null
+  phone?: string | null
+  bio?: string | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  referral_code?: string | null
+  referred_by_code?: string | null
+  referral_count?: number
+  waitlist_persona?: string | null
+  candidate_role?: string | null
+  role_activated_at?: Date | string | null
+  launch_reward_window_ends_at?: Date | string | null
+  admin_audit_log?: Prisma.admin_audit_logCreateNestedManyWithoutProfilesInput
+  agents?: Prisma.agentsCreateNestedOneWithoutProfilesInput
+  email_campaigns?: Prisma.email_campaignsCreateNestedManyWithoutProfilesInput
+  inquiries_inquiries_owner_idToprofiles?: Prisma.inquiriesCreateNestedManyWithoutProfiles_inquiries_owner_idToprofilesInput
+  inquiries_inquiries_sender_idToprofiles?: Prisma.inquiriesCreateNestedManyWithoutProfiles_inquiries_sender_idToprofilesInput
+  kyc_requests?: Prisma.kyc_requestsCreateNestedManyWithoutProfilesInput
+  notifications?: Prisma.notificationsCreateNestedManyWithoutProfilesInput
+  owners?: Prisma.ownersCreateNestedOneWithoutProfilesInput
+  payments?: Prisma.paymentsCreateNestedManyWithoutProfilesInput
+  referrer?: Prisma.profilesCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.profilesCreateNestedManyWithoutReferrerInput
+  users: Prisma.usersCreateNestedOneWithoutProfilesInput
+  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
+}
+
+export type profilesUncheckedCreateWithoutReferral_events_referral_events_referred_profile_idToprofilesInput = {
+  id: string
+  email: string
+  full_name?: string | null
+  avatar_url?: string | null
+  phone?: string | null
+  bio?: string | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  referral_code?: string | null
+  referred_by?: string | null
+  referred_by_code?: string | null
+  referral_count?: number
+  waitlist_persona?: string | null
+  candidate_role?: string | null
+  role_activated_at?: Date | string | null
+  launch_reward_window_ends_at?: Date | string | null
+  admin_audit_log?: Prisma.admin_audit_logUncheckedCreateNestedManyWithoutProfilesInput
+  agents?: Prisma.agentsUncheckedCreateNestedOneWithoutProfilesInput
+  email_campaigns?: Prisma.email_campaignsUncheckedCreateNestedManyWithoutProfilesInput
+  inquiries_inquiries_owner_idToprofiles?: Prisma.inquiriesUncheckedCreateNestedManyWithoutProfiles_inquiries_owner_idToprofilesInput
+  inquiries_inquiries_sender_idToprofiles?: Prisma.inquiriesUncheckedCreateNestedManyWithoutProfiles_inquiries_sender_idToprofilesInput
+  kyc_requests?: Prisma.kyc_requestsUncheckedCreateNestedManyWithoutProfilesInput
+  notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutProfilesInput
+  owners?: Prisma.ownersUncheckedCreateNestedOneWithoutProfilesInput
+  payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutProfilesInput
+  referrals?: Prisma.profilesUncheckedCreateNestedManyWithoutReferrerInput
+  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
+}
+
+export type profilesCreateOrConnectWithoutReferral_events_referral_events_referred_profile_idToprofilesInput = {
+  where: Prisma.profilesWhereUniqueInput
+  create: Prisma.XOR<Prisma.profilesCreateWithoutReferral_events_referral_events_referred_profile_idToprofilesInput, Prisma.profilesUncheckedCreateWithoutReferral_events_referral_events_referred_profile_idToprofilesInput>
+}
+
+export type profilesCreateWithoutReferral_events_referral_events_referrer_profile_idToprofilesInput = {
+  email: string
+  full_name?: string | null
+  avatar_url?: string | null
+  phone?: string | null
+  bio?: string | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  referral_code?: string | null
+  referred_by_code?: string | null
+  referral_count?: number
+  waitlist_persona?: string | null
+  candidate_role?: string | null
+  role_activated_at?: Date | string | null
+  launch_reward_window_ends_at?: Date | string | null
+  admin_audit_log?: Prisma.admin_audit_logCreateNestedManyWithoutProfilesInput
+  agents?: Prisma.agentsCreateNestedOneWithoutProfilesInput
+  email_campaigns?: Prisma.email_campaignsCreateNestedManyWithoutProfilesInput
+  inquiries_inquiries_owner_idToprofiles?: Prisma.inquiriesCreateNestedManyWithoutProfiles_inquiries_owner_idToprofilesInput
+  inquiries_inquiries_sender_idToprofiles?: Prisma.inquiriesCreateNestedManyWithoutProfiles_inquiries_sender_idToprofilesInput
+  kyc_requests?: Prisma.kyc_requestsCreateNestedManyWithoutProfilesInput
+  notifications?: Prisma.notificationsCreateNestedManyWithoutProfilesInput
+  owners?: Prisma.ownersCreateNestedOneWithoutProfilesInput
+  payments?: Prisma.paymentsCreateNestedManyWithoutProfilesInput
+  referrer?: Prisma.profilesCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.profilesCreateNestedManyWithoutReferrerInput
+  users: Prisma.usersCreateNestedOneWithoutProfilesInput
+  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
+}
+
+export type profilesUncheckedCreateWithoutReferral_events_referral_events_referrer_profile_idToprofilesInput = {
+  id: string
+  email: string
+  full_name?: string | null
+  avatar_url?: string | null
+  phone?: string | null
+  bio?: string | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  referral_code?: string | null
+  referred_by?: string | null
+  referred_by_code?: string | null
+  referral_count?: number
+  waitlist_persona?: string | null
+  candidate_role?: string | null
+  role_activated_at?: Date | string | null
+  launch_reward_window_ends_at?: Date | string | null
+  admin_audit_log?: Prisma.admin_audit_logUncheckedCreateNestedManyWithoutProfilesInput
+  agents?: Prisma.agentsUncheckedCreateNestedOneWithoutProfilesInput
+  email_campaigns?: Prisma.email_campaignsUncheckedCreateNestedManyWithoutProfilesInput
+  inquiries_inquiries_owner_idToprofiles?: Prisma.inquiriesUncheckedCreateNestedManyWithoutProfiles_inquiries_owner_idToprofilesInput
+  inquiries_inquiries_sender_idToprofiles?: Prisma.inquiriesUncheckedCreateNestedManyWithoutProfiles_inquiries_sender_idToprofilesInput
+  kyc_requests?: Prisma.kyc_requestsUncheckedCreateNestedManyWithoutProfilesInput
+  notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutProfilesInput
+  owners?: Prisma.ownersUncheckedCreateNestedOneWithoutProfilesInput
+  payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutProfilesInput
+  referrals?: Prisma.profilesUncheckedCreateNestedManyWithoutReferrerInput
+  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
+}
+
+export type profilesCreateOrConnectWithoutReferral_events_referral_events_referrer_profile_idToprofilesInput = {
+  where: Prisma.profilesWhereUniqueInput
+  create: Prisma.XOR<Prisma.profilesCreateWithoutReferral_events_referral_events_referrer_profile_idToprofilesInput, Prisma.profilesUncheckedCreateWithoutReferral_events_referral_events_referrer_profile_idToprofilesInput>
+}
+
+export type profilesUpsertWithoutReferral_events_referral_events_referred_profile_idToprofilesInput = {
+  update: Prisma.XOR<Prisma.profilesUpdateWithoutReferral_events_referral_events_referred_profile_idToprofilesInput, Prisma.profilesUncheckedUpdateWithoutReferral_events_referral_events_referred_profile_idToprofilesInput>
+  create: Prisma.XOR<Prisma.profilesCreateWithoutReferral_events_referral_events_referred_profile_idToprofilesInput, Prisma.profilesUncheckedCreateWithoutReferral_events_referral_events_referred_profile_idToprofilesInput>
+  where?: Prisma.profilesWhereInput
+}
+
+export type profilesUpdateToOneWithWhereWithoutReferral_events_referral_events_referred_profile_idToprofilesInput = {
+  where?: Prisma.profilesWhereInput
+  data: Prisma.XOR<Prisma.profilesUpdateWithoutReferral_events_referral_events_referred_profile_idToprofilesInput, Prisma.profilesUncheckedUpdateWithoutReferral_events_referral_events_referred_profile_idToprofilesInput>
+}
+
+export type profilesUpdateWithoutReferral_events_referral_events_referred_profile_idToprofilesInput = {
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  full_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  referral_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referred_by_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referral_count?: Prisma.IntFieldUpdateOperationsInput | number
+  waitlist_persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_activated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  launch_reward_window_ends_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  admin_audit_log?: Prisma.admin_audit_logUpdateManyWithoutProfilesNestedInput
+  agents?: Prisma.agentsUpdateOneWithoutProfilesNestedInput
+  email_campaigns?: Prisma.email_campaignsUpdateManyWithoutProfilesNestedInput
+  inquiries_inquiries_owner_idToprofiles?: Prisma.inquiriesUpdateManyWithoutProfiles_inquiries_owner_idToprofilesNestedInput
+  inquiries_inquiries_sender_idToprofiles?: Prisma.inquiriesUpdateManyWithoutProfiles_inquiries_sender_idToprofilesNestedInput
+  kyc_requests?: Prisma.kyc_requestsUpdateManyWithoutProfilesNestedInput
+  notifications?: Prisma.notificationsUpdateManyWithoutProfilesNestedInput
+  owners?: Prisma.ownersUpdateOneWithoutProfilesNestedInput
+  payments?: Prisma.paymentsUpdateManyWithoutProfilesNestedInput
+  referrer?: Prisma.profilesUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.profilesUpdateManyWithoutReferrerNestedInput
+  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
+  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
+}
+
+export type profilesUncheckedUpdateWithoutReferral_events_referral_events_referred_profile_idToprofilesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  full_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  referral_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referred_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referred_by_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referral_count?: Prisma.IntFieldUpdateOperationsInput | number
+  waitlist_persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_activated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  launch_reward_window_ends_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  admin_audit_log?: Prisma.admin_audit_logUncheckedUpdateManyWithoutProfilesNestedInput
+  agents?: Prisma.agentsUncheckedUpdateOneWithoutProfilesNestedInput
+  email_campaigns?: Prisma.email_campaignsUncheckedUpdateManyWithoutProfilesNestedInput
+  inquiries_inquiries_owner_idToprofiles?: Prisma.inquiriesUncheckedUpdateManyWithoutProfiles_inquiries_owner_idToprofilesNestedInput
+  inquiries_inquiries_sender_idToprofiles?: Prisma.inquiriesUncheckedUpdateManyWithoutProfiles_inquiries_sender_idToprofilesNestedInput
+  kyc_requests?: Prisma.kyc_requestsUncheckedUpdateManyWithoutProfilesNestedInput
+  notifications?: Prisma.notificationsUncheckedUpdateManyWithoutProfilesNestedInput
+  owners?: Prisma.ownersUncheckedUpdateOneWithoutProfilesNestedInput
+  payments?: Prisma.paymentsUncheckedUpdateManyWithoutProfilesNestedInput
+  referrals?: Prisma.profilesUncheckedUpdateManyWithoutReferrerNestedInput
+  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
+}
+
+export type profilesUpsertWithoutReferral_events_referral_events_referrer_profile_idToprofilesInput = {
+  update: Prisma.XOR<Prisma.profilesUpdateWithoutReferral_events_referral_events_referrer_profile_idToprofilesInput, Prisma.profilesUncheckedUpdateWithoutReferral_events_referral_events_referrer_profile_idToprofilesInput>
+  create: Prisma.XOR<Prisma.profilesCreateWithoutReferral_events_referral_events_referrer_profile_idToprofilesInput, Prisma.profilesUncheckedCreateWithoutReferral_events_referral_events_referrer_profile_idToprofilesInput>
+  where?: Prisma.profilesWhereInput
+}
+
+export type profilesUpdateToOneWithWhereWithoutReferral_events_referral_events_referrer_profile_idToprofilesInput = {
+  where?: Prisma.profilesWhereInput
+  data: Prisma.XOR<Prisma.profilesUpdateWithoutReferral_events_referral_events_referrer_profile_idToprofilesInput, Prisma.profilesUncheckedUpdateWithoutReferral_events_referral_events_referrer_profile_idToprofilesInput>
+}
+
+export type profilesUpdateWithoutReferral_events_referral_events_referrer_profile_idToprofilesInput = {
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  full_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  referral_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referred_by_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referral_count?: Prisma.IntFieldUpdateOperationsInput | number
+  waitlist_persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_activated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  launch_reward_window_ends_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  admin_audit_log?: Prisma.admin_audit_logUpdateManyWithoutProfilesNestedInput
+  agents?: Prisma.agentsUpdateOneWithoutProfilesNestedInput
+  email_campaigns?: Prisma.email_campaignsUpdateManyWithoutProfilesNestedInput
+  inquiries_inquiries_owner_idToprofiles?: Prisma.inquiriesUpdateManyWithoutProfiles_inquiries_owner_idToprofilesNestedInput
+  inquiries_inquiries_sender_idToprofiles?: Prisma.inquiriesUpdateManyWithoutProfiles_inquiries_sender_idToprofilesNestedInput
+  kyc_requests?: Prisma.kyc_requestsUpdateManyWithoutProfilesNestedInput
+  notifications?: Prisma.notificationsUpdateManyWithoutProfilesNestedInput
+  owners?: Prisma.ownersUpdateOneWithoutProfilesNestedInput
+  payments?: Prisma.paymentsUpdateManyWithoutProfilesNestedInput
+  referrer?: Prisma.profilesUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.profilesUpdateManyWithoutReferrerNestedInput
+  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
+  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
+}
+
+export type profilesUncheckedUpdateWithoutReferral_events_referral_events_referrer_profile_idToprofilesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  full_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  referral_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referred_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referred_by_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referral_count?: Prisma.IntFieldUpdateOperationsInput | number
+  waitlist_persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_activated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  launch_reward_window_ends_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  admin_audit_log?: Prisma.admin_audit_logUncheckedUpdateManyWithoutProfilesNestedInput
+  agents?: Prisma.agentsUncheckedUpdateOneWithoutProfilesNestedInput
+  email_campaigns?: Prisma.email_campaignsUncheckedUpdateManyWithoutProfilesNestedInput
+  inquiries_inquiries_owner_idToprofiles?: Prisma.inquiriesUncheckedUpdateManyWithoutProfiles_inquiries_owner_idToprofilesNestedInput
+  inquiries_inquiries_sender_idToprofiles?: Prisma.inquiriesUncheckedUpdateManyWithoutProfiles_inquiries_sender_idToprofilesNestedInput
+  kyc_requests?: Prisma.kyc_requestsUncheckedUpdateManyWithoutProfilesNestedInput
+  notifications?: Prisma.notificationsUncheckedUpdateManyWithoutProfilesNestedInput
+  owners?: Prisma.ownersUncheckedUpdateOneWithoutProfilesNestedInput
+  payments?: Prisma.paymentsUncheckedUpdateManyWithoutProfilesNestedInput
+  referrals?: Prisma.profilesUncheckedUpdateManyWithoutReferrerNestedInput
+  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
+}
+
+export type profilesCreateWithoutReward_entitlementsInput = {
+  email: string
+  full_name?: string | null
+  avatar_url?: string | null
+  phone?: string | null
+  bio?: string | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  referral_code?: string | null
+  referred_by_code?: string | null
+  referral_count?: number
+  waitlist_persona?: string | null
+  candidate_role?: string | null
+  role_activated_at?: Date | string | null
+  launch_reward_window_ends_at?: Date | string | null
+  admin_audit_log?: Prisma.admin_audit_logCreateNestedManyWithoutProfilesInput
+  agents?: Prisma.agentsCreateNestedOneWithoutProfilesInput
+  email_campaigns?: Prisma.email_campaignsCreateNestedManyWithoutProfilesInput
+  inquiries_inquiries_owner_idToprofiles?: Prisma.inquiriesCreateNestedManyWithoutProfiles_inquiries_owner_idToprofilesInput
+  inquiries_inquiries_sender_idToprofiles?: Prisma.inquiriesCreateNestedManyWithoutProfiles_inquiries_sender_idToprofilesInput
+  kyc_requests?: Prisma.kyc_requestsCreateNestedManyWithoutProfilesInput
+  notifications?: Prisma.notificationsCreateNestedManyWithoutProfilesInput
+  owners?: Prisma.ownersCreateNestedOneWithoutProfilesInput
+  payments?: Prisma.paymentsCreateNestedManyWithoutProfilesInput
+  referrer?: Prisma.profilesCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.profilesCreateNestedManyWithoutReferrerInput
+  users: Prisma.usersCreateNestedOneWithoutProfilesInput
+  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
+}
+
+export type profilesUncheckedCreateWithoutReward_entitlementsInput = {
+  id: string
+  email: string
+  full_name?: string | null
+  avatar_url?: string | null
+  phone?: string | null
+  bio?: string | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  referral_code?: string | null
+  referred_by?: string | null
+  referred_by_code?: string | null
+  referral_count?: number
+  waitlist_persona?: string | null
+  candidate_role?: string | null
+  role_activated_at?: Date | string | null
+  launch_reward_window_ends_at?: Date | string | null
+  admin_audit_log?: Prisma.admin_audit_logUncheckedCreateNestedManyWithoutProfilesInput
+  agents?: Prisma.agentsUncheckedCreateNestedOneWithoutProfilesInput
+  email_campaigns?: Prisma.email_campaignsUncheckedCreateNestedManyWithoutProfilesInput
+  inquiries_inquiries_owner_idToprofiles?: Prisma.inquiriesUncheckedCreateNestedManyWithoutProfiles_inquiries_owner_idToprofilesInput
+  inquiries_inquiries_sender_idToprofiles?: Prisma.inquiriesUncheckedCreateNestedManyWithoutProfiles_inquiries_sender_idToprofilesInput
+  kyc_requests?: Prisma.kyc_requestsUncheckedCreateNestedManyWithoutProfilesInput
+  notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutProfilesInput
+  owners?: Prisma.ownersUncheckedCreateNestedOneWithoutProfilesInput
+  payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutProfilesInput
+  referrals?: Prisma.profilesUncheckedCreateNestedManyWithoutReferrerInput
+  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
+}
+
+export type profilesCreateOrConnectWithoutReward_entitlementsInput = {
+  where: Prisma.profilesWhereUniqueInput
+  create: Prisma.XOR<Prisma.profilesCreateWithoutReward_entitlementsInput, Prisma.profilesUncheckedCreateWithoutReward_entitlementsInput>
+}
+
+export type profilesUpsertWithoutReward_entitlementsInput = {
+  update: Prisma.XOR<Prisma.profilesUpdateWithoutReward_entitlementsInput, Prisma.profilesUncheckedUpdateWithoutReward_entitlementsInput>
+  create: Prisma.XOR<Prisma.profilesCreateWithoutReward_entitlementsInput, Prisma.profilesUncheckedCreateWithoutReward_entitlementsInput>
+  where?: Prisma.profilesWhereInput
+}
+
+export type profilesUpdateToOneWithWhereWithoutReward_entitlementsInput = {
+  where?: Prisma.profilesWhereInput
+  data: Prisma.XOR<Prisma.profilesUpdateWithoutReward_entitlementsInput, Prisma.profilesUncheckedUpdateWithoutReward_entitlementsInput>
+}
+
+export type profilesUpdateWithoutReward_entitlementsInput = {
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  full_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  referral_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referred_by_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referral_count?: Prisma.IntFieldUpdateOperationsInput | number
+  waitlist_persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_activated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  launch_reward_window_ends_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  admin_audit_log?: Prisma.admin_audit_logUpdateManyWithoutProfilesNestedInput
+  agents?: Prisma.agentsUpdateOneWithoutProfilesNestedInput
+  email_campaigns?: Prisma.email_campaignsUpdateManyWithoutProfilesNestedInput
+  inquiries_inquiries_owner_idToprofiles?: Prisma.inquiriesUpdateManyWithoutProfiles_inquiries_owner_idToprofilesNestedInput
+  inquiries_inquiries_sender_idToprofiles?: Prisma.inquiriesUpdateManyWithoutProfiles_inquiries_sender_idToprofilesNestedInput
+  kyc_requests?: Prisma.kyc_requestsUpdateManyWithoutProfilesNestedInput
+  notifications?: Prisma.notificationsUpdateManyWithoutProfilesNestedInput
+  owners?: Prisma.ownersUpdateOneWithoutProfilesNestedInput
+  payments?: Prisma.paymentsUpdateManyWithoutProfilesNestedInput
+  referrer?: Prisma.profilesUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.profilesUpdateManyWithoutReferrerNestedInput
+  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
+  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
+}
+
+export type profilesUncheckedUpdateWithoutReward_entitlementsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  full_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  referral_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referred_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referred_by_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referral_count?: Prisma.IntFieldUpdateOperationsInput | number
+  waitlist_persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_activated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  launch_reward_window_ends_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  admin_audit_log?: Prisma.admin_audit_logUncheckedUpdateManyWithoutProfilesNestedInput
+  agents?: Prisma.agentsUncheckedUpdateOneWithoutProfilesNestedInput
+  email_campaigns?: Prisma.email_campaignsUncheckedUpdateManyWithoutProfilesNestedInput
+  inquiries_inquiries_owner_idToprofiles?: Prisma.inquiriesUncheckedUpdateManyWithoutProfiles_inquiries_owner_idToprofilesNestedInput
+  inquiries_inquiries_sender_idToprofiles?: Prisma.inquiriesUncheckedUpdateManyWithoutProfiles_inquiries_sender_idToprofilesNestedInput
+  kyc_requests?: Prisma.kyc_requestsUncheckedUpdateManyWithoutProfilesNestedInput
+  notifications?: Prisma.notificationsUncheckedUpdateManyWithoutProfilesNestedInput
+  owners?: Prisma.ownersUncheckedUpdateOneWithoutProfilesNestedInput
+  payments?: Prisma.paymentsUncheckedUpdateManyWithoutProfilesNestedInput
+  referrals?: Prisma.profilesUncheckedUpdateManyWithoutReferrerNestedInput
+  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
+}
+
+export type profilesCreateWithoutReward_redemptionsInput = {
+  email: string
+  full_name?: string | null
+  avatar_url?: string | null
+  phone?: string | null
+  bio?: string | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  referral_code?: string | null
+  referred_by_code?: string | null
+  referral_count?: number
+  waitlist_persona?: string | null
+  candidate_role?: string | null
+  role_activated_at?: Date | string | null
+  launch_reward_window_ends_at?: Date | string | null
+  admin_audit_log?: Prisma.admin_audit_logCreateNestedManyWithoutProfilesInput
+  agents?: Prisma.agentsCreateNestedOneWithoutProfilesInput
+  email_campaigns?: Prisma.email_campaignsCreateNestedManyWithoutProfilesInput
+  inquiries_inquiries_owner_idToprofiles?: Prisma.inquiriesCreateNestedManyWithoutProfiles_inquiries_owner_idToprofilesInput
+  inquiries_inquiries_sender_idToprofiles?: Prisma.inquiriesCreateNestedManyWithoutProfiles_inquiries_sender_idToprofilesInput
+  kyc_requests?: Prisma.kyc_requestsCreateNestedManyWithoutProfilesInput
+  notifications?: Prisma.notificationsCreateNestedManyWithoutProfilesInput
+  owners?: Prisma.ownersCreateNestedOneWithoutProfilesInput
+  payments?: Prisma.paymentsCreateNestedManyWithoutProfilesInput
+  referrer?: Prisma.profilesCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.profilesCreateNestedManyWithoutReferrerInput
+  users: Prisma.usersCreateNestedOneWithoutProfilesInput
+  property_documents?: Prisma.property_documentsCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutProfilesInput
+}
+
+export type profilesUncheckedCreateWithoutReward_redemptionsInput = {
+  id: string
+  email: string
+  full_name?: string | null
+  avatar_url?: string | null
+  phone?: string | null
+  bio?: string | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  referral_code?: string | null
+  referred_by?: string | null
+  referred_by_code?: string | null
+  referral_count?: number
+  waitlist_persona?: string | null
+  candidate_role?: string | null
+  role_activated_at?: Date | string | null
+  launch_reward_window_ends_at?: Date | string | null
+  admin_audit_log?: Prisma.admin_audit_logUncheckedCreateNestedManyWithoutProfilesInput
+  agents?: Prisma.agentsUncheckedCreateNestedOneWithoutProfilesInput
+  email_campaigns?: Prisma.email_campaignsUncheckedCreateNestedManyWithoutProfilesInput
+  inquiries_inquiries_owner_idToprofiles?: Prisma.inquiriesUncheckedCreateNestedManyWithoutProfiles_inquiries_owner_idToprofilesInput
+  inquiries_inquiries_sender_idToprofiles?: Prisma.inquiriesUncheckedCreateNestedManyWithoutProfiles_inquiries_sender_idToprofilesInput
+  kyc_requests?: Prisma.kyc_requestsUncheckedCreateNestedManyWithoutProfilesInput
+  notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutProfilesInput
+  owners?: Prisma.ownersUncheckedCreateNestedOneWithoutProfilesInput
+  payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutProfilesInput
+  referrals?: Prisma.profilesUncheckedCreateNestedManyWithoutReferrerInput
+  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutProfilesInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referred_profile_idToprofilesInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutProfiles_referral_events_referrer_profile_idToprofilesInput
+  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutProfilesInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedCreateNestedManyWithoutProfilesInput
+  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutProfilesInput
+}
+
+export type profilesCreateOrConnectWithoutReward_redemptionsInput = {
+  where: Prisma.profilesWhereUniqueInput
+  create: Prisma.XOR<Prisma.profilesCreateWithoutReward_redemptionsInput, Prisma.profilesUncheckedCreateWithoutReward_redemptionsInput>
+}
+
+export type profilesUpsertWithoutReward_redemptionsInput = {
+  update: Prisma.XOR<Prisma.profilesUpdateWithoutReward_redemptionsInput, Prisma.profilesUncheckedUpdateWithoutReward_redemptionsInput>
+  create: Prisma.XOR<Prisma.profilesCreateWithoutReward_redemptionsInput, Prisma.profilesUncheckedCreateWithoutReward_redemptionsInput>
+  where?: Prisma.profilesWhereInput
+}
+
+export type profilesUpdateToOneWithWhereWithoutReward_redemptionsInput = {
+  where?: Prisma.profilesWhereInput
+  data: Prisma.XOR<Prisma.profilesUpdateWithoutReward_redemptionsInput, Prisma.profilesUncheckedUpdateWithoutReward_redemptionsInput>
+}
+
+export type profilesUpdateWithoutReward_redemptionsInput = {
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  full_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  referral_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referred_by_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referral_count?: Prisma.IntFieldUpdateOperationsInput | number
+  waitlist_persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_activated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  launch_reward_window_ends_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  admin_audit_log?: Prisma.admin_audit_logUpdateManyWithoutProfilesNestedInput
+  agents?: Prisma.agentsUpdateOneWithoutProfilesNestedInput
+  email_campaigns?: Prisma.email_campaignsUpdateManyWithoutProfilesNestedInput
+  inquiries_inquiries_owner_idToprofiles?: Prisma.inquiriesUpdateManyWithoutProfiles_inquiries_owner_idToprofilesNestedInput
+  inquiries_inquiries_sender_idToprofiles?: Prisma.inquiriesUpdateManyWithoutProfiles_inquiries_sender_idToprofilesNestedInput
+  kyc_requests?: Prisma.kyc_requestsUpdateManyWithoutProfilesNestedInput
+  notifications?: Prisma.notificationsUpdateManyWithoutProfilesNestedInput
+  owners?: Prisma.ownersUpdateOneWithoutProfilesNestedInput
+  payments?: Prisma.paymentsUpdateManyWithoutProfilesNestedInput
+  referrer?: Prisma.profilesUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.profilesUpdateManyWithoutReferrerNestedInput
+  users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
+  property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
+}
+
+export type profilesUncheckedUpdateWithoutReward_redemptionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  full_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  referral_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referred_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referred_by_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referral_count?: Prisma.IntFieldUpdateOperationsInput | number
+  waitlist_persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_activated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  launch_reward_window_ends_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  admin_audit_log?: Prisma.admin_audit_logUncheckedUpdateManyWithoutProfilesNestedInput
+  agents?: Prisma.agentsUncheckedUpdateOneWithoutProfilesNestedInput
+  email_campaigns?: Prisma.email_campaignsUncheckedUpdateManyWithoutProfilesNestedInput
+  inquiries_inquiries_owner_idToprofiles?: Prisma.inquiriesUncheckedUpdateManyWithoutProfiles_inquiries_owner_idToprofilesNestedInput
+  inquiries_inquiries_sender_idToprofiles?: Prisma.inquiriesUncheckedUpdateManyWithoutProfiles_inquiries_sender_idToprofilesNestedInput
+  kyc_requests?: Prisma.kyc_requestsUncheckedUpdateManyWithoutProfilesNestedInput
+  notifications?: Prisma.notificationsUncheckedUpdateManyWithoutProfilesNestedInput
+  owners?: Prisma.ownersUncheckedUpdateOneWithoutProfilesNestedInput
+  payments?: Prisma.paymentsUncheckedUpdateManyWithoutProfilesNestedInput
+  referrals?: Prisma.profilesUncheckedUpdateManyWithoutReferrerNestedInput
+  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesCreateManyReferrerInput = {
@@ -3086,11 +4034,15 @@ export type profilesUpdateWithoutReferrerInput = {
   notifications?: Prisma.notificationsUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUpdateManyWithoutProfilesNestedInput
+  referrals?: Prisma.profilesUpdateManyWithoutReferrerNestedInput
   users?: Prisma.usersUpdateOneRequiredWithoutProfilesNestedInput
   property_documents?: Prisma.property_documentsUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
   reviews?: Prisma.reviewsUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUpdateManyWithoutProfilesNestedInput
   saved_properties?: Prisma.saved_propertiesUpdateManyWithoutProfilesNestedInput
-  referrals?: Prisma.profilesUpdateManyWithoutReferrerNestedInput
 }
 
 export type profilesUncheckedUpdateWithoutReferrerInput = {
@@ -3118,10 +4070,14 @@ export type profilesUncheckedUpdateWithoutReferrerInput = {
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutProfilesNestedInput
   owners?: Prisma.ownersUncheckedUpdateOneWithoutProfilesNestedInput
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutProfilesNestedInput
-  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
-  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
-  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
   referrals?: Prisma.profilesUncheckedUpdateManyWithoutReferrerNestedInput
+  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutProfilesNestedInput
+  referral_events_referral_events_referred_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referred_profile_idToprofilesNestedInput
+  referral_events_referral_events_referrer_profile_idToprofiles?: Prisma.referral_eventsUncheckedUpdateManyWithoutProfiles_referral_events_referrer_profile_idToprofilesNestedInput
+  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedUpdateManyWithoutProfilesNestedInput
+  reward_redemptions?: Prisma.reward_redemptionsUncheckedUpdateManyWithoutProfilesNestedInput
+  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutProfilesNestedInput
 }
 
 export type profilesUncheckedUpdateManyWithoutReferrerInput = {
@@ -3155,10 +4111,14 @@ export type ProfilesCountOutputType = {
   kyc_requests: number
   notifications: number
   payments: number
-  property_documents: number
-  reviews: number
-  saved_properties: number
   referrals: number
+  property_documents: number
+  referral_events_referral_events_referred_profile_idToprofiles: number
+  referral_events_referral_events_referrer_profile_idToprofiles: number
+  reviews: number
+  reward_entitlements: number
+  reward_redemptions: number
+  saved_properties: number
 }
 
 export type ProfilesCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -3169,10 +4129,14 @@ export type ProfilesCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensio
   kyc_requests?: boolean | ProfilesCountOutputTypeCountKyc_requestsArgs
   notifications?: boolean | ProfilesCountOutputTypeCountNotificationsArgs
   payments?: boolean | ProfilesCountOutputTypeCountPaymentsArgs
-  property_documents?: boolean | ProfilesCountOutputTypeCountProperty_documentsArgs
-  reviews?: boolean | ProfilesCountOutputTypeCountReviewsArgs
-  saved_properties?: boolean | ProfilesCountOutputTypeCountSaved_propertiesArgs
   referrals?: boolean | ProfilesCountOutputTypeCountReferralsArgs
+  property_documents?: boolean | ProfilesCountOutputTypeCountProperty_documentsArgs
+  referral_events_referral_events_referred_profile_idToprofiles?: boolean | ProfilesCountOutputTypeCountReferral_events_referral_events_referred_profile_idToprofilesArgs
+  referral_events_referral_events_referrer_profile_idToprofiles?: boolean | ProfilesCountOutputTypeCountReferral_events_referral_events_referrer_profile_idToprofilesArgs
+  reviews?: boolean | ProfilesCountOutputTypeCountReviewsArgs
+  reward_entitlements?: boolean | ProfilesCountOutputTypeCountReward_entitlementsArgs
+  reward_redemptions?: boolean | ProfilesCountOutputTypeCountReward_redemptionsArgs
+  saved_properties?: boolean | ProfilesCountOutputTypeCountSaved_propertiesArgs
 }
 
 /**
@@ -3237,8 +4201,29 @@ export type ProfilesCountOutputTypeCountPaymentsArgs<ExtArgs extends runtime.Typ
 /**
  * ProfilesCountOutputType without action
  */
+export type ProfilesCountOutputTypeCountReferralsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.profilesWhereInput
+}
+
+/**
+ * ProfilesCountOutputType without action
+ */
 export type ProfilesCountOutputTypeCountProperty_documentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.property_documentsWhereInput
+}
+
+/**
+ * ProfilesCountOutputType without action
+ */
+export type ProfilesCountOutputTypeCountReferral_events_referral_events_referred_profile_idToprofilesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.referral_eventsWhereInput
+}
+
+/**
+ * ProfilesCountOutputType without action
+ */
+export type ProfilesCountOutputTypeCountReferral_events_referral_events_referrer_profile_idToprofilesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.referral_eventsWhereInput
 }
 
 /**
@@ -3251,15 +4236,22 @@ export type ProfilesCountOutputTypeCountReviewsArgs<ExtArgs extends runtime.Type
 /**
  * ProfilesCountOutputType without action
  */
-export type ProfilesCountOutputTypeCountSaved_propertiesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.saved_propertiesWhereInput
+export type ProfilesCountOutputTypeCountReward_entitlementsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.reward_entitlementsWhereInput
 }
 
 /**
  * ProfilesCountOutputType without action
  */
-export type ProfilesCountOutputTypeCountReferralsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.profilesWhereInput
+export type ProfilesCountOutputTypeCountReward_redemptionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.reward_redemptionsWhereInput
+}
+
+/**
+ * ProfilesCountOutputType without action
+ */
+export type ProfilesCountOutputTypeCountSaved_propertiesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.saved_propertiesWhereInput
 }
 
 
@@ -3289,12 +4281,16 @@ export type profilesSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   notifications?: boolean | Prisma.profiles$notificationsArgs<ExtArgs>
   owners?: boolean | Prisma.profiles$ownersArgs<ExtArgs>
   payments?: boolean | Prisma.profiles$paymentsArgs<ExtArgs>
-  users?: boolean | Prisma.usersDefaultArgs<ExtArgs>
-  property_documents?: boolean | Prisma.profiles$property_documentsArgs<ExtArgs>
-  reviews?: boolean | Prisma.profiles$reviewsArgs<ExtArgs>
-  saved_properties?: boolean | Prisma.profiles$saved_propertiesArgs<ExtArgs>
   referrer?: boolean | Prisma.profiles$referrerArgs<ExtArgs>
   referrals?: boolean | Prisma.profiles$referralsArgs<ExtArgs>
+  users?: boolean | Prisma.usersDefaultArgs<ExtArgs>
+  property_documents?: boolean | Prisma.profiles$property_documentsArgs<ExtArgs>
+  referral_events_referral_events_referred_profile_idToprofiles?: boolean | Prisma.profiles$referral_events_referral_events_referred_profile_idToprofilesArgs<ExtArgs>
+  referral_events_referral_events_referrer_profile_idToprofiles?: boolean | Prisma.profiles$referral_events_referral_events_referrer_profile_idToprofilesArgs<ExtArgs>
+  reviews?: boolean | Prisma.profiles$reviewsArgs<ExtArgs>
+  reward_entitlements?: boolean | Prisma.profiles$reward_entitlementsArgs<ExtArgs>
+  reward_redemptions?: boolean | Prisma.profiles$reward_redemptionsArgs<ExtArgs>
+  saved_properties?: boolean | Prisma.profiles$saved_propertiesArgs<ExtArgs>
   _count?: boolean | Prisma.ProfilesCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["profiles"]>
 
@@ -3315,8 +4311,8 @@ export type profilesSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   candidate_role?: boolean
   role_activated_at?: boolean
   launch_reward_window_ends_at?: boolean
-  users?: boolean | Prisma.usersDefaultArgs<ExtArgs>
   referrer?: boolean | Prisma.profiles$referrerArgs<ExtArgs>
+  users?: boolean | Prisma.usersDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["profiles"]>
 
 export type profilesSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -3336,8 +4332,8 @@ export type profilesSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   candidate_role?: boolean
   role_activated_at?: boolean
   launch_reward_window_ends_at?: boolean
-  users?: boolean | Prisma.usersDefaultArgs<ExtArgs>
   referrer?: boolean | Prisma.profiles$referrerArgs<ExtArgs>
+  users?: boolean | Prisma.usersDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["profiles"]>
 
 export type profilesSelectScalar = {
@@ -3370,21 +4366,25 @@ export type profilesInclude<ExtArgs extends runtime.Types.Extensions.InternalArg
   notifications?: boolean | Prisma.profiles$notificationsArgs<ExtArgs>
   owners?: boolean | Prisma.profiles$ownersArgs<ExtArgs>
   payments?: boolean | Prisma.profiles$paymentsArgs<ExtArgs>
-  users?: boolean | Prisma.usersDefaultArgs<ExtArgs>
-  property_documents?: boolean | Prisma.profiles$property_documentsArgs<ExtArgs>
-  reviews?: boolean | Prisma.profiles$reviewsArgs<ExtArgs>
-  saved_properties?: boolean | Prisma.profiles$saved_propertiesArgs<ExtArgs>
   referrer?: boolean | Prisma.profiles$referrerArgs<ExtArgs>
   referrals?: boolean | Prisma.profiles$referralsArgs<ExtArgs>
+  users?: boolean | Prisma.usersDefaultArgs<ExtArgs>
+  property_documents?: boolean | Prisma.profiles$property_documentsArgs<ExtArgs>
+  referral_events_referral_events_referred_profile_idToprofiles?: boolean | Prisma.profiles$referral_events_referral_events_referred_profile_idToprofilesArgs<ExtArgs>
+  referral_events_referral_events_referrer_profile_idToprofiles?: boolean | Prisma.profiles$referral_events_referral_events_referrer_profile_idToprofilesArgs<ExtArgs>
+  reviews?: boolean | Prisma.profiles$reviewsArgs<ExtArgs>
+  reward_entitlements?: boolean | Prisma.profiles$reward_entitlementsArgs<ExtArgs>
+  reward_redemptions?: boolean | Prisma.profiles$reward_redemptionsArgs<ExtArgs>
+  saved_properties?: boolean | Prisma.profiles$saved_propertiesArgs<ExtArgs>
   _count?: boolean | Prisma.ProfilesCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type profilesIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  users?: boolean | Prisma.usersDefaultArgs<ExtArgs>
   referrer?: boolean | Prisma.profiles$referrerArgs<ExtArgs>
+  users?: boolean | Prisma.usersDefaultArgs<ExtArgs>
 }
 export type profilesIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  users?: boolean | Prisma.usersDefaultArgs<ExtArgs>
   referrer?: boolean | Prisma.profiles$referrerArgs<ExtArgs>
+  users?: boolean | Prisma.usersDefaultArgs<ExtArgs>
 }
 
 export type $profilesPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -3399,12 +4399,16 @@ export type $profilesPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     notifications: Prisma.$notificationsPayload<ExtArgs>[]
     owners: Prisma.$ownersPayload<ExtArgs> | null
     payments: Prisma.$paymentsPayload<ExtArgs>[]
-    users: Prisma.$usersPayload<ExtArgs>
-    property_documents: Prisma.$property_documentsPayload<ExtArgs>[]
-    reviews: Prisma.$reviewsPayload<ExtArgs>[]
-    saved_properties: Prisma.$saved_propertiesPayload<ExtArgs>[]
     referrer: Prisma.$profilesPayload<ExtArgs> | null
     referrals: Prisma.$profilesPayload<ExtArgs>[]
+    users: Prisma.$usersPayload<ExtArgs>
+    property_documents: Prisma.$property_documentsPayload<ExtArgs>[]
+    referral_events_referral_events_referred_profile_idToprofiles: Prisma.$referral_eventsPayload<ExtArgs>[]
+    referral_events_referral_events_referrer_profile_idToprofiles: Prisma.$referral_eventsPayload<ExtArgs>[]
+    reviews: Prisma.$reviewsPayload<ExtArgs>[]
+    reward_entitlements: Prisma.$reward_entitlementsPayload<ExtArgs>[]
+    reward_redemptions: Prisma.$reward_redemptionsPayload<ExtArgs>[]
+    saved_properties: Prisma.$saved_propertiesPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -3826,12 +4830,16 @@ export interface Prisma__profilesClient<T, Null = never, ExtArgs extends runtime
   notifications<T extends Prisma.profiles$notificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.profiles$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$notificationsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   owners<T extends Prisma.profiles$ownersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.profiles$ownersArgs<ExtArgs>>): Prisma.Prisma__ownersClient<runtime.Types.Result.GetResult<Prisma.$ownersPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   payments<T extends Prisma.profiles$paymentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.profiles$paymentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$paymentsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  users<T extends Prisma.usersDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.usersDefaultArgs<ExtArgs>>): Prisma.Prisma__usersClient<runtime.Types.Result.GetResult<Prisma.$usersPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  property_documents<T extends Prisma.profiles$property_documentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.profiles$property_documentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$property_documentsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  reviews<T extends Prisma.profiles$reviewsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.profiles$reviewsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$reviewsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  saved_properties<T extends Prisma.profiles$saved_propertiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.profiles$saved_propertiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$saved_propertiesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   referrer<T extends Prisma.profiles$referrerArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.profiles$referrerArgs<ExtArgs>>): Prisma.Prisma__profilesClient<runtime.Types.Result.GetResult<Prisma.$profilesPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   referrals<T extends Prisma.profiles$referralsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.profiles$referralsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$profilesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  users<T extends Prisma.usersDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.usersDefaultArgs<ExtArgs>>): Prisma.Prisma__usersClient<runtime.Types.Result.GetResult<Prisma.$usersPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  property_documents<T extends Prisma.profiles$property_documentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.profiles$property_documentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$property_documentsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  referral_events_referral_events_referred_profile_idToprofiles<T extends Prisma.profiles$referral_events_referral_events_referred_profile_idToprofilesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.profiles$referral_events_referral_events_referred_profile_idToprofilesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$referral_eventsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  referral_events_referral_events_referrer_profile_idToprofiles<T extends Prisma.profiles$referral_events_referral_events_referrer_profile_idToprofilesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.profiles$referral_events_referral_events_referrer_profile_idToprofilesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$referral_eventsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  reviews<T extends Prisma.profiles$reviewsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.profiles$reviewsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$reviewsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  reward_entitlements<T extends Prisma.profiles$reward_entitlementsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.profiles$reward_entitlementsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$reward_entitlementsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  reward_redemptions<T extends Prisma.profiles$reward_redemptionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.profiles$reward_redemptionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$reward_redemptionsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  saved_properties<T extends Prisma.profiles$saved_propertiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.profiles$saved_propertiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$saved_propertiesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -4073,6 +5081,11 @@ export type profilesFindManyArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Skip the first `n` profiles.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of profiles.
+   */
   distinct?: Prisma.ProfilesScalarFieldEnum | Prisma.ProfilesScalarFieldEnum[]
 }
 
@@ -4479,78 +5492,6 @@ export type profiles$paymentsArgs<ExtArgs extends runtime.Types.Extensions.Inter
 }
 
 /**
- * profiles.property_documents
- */
-export type profiles$property_documentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the property_documents
-   */
-  select?: Prisma.property_documentsSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the property_documents
-   */
-  omit?: Prisma.property_documentsOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.property_documentsInclude<ExtArgs> | null
-  where?: Prisma.property_documentsWhereInput
-  orderBy?: Prisma.property_documentsOrderByWithRelationInput | Prisma.property_documentsOrderByWithRelationInput[]
-  cursor?: Prisma.property_documentsWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.Property_documentsScalarFieldEnum | Prisma.Property_documentsScalarFieldEnum[]
-}
-
-/**
- * profiles.reviews
- */
-export type profiles$reviewsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the reviews
-   */
-  select?: Prisma.reviewsSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the reviews
-   */
-  omit?: Prisma.reviewsOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.reviewsInclude<ExtArgs> | null
-  where?: Prisma.reviewsWhereInput
-  orderBy?: Prisma.reviewsOrderByWithRelationInput | Prisma.reviewsOrderByWithRelationInput[]
-  cursor?: Prisma.reviewsWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.ReviewsScalarFieldEnum | Prisma.ReviewsScalarFieldEnum[]
-}
-
-/**
- * profiles.saved_properties
- */
-export type profiles$saved_propertiesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the saved_properties
-   */
-  select?: Prisma.saved_propertiesSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the saved_properties
-   */
-  omit?: Prisma.saved_propertiesOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.saved_propertiesInclude<ExtArgs> | null
-  where?: Prisma.saved_propertiesWhereInput
-  orderBy?: Prisma.saved_propertiesOrderByWithRelationInput | Prisma.saved_propertiesOrderByWithRelationInput[]
-  cursor?: Prisma.saved_propertiesWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.Saved_propertiesScalarFieldEnum | Prisma.Saved_propertiesScalarFieldEnum[]
-}
-
-/**
  * profiles.referrer
  */
 export type profiles$referrerArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -4591,6 +5532,174 @@ export type profiles$referralsArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.ProfilesScalarFieldEnum | Prisma.ProfilesScalarFieldEnum[]
+}
+
+/**
+ * profiles.property_documents
+ */
+export type profiles$property_documentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the property_documents
+   */
+  select?: Prisma.property_documentsSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the property_documents
+   */
+  omit?: Prisma.property_documentsOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.property_documentsInclude<ExtArgs> | null
+  where?: Prisma.property_documentsWhereInput
+  orderBy?: Prisma.property_documentsOrderByWithRelationInput | Prisma.property_documentsOrderByWithRelationInput[]
+  cursor?: Prisma.property_documentsWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Property_documentsScalarFieldEnum | Prisma.Property_documentsScalarFieldEnum[]
+}
+
+/**
+ * profiles.referral_events_referral_events_referred_profile_idToprofiles
+ */
+export type profiles$referral_events_referral_events_referred_profile_idToprofilesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the referral_events
+   */
+  select?: Prisma.referral_eventsSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the referral_events
+   */
+  omit?: Prisma.referral_eventsOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.referral_eventsInclude<ExtArgs> | null
+  where?: Prisma.referral_eventsWhereInput
+  orderBy?: Prisma.referral_eventsOrderByWithRelationInput | Prisma.referral_eventsOrderByWithRelationInput[]
+  cursor?: Prisma.referral_eventsWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Referral_eventsScalarFieldEnum | Prisma.Referral_eventsScalarFieldEnum[]
+}
+
+/**
+ * profiles.referral_events_referral_events_referrer_profile_idToprofiles
+ */
+export type profiles$referral_events_referral_events_referrer_profile_idToprofilesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the referral_events
+   */
+  select?: Prisma.referral_eventsSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the referral_events
+   */
+  omit?: Prisma.referral_eventsOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.referral_eventsInclude<ExtArgs> | null
+  where?: Prisma.referral_eventsWhereInput
+  orderBy?: Prisma.referral_eventsOrderByWithRelationInput | Prisma.referral_eventsOrderByWithRelationInput[]
+  cursor?: Prisma.referral_eventsWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Referral_eventsScalarFieldEnum | Prisma.Referral_eventsScalarFieldEnum[]
+}
+
+/**
+ * profiles.reviews
+ */
+export type profiles$reviewsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the reviews
+   */
+  select?: Prisma.reviewsSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the reviews
+   */
+  omit?: Prisma.reviewsOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.reviewsInclude<ExtArgs> | null
+  where?: Prisma.reviewsWhereInput
+  orderBy?: Prisma.reviewsOrderByWithRelationInput | Prisma.reviewsOrderByWithRelationInput[]
+  cursor?: Prisma.reviewsWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ReviewsScalarFieldEnum | Prisma.ReviewsScalarFieldEnum[]
+}
+
+/**
+ * profiles.reward_entitlements
+ */
+export type profiles$reward_entitlementsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the reward_entitlements
+   */
+  select?: Prisma.reward_entitlementsSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the reward_entitlements
+   */
+  omit?: Prisma.reward_entitlementsOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.reward_entitlementsInclude<ExtArgs> | null
+  where?: Prisma.reward_entitlementsWhereInput
+  orderBy?: Prisma.reward_entitlementsOrderByWithRelationInput | Prisma.reward_entitlementsOrderByWithRelationInput[]
+  cursor?: Prisma.reward_entitlementsWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Reward_entitlementsScalarFieldEnum | Prisma.Reward_entitlementsScalarFieldEnum[]
+}
+
+/**
+ * profiles.reward_redemptions
+ */
+export type profiles$reward_redemptionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the reward_redemptions
+   */
+  select?: Prisma.reward_redemptionsSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the reward_redemptions
+   */
+  omit?: Prisma.reward_redemptionsOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.reward_redemptionsInclude<ExtArgs> | null
+  where?: Prisma.reward_redemptionsWhereInput
+  orderBy?: Prisma.reward_redemptionsOrderByWithRelationInput | Prisma.reward_redemptionsOrderByWithRelationInput[]
+  cursor?: Prisma.reward_redemptionsWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Reward_redemptionsScalarFieldEnum | Prisma.Reward_redemptionsScalarFieldEnum[]
+}
+
+/**
+ * profiles.saved_properties
+ */
+export type profiles$saved_propertiesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the saved_properties
+   */
+  select?: Prisma.saved_propertiesSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the saved_properties
+   */
+  omit?: Prisma.saved_propertiesOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.saved_propertiesInclude<ExtArgs> | null
+  where?: Prisma.saved_propertiesWhereInput
+  orderBy?: Prisma.saved_propertiesOrderByWithRelationInput | Prisma.saved_propertiesOrderByWithRelationInput[]
+  cursor?: Prisma.saved_propertiesWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Saved_propertiesScalarFieldEnum | Prisma.Saved_propertiesScalarFieldEnum[]
 }
 
 /**

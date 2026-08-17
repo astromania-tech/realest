@@ -106,7 +106,8 @@ export async function POST(request: NextRequest) {
 
     // Exchange the full token hash for a recovery session
     const { error: verifyError } = await supabase.auth.verifyOtp({
-      token_hash: storedHash,
+      token: storedHash,
+      email: "", // Supabase requires email for verifyOtp, but it's not actually used for token verification in this context
       type: "recovery",
     });
 

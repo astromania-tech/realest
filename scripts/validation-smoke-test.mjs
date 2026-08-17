@@ -45,6 +45,38 @@ async function requestJson(url, options) {
   return { response, body, contentType };
 }
 
+async function processValidationJob(baseUrl, headers, jobId) {
+  const processResult = await requestJson(`${baseUrl}/api/admin/validation/jobs/process`, {
+    method: 'POST',
+    headers: {
+      ...headers,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ jobId }),
+  });
+
+  if (!processResult.response.ok) {
+    const preview = typeof processResult.body === 'string' ? processResult.body.slice(0, 1024) : JSON.stringify(processResult.body);
+    throw new Error(`Failed to process validation job ${jobId}: ${processResult.response.status} ${processResult.response.statusText}\n${preview}`);
+  }
+
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    const statusResult = await requestJson(`${baseUrl}/api/admin/validation/jobs/${jobId}`, { headers });
+    if (!statusResult.response.ok) {
+      throw new Error(`Failed to load validation job ${jobId}: ${statusResult.response.status} ${statusResult.response.statusText}`);
+    }
+
+    const job = statusResult.body?.data ?? statusResult.body;
+    if (job?.status === 'completed' || job?.status === 'failed') {
+      return job;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+
+  throw new Error(`Timed out waiting for validation job ${jobId}`);
+}
+
 function buildSmokePropertyPayload(sourceRole) {
   const nonce = Date.now().toString(36);
   const latitude = 4.9001 + (Number.parseInt(nonce.slice(-2), 36) % 7) * 0.001;
@@ -195,6 +227,13 @@ async function main() {
   console.log(`[document] ${documentResult.response.status} ${documentResult.response.statusText}`);
   console.log(JSON.stringify(documentResult.body, null, 2));
 
+  if (!documentResult.body?.jobId) {
+    throw new Error(`Document validation did not return a jobId: ${JSON.stringify(documentResult.body)}`);
+  }
+
+  const documentJob = await processValidationJob(baseUrl, headers, documentResult.body.jobId);
+  console.log(`[document-job] ${JSON.stringify(documentJob, null, 2)}`);
+
   const imagePath = path.join(process.cwd(), 'public', 'placeholder.jpg');
   const imageBuffer = fs.readFileSync(imagePath);
   const imageForm = new FormData();
@@ -209,6 +248,13 @@ async function main() {
   });
   console.log(`[image] ${imageResult.response.status} ${imageResult.response.statusText}`);
   console.log(JSON.stringify(imageResult.body, null, 2));
+
+  if (!imageResult.body?.jobId) {
+    throw new Error(`Image validation did not return a jobId: ${JSON.stringify(imageResult.body)}`);
+  }
+
+  const imageJob = await processValidationJob(baseUrl, headers, imageResult.body.jobId);
+  console.log(`[image-job] ${JSON.stringify(imageJob, null, 2)}`);
 
   const duplicateResult = await requestJson(`${baseUrl}/api/admin/validation/duplicates`, {
     method: 'POST',
@@ -227,6 +273,13 @@ async function main() {
   });
   console.log(`[duplicates] ${duplicateResult.response.status} ${duplicateResult.response.statusText}`);
   console.log(JSON.stringify(duplicateResult.body, null, 2));
+
+  if (!duplicateResult.body?.jobId) {
+    throw new Error(`Duplicate check did not return a jobId: ${JSON.stringify(duplicateResult.body)}`);
+  }
+
+  const duplicateJob = await processValidationJob(baseUrl, headers, duplicateResult.body.jobId);
+  console.log(`[duplicate-job] ${JSON.stringify(duplicateJob, null, 2)}`);
 }
 
 main().catch((error) => {

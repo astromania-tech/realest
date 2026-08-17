@@ -1,38 +1,103 @@
 -- Migration: Update schema for new user types, inquiries, reviews, and payments
 -- Date: 2024-12-02
 
--- Update profiles user_type enum
--- First, add new enum values if not present
-DO $$
+-- Drop existing policies that depend on profiles.user_type or user_type_enum
+-- RLS policies create a dependency that prevents ALTER TABLE ... TYPE or DROP TYPE.
+DO $$ 
 BEGIN
-  -- Add 'agent' and 'user' if not exists
-  IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumtypid = (SELECT oid FROM pg_type WHERE typname = 'user_type_enum')) THEN
-    -- If enum doesn't exist, create it (but assuming it does)
-    ALTER TYPE user_type_enum ADD VALUE IF NOT EXISTS 'agent';
-    ALTER TYPE user_type_enum ADD VALUE IF NOT EXISTS 'user';
-  END IF;
+    -- Drop policies on profiles (this table exists in the base schema)
+    DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
+    DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+    DROP POLICY IF EXISTS "Admins can manage all profiles" ON public.profiles;
+    DROP POLICY IF EXISTS "profiles_select_public_owners" ON public.profiles;
+    DROP POLICY IF EXISTS "profiles_insert_self" ON public.profiles;
+
+    -- For other tables, we check if they exist first to avoid errors on a fresh database
+    IF EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'owners' AND schemaname = 'public') THEN
+        DROP POLICY IF EXISTS "Owners can view their own record" ON public.owners;
+        DROP POLICY IF EXISTS "Admins can manage owners" ON public.owners;
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'agents' AND schemaname = 'public') THEN
+        DROP POLICY IF EXISTS "Agents can view their own record" ON public.agents;
+        DROP POLICY IF EXISTS "Admins can manage agents" ON public.agents;
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'kyc_requests' AND schemaname = 'public') THEN
+        DROP POLICY IF EXISTS "Users can view their own KYC requests" ON public.kyc_requests;
+        DROP POLICY IF EXISTS "Users can insert their own KYC requests" ON public.kyc_requests;
+        DROP POLICY IF EXISTS "Admins can manage KYC requests" ON public.kyc_requests;
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'reviews' AND schemaname = 'public') THEN
+        DROP POLICY IF EXISTS "Users can view reviews" ON public.reviews;
+        DROP POLICY IF EXISTS "Users can insert their own reviews" ON public.reviews;
+        DROP POLICY IF EXISTS "Admins can manage reviews" ON public.reviews;
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'payments' AND schemaname = 'public') THEN
+        DROP POLICY IF EXISTS "Users can view their own payments" ON public.payments;
+        DROP POLICY IF EXISTS "Users can insert their own payments" ON public.payments;
+        DROP POLICY IF EXISTS "Admins can view all payments" ON public.payments;
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'properties' AND schemaname = 'public') THEN
+        DROP POLICY IF EXISTS "agents_or_admins_insert_properties" ON public.properties;
+        DROP POLICY IF EXISTS "properties_insert_owner_agent_jwt" ON public.properties;
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'admin_audit_log' AND schemaname = 'public') THEN
+        DROP POLICY IF EXISTS "admins_view_audit_logs" ON public.admin_audit_log;
+    END IF;
 END $$;
 
--- Rename 'property_owner' to 'owner' and 'buyer' to 'user' in the enum
--- Note: This is tricky in Postgres; for simplicity, we'll update the data and alter the type
--- Assuming the enum is named user_type_enum (adjust if different)
+-- Temporarily change reviews.target_type to text to allow user_type_enum to be dropped
+ALTER TABLE public.reviews ALTER COLUMN target_type TYPE text;
 
--- Update existing data
+-- 1. Temporarily change column to text to handle updates safely
+-- This works whether the column is currently an enum or already text
+ALTER TABLE public.profiles ALTER COLUMN user_type TYPE text;
+
+-- 2. Update existing data (only applies if migrating from old schema/wiped data)
 UPDATE profiles SET user_type = 'owner' WHERE user_type = 'property_owner';
 UPDATE profiles SET user_type = 'user' WHERE user_type = 'buyer';
 
--- Drop and recreate the enum with new values (since renaming values isn't direct)
--- This assumes the enum is attached to the column
-ALTER TABLE profiles ALTER COLUMN user_type TYPE text;
+-- 3. Recreate the enum type with all desired values
 DROP TYPE IF EXISTS user_type_enum;
 CREATE TYPE user_type_enum AS ENUM ('owner', 'agent', 'user', 'admin');
+
+-- 4. Re-apply the enum type to the column
 ALTER TABLE profiles ALTER COLUMN user_type TYPE user_type_enum USING user_type::user_type_enum;
 
+-- 5. Re-apply the enum type to the reviews.target_type column
+ALTER TABLE public.reviews ALTER COLUMN target_type TYPE user_type_enum USING target_type::user_type_enum;
+
+-- Recreate standard profiles policies
+CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles FOR SELECT USING (true);
+CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Admins can manage all profiles" ON public.profiles FOR ALL USING (
+  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND user_type = 'admin')
+);
+-- Recreate profiles_select_public_owners (from 20260401)
+CREATE POLICY "profiles_select_public_owners"
+  ON public.profiles FOR SELECT
+  USING (user_type = 'owner' AND deleted_at IS NULL); -- Assuming 'deleted_at' exists on profiles
+
+-- Recreate profiles_insert_self (from 20260401)
+CREATE POLICY "profiles_insert_self"
+  ON public.profiles FOR INSERT
+  WITH CHECK (id = auth.uid());
+
 -- Rename buyer_id to user_id in inquiries
-ALTER TABLE inquiries RENAME COLUMN buyer_id TO user_id;
+DO $$ 
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='inquiries' AND column_name='buyer_id') THEN
+    ALTER TABLE inquiries RENAME COLUMN buyer_id TO user_id;
+  END IF;
+END $$;
 
 -- Create owners table
-CREATE TABLE owners (
+CREATE TABLE IF NOT EXISTS owners (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   business_name TEXT,
@@ -51,7 +116,7 @@ CREATE TABLE owners (
 );
 
 -- Create agents table
-CREATE TABLE agents (
+CREATE TABLE IF NOT EXISTS agents (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   license_number TEXT,
@@ -72,7 +137,7 @@ CREATE TABLE agents (
 );
 
 -- Create kyc_requests table
-CREATE TABLE kyc_requests (
+CREATE TABLE IF NOT EXISTS kyc_requests (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   user_type TEXT NOT NULL CHECK (user_type IN ('agent', 'owner')),
@@ -89,7 +154,7 @@ CREATE TABLE kyc_requests (
 );
 
 -- Create reviews table
-CREATE TABLE reviews (
+CREATE TABLE IF NOT EXISTS reviews (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
   reviewer_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
@@ -100,7 +165,7 @@ CREATE TABLE reviews (
 );
 
 -- Create payments table
-CREATE TABLE payments (
+CREATE TABLE IF NOT EXISTS payments (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   property_id UUID REFERENCES properties(id) ON DELETE SET NULL,

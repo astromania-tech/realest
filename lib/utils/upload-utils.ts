@@ -73,15 +73,12 @@ export async function generateSignedUrl(input: SignedUrlInput): Promise<SignedUr
       }
     }
   } else if (input.bucket === "avatars") {
-    // For avatars, just verify the user exists
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("id", input.user_id)
-      .single();
+    // For avatars, only require an authenticated user.
+    // Onboarding can upload a photo before the full profile row exists.
+    const { data: authUser, error: authError } = await supabase.auth.getUser();
 
-    if (!profile) {
-      throw new Error("User not found");
+    if (authError || !authUser?.user || authUser.user.id !== input.user_id) {
+      throw new Error("Unauthorized: user session is invalid");
     }
   }
 

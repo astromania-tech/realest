@@ -3,6 +3,7 @@ import type {
   DuplicateCheckResult,
   ImageValidationResult,
 } from "@/lib/types/validation";
+import { extractValidationText } from "@/lib/validation/ocr";
 
 const ALLOWED_DOCUMENT_MIME_TYPES = new Set(["application/pdf", "image/jpeg", "image/png"]);
 const ALLOWED_IMAGE_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -133,11 +134,6 @@ function detectPropertyType(text: string): string | null {
   return null;
 }
 
-function extractReadableText(buffer: Buffer): string {
-  const rawText = buffer.toString("utf8").replace(/\0/g, " ");
-  return rawText.replace(/[^\x09\x0A\x0D\x20-\x7E]/g, " ").replace(/\s+/g, " ").trim();
-}
-
 function baseConfidenceFromSize(size: number, minimumSize: number, expectedSize: number): number {
   if (size <= minimumSize) {
     return 0.25;
@@ -147,13 +143,14 @@ function baseConfidenceFromSize(size: number, minimumSize: number, expectedSize:
   return clampScore(0.35 + ratio * 0.45);
 }
 
-export function validateDocumentBuffer(
+export async function validateDocumentBuffer(
   buffer: Buffer,
   mimeType: string,
   expectedType: string,
-): DocumentValidationResult {
+): Promise<DocumentValidationResult> {
   const size = buffer.length;
-  const extractedText = extractReadableText(buffer);
+  const extraction = await extractValidationText(buffer, mimeType);
+  const extractedText = extraction.text;
   const normalizedText = normalizeText(extractedText);
   const issues: string[] = [];
 
@@ -194,7 +191,7 @@ export function validateDocumentBuffer(
     issues.push("Watermark or seal not detected");
   }
 
-  const textQuality = clampScore(extractedText.length / 600);
+  const textQuality = clampScore(Math.max(extraction.confidence, extractedText.length / 600));
   if (textQuality < 0.35) {
     issues.push("Text quality is too low for reliable extraction");
   }
@@ -214,9 +211,13 @@ export function validateDocumentBuffer(
     extractedText: extractedText.slice(0, 2000),
     issues,
     metadata: {
-      pageCount: mimeType === "application/pdf" ? Math.max(1, Math.ceil(size / 15000)) : 1,
+      pageCount: extraction.metadata.pageCount,
       size,
-      format: mimeType.split("/")[1] ?? "unknown",
+      format: extraction.metadata.format,
+      width: extraction.metadata.width,
+      height: extraction.metadata.height,
+      hasExif: extraction.metadata.hasExif,
+      location: extraction.metadata.location,
     },
     checks: {
       isAuthentic,
@@ -228,15 +229,15 @@ export function validateDocumentBuffer(
   };
 }
 
-export function validateImageBuffer(
+export async function validateImageBuffer(
   buffer: Buffer,
   mimeType: string,
   propertyType: string,
-): ImageValidationResult {
+): Promise<ImageValidationResult> {
   const size = buffer.length;
   const issues: string[] = [];
-  const fileText = extractReadableText(buffer);
-  const normalizedText = normalizeText(fileText);
+  const extraction = await extractValidationText(buffer, mimeType);
+  const normalizedText = normalizeText(extraction.text);
   const propertyHints = PROPERTY_TYPE_KEYWORDS[propertyType] ?? [propertyType.replace(/_/g, " ")];
 
   if (!ALLOWED_IMAGE_MIME_TYPES.has(mimeType)) {
@@ -251,7 +252,7 @@ export function validateImageBuffer(
   const isManipulated = /edited|manipulated|photoshop|gimp/.test(normalizedText);
   const hasAdultContent = /adult|nsfw|explicit/.test(normalizedText);
   const hasPropertyContent = propertyHints.some((hint) => normalizedText.includes(hint)) || size >= 4096;
-  const qualityScore = clampScore(baseConfidenceFromSize(size, 1024, 250000));
+  const qualityScore = clampScore(Math.max(baseConfidenceFromSize(size, 1024, 250000), extraction.confidence));
 
   if (!isRealPhoto) {
     issues.push("Image appears to be AI-generated or stock photo. Real property photos are required.");
@@ -286,12 +287,12 @@ export function validateImageBuffer(
     confidence: Math.round(confidence * 100) / 100,
     issues,
     metadata: {
-      width: undefined,
-      height: undefined,
-      format: mimeType.split("/")[1] ?? "unknown",
+      width: extraction.metadata.width,
+      height: extraction.metadata.height,
+      format: extraction.metadata.format,
       size,
-      hasExif: mimeType !== "image/png",
-      location: null,
+      hasExif: extraction.metadata.hasExif,
+      location: extraction.metadata.location,
     },
     checks: {
       isRealPhoto,

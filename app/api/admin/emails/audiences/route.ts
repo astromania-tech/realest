@@ -9,7 +9,7 @@
  */
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
 
 export const openApiGET: OpenApiMetadata = {
@@ -108,7 +108,7 @@ export async function GET() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

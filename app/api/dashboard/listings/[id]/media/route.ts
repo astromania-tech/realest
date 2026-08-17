@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
@@ -74,7 +74,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -94,11 +94,11 @@ export async function GET(request: Request, { params }: RouteParams) {
         userRow.role === "agent"
           ? {
               OR: [
-                { owner_id: user.id },
+                { owners: { profile_id: user.id } },
                 { agent: { profile_id: user.id } },
               ],
             }
-          : { owner_id: user.id };
+          : { owners: { profile_id: user.id } };
 
       const property = await prisma.properties.findFirst({
         where: { id: propertyId, ...accessFilter },
@@ -130,7 +130,6 @@ export async function GET(request: Request, { params }: RouteParams) {
 
 export async function POST(request: Request, { params }: RouteParams) {
   try {
-    const supabase = await createClient();
     const { id } = await params;
     const propertyIdResult = propertyIdSchema.safeParse(id);
     if (!propertyIdResult.success) {
@@ -142,7 +141,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -158,8 +157,12 @@ export async function POST(request: Request, { params }: RouteParams) {
 
     // Verify property ownership (unless admin)
     if (userRow.role !== "admin") {
+      const accessFilter = userRow.role === "agent"
+        ? { id: propertyId, agent: { profile_id: user.id } }
+        : { id: propertyId, owners: { profile_id: user.id } };
+
       const property = await prisma.properties.findFirst({
-        where: { id: propertyId, owner_id: user.id },
+        where: accessFilter,
         select: { id: true },
       });
       if (!property) {

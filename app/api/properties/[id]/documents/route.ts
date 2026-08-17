@@ -1,6 +1,6 @@
 // realest/app/api/properties/[id]/documents/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { propertyDocumentSchema } from "@/lib/validations/property";
@@ -132,7 +132,7 @@ export async function GET(
     const propertyId = propertyIdResult.data;
 
     // Auth
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await getAuthUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -182,7 +182,7 @@ export async function POST(
     }
     const propertyId = propertyIdResult.data;
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -206,7 +206,6 @@ export async function POST(
 
     const document = await prisma.property_documents.create({
       data: {
-        property_id: id,
         property_id: propertyId,
         document_type: validatedData.document_type,
         document_url: validatedData.document_url,

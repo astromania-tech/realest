@@ -1,3 +1,4 @@
+import { getAuthUser } from "@/lib/supabase/server";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import {
@@ -63,7 +64,7 @@ export async function updateSession(request: NextRequest) {
 
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
 
   // Guest-only routes: redirect confirmed + authenticated users to dashboard
   const guestOnlyRoutes = ["/login", "/register", "/forgot-password"];

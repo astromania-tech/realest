@@ -508,7 +508,7 @@
       "post": {
         "method": "post",
         "summary": "Create new property listing",
-        "description": "Create a new property listing. Requires owner or agent role. Can submit as draft or for live listing.",
+        "description": "Create a new property listing. Requires owner or agent role. Drafts stay editable; submitted listings are automatically queued for ML validation.",
         "tags": [
           "Properties"
         ],

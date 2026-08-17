@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { SubAdminForm } from "@/components/admin/SubAdminForm"
 
 export default async function SubAdminsPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getAuthUser()
   if (!user) redirect("/login?redirect=/admin/subadmins")
 
   const { data: userRow } = await supabase

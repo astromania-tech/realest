@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import { createServiceClient } from '@/lib/supabase/service'
+import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
-import { validateImageBuffer } from '@/lib/validation/ml-validation'
-import type { ImageValidationResult } from '@/lib/types/validation'
+import { enqueueValidationJob } from '@/lib/validation/validation-job-worker'
+import { uploadValidationAsset } from '@/lib/validation/validation-assets'
 
 const imageValidationBodySchema = z.object({
   propertyId: z.string().uuid('Invalid property ID'),
@@ -20,7 +19,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const supabase = await createClient()
 
     // Verify admin authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const { data: { user }, error: authError } = await getAuthUser()
     if (authError || !user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -46,6 +45,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const file = formData.get('file') as File
     const propertyId = (formData.get('propertyId') as string) || ''
     const propertyType = (formData.get('propertyType') as string) || 'house'
+    const fileUrl = (formData.get('fileUrl') as string) || ''
 
     // Validate inputs
     const bodyValidation = imageValidationBodySchema.safeParse({ propertyId, propertyType })
@@ -55,8 +55,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         { status: 400 }
       )
     }
-
-    // `file` may be omitted when a `fileUrl` is provided (E2E harness). Handle below.
 
     // Verify property exists
     const property = await prisma.properties.findUnique({
@@ -71,86 +69,60 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // Convert file to buffer. Accept either an uploaded File or a `fileUrl` pointing
-    // to an already-uploaded public object (used by E2E harness).
-    let buffer: Buffer
-    let contentType = file?.type || ''
+    let source:
+      | { kind: 'url'; fileUrl: string; mimeType?: string }
+      | { kind: 'storage'; bucket: string; path: string; mimeType?: string; originalName?: string }
 
     if (file && typeof (file as any).arrayBuffer === 'function') {
-      const bytes = await (file as any).arrayBuffer()
-      buffer = Buffer.from(bytes)
+      source = await uploadValidationAsset({
+        file,
+        bucket: 'property-media',
+        propertyId,
+        jobKind: 'image',
+      })
+    } else if (fileUrl) {
+      source = { kind: 'url', fileUrl, mimeType: file?.type || undefined }
     } else {
-      const fileUrl = (formData.get('fileUrl') as string) || ''
-      if (!fileUrl) {
-        return NextResponse.json({ error: 'No file provided' }, { status: 400 })
-      }
-      // Try a normal public fetch first
-      const fetched = await fetch(fileUrl)
-      if (fetched.ok) {
-        const bytes = await fetched.arrayBuffer()
-        buffer = Buffer.from(bytes)
-        contentType = fetched.headers.get('content-type') || contentType
-      } else {
-        // If public fetch fails and this is a Supabase storage URL, try service-role download
-        const serviceSupabase = createServiceClient()
-        try {
-          const url = new URL(fileUrl)
-          const storagePrefix = '/storage/v1/object/'
-          const idx = url.pathname.indexOf(storagePrefix)
-          if (idx === -1) {
-            return NextResponse.json({ error: 'Failed to fetch fileUrl', details: fetched.statusText }, { status: 400 })
-          }
-          let suffix = url.pathname.slice(idx + storagePrefix.length) // e.g. 'public/property-media/...'
-          const parts = suffix.split('/').filter(Boolean)
-          // Remove optional 'public' or 'private' prefix
-          if (parts[0] === 'public' || parts[0] === 'private') parts.shift()
-          const bucket = parts.shift()
-          const filePath = parts.join('/')
-          if (!bucket || !filePath) {
-            return NextResponse.json({ error: 'Invalid storage URL' }, { status: 400 })
-          }
-
-          const { data: downloaded, error: dlError } = await serviceSupabase.storage.from(bucket).download(filePath)
-          if (dlError || !downloaded) {
-            return NextResponse.json({ error: 'Failed to download from storage', details: dlError?.message || 'no data' }, { status: 400 })
-          }
-
-          // Normalize downloaded data to ArrayBuffer
-          let ab: ArrayBuffer
-          if (typeof (downloaded as any).arrayBuffer === 'function') {
-            ab = await (downloaded as any).arrayBuffer()
-          } else {
-            ab = await new Response(downloaded as any).arrayBuffer()
-          }
-          buffer = Buffer.from(ab)
-          contentType = (downloaded as any).type || contentType
-        } catch (err) {
-          return NextResponse.json({ error: 'Failed to fetch fileUrl', details: String(err) }, { status: 400 })
-        }
-      }
+      return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    // Perform validation
-    const validationResult = validateImageBuffer(buffer, contentType || file.type, propertyType)
+    const queuedJob = await enqueueValidationJob({
+      propertyId,
+      jobKind: 'image',
+      source: 'admin_image_validation',
+      requestPayload: {
+        kind: 'image',
+        propertyId,
+        propertyType,
+        source,
+      },
+      requestedBy: user.id,
+    })
 
     // Log validation
     await prisma.admin_audit_log.create({
       data: {
         actor_id: user.id,
-        action: 'image_validation',
+        action: 'image_validation_queued',
         target_id: propertyId,
         metadata: {
           propertyType,
-          confidence: validationResult.confidence,
-          isValid: validationResult.isValid,
-          issues: validationResult.issues,
-          isRealPhoto: validationResult.checks.isRealPhoto,
-          isManipulated: validationResult.checks.isManipulated,
+          jobId: queuedJob.id,
+          status: queuedJob.status,
+          source,
         },
       },
     })
 
-    return NextResponse.json(validationResult)
+    return NextResponse.json({
+      ok: true,
+      jobId: queuedJob.id,
+      status: queuedJob.status,
+      queuedAt: queuedJob.queued_at,
+      pollUrl: `/api/admin/validation/jobs/${queuedJob.id}`,
+      propertyId,
+      propertyType,
+    })
 
   } catch (error) {
     console.error('[validation] Image validation error:', error)

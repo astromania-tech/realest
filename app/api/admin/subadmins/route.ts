@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { randomBytes } from "crypto"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { createServiceClient } from "@/lib/supabase/service"
 import { logAdminAction } from "@/lib/audit"
 import { sendSubAdminInvitationEmail } from "@/lib/emailService"
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     }
 
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await getAuthUser()
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
     const adminRow = await prisma.users.findUnique({ where: { id: user.id }, select: { role: true } })

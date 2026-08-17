@@ -65,7 +65,6 @@ export const ModelName = {
   property_media: 'property_media',
   reviews: 'reviews',
   saved_properties: 'saved_properties',
-  spatial_ref_sys: 'spatial_ref_sys',
   users: 'users',
   waitlist: 'waitlist',
   poll_responses: 'poll_responses',
@@ -73,7 +72,13 @@ export const ModelName = {
   poll_questions: 'poll_questions',
   poll_submissions: 'poll_submissions',
   poll_submission_answers: 'poll_submission_answers',
-  email_campaigns: 'email_campaigns'
+  email_campaigns: 'email_campaigns',
+  property_validation_jobs: 'property_validation_jobs',
+  referral_events: 'referral_events',
+  reward_catalog: 'reward_catalog',
+  reward_entitlements: 'reward_entitlements',
+  reward_redemptions: 'reward_redemptions',
+  waitlist_rank_history: 'waitlist_rank_history'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -341,17 +346,6 @@ export const Saved_propertiesScalarFieldEnum = {
 export type Saved_propertiesScalarFieldEnum = (typeof Saved_propertiesScalarFieldEnum)[keyof typeof Saved_propertiesScalarFieldEnum]
 
 
-export const Spatial_ref_sysScalarFieldEnum = {
-  srid: 'srid',
-  auth_name: 'auth_name',
-  auth_srid: 'auth_srid',
-  srtext: 'srtext',
-  proj4text: 'proj4text'
-} as const
-
-export type Spatial_ref_sysScalarFieldEnum = (typeof Spatial_ref_sysScalarFieldEnum)[keyof typeof Spatial_ref_sysScalarFieldEnum]
-
-
 export const UsersScalarFieldEnum = {
   id: 'id',
   email: 'email',
@@ -394,15 +388,15 @@ export const WaitlistScalarFieldEnum = {
   referral_code: 'referral_code',
   referred_by: 'referred_by',
   referral_count: 'referral_count',
+  created_at: 'created_at',
+  updated_at: 'updated_at',
   persona: 'persona',
   persona_details: 'persona_details',
   queue_score: 'queue_score',
   queue_rank: 'queue_rank',
   candidate_role: 'candidate_role',
   poll_completion_count: 'poll_completion_count',
-  waitlist_reward_eligible: 'waitlist_reward_eligible',
-  created_at: 'created_at',
-  updated_at: 'updated_at'
+  waitlist_reward_eligible: 'waitlist_reward_eligible'
 } as const
 
 export type WaitlistScalarFieldEnum = (typeof WaitlistScalarFieldEnum)[keyof typeof WaitlistScalarFieldEnum]
@@ -500,6 +494,101 @@ export const Email_campaignsScalarFieldEnum = {
 } as const
 
 export type Email_campaignsScalarFieldEnum = (typeof Email_campaignsScalarFieldEnum)[keyof typeof Email_campaignsScalarFieldEnum]
+
+
+export const Property_validation_jobsScalarFieldEnum = {
+  id: 'id',
+  property_id: 'property_id',
+  job_kind: 'job_kind',
+  source: 'source',
+  status: 'status',
+  attempts: 'attempts',
+  retry_count: 'retry_count',
+  last_error: 'last_error',
+  failure_reason: 'failure_reason',
+  final_property_status: 'final_property_status',
+  queued_at: 'queued_at',
+  started_at: 'started_at',
+  finished_at: 'finished_at',
+  updated_at: 'updated_at',
+  next_retry_at: 'next_retry_at',
+  request_payload: 'request_payload',
+  result: 'result',
+  requested_by: 'requested_by'
+} as const
+
+export type Property_validation_jobsScalarFieldEnum = (typeof Property_validation_jobsScalarFieldEnum)[keyof typeof Property_validation_jobsScalarFieldEnum]
+
+
+export const Referral_eventsScalarFieldEnum = {
+  id: 'id',
+  referrer_waitlist_id: 'referrer_waitlist_id',
+  referrer_profile_id: 'referrer_profile_id',
+  referred_waitlist_id: 'referred_waitlist_id',
+  referred_profile_id: 'referred_profile_id',
+  referral_code: 'referral_code',
+  event_type: 'event_type',
+  metadata: 'metadata',
+  created_at: 'created_at'
+} as const
+
+export type Referral_eventsScalarFieldEnum = (typeof Referral_eventsScalarFieldEnum)[keyof typeof Referral_eventsScalarFieldEnum]
+
+
+export const Reward_catalogScalarFieldEnum = {
+  id: 'id',
+  key: 'key',
+  name: 'name',
+  reward_system: 'reward_system',
+  description: 'description',
+  is_redeemable: 'is_redeemable',
+  metadata: 'metadata',
+  created_at: 'created_at'
+} as const
+
+export type Reward_catalogScalarFieldEnum = (typeof Reward_catalogScalarFieldEnum)[keyof typeof Reward_catalogScalarFieldEnum]
+
+
+export const Reward_entitlementsScalarFieldEnum = {
+  id: 'id',
+  user_email: 'user_email',
+  waitlist_id: 'waitlist_id',
+  profile_id: 'profile_id',
+  reward_key: 'reward_key',
+  source_event: 'source_event',
+  source_referral_count: 'source_referral_count',
+  status: 'status',
+  granted_at: 'granted_at',
+  expires_at: 'expires_at',
+  metadata: 'metadata'
+} as const
+
+export type Reward_entitlementsScalarFieldEnum = (typeof Reward_entitlementsScalarFieldEnum)[keyof typeof Reward_entitlementsScalarFieldEnum]
+
+
+export const Reward_redemptionsScalarFieldEnum = {
+  id: 'id',
+  entitlement_id: 'entitlement_id',
+  profile_id: 'profile_id',
+  redemption_context: 'redemption_context',
+  redemption_reference_id: 'redemption_reference_id',
+  redeemed_at: 'redeemed_at',
+  metadata: 'metadata'
+} as const
+
+export type Reward_redemptionsScalarFieldEnum = (typeof Reward_redemptionsScalarFieldEnum)[keyof typeof Reward_redemptionsScalarFieldEnum]
+
+
+export const Waitlist_rank_historyScalarFieldEnum = {
+  id: 'id',
+  waitlist_id: 'waitlist_id',
+  rank: 'rank',
+  score: 'score',
+  reason: 'reason',
+  created_at: 'created_at'
+} as const
+
+export type Waitlist_rank_historyScalarFieldEnum = (typeof Waitlist_rank_historyScalarFieldEnum)[keyof typeof Waitlist_rank_historyScalarFieldEnum]
 
 
 export const SortOrder = {

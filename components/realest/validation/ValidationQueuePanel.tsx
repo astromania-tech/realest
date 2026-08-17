@@ -159,7 +159,7 @@ export function ValidationQueuePanel() {
           <Badge variant="secondary">{data?.metrics.queued ?? 0} queued</Badge>
           <Badge variant="outline">{data?.metrics.processing ?? 0} processing</Badge>
           <Badge variant="destructive">{data?.metrics.failed ?? 0} failed</Badge>
-          <Button size="sm" variant="ghost" onClick={() => void loadQueue(true)} disabled={loading || refreshing}>
+          <Button size="sm" variant="ghost" onClick={() => void loadQueue(true)} isDisabled={loading || refreshing}>
             <RotateCw className={`w-4 h-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
             Refresh
           </Button>
@@ -236,12 +236,12 @@ export function ValidationQueuePanel() {
                     ) : null}
                   </div>
 
-                  <div className="flex flex-col gap-2 lg:min-w-[220px]">
+                  <div className="flex flex-col gap-2 lg:min-w-55">
                     <div className="text-xs text-gray-400">Current status</div>
                     <div className="text-sm text-gray-200">Property: {job.property_status}</div>
                     <div className="text-sm text-gray-200">Final: {job.final_property_status ?? "—"}</div>
                     <Progress value={Math.min(100, Math.max(0, job.attempts * 25))} className="h-2" />
-                    <Button size="sm" variant="ghost" disabled={!canRetry || retryingId === job.job_id} onClick={() => void retryJob(job.job_id)}>
+                    <Button size="sm" variant="ghost" isDisabled={!canRetry || retryingId === job.job_id} onClick={() => void retryJob(job.job_id)}>
                       {retryingId === job.job_id ? (
                         <>
                           <Clock className="w-4 h-4 mr-2 animate-pulse" />

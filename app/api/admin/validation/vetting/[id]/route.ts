@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata'
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const { id } = await params
 
     // Verify admin authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const { data: { user }, error: authError } = await getAuthUser()
     if (authError || !user) {
       return NextResponse.json(
         { error: 'Unauthorized' },

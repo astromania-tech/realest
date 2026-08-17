@@ -11,7 +11,7 @@
  * Admin-only.
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import prisma from '@/lib/prisma';
 import { renderCampaignTemplate, executeBulkSend, CampaignRecipient } from '@/lib/emailBulkSender';
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
@@ -59,7 +59,7 @@ async function requireAdmin() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
 
   if (!user) return { user: null, error: 'Unauthorized', status: 401 };
 
@@ -111,7 +111,8 @@ async function fetchDbSegmentRecipients(
   let query = supabase
     .from('users')
     .select('email, full_name')
-    .is('deleted_at', null);
+    .is('deleted_at', null)
+    .not('email', 'is', null);
 
   if (audienceFilter.role) {
     query = query.eq('role', audienceFilter.role);
@@ -172,7 +173,7 @@ export async function POST(
 
       result = await executeBulkSend({
         mode: 'broadcast',
-        audienceId: campaign.audience_id,
+        audience_id: campaign.audience_id,
         from,
         subject: campaign.subject,
         html,

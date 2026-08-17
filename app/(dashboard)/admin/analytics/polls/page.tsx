@@ -1,7 +1,7 @@
 /**
  * /admin/analytics/polls — Poll results page (server component)
  */
-import { createClient } from '@/lib/supabase/server';
+import { createClient, getAuthUser} from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -25,7 +25,7 @@ async function getPollData() {
 
 export default async function PollResultsPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await getAuthUser();
   if (!user) redirect('/login');
   const { data: userRow } = await supabase.from('users').select('role').eq('id', user.id).single();
   if (userRow?.role !== 'admin') redirect('/');

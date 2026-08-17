@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import { prisma, Prisma } from '@/lib/prisma'
+import { createClient, getAuthUser } from "@/lib/supabase/server"
+import { prisma } from '@/lib/prisma'
+import { Prisma } from '@/lib/prisma/client'
 import { logAuth401Diagnostics } from '@/lib/auth-diagnostics'
 import { z } from 'zod'
 
@@ -13,6 +14,7 @@ const queueQuerySchema = z.object({
 type ValidationJobRow = {
   job_id: string
   property_id: string
+  job_kind: string
   job_status: string
   attempts: number
   retry_count: number
@@ -39,7 +41,7 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const { data: { user }, error: authError } = await getAuthUser()
 
     if (authError || !user) {
       await logAuth401Diagnostics({
@@ -78,6 +80,7 @@ export async function GET(request: NextRequest) {
       select
         j.id as job_id,
         j.property_id,
+        j.job_kind,
         j.status as job_status,
         j.attempts,
         j.retry_count,

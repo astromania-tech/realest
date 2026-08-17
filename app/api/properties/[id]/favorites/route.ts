@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
 
@@ -89,7 +89,7 @@ export async function POST(
     }
     const propertyId = propertyIdResult.data;
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
@@ -157,7 +157,7 @@ export async function DELETE(
     }
     const propertyId = propertyIdResult.data;
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }

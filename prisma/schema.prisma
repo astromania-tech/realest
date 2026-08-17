@@ -155,76 +155,85 @@ model payments {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model profiles {
-  id                                      String               @id @db.Uuid
-  email                                   String
-  full_name                               String?
-  avatar_url                              String?
-  phone                                   String?
-  bio                                     String?
-  created_at                              DateTime?            @default(now()) @db.Timestamptz(6)
-  updated_at                              DateTime?            @default(now()) @db.Timestamptz(6)
-  admin_audit_log                         admin_audit_log[]
-  agents                                  agents?
-  email_campaigns                         email_campaigns[]
-  inquiries_inquiries_owner_idToprofiles  inquiries[]          @relation("inquiries_owner_idToprofiles")
-  inquiries_inquiries_sender_idToprofiles inquiries[]          @relation("inquiries_sender_idToprofiles")
-  kyc_requests                            kyc_requests[]
-  notifications                           notifications[]
-  owners                                  owners?
-  payments                                payments[]
-  users                                   users                @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "profiles_users_id_fkey")
-  property_documents                      property_documents[]
-  reviews                                 reviews[]
-  saved_properties                        saved_properties[]
-  referral_code                           String?              @unique @db.VarChar(20)
-  referred_by                             String?              @db.Uuid
-  referred_by_code                        String?              @db.VarChar(20)
-  referral_count                          Int                  @default(0)
-  referrer                                profiles?            @relation("ProfileReferrals", fields: [referred_by], references: [id], onDelete: SetNull)
-  referrals                               profiles[]           @relation("ProfileReferrals")
+  id                                                            String                @id @db.Uuid
+  email                                                         String
+  full_name                                                     String?
+  avatar_url                                                    String?
+  phone                                                         String?
+  bio                                                           String?
+  created_at                                                    DateTime?             @default(now()) @db.Timestamptz(6)
+  updated_at                                                    DateTime?             @default(now()) @db.Timestamptz(6)
+  referral_code                                                 String?               @unique @db.VarChar(20)
+  referred_by                                                   String?               @db.Uuid
+  referred_by_code                                              String?               @db.VarChar(20)
+  referral_count                                                Int                   @default(0)
+  waitlist_persona                                              String?
+  candidate_role                                                String?
+  role_activated_at                                             DateTime?             @db.Timestamptz(6)
+  launch_reward_window_ends_at                                  DateTime?             @db.Timestamptz(6)
+  admin_audit_log                                               admin_audit_log[]
+  agents                                                        agents?
+  email_campaigns                                               email_campaigns[]
+  inquiries_inquiries_owner_idToprofiles                        inquiries[]           @relation("inquiries_owner_idToprofiles")
+  inquiries_inquiries_sender_idToprofiles                       inquiries[]           @relation("inquiries_sender_idToprofiles")
+  kyc_requests                                                  kyc_requests[]
+  notifications                                                 notifications[]
+  owners                                                        owners?
+  payments                                                      payments[]
+  referrer                                                      profiles?             @relation("ProfileReferrals", fields: [referred_by], references: [id])
+  referrals                                                     profiles[]            @relation("ProfileReferrals")
+  users                                                         users                 @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "profiles_users_id_fkey")
+  property_documents                                            property_documents[]
+  referral_events_referral_events_referred_profile_idToprofiles referral_events[]     @relation("referral_events_referred_profile_idToprofiles")
+  referral_events_referral_events_referrer_profile_idToprofiles referral_events[]     @relation("referral_events_referrer_profile_idToprofiles")
+  reviews                                                       reviews[]
+  reward_entitlements                                           reward_entitlements[]
+  reward_redemptions                                            reward_redemptions[]
+  saved_properties                                              saved_properties[]
 
   @@index([referral_code], map: "idx_profiles_referral_code")
-  @@index([referred_by],   map: "idx_profiles_referred_by")
+  @@index([referred_by], map: "idx_profiles_referred_by")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 /// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model properties {
-  id                  String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  owner_id            String?              @db.Uuid
-  title               String
-  description         String?
-  price               Decimal              @db.Decimal
-  property_type       String
-  listing_type        String               @default("'for_rent'::text")
-  address             String
-  city                String
-  state               String?
-  postal_code         String?
-  country             String               @default("NG")
-  latitude            Decimal?             @db.Decimal
-  longitude           Decimal?             @db.Decimal
-  bedrooms            Int?
-  bathrooms           Decimal?             @db.Decimal
-  square_feet         Decimal?             @db.Decimal
-  year_built          Int?
-  status              String               @default("'draft'::text")
-  verification_status String               @default("pending")
-  created_at          DateTime?            @default(now()) @db.Timestamptz(6)
-  updated_at          DateTime?            @default(now()) @db.Timestamptz(6)
-  agent_id            String?              @db.Uuid
-  listing_source      String?              @default("owner")
-  price_frequency     String?              @default("sale")
-  inquiries           inquiries[]
-  payments            payments[]
-  agents              agents?              @relation(fields: [agent_id], references: [id], onUpdate: NoAction)
-  owners              owners?              @relation(fields: [owner_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  property_details    property_details[]
-  property_documents  property_documents[]
-  property_media      property_media[]
-  reviews             reviews[]
-  saved_properties    saved_properties[]
+  id                       String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  owner_id                 String?                    @db.Uuid
+  title                    String
+  description              String?
+  price                    Decimal                    @db.Decimal
+  property_type            String
+  listing_type             String                     @default("'for_rent'::text")
+  address                  String
+  city                     String
+  state                    String?
+  postal_code              String?
+  country                  String                     @default("NG")
+  latitude                 Decimal?                   @db.Decimal
+  longitude                Decimal?                   @db.Decimal
+  bedrooms                 Int?
+  bathrooms                Decimal?                   @db.Decimal
+  square_feet              Decimal?                   @db.Decimal
+  year_built               Int?
+  status                   String                     @default("'draft'::text")
+  verification_status      String                     @default("pending")
+  created_at               DateTime?                  @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime?                  @default(now()) @db.Timestamptz(6)
+  agent_id                 String?                    @db.Uuid
+  listing_source           String?                    @default("owner")
+  price_frequency          String?                    @default("sale")
+  inquiries                inquiries[]
+  payments                 payments[]
+  agents                   agents?                    @relation(fields: [agent_id], references: [id], onUpdate: NoAction)
+  owners                   owners?                    @relation(fields: [owner_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  property_details         property_details[]
+  property_documents       property_documents[]
+  property_media           property_media[]
+  property_validation_jobs property_validation_jobs[]
+  reviews                  reviews[]
+  saved_properties         saved_properties[]
 
   @@index([agent_id], map: "idx_properties_agent")
   @@index([description(ops: raw("gin_trgm_ops"))], map: "idx_properties_description_trgm", type: Gin)
@@ -324,29 +333,21 @@ model saved_properties {
   @@index([user_id], map: "idx_saved_properties_user_id")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model spatial_ref_sys {
-  srid      Int     @id
-  auth_name String? @db.VarChar(256)
-  auth_srid Int?
-  srtext    String? @db.VarChar(2048)
-  proj4text String? @db.VarChar(2048)
-}
-
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model users {
-  id         String    @id @db.Uuid
-  email      String?   @unique
-  phone      String?
-  full_name  String?
-  avatar_url String?
-  role       UserRole  @default(user)
-  is_active  Boolean   @default(true)
-  metadata   Json?     @default("{}")
-  created_at DateTime? @default(now()) @db.Timestamptz(6)
-  updated_at DateTime? @default(now()) @db.Timestamptz(6)
-  deleted_at DateTime? @db.Timestamptz(6)
-  profiles   profiles?
+  id                       String                     @id @db.Uuid
+  email                    String?                    @unique
+  phone                    String?
+  full_name                String?
+  avatar_url               String?
+  role                     UserRole                   @default(user)
+  is_active                Boolean                    @default(true)
+  metadata                 Json?                      @default("{}")
+  created_at               DateTime?                  @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime?                  @default(now()) @db.Timestamptz(6)
+  deleted_at               DateTime?                  @db.Timestamptz(6)
+  profiles                 profiles?
+  property_validation_jobs property_validation_jobs[]
 
   @@index([deleted_at], map: "idx_users_deleted_at", where: raw("(deleted_at IS NOT NULL)"))
   @@index([email], map: "idx_users_email")
@@ -357,38 +358,48 @@ model users {
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model waitlist {
-  id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email                    String    @unique @db.VarChar(255)
-  first_name               String    @db.VarChar(100)
-  last_name                String?   @db.VarChar(100)
-  phone                    String?   @db.VarChar(20)
-  source                   String?   @default("website") @db.VarChar(50)
-  status                   String?   @default("active") @db.VarChar(20)
-  interests                String[]
-  location_preference      String?   @db.VarChar(100)
-  property_type_preference String?   @db.VarChar(50)
-  budget_range             String?   @db.VarChar(50)
-  subscribed_at            DateTime? @default(now()) @db.Timestamptz(6)
-  unsubscribed_at          DateTime? @db.Timestamptz(6)
-  last_contacted_at        DateTime? @db.Timestamptz(6)
-  contact_count            Int?      @default(0)
-  referrer_url             String?
-  user_agent               String?
-  ip_address               String?   @db.Inet
-  utm_source               String?    @db.VarChar(100)
-  utm_medium               String?    @db.VarChar(100)
-  utm_campaign             String?    @db.VarChar(100)
+  id                                                             String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                                                          String                  @unique @db.VarChar(255)
+  first_name                                                     String                  @db.VarChar(100)
+  last_name                                                      String?                 @db.VarChar(100)
+  phone                                                          String?                 @db.VarChar(20)
+  source                                                         String?                 @default("website") @db.VarChar(50)
+  status                                                         String?                 @default("active") @db.VarChar(20)
+  interests                                                      String[]
+  location_preference                                            String?                 @db.VarChar(100)
+  property_type_preference                                       String?                 @db.VarChar(50)
+  budget_range                                                   String?                 @db.VarChar(50)
+  subscribed_at                                                  DateTime?               @default(now()) @db.Timestamptz(6)
+  unsubscribed_at                                                DateTime?               @db.Timestamptz(6)
+  last_contacted_at                                              DateTime?               @db.Timestamptz(6)
+  contact_count                                                  Int?                    @default(0)
+  referrer_url                                                   String?
+  user_agent                                                     String?
+  ip_address                                                     String?                 @db.Inet
+  utm_source                                                     String?                 @db.VarChar(100)
+  utm_medium                                                     String?                 @db.VarChar(100)
+  utm_campaign                                                   String?                 @db.VarChar(100)
   /// Auto-generated unique invite code, e.g. "A3F9B2C1"
-  referral_code            String?    @unique @db.VarChar(20)
+  referral_code                                                  String?                 @unique @db.VarChar(20)
   /// UUID of the waitlist entry whose referral_code was used at signup
-  referred_by              String?    @db.Uuid
+  referred_by                                                    String?                 @db.Uuid
   /// Cached count of successful referrals (incremented atomically)
-  referral_count           Int?       @default(0)
-  created_at               DateTime?  @default(now()) @db.Timestamptz(6)
-  updated_at               DateTime?  @default(now()) @db.Timestamptz(6)
-
-  referrer                 waitlist?  @relation("WaitlistReferrals", fields: [referred_by], references: [id], onDelete: SetNull)
-  referrals                waitlist[] @relation("WaitlistReferrals")
+  referral_count                                                 Int?                    @default(0)
+  created_at                                                     DateTime?               @default(now()) @db.Timestamptz(6)
+  updated_at                                                     DateTime?               @default(now()) @db.Timestamptz(6)
+  persona                                                        String                  @default("buyer_renter")
+  persona_details                                                Json?
+  queue_score                                                    Int                     @default(0)
+  queue_rank                                                     Int?
+  candidate_role                                                 String?
+  poll_completion_count                                          Int                     @default(0)
+  waitlist_reward_eligible                                       Boolean                 @default(false)
+  referral_events_referral_events_referred_waitlist_idTowaitlist referral_events[]       @relation("referral_events_referred_waitlist_idTowaitlist")
+  referral_events_referral_events_referrer_waitlist_idTowaitlist referral_events[]       @relation("referral_events_referrer_waitlist_idTowaitlist")
+  reward_entitlements                                            reward_entitlements[]
+  referrer                                                       waitlist?               @relation("WaitlistReferrals", fields: [referred_by], references: [id])
+  referrals                                                      waitlist[]              @relation("WaitlistReferrals")
+  waitlist_rank_history                                          waitlist_rank_history[]
 
   @@index([email], map: "idx_waitlist_email")
   @@index([location_preference], map: "idx_waitlist_location_preference")
@@ -418,33 +429,31 @@ model poll_responses {
 
 /// Persona-segmented launch intelligence poll catalog (form container).
 model poll_forms {
-  id          String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  slug        String              @unique
+  id          String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug        String             @unique
   title       String
   description String?
-  is_active   Boolean             @default(true)
-  created_at  DateTime            @default(now()) @db.Timestamptz(6)
-  updated_at  DateTime            @default(now()) @db.Timestamptz(6)
-
+  is_active   Boolean            @default(true)
+  created_at  DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime           @default(now()) @db.Timestamptz(6)
   questions   poll_questions[]
   submissions poll_submissions[]
 }
 
 /// Questions belonging to a poll form, keyed by segment.
 model poll_questions {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  form_id       String   @db.Uuid
+  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  form_id       String     @db.Uuid
   question_key  String
   segment       String
   prompt        String
   question_type String
   options       Json?
-  is_required   Boolean  @default(true)
+  is_required   Boolean    @default(true)
   display_order Int
-  show_if       String?  // Added for conditional logic
-  created_at    DateTime @default(now()) @db.Timestamptz(6)
-  updated_at    DateTime @default(now()) @db.Timestamptz(6)
-
+  show_if       String?
+  created_at    DateTime   @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime   @default(now()) @db.Timestamptz(6)
   form          poll_forms @relation(fields: [form_id], references: [id], onDelete: Cascade)
 
   @@unique([form_id, question_key])
@@ -453,21 +462,20 @@ model poll_questions {
 
 /// A single respondent's poll submission (one per person per form).
 model poll_submissions {
-  id                    String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  form_id               String                   @db.Uuid
-  segment               String
-  full_name             String
-  email                 String
-  opt_in_email_results  Boolean                  @default(false)
-  referral_code         String?
-  source                String                   @default("web")
-  created_at            DateTime                 @default(now()) @db.Timestamptz(6)
-
-  form                  poll_forms               @relation(fields: [form_id], references: [id], onDelete: Restrict)
-  answers               poll_submission_answers[]
+  id                   String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  form_id              String                    @db.Uuid
+  segment              String
+  full_name            String
+  email                String
+  opt_in_email_results Boolean                   @default(false)
+  referral_code        String?
+  source               String                    @default("web")
+  created_at           DateTime                  @default(now()) @db.Timestamptz(6)
+  answers              poll_submission_answers[]
+  form                 poll_forms                @relation(fields: [form_id], references: [id])
 
   @@index([form_id, segment], map: "poll_submissions_form_segment_idx")
-  @@index([email], map: "poll_submissions_email_idx")
+  @@index([email])
 }
 
 /// Individual answers for each question within a submission.
@@ -477,12 +485,11 @@ model poll_submission_answers {
   question_key  String
   answer        Json
   created_at    DateTime         @default(now()) @db.Timestamptz(6)
-
   submission    poll_submissions @relation(fields: [submission_id], references: [id], onDelete: Cascade)
 
   @@unique([submission_id, question_key])
   @@index([submission_id], map: "poll_submission_answers_submission_idx")
-  @@index([question_key], map: "poll_submission_answers_question_key_idx")
+  @@index([question_key])
 }
 
 /// Email marketing campaign records — tracks both Resend broadcast and DB-segment batch sends.
@@ -513,11 +520,123 @@ model email_campaigns {
   created_by       String    @db.Uuid
   created_at       DateTime? @default(now()) @db.Timestamptz(6)
   updated_at       DateTime? @default(now()) @db.Timestamptz(6)
-  profiles         profiles  @relation(fields: [created_by], references: [id], onDelete: Restrict)
+  profiles         profiles  @relation(fields: [created_by], references: [id])
 
   @@index([status], map: "idx_email_campaigns_status")
   @@index([created_by], map: "idx_email_campaigns_created_by")
   @@index([created_at(sort: Desc)], map: "idx_email_campaigns_created_at")
+}
+
+model property_validation_jobs {
+  id                    String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  property_id           String     @db.Uuid
+  job_kind              String     @default("property")
+  source                String     @default("admin_validation")
+  status                String     @default("queued")
+  attempts              Int        @default(0)
+  retry_count           Int        @default(0)
+  last_error            String?
+  failure_reason        String?
+  final_property_status String?
+  queued_at             DateTime   @default(now()) @db.Timestamptz(6)
+  started_at            DateTime?  @db.Timestamptz(6)
+  finished_at           DateTime?  @db.Timestamptz(6)
+  updated_at            DateTime   @default(now()) @db.Timestamptz(6)
+  next_retry_at         DateTime?  @db.Timestamptz(6)
+  request_payload       Json?
+  result                Json?
+  requested_by          String?    @db.Uuid
+  properties            properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                 users?     @relation(fields: [requested_by], references: [id], onUpdate: NoAction)
+
+  @@index([job_kind], map: "idx_property_validation_jobs_job_kind")
+  @@index([next_retry_at], map: "idx_property_validation_jobs_next_retry_at", where: raw("(next_retry_at IS NOT NULL)"))
+  @@index([property_id], map: "idx_property_validation_jobs_property_id")
+  @@index([queued_at(sort: Desc)], map: "idx_property_validation_jobs_queued_at")
+  @@index([status], map: "idx_property_validation_jobs_status")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model referral_events {
+  id                                                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  referrer_waitlist_id                                    String?   @db.Uuid
+  referrer_profile_id                                     String?   @db.Uuid
+  referred_waitlist_id                                    String?   @db.Uuid
+  referred_profile_id                                     String?   @db.Uuid
+  referral_code                                           String?
+  event_type                                              String
+  metadata                                                Json      @default("{}")
+  created_at                                              DateTime  @default(now()) @db.Timestamptz(6)
+  profiles_referral_events_referred_profile_idToprofiles  profiles? @relation("referral_events_referred_profile_idToprofiles", fields: [referred_profile_id], references: [id], onUpdate: NoAction)
+  waitlist_referral_events_referred_waitlist_idTowaitlist waitlist? @relation("referral_events_referred_waitlist_idTowaitlist", fields: [referred_waitlist_id], references: [id], onUpdate: NoAction)
+  profiles_referral_events_referrer_profile_idToprofiles  profiles? @relation("referral_events_referrer_profile_idToprofiles", fields: [referrer_profile_id], references: [id], onUpdate: NoAction)
+  waitlist_referral_events_referrer_waitlist_idTowaitlist waitlist? @relation("referral_events_referrer_waitlist_idTowaitlist", fields: [referrer_waitlist_id], references: [id], onUpdate: NoAction)
+
+  @@index([event_type], map: "idx_referral_events_event_type")
+  @@index([referrer_profile_id], map: "idx_referral_events_referrer_profile")
+  @@index([referrer_waitlist_id], map: "idx_referral_events_referrer_waitlist")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model reward_catalog {
+  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key                 String                @unique
+  name                String
+  reward_system       String
+  description         String
+  is_redeemable       Boolean               @default(false)
+  metadata            Json                  @default("{}")
+  created_at          DateTime              @default(now()) @db.Timestamptz(6)
+  reward_entitlements reward_entitlements[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model reward_entitlements {
+  id                    String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_email            String
+  waitlist_id           String?              @db.Uuid
+  profile_id            String?              @db.Uuid
+  reward_key            String
+  source_event          String
+  source_referral_count Int?
+  status                String               @default("active")
+  granted_at            DateTime             @default(now()) @db.Timestamptz(6)
+  expires_at            DateTime?            @db.Timestamptz(6)
+  metadata              Json                 @default("{}")
+  profiles              profiles?            @relation(fields: [profile_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  reward_catalog        reward_catalog       @relation(fields: [reward_key], references: [key], onUpdate: NoAction)
+  waitlist              waitlist?            @relation(fields: [waitlist_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  reward_redemptions    reward_redemptions[]
+
+  @@unique([user_email, reward_key], map: "idx_reward_entitlements_email_key", where: raw("(status = ANY (ARRAY['active'::text, 'redeemed'::text]))"))
+  @@index([profile_id], map: "idx_reward_entitlements_profile_id")
+  @@index([waitlist_id], map: "idx_reward_entitlements_waitlist_id")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model reward_redemptions {
+  id                      String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  entitlement_id          String              @db.Uuid
+  profile_id              String?             @db.Uuid
+  redemption_context      String
+  redemption_reference_id String?
+  redeemed_at             DateTime            @default(now()) @db.Timestamptz(6)
+  metadata                Json                @default("{}")
+  reward_entitlements     reward_entitlements @relation(fields: [entitlement_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  profiles                profiles?           @relation(fields: [profile_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model waitlist_rank_history {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  waitlist_id String   @db.Uuid
+  rank        Int
+  score       Int
+  reason      String
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  waitlist    waitlist @relation(fields: [waitlist_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([waitlist_id], map: "idx_waitlist_rank_history_waitlist_id")
 }
 
 enum UserRole {

@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { prisma, Prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
     const supabase = await createClient()
 
     // Verify authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const { data: { user }, error: authError } = await getAuthUser()
     if (authError || !user) {
       return NextResponse.json(
         { error: 'Unauthorized' },

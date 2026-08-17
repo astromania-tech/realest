@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -20,58 +19,28 @@ import {
 import { HeaderLogo } from "@/components/ui/RealEstLogo";
 import { ThemeToggleCompact } from "@/components/ui/theme-toggle-wrapper";
 import { ProfileDropdown } from "@/components/realest/ProfileDropdown";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 export default function Header() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const { user } = useAuth();
   const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchUserSession = async () => {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
-
-      if (user) {
-        const { data: userData } = await supabase
-          .from("users")
-          .select("role")
-          .eq("id", user.id)
-          .single();
-        setRole(userData?.role || null);
-      } else {
-        setRole(null);
-      }
-    };
-
-    fetchUserSession();
-
-    // Listen for auth state changes
+    if (!user) {
+      setRole(null);
+      return;
+    }
     const supabase = createClient();
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        supabase
-          .from("users")
-          .select("role")
-          .eq("id", session.user.id)
-          .single()
-          .then(({ data: userData }) => {
-            setRole(userData?.role || null);
-          });
-      } else {
-        setRole(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => setRole(data?.role || null));
+  }, [user]);
 
   const handleLogout = async () => {
     setIsLoading(true);

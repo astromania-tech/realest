@@ -9,6 +9,7 @@ import {
   CheckCircle,
   Copy,
   Gift,
+  Info,
   Link2,
   Mail,
   Send,
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 import { XIcon, FacebookIcon, LinkedInIcon, WhatsAppIcon } from "@/lib/utils/icon";
 import WaitlistModal from "@/components/shared/WaitlistModal";
+import { useEmailValidation, useEmailCheck, formatWaitlistMessage } from '@/lib/hooks/useEmailValidation';
 
 type Milestone = {
   count: number;
@@ -59,6 +61,10 @@ function ReferContent() {
   const [inviteeEmail, setInviteeEmail] = useState("");
   const [inviteSending, setInviteSending] = useState(false);
   const [inviteFeedback, setInviteFeedback] = useState<string | null>(null);
+
+    // Validates invitee email in real-time as user types
+  const inviteeValidation = useEmailValidation(inviteeEmail, { debounceMs: 500, minLength: 3 });
+  const { checkEmail, isLoading: isCheckingJoin } = useEmailCheck();
 
   useEffect(() => {
     if (ref) {
@@ -206,7 +212,7 @@ function ReferContent() {
       {inviter && !resolveError && (
         <>
           <section className="py-14 px-4">
-            <div className="container mx-auto max-w-5xl grid lg:grid-cols-2 gap-8">
+            <div className="container mx-auto max-w-5xl space-y-8 md:space-y-0 md:grid md:grid-cols-2 gap-6">
               <div className="rounded-2xl border border-border bg-card p-6 space-y-5">
                 <div className="flex items-center gap-2">
                   <Share2 className="w-5 h-5 text-primary" />
@@ -221,17 +227,17 @@ function ReferContent() {
                   </Button>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <a href={socialLinks.x} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border py-2 text-sm hover:bg-muted/50">
-                    <XIcon size={15} /> X (Twitter)
+                <div className="grid grid-cols-2 text-sm md:text-xs sm:grid-cols-4 md:grid-cols-2 gap-2">
+                  <a href={socialLinks.x} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border py-2 px-5 md:hover:text-primary/80 hover:bg-muted/50">
+                    <XIcon size={15} /> 
                   </a>
-                  <a href={socialLinks.facebook} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border py-2 text-sm hover:bg-muted/50">
+                  <a href={socialLinks.facebook} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border py-2 px-5 md:hover:text-primary/80 hover:bg-muted/50">
                     <FacebookIcon size={15} /> Facebook
                   </a>
-                  <a href={socialLinks.linkedin} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border py-2 text-sm hover:bg-muted/50">
+                  <a href={socialLinks.linkedin} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border py-2 px-5 md:hover:text-primary/80 hover:bg-muted/50">
                     <LinkedInIcon size={15} /> LinkedIn
                   </a>
-                  <a href={socialLinks.whatsapp} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border py-2 text-sm hover:bg-muted/50">
+                  <a href={socialLinks.whatsapp} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border py-2 px-5 md:hover:text-primary/80 hover:bg-muted/50">
                     <WhatsAppIcon size={15} /> WhatsApp
                   </a>
                 </div>
@@ -260,18 +266,53 @@ function ReferContent() {
                       value={inviteeEmail}
                       onChange={(e) => setInviteeEmail(e.target.value)}
                       placeholder="friend@example.com"
-                      className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                      className={`mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm ${
+                        inviteeValidation.isValid && !inviteeValidation.isAvailable
+                          ? 'border-orange-400 focus:ring-orange-200/50'
+                          : 'border-border'
+                      }`}
                     />
+
+                    {/* Already on waitlist — bounce with position info */}
+                    {inviteeValidation.isValid && !inviteeValidation.isAvailable && inviteeValidation.userInfo && (
+                      <div className="mt-2 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+                        <div className="flex items-start gap-2">
+                          <Info className="w-4 h-4 text-orange-600 dark:text-orange-400 mt-0.5 shrink-0" />
+                          <div className="text-xs">
+                            <div className="font-medium text-orange-800 dark:text-orange-200">
+                              {formatWaitlistMessage(inviteeValidation.userInfo).title}
+                            </div>
+                            <div className="text-orange-700 dark:text-orange-300 mt-0.5">
+                              {formatWaitlistMessage(inviteeValidation.userInfo).description}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <Button onClick={handleInvite} disabled={inviteSending || !(inviter?.referralCode ?? ref)} className="w-full">
+                  <Button
+                    onClick={handleInvite}
+                    disabled={
+                      inviteSending ||
+                      !(inviter?.referralCode ?? ref) ||
+                      inviteeValidation.isLoading ||
+                      (inviteeValidation.isValid && !inviteeValidation.isAvailable) // ← block if already on list
+                    }
+                    className="w-full"
+                  >
                     <Mail className="w-4 h-4 mr-2" />
-                    {inviteSending ? "Sending invite..." : "Send Invite"}
+                    {
+                      inviteSending ? "Sending invite..." 
+                      : (inviteeValidation.isValid && !inviteeValidation.isAvailable)
+                        ? "Already on waitlist"
+                        : "Send Invite"
+                    }
                   </Button>
-                  {inviteFeedback ? (
-                    <p className={`text-sm ${inviteFeedback.includes("success") ? "text-green-600" : "text-red-600"}`}>
+                  {inviteFeedback && (
+                    <p className={`text-sm text-center ${inviteFeedback.includes("success") ? "text-green-600" : "text-red-600"}`}>
                       {inviteFeedback}
                     </p>
-                  ) : null}
+                  )}
                 </div>
               </div>
             </div>

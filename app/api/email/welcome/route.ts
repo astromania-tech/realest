@@ -5,6 +5,7 @@
  * Requires an authenticated session — the email and firstName are derived
  * from the authenticated user's profile to prevent spoofing.
  */
+import { getAuthUser } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createServerClient } from "@supabase/ssr";
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
 
     if (authError || !user) {
       return NextResponse.json(

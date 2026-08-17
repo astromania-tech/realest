@@ -1,6 +1,6 @@
 // realest/app/api/properties/[id]/media/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { propertyMediaSchema } from "@/lib/validations/property";
@@ -139,7 +139,7 @@ export async function GET(
       return NextResponse.json({ error: "Property not found" }, { status: 404 });
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await getAuthUser();
     let ownerRecord: { id: string } | null = null;
     if (user) {
       ownerRecord = await prisma.owners.findUnique({ where: { profile_id: user.id }, select: { id: true } });
@@ -176,7 +176,7 @@ export async function POST(
     }
     const propertyId = propertyIdResult.data;
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -216,7 +216,6 @@ export async function POST(
 
     const media = await prisma.property_media.create({
       data: {
-        property_id: id,
         property_id: propertyId,
         media_type: validatedData.media_type,
         media_url: validatedData.media_url,

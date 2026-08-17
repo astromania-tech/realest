@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Card, Chip } from "@heroui/react";
 import Link from "next/link";
 import { MessageSquare, Calendar, MapPin, Eye } from "lucide-react";
+import { getAuthUser } from "@/lib/supabase/server";
 
 interface SentInquiry {
   id: string;
@@ -27,7 +28,7 @@ export default function MyInquiriesPage() {
   useEffect(() => {
     const fetchInquiries = async () => {
       const supabase = createClient();
-      const { data: user } = await supabase.auth.getUser();
+      const { data: user } = await getAuthUser();
 
       if (!user.user) {
         setInquiries([]);

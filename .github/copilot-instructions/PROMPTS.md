@@ -350,7 +350,7 @@ Layout Structure:
   <div className="space-y-4">
     {/* Property cards */}
   </div>
-  <div className="sticky top-4 h-[600px]">
+  <div className="sticky top-4 h-150">
     <PropertyMap properties={properties} />
   </div>
 </div>

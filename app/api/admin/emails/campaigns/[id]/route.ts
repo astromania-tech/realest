@@ -6,7 +6,7 @@
  * Admin-only.
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
@@ -85,7 +85,7 @@ async function requireAdmin() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
 
   if (!user) return { user: null, error: 'Unauthorized', status: 401 };
 

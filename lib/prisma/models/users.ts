@@ -196,7 +196,7 @@ export type UsersGroupByOutputType = {
   _max: UsersMaxAggregateOutputType | null
 }
 
-type GetUsersGroupByPayload<T extends usersGroupByArgs> = Prisma.PrismaPromise<
+export type GetUsersGroupByPayload<T extends usersGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<UsersGroupByOutputType, T['by']> &
       {
@@ -227,6 +227,7 @@ export type usersWhereInput = {
   updated_at?: Prisma.DateTimeNullableFilter<"users"> | Date | string | null
   deleted_at?: Prisma.DateTimeNullableFilter<"users"> | Date | string | null
   profiles?: Prisma.XOR<Prisma.ProfilesNullableScalarRelationFilter, Prisma.profilesWhereInput> | null
+  property_validation_jobs?: Prisma.Property_validation_jobsListRelationFilter
 }
 
 export type usersOrderByWithRelationInput = {
@@ -242,6 +243,7 @@ export type usersOrderByWithRelationInput = {
   updated_at?: Prisma.SortOrderInput | Prisma.SortOrder
   deleted_at?: Prisma.SortOrderInput | Prisma.SortOrder
   profiles?: Prisma.profilesOrderByWithRelationInput
+  property_validation_jobs?: Prisma.property_validation_jobsOrderByRelationAggregateInput
 }
 
 export type usersWhereUniqueInput = Prisma.AtLeast<{
@@ -260,6 +262,7 @@ export type usersWhereUniqueInput = Prisma.AtLeast<{
   updated_at?: Prisma.DateTimeNullableFilter<"users"> | Date | string | null
   deleted_at?: Prisma.DateTimeNullableFilter<"users"> | Date | string | null
   profiles?: Prisma.XOR<Prisma.ProfilesNullableScalarRelationFilter, Prisma.profilesWhereInput> | null
+  property_validation_jobs?: Prisma.Property_validation_jobsListRelationFilter
 }, "id" | "email">
 
 export type usersOrderByWithAggregationInput = {
@@ -309,6 +312,7 @@ export type usersCreateInput = {
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
   profiles?: Prisma.profilesCreateNestedOneWithoutUsersInput
+  property_validation_jobs?: Prisma.property_validation_jobsCreateNestedManyWithoutUsersInput
 }
 
 export type usersUncheckedCreateInput = {
@@ -324,6 +328,7 @@ export type usersUncheckedCreateInput = {
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
   profiles?: Prisma.profilesUncheckedCreateNestedOneWithoutUsersInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedCreateNestedManyWithoutUsersInput
 }
 
 export type usersUpdateInput = {
@@ -339,6 +344,7 @@ export type usersUpdateInput = {
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   profiles?: Prisma.profilesUpdateOneWithoutUsersNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUpdateManyWithoutUsersNestedInput
 }
 
 export type usersUncheckedUpdateInput = {
@@ -354,6 +360,7 @@ export type usersUncheckedUpdateInput = {
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   profiles?: Prisma.profilesUncheckedUpdateOneWithoutUsersNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedUpdateManyWithoutUsersNestedInput
 }
 
 export type usersCreateManyInput = {
@@ -443,6 +450,11 @@ export type usersMinOrderByAggregateInput = {
   deleted_at?: Prisma.SortOrder
 }
 
+export type UsersNullableScalarRelationFilter = {
+  is?: Prisma.usersWhereInput | null
+  isNot?: Prisma.usersWhereInput | null
+}
+
 export type usersCreateNestedOneWithoutProfilesInput = {
   create?: Prisma.XOR<Prisma.usersCreateWithoutProfilesInput, Prisma.usersUncheckedCreateWithoutProfilesInput>
   connectOrCreate?: Prisma.usersCreateOrConnectWithoutProfilesInput
@@ -465,6 +477,22 @@ export type BoolFieldUpdateOperationsInput = {
   set?: boolean
 }
 
+export type usersCreateNestedOneWithoutProperty_validation_jobsInput = {
+  create?: Prisma.XOR<Prisma.usersCreateWithoutProperty_validation_jobsInput, Prisma.usersUncheckedCreateWithoutProperty_validation_jobsInput>
+  connectOrCreate?: Prisma.usersCreateOrConnectWithoutProperty_validation_jobsInput
+  connect?: Prisma.usersWhereUniqueInput
+}
+
+export type usersUpdateOneWithoutProperty_validation_jobsNestedInput = {
+  create?: Prisma.XOR<Prisma.usersCreateWithoutProperty_validation_jobsInput, Prisma.usersUncheckedCreateWithoutProperty_validation_jobsInput>
+  connectOrCreate?: Prisma.usersCreateOrConnectWithoutProperty_validation_jobsInput
+  upsert?: Prisma.usersUpsertWithoutProperty_validation_jobsInput
+  disconnect?: Prisma.usersWhereInput | boolean
+  delete?: Prisma.usersWhereInput | boolean
+  connect?: Prisma.usersWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.usersUpdateToOneWithWhereWithoutProperty_validation_jobsInput, Prisma.usersUpdateWithoutProperty_validation_jobsInput>, Prisma.usersUncheckedUpdateWithoutProperty_validation_jobsInput>
+}
+
 export type usersCreateWithoutProfilesInput = {
   id: string
   email?: string | null
@@ -477,6 +505,7 @@ export type usersCreateWithoutProfilesInput = {
   created_at?: Date | string | null
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
+  property_validation_jobs?: Prisma.property_validation_jobsCreateNestedManyWithoutUsersInput
 }
 
 export type usersUncheckedCreateWithoutProfilesInput = {
@@ -491,6 +520,7 @@ export type usersUncheckedCreateWithoutProfilesInput = {
   created_at?: Date | string | null
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedCreateNestedManyWithoutUsersInput
 }
 
 export type usersCreateOrConnectWithoutProfilesInput = {
@@ -521,6 +551,7 @@ export type usersUpdateWithoutProfilesInput = {
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  property_validation_jobs?: Prisma.property_validation_jobsUpdateManyWithoutUsersNestedInput
 }
 
 export type usersUncheckedUpdateWithoutProfilesInput = {
@@ -535,8 +566,114 @@ export type usersUncheckedUpdateWithoutProfilesInput = {
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedUpdateManyWithoutUsersNestedInput
 }
 
+export type usersCreateWithoutProperty_validation_jobsInput = {
+  id: string
+  email?: string | null
+  phone?: string | null
+  full_name?: string | null
+  avatar_url?: string | null
+  role?: $Enums.UserRole
+  is_active?: boolean
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  deleted_at?: Date | string | null
+  profiles?: Prisma.profilesCreateNestedOneWithoutUsersInput
+}
+
+export type usersUncheckedCreateWithoutProperty_validation_jobsInput = {
+  id: string
+  email?: string | null
+  phone?: string | null
+  full_name?: string | null
+  avatar_url?: string | null
+  role?: $Enums.UserRole
+  is_active?: boolean
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  deleted_at?: Date | string | null
+  profiles?: Prisma.profilesUncheckedCreateNestedOneWithoutUsersInput
+}
+
+export type usersCreateOrConnectWithoutProperty_validation_jobsInput = {
+  where: Prisma.usersWhereUniqueInput
+  create: Prisma.XOR<Prisma.usersCreateWithoutProperty_validation_jobsInput, Prisma.usersUncheckedCreateWithoutProperty_validation_jobsInput>
+}
+
+export type usersUpsertWithoutProperty_validation_jobsInput = {
+  update: Prisma.XOR<Prisma.usersUpdateWithoutProperty_validation_jobsInput, Prisma.usersUncheckedUpdateWithoutProperty_validation_jobsInput>
+  create: Prisma.XOR<Prisma.usersCreateWithoutProperty_validation_jobsInput, Prisma.usersUncheckedCreateWithoutProperty_validation_jobsInput>
+  where?: Prisma.usersWhereInput
+}
+
+export type usersUpdateToOneWithWhereWithoutProperty_validation_jobsInput = {
+  where?: Prisma.usersWhereInput
+  data: Prisma.XOR<Prisma.usersUpdateWithoutProperty_validation_jobsInput, Prisma.usersUncheckedUpdateWithoutProperty_validation_jobsInput>
+}
+
+export type usersUpdateWithoutProperty_validation_jobsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  full_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  profiles?: Prisma.profilesUpdateOneWithoutUsersNestedInput
+}
+
+export type usersUncheckedUpdateWithoutProperty_validation_jobsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  full_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  profiles?: Prisma.profilesUncheckedUpdateOneWithoutUsersNestedInput
+}
+
+
+/**
+ * Count Type UsersCountOutputType
+ */
+
+export type UsersCountOutputType = {
+  property_validation_jobs: number
+}
+
+export type UsersCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  property_validation_jobs?: boolean | UsersCountOutputTypeCountProperty_validation_jobsArgs
+}
+
+/**
+ * UsersCountOutputType without action
+ */
+export type UsersCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the UsersCountOutputType
+   */
+  select?: Prisma.UsersCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * UsersCountOutputType without action
+ */
+export type UsersCountOutputTypeCountProperty_validation_jobsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.property_validation_jobsWhereInput
+}
 
 
 export type usersSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -552,6 +689,8 @@ export type usersSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   updated_at?: boolean
   deleted_at?: boolean
   profiles?: boolean | Prisma.users$profilesArgs<ExtArgs>
+  property_validation_jobs?: boolean | Prisma.users$property_validation_jobsArgs<ExtArgs>
+  _count?: boolean | Prisma.UsersCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["users"]>
 
 export type usersSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -599,6 +738,8 @@ export type usersSelectScalar = {
 export type usersOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "phone" | "full_name" | "avatar_url" | "role" | "is_active" | "metadata" | "created_at" | "updated_at" | "deleted_at", ExtArgs["result"]["users"]>
 export type usersInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   profiles?: boolean | Prisma.users$profilesArgs<ExtArgs>
+  property_validation_jobs?: boolean | Prisma.users$property_validation_jobsArgs<ExtArgs>
+  _count?: boolean | Prisma.UsersCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type usersIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
 export type usersIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -607,6 +748,7 @@ export type $usersPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   name: "users"
   objects: {
     profiles: Prisma.$profilesPayload<ExtArgs> | null
+    property_validation_jobs: Prisma.$property_validation_jobsPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1015,6 +1157,7 @@ readonly fields: usersFieldRefs;
 export interface Prisma__usersClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   profiles<T extends Prisma.users$profilesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$profilesArgs<ExtArgs>>): Prisma.Prisma__profilesClient<runtime.Types.Result.GetResult<Prisma.$profilesPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  property_validation_jobs<T extends Prisma.users$property_validation_jobsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$property_validation_jobsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$property_validation_jobsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1251,6 +1394,11 @@ export type usersFindManyArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    * Skip the first `n` users.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of users.
+   */
   distinct?: Prisma.UsersScalarFieldEnum | Prisma.UsersScalarFieldEnum[]
 }
 
@@ -1459,6 +1607,30 @@ export type users$profilesArgs<ExtArgs extends runtime.Types.Extensions.Internal
    */
   include?: Prisma.profilesInclude<ExtArgs> | null
   where?: Prisma.profilesWhereInput
+}
+
+/**
+ * users.property_validation_jobs
+ */
+export type users$property_validation_jobsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the property_validation_jobs
+   */
+  select?: Prisma.property_validation_jobsSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the property_validation_jobs
+   */
+  omit?: Prisma.property_validation_jobsOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.property_validation_jobsInclude<ExtArgs> | null
+  where?: Prisma.property_validation_jobsWhereInput
+  orderBy?: Prisma.property_validation_jobsOrderByWithRelationInput | Prisma.property_validation_jobsOrderByWithRelationInput[]
+  cursor?: Prisma.property_validation_jobsWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Property_validation_jobsScalarFieldEnum | Prisma.Property_validation_jobsScalarFieldEnum[]
 }
 
 /**

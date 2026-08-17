@@ -1,5 +1,6 @@
+// app/api/referral/resolve/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase/service';
+import prisma from '@/lib/prisma';
 import {
   buildReferralShareUrl,
   getCurrentMilestone,
@@ -20,23 +21,32 @@ export const openApiGET: OpenApiMetadata = {
     '400': { description: 'Referral code is required' },
     '404': { description: 'Referral code not found' },
   },
-}
+};
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code')?.trim().toUpperCase();
 
   if (!code) {
-    return NextResponse.json({ ok: false, error: 'Referral code is required' }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: 'Referral code is required' },
+      { status: 400 },
+    );
   }
 
-  const svc = createServiceClient();
-
-  const { data: profileReferrer } = await svc
-    .from('profiles')
-    .select('id, email, full_name, referral_code, referral_count, waitlist_persona, candidate_role')
-    .eq('referral_code', code)
-    .maybeSingle();
+  // 1. Check profiles first (registered users take priority)
+  const profileReferrer = await prisma.profiles.findFirst({
+    where: { referral_code: code },
+    select: {
+      id: true,
+      email: true,
+      full_name: true,
+      referral_code: true,
+      referral_count: true,
+      waitlist_persona: true,
+      candidate_role: true,
+    },
+  });
 
   if (profileReferrer) {
     const persona = isWaitlistPersona(profileReferrer.waitlist_persona)
@@ -62,17 +72,31 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  const { data: waitlistReferrer } = await svc
-    .from('waitlist')
-    .select('id, email, first_name, referral_code, referral_count, persona, candidate_role, queue_rank')
-    .eq('referral_code', code)
-    .maybeSingle();
+  // 2. Fall back to waitlist (pre-registration users)
+  const waitlistReferrer = await prisma.waitlist.findFirst({
+    where: { referral_code: code },
+    select: {
+      id: true,
+      email: true,
+      first_name: true,
+      referral_code: true,
+      referral_count: true,
+      persona: true,
+      candidate_role: true,
+      queue_rank: true,
+    },
+  });
 
   if (!waitlistReferrer) {
-    return NextResponse.json({ ok: false, error: 'Referral code not found' }, { status: 404 });
+    return NextResponse.json(
+      { ok: false, error: 'Referral code not found' },
+      { status: 404 },
+    );
   }
 
-  const persona = isWaitlistPersona(waitlistReferrer.persona) ? waitlistReferrer.persona : null;
+  const persona = isWaitlistPersona(waitlistReferrer.persona)
+    ? waitlistReferrer.persona
+    : null;
   const referralCount = waitlistReferrer.referral_count ?? 0;
 
   return NextResponse.json({
