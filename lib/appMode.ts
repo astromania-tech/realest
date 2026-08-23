@@ -134,9 +134,9 @@ export function isRouteAccessible(pathname: string): boolean {
       '/api/poll/city',     // City poll vote endpoint
       '/api/poll/catalog',  // Poll catalog endpoint
       '/api/poll/submit',   // Poll submission endpoint
-      '/api/referral/resolve', // Referral code resolution endpoint
-      '/api/referral/invite',   // Referral invite endpoint
-      '/api/referral/me',       // Referral status endpoint
+      '/api/referral/me',  // Referral details endpoint
+      '/api/referral/resolve',  // Referral code resolve endpoint
+      '/api/referral/invite',  // Referral invitation endpoint
     ];
     // Allow /api/poll/submission/[id] dynamic routes
     const isPollSubmissionApi = /^\/api\/poll\/submission\/[0-9a-f-]{36}$/i.test(pathname);
