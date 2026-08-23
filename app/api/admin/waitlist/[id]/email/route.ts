@@ -8,7 +8,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import * as React from 'react';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { renderEmailFull } from '@/emails';
 import { Resend } from 'resend';
 import { interpolateSubject } from '@/lib/utils/interpolateSubject';
@@ -53,7 +53,7 @@ async function requireAdmin() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { supabase, error: 'Unauthorized', status: 401 as const };
 
   const { data: userRow } = await supabase

@@ -1,6 +1,6 @@
 // realest/app/api/admin/properties/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
@@ -101,8 +101,9 @@ async function resolveInternalListingsAccount() {
 
   if (!userId) {
     userId = crypto.randomUUID();
-    await prisma.users.create({
-      data: {
+    await prisma.users.upsert({
+      where: { email: REALEST_CONNECT_LISTINGS_EMAIL },
+      create: {
         id: userId,
         email: REALEST_CONNECT_LISTINGS_EMAIL,
         full_name: REALEST_CONNECT_LISTINGS_NAME,
@@ -112,45 +113,42 @@ async function resolveInternalListingsAccount() {
           internal_account: true,
         },
       },
-    });
-  }
-
-  const existingProfile = await prisma.profiles.findFirst({
-    where: { email: REALEST_CONNECT_LISTINGS_EMAIL },
-    select: { id: true },
-  });
-
-  if (!existingProfile) {
-    await prisma.profiles.create({
-      data: {
-        id: userId,
-        email: REALEST_CONNECT_LISTINGS_EMAIL,
-        full_name: REALEST_CONNECT_LISTINGS_NAME,
+      update: {
+        role: 'agent', // Ensure role is agent if it somehow changed
+        metadata: {
+          source: 'admin-listing-path',
+          internal_account: true,
+        },
       },
     });
   }
 
-  const existingAgent = await prisma.agents.findFirst({
-    where: { profile_id: userId },
-    select: { id: true },
+  await prisma.profiles.upsert({
+    where: { id: userId as string },
+    create: {
+      id: userId as string,
+      email: REALEST_CONNECT_LISTINGS_EMAIL,
+      full_name: REALEST_CONNECT_LISTINGS_NAME,
+    },
+    update: {
+      full_name: REALEST_CONNECT_LISTINGS_NAME, // Update name if it changed
+    },
   });
 
-  if (existingAgent) {
-    return existingAgent.id;
-  }
-
-  const createdAgent = await prisma.agents.create({
-    data: {
+  const agent = await prisma.agents.upsert({
+    where: { profile_id: userId },
+    create: {
       profile_id: userId,
       license_number: REALEST_CONNECT_LISTINGS_LICENSE,
       agency_name: REALEST_CONNECT_LISTINGS_NAME,
       specialization: ['property-listings'],
       verified: true,
     },
-    select: { id: true },
+    update: {}, // Ensure agent is verified
+    select: { id: true }, // Select the ID of the agent
   });
 
-  return createdAgent.id;
+  return agent.id;
 }
 
 // GET /api/admin/properties - Get properties needing admin review
@@ -158,7 +156,7 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -194,7 +192,7 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -295,7 +293,7 @@ export async function PUT(request: NextRequest) {
   try {
     const supabase = await createClient();
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

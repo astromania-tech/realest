@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser} from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { templateMeta, CATEGORIES } from "@/emails/preview-registry";
 import { EmailPreviewDashboard } from "./_components/EmailPreviewDashboard";
@@ -13,7 +13,7 @@ export default async function AdminEmailsPage() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
 
   if (!user) {
     redirect("/login");

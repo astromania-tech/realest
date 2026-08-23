@@ -1,20 +1,23 @@
 /**
  * POST /api/webhooks/audience-sync
  *
- * Supabase Database Webhook handler — keeps Resend audiences in sync with
- * the application database as a safety net for any changes that bypass the
- * primary application-layer sync hooks.
+ * ⛔ RETIRED — returns 410 Gone.
  *
- * Handles:
- *   public.users   INSERT            → add to USERS audience
- *   public.users   UPDATE (role)     → move to OWNERS or AGENTS audience
- *   public.waitlist INSERT            → add to WAITLIST audience (safety net)
- *   public.waitlist UPDATE (status)   → unsubscribe from WAITLIST audience
+ * This webhook was a secondary / safety-net sync path that duplicated the
+ * primary audience sync already handled in-line by the application routes:
  *
- * Security:
- *   Validates the `x-webhook-secret` header against SUPABASE_WEBHOOK_SECRET.
- *   The endpoint always returns 200 to prevent Supabase from disabling the
- *   webhook due to repeated non-2xx responses (errors are logged, not re-thrown).
+ *   POST   /api/waitlist  → syncWaitlistJoin()        (lib/resend-audiences)
+ *   DELETE /api/waitlist  → syncWaitlistUnsubscribe()  (lib/resend-audiences)
+ *   POST   /api/auth/...  → syncNewUser / syncRoleChange (lib/resend-audiences)
+ *
+ * The webhook approach also required Supabase Dashboard → Database → Webhooks
+ * to be configured pointing at this URL, which was never done in production.
+ *
+ * Single source of truth: lib/resend-audiences.ts, called from route handlers.
+ *
+ * For the Resend→DB reverse direction (recovery after migrations), use:
+ *   npx tsx scripts/import-resend-to-db.ts
+ * or invoke the `resend-audience-sync` Supabase Edge Function.
  *
  * How to configure in Supabase:
  *   Dashboard → Database → Webhooks → Create a new webhook:

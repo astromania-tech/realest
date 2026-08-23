@@ -33,8 +33,6 @@ export default function FavoritesPage() {
 
   useEffect(() => {
     const fetchFavorites = async () => {
-      const supabase = createClient();
-      const { data: user } = await supabase.auth.getUser();
 
       try {
         const supabase = createClient();

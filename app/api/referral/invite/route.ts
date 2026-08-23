@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { sendReferralInviteEmail } from '@/lib/emailService';
 import { recordReferralEvent } from '@/lib/reward-engine';
 import { buildReferralShareUrl, getCurrentMilestone, getNextMilestone } from '@/lib/referral-system';
-import { createServiceClient } from '@/lib/supabase/service';
+import prisma from '@/lib/prisma';
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
 
 export const openApiPOST: OpenApiMetadata = {
@@ -76,20 +76,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Invitee email and referral code are required' }, { status: 400 });
   }
 
-  const svc = createServiceClient();
-  const { data: profileReferrer } = await svc
-    .from('profiles')
-    .select('id, email, full_name, referral_code, referral_count')
-    .eq('referral_code', referralCode)
-    .maybeSingle();
+  const profileReferrer = await prisma.profiles.findFirst({
+    where: { referral_code: referralCode },
+    select: { id: true, email: true, full_name: true, referral_code: true, referral_count: true },
+  });
 
-  const { data: waitlistReferrer } = profileReferrer
-    ? { data: null }
-    : await svc
-        .from('waitlist')
-        .select('id, email, first_name, referral_code, referral_count')
-        .eq('referral_code', referralCode)
-        .maybeSingle();
+  const waitlistReferrer = profileReferrer
+    ? null
+    : await prisma.waitlist.findFirst({
+        where: { referral_code: referralCode },
+        select: { id: true, email: true, first_name: true, referral_code: true, referral_count: true },
+      });
 
   const inviter = profileReferrer
     ? {
@@ -123,7 +120,7 @@ export async function POST(request: NextRequest) {
     referralCode: inviter.referralCode,
     referralUrl: buildReferralShareUrl(inviter.referralCode),
     rewardDescription: currentMilestone?.label ?? 'priority verification on your first listing',
-    rewardForReferee: nextMilestone?.label ?? '1 month of premium visibility',
+    rewardForReferrer: nextMilestone?.label ?? '1 month of premium visibility',
   });
 
   if (!result.success) {
@@ -139,7 +136,7 @@ export async function POST(request: NextRequest) {
       invitee_email: inviteeEmail,
       invitee_name: inviteeName || null,
     },
-  }, svc);
+  });
 
   return NextResponse.json({ ok: true });
 }

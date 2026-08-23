@@ -154,7 +154,7 @@ export type Poll_submission_answersGroupByOutputType = {
   _max: Poll_submission_answersMaxAggregateOutputType | null
 }
 
-type GetPoll_submission_answersGroupByPayload<T extends poll_submission_answersGroupByArgs> = Prisma.PrismaPromise<
+export type GetPoll_submission_answersGroupByPayload<T extends poll_submission_answersGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<Poll_submission_answersGroupByOutputType, T['by']> &
       {
@@ -1122,6 +1122,11 @@ export type poll_submission_answersFindManyArgs<ExtArgs extends runtime.Types.Ex
    * Skip the first `n` poll_submission_answers.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of poll_submission_answers.
+   */
   distinct?: Prisma.Poll_submission_answersScalarFieldEnum | Prisma.Poll_submission_answersScalarFieldEnum[]
 }
 

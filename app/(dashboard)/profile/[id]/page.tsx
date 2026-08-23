@@ -21,6 +21,7 @@ import {
   MessageSquare,
   Star,
 } from "lucide-react";
+import { ProfileUpload } from "@/components/realest/ProfileUpload";
 
 interface UserProfile {
   id: string;
@@ -167,13 +168,14 @@ export default function PublicProfilePage() {
           <Card className="mb-8">
             <CardContent className="p-8">
               <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-                <Avatar.Root size="lg">
+                <ProfileUpload />
+                {/* <Avatar.Root size="lg">
                   <Avatar.Fallback className="text-2xl">
                     {profile.full_name?.charAt(0) ||
                       profile.email?.charAt(0) ||
                       "U"}
                   </Avatar.Fallback>
-                </Avatar.Root>
+                </Avatar.Root> */}
 
                 <div className="flex-1 text-center md:text-left">
                   <h1 className="text-3xl font-bold mb-2">

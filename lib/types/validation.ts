@@ -19,6 +19,10 @@ export interface DocumentValidationResult {
     pageCount?: number
     size: number
     format: string
+    width?: number
+    height?: number
+    hasExif?: boolean
+    location?: { lat: number; lng: number } | null
   }
   checks: {
     isAuthentic: boolean

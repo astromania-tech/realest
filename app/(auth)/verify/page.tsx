@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import VerifyPage from "./VerifyClient";
+import VerifyEmailPage from "./VerifyClient";
 
 export const metadata: Metadata = {
   title: "Verifying Email",
@@ -7,6 +7,6 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-export default function EmailVerifyPage() {
-  return <VerifyPage />;
+export default function VerifyPage() {
+  return <VerifyEmailPage />;
 }

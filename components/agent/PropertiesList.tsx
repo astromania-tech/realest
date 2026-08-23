@@ -43,7 +43,7 @@ export function PropertiesList({ properties }: { properties: PropertyListItem[] 
                 {/* Premium features: views_count and inquiries_count removed for free tier */}
               </div>
               <div className="text-right">
-                <Link className="text-primary underline" href={`/agent/listing/${p.id}/edit`}>Edit</Link>
+                <Link className="text-primary underline" href={`/agent/properties/${p.id}/edit`}>Edit</Link>
               </div>
             </div>
           </Card>

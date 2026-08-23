@@ -57,7 +57,7 @@ async function findSession(sessionId: string) {
     return null
   }
 
-  const rows = await prisma.$queryRawUnsafe<Array<{
+  const rows = await prisma.$queryRawUnsafe<{
     id: string
     user_id: string
     created_at: Date
@@ -67,12 +67,12 @@ async function findSession(sessionId: string) {
     user_agent: string | null
     ip: string | null
     tag: string | null
-  }>(`
+  }[]>(`
     select id, user_id, created_at, updated_at, refreshed_at, not_after, user_agent, ip, tag
     from auth.sessions
     where id = '${sessionId}'::uuid
     limit 1
-  `)
+  `);
 
   return rows[0] ?? null
 }
@@ -82,17 +82,17 @@ async function findAuthUser(userId: string) {
     return null
   }
 
-  const rows = await prisma.$queryRawUnsafe<Array<{
+  const rows = await prisma.$queryRawUnsafe<{
     id: string
     email: string | null
     raw_app_meta_data: unknown
     raw_user_meta_data: unknown
-  }>(`
+  }[]>(`
     select id, email, raw_app_meta_data, raw_user_meta_data
     from auth.users
     where id = '${userId}'::uuid
     limit 1
-  `)
+  `);
 
   return rows[0] ?? null
 }

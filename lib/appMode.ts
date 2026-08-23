@@ -117,6 +117,7 @@ export function isRouteAccessible(pathname: string): boolean {
       '/',              // Home page (coming soon)
       '/not-found',     // 404 page
       '/favicon.ico',   // Browser favicon
+      '/manifest.json', // PWA manifest
       '/sneak-peek',    // Email link: sneak peek preview
       '/early-access',  // Email link: early access sign-up
       '/refer',         // Email link: referral landing
@@ -133,6 +134,9 @@ export function isRouteAccessible(pathname: string): boolean {
       '/api/poll/city',     // City poll vote endpoint
       '/api/poll/catalog',  // Poll catalog endpoint
       '/api/poll/submit',   // Poll submission endpoint
+      '/api/referral/resolve', // Referral code resolution endpoint
+      '/api/referral/invite',   // Referral invite endpoint
+      '/api/referral/me',       // Referral status endpoint
     ];
     // Allow /api/poll/submission/[id] dynamic routes
     const isPollSubmissionApi = /^\/api\/poll\/submission\/[0-9a-f-]{36}$/i.test(pathname);

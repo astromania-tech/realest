@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { logAdminAction } from "@/lib/audit"
 import { prisma } from "@/lib/prisma"
 import type { OpenApiMetadata } from "@/lib/openapi/route-metadata"
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     const supabase = await createClient()
 
     // Ensure requester is admin
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await getAuthUser()
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
     const adminRow = await prisma.users.findUnique({ where: { id: user.id }, select: { role: true } })

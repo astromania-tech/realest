@@ -14,7 +14,6 @@ import {
 import { Input } from "@/components/ui/input";
 import {
   signInWithPassword,
-  getUserProfile,
   formatAuthError,
 } from "@/lib/auth";
 import { Eye, EyeOff, Mail, Lock, CheckCircle, AlertCircle } from "lucide-react";
@@ -69,50 +68,36 @@ function LoginForm() {
       }
 
       if (response.user) {
-        // Get user profile to determine redirect
-        const profileResponse = await getUserProfile(response.user.id);
+        const userType =
+          response.user.app_metadata?.role || response.user.user_metadata?.user_type;
 
-        if (profileResponse.success && profileResponse.profile) {
-          const userType = profileResponse.profile.user_type;
+        if (userType === "owner" || userType === "agent") {
+          const supabase = (await import("@/lib/supabase/client")).createClient();
+          const tableName = userType === "owner" ? "owners" : "agents";
 
-          // Check if user needs to complete onboarding
-          if (userType === "owner" || userType === "agent") {
-            // Check if onboarding is complete by verifying role-specific table entry
-            const supabase = (
-              await import("@/lib/supabase/client")
-            ).createClient();
-            const tableName = userType === "owner" ? "owners" : "agents";
+          const { data: onboardingComplete } = await supabase
+            .from(tableName)
+            .select("id")
+            .eq("profile_id", response.user.id)
+            .single();
 
-            const { data: onboardingComplete } = await supabase
-              .from(tableName)
-              .select("id")
-              .eq("profile_id", response.user.id)
-              .single();
-
-            if (!onboardingComplete) {
-              // User hasn't completed onboarding, redirect to onboarding flow
-              router.push("/onboarding");
-              router.refresh();
-              return;
-            }
+          if (!onboardingComplete) {
+            router.push("/onboarding");
+            router.refresh();
+            return;
           }
-
-          // User has completed onboarding or doesn't need it, redirect to dashboard
-          if (userType === "owner") {
-            router.push("/owner");
-          } else if (userType === "admin") {
-            router.push("/admin");
-          } else if (userType === "agent") {
-            router.push("/agent");
-          } else {
-            router.push("/profile");
-          }
-          router.refresh();
-        } else {
-          // Fallback to profile if profile fetch fails
-          router.push("/profile");
-          router.refresh();
         }
+
+        if (userType === "owner") {
+          router.push("/owner");
+        } else if (userType === "admin") {
+          router.push("/admin");
+        } else if (userType === "agent") {
+          router.push("/agent");
+        } else {
+          router.push("/profile");
+        }
+        router.refresh();
       }
     } catch (err) {
       setError("An unexpected error occurred");

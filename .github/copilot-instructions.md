@@ -43,7 +43,7 @@ See [META-COGNITIVE-SYSTEM.md](copilot-instructions/META-COGNITIVE-SYSTEM.md) fo
 | **[04-authentication.md](copilot-instructions/04-authentication.md)** | Auth patterns, RLS policies, role-based access, middleware | User auth, protected routes, permission checks, security |
 | **[05-nigerian-market.md](copilot-instructions/05-nigerian-market.md)** | Cultural context, infrastructure realities, localization, BQ features | Nigerian-specific features, cultural sensitivity, local patterns |
 | **[07-api-documentation.md](copilot-instructions/07-api-documentation.md)** | ⚠️ MANDATORY: Auto-documentation workflow, OpenAPI spec, endpoint docs, Nigerian context | Creating/updating/deleting APIs - EVERY change must update docs |
-| **[07-documentation-and-summary-rules.md](copilot-instructions/07-documentation-and-summary-rules.md)** | ⚠️ ENFORCED: Prevents doc clutter, no duplicate files, consolidation rules | Commit reviews will reject violations - one topic = one file |
+| **[08-documentation-and-summary-rules.md](copilot-instructions/08-documentation-and-summary-rules.md)** | ⚠️ ENFORCED: Prevents doc clutter, no duplicate files, consolidation rules | Commit reviews will reject violations - one topic = one file |
 | **[PROMPTS.md](copilot-instructions/PROMPTS.md)** | Battle-tested prompt templates for common tasks | Quick-start prompts, task templates, examples |
 
 ### How to Use This System

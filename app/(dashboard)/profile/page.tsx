@@ -150,13 +150,15 @@ export default function UserDashboardPage() {
       try {
         const supabase = createClient();
 
-        // Get current user
+        // Get current user using client-side auth
         const {
           data: { user },
-          error: authError,
+          error: authError
         } = await supabase.auth.getUser();
+        const userRole =
+          user?.app_metadata?.role || user?.user_metadata?.user_type || role;
 
-        if (authError) {
+        if (authError || !user) {
           console.error("Auth error:", authError);
           setAuthError("Authentication failed. Please try logging in again.");
           router.push("/login?redirect=/profile");
@@ -177,9 +179,12 @@ export default function UserDashboardPage() {
 
         if (profileError) {
           console.error("Profile fetch error:", profileError);
-          setAuthError(
-            "Failed to load your profile. Please try refreshing the page.",
-          );
+          if (userRole === "owner" || userRole === "agent") {
+            router.push("/onboarding");
+            return;
+          }
+
+          setAuthError("Failed to load your profile. Please try refreshing the page.");
           setIsLoading(false);
           return;
         }
@@ -194,6 +199,11 @@ export default function UserDashboardPage() {
             user_type: role || "user",
           });
         } else {
+          if (userRole === "owner" || userRole === "agent") {
+            router.push("/onboarding");
+            return;
+          }
+
           setAuthError("Profile not found. Please contact support.");
         }
 

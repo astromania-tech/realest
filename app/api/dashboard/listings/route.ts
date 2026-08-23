@@ -179,9 +179,9 @@ export async function POST(request: Request) {
       select: { role: true },
     })
 
-    if (!userRowPost || !['owner', 'admin'].includes(userRowPost.role)) {
+    if (!userRowPost || !['owner', 'admin', 'agent'].includes(userRowPost.role)) {
       return NextResponse.json(
-        { error: 'Forbidden - Property owners only' },
+        { error: 'Forbidden' },
         { status: 403 }
       )
     }
@@ -214,27 +214,43 @@ export async function POST(request: Request) {
 
     const isDuplicate = existingProperties.length > 0
 
-    // Look up owner record (properties.owner_id now references owners.id)
-    const ownerRec = await prisma.owners.upsert({
-      where: { profile_id: user.id },
-      create: { profile_id: user.id },
-      update: {},
-      select: { id: true },
-    })
+    let ownerId: string | null = null;
+    let agentId: string | null = null;
+    let includeData: any = {};
+
+    if (userRowPost.role === 'owner') {
+      const ownerRec = await prisma.owners.upsert({
+        where: { profile_id: user.id },
+        create: { profile_id: user.id },
+        update: {},
+        select: { id: true },
+      })
+      ownerId = ownerRec.id;
+      includeData = { owners: { include: { profiles: { select: { full_name: true, email: true } } } } };
+    } else if (userRowPost.role === 'agent') {
+      // Agents should already be created, but we upsert to be safe
+      const agentRec = await prisma.agents.upsert({
+        where: { profile_id: user.id },
+        create: { profile_id: user.id, license_number: 'PENDING', agency_name: 'Independent', specialization: [], verified: false },
+        update: {},
+        select: { id: true },
+      })
+      agentId = agentRec.id;
+      includeData = { agent: { include: { profiles: { select: { full_name: true, email: true } } } } };
+    }
 
     // Create property (only pass schema-valid fields)
     const { images: _images, documents: _documents, verification_status: _vs, toilets: _toilets, ...validPropertyData } = propertyData as any
     const property = await prisma.properties.create({
       data: {
         ...validPropertyData,
-        owner_id: ownerRec.id,
-        status: 'pending_ml_validation',
+        owner_id: ownerId,
+        agent_id: agentId,
+        status: 'draft',
         created_at: new Date(),
         updated_at: new Date(),
       },
-      include: {
-        owners: { include: { profiles: { select: { full_name: true, email: true } } } },
-      },
+      include: includeData,
     })
 
     if (isDuplicate) {

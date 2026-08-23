@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const context = await syncWaitlistContextToProfile(email, profile.id, svc);
+  const context = await syncWaitlistContextToProfile(email, profile.id);
 
   return NextResponse.json({
     ok: true,

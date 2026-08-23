@@ -10,6 +10,7 @@
  * No request body needed — the user identity is read from the session cookie.
  */
 
+import { getAuthUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
@@ -57,7 +58,7 @@ export async function POST() {
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
 
     if (authError || !user) {
       // Not authenticated — skip silently (user may have already been signed out)

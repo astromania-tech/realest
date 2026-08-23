@@ -1,17 +1,16 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { getAuthUser } from "@/lib/supabase/server"
+import { prisma } from "@/lib/prisma"
 import { PropertyForm } from "@/components/agent/PropertyForm"
 
 export default async function NewPropertyPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getAuthUser()
   if (!user) redirect("/login?redirect=/agent/properties/new")
 
-  const { data: userData } = await supabase
-    .from("users")
-    .select("id, role")
-    .eq("id", user.id)
-    .single()
+  const userData = await prisma.users.findUnique({
+    where: { id: user.id },
+    select: { role: true },
+  })
 
   if (!userData || userData.role !== "agent") redirect("/")
 

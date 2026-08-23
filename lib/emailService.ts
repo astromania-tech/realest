@@ -14,6 +14,7 @@ import {
   WaitlistConfirmationEmail,
   AdminNotificationEmail,
   PasswordResetEmail,
+  VerificationEmail,
   WelcomeEmail,
   OnboardingReminderEmail,
   PasswordChangedEmail,
@@ -95,6 +96,7 @@ import {
   type ReferralInviteEmailData,
   type ReferralSuccessEmailData,
   type PollResultsSummaryEmailData,
+  VerificationEmailData,
 } from '@/emails';
 
 if (!process.env.RESEND_API_KEY) {
@@ -185,6 +187,19 @@ export async function sendHybridPasswordResetEmail(data: PasswordResetEmailData)
     to: data.email,
     subject: PasswordResetEmail.subject(data),
     component: React.createElement(PasswordResetEmail, data),
+  });
+}
+
+export async function sendVerificationEmail(data: VerificationEmailData): Promise<EmailResult> {
+  if (!data.email || !data.firstName || !data.verificationUrl) {
+    return { success: false, error: 'Invalid verification email data' };
+  }
+  console.log(`📧 Sending verification email to ${data.email}`);
+  return sendReactEmail({
+    from: FROM_EMAIL_AUTH,
+    to: data.email,
+    subject: VerificationEmail.subject(data),
+    component: React.createElement(VerificationEmail, data),
   });
 }
 
@@ -557,6 +572,7 @@ export async function testEmailConfiguration(): Promise<{ success: boolean; erro
 export type {
   // Platform
   WaitlistEmailData,
+  VerificationEmail,
   AdminNotificationData,
   PasswordResetEmailData,
   WelcomeEmailData,
