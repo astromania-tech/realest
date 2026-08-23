@@ -1,22 +1,90 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { z } from "zod";
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
+
+const propertyIdSchema = z.string().uuid("Invalid property ID");
 
 interface RouteParams {
   params: Promise<{ id: string }>;
+}
+
+export const openApiGET: OpenApiMetadata = {
+  method: 'get',
+  summary: 'Get dashboard property',
+  description: 'Fetch a single property with all owner dashboard relations, media, documents, and inquiries.',
+  tags: ['Dashboard'],
+  security: [{ bearerAuth: [] }],
+  parameters: [
+    { name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Property ID' },
+  ],
+  responses: {
+    '200': { description: 'Property retrieved successfully' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Forbidden - Property owners only' },
+    '404': { description: 'Property not found or access denied' },
+  },
+}
+
+export const openApiPUT: OpenApiMetadata = {
+  method: 'put',
+  summary: 'Update dashboard property',
+  description: 'Update owner-managed property fields before verification.',
+  tags: ['Dashboard'],
+  security: [{ bearerAuth: [] }],
+  parameters: [
+    { name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Property ID' },
+  ],
+  requestBody: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: { type: 'object', description: 'Partial property update payload' },
+      },
+    },
+  },
+  responses: {
+    '200': { description: 'Property updated successfully' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Forbidden - Property owners only' },
+    '404': { description: 'Property not found or access denied' },
+  },
+}
+
+export const openApiDELETE: OpenApiMetadata = {
+  method: 'delete',
+  summary: 'Delete dashboard property',
+  description: 'Delete a draft, unlisted, or rejected property from the dashboard.',
+  tags: ['Dashboard'],
+  security: [{ bearerAuth: [] }],
+  parameters: [
+    { name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Property ID' },
+  ],
+  responses: {
+    '200': { description: 'Property deleted successfully' },
+    '400': { description: 'Cannot delete property' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Forbidden - Property owners only' },
+    '404': { description: 'Property not found or access denied' },
+  },
 }
 
 export async function GET(request: Request, { params }: RouteParams) {
   try {
     const supabase = await createClient();
     const { id } = await params;
-    const propertyId = id;
+    const propertyIdResult = propertyIdSchema.safeParse(id);
+    if (!propertyIdResult.success) {
+      return NextResponse.json({ error: "Property not found or access denied" }, { status: 404 });
+    }
+    const propertyId = propertyIdResult.data;
 
     // Verify authentication
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -82,13 +150,17 @@ export async function PUT(request: Request, { params }: RouteParams) {
   try {
     const supabase = await createClient();
     const { id } = await params;
-    const propertyId = id;
+    const propertyIdResult = propertyIdSchema.safeParse(id);
+    if (!propertyIdResult.success) {
+      return NextResponse.json({ error: "Property not found or access denied" }, { status: 404 });
+    }
+    const propertyId = propertyIdResult.data;
 
     // Verify authentication
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -162,13 +234,17 @@ export async function DELETE(request: Request, { params }: RouteParams) {
   try {
     const supabase = await createClient();
     const { id } = await params;
-    const propertyId = id;
+    const propertyIdResult = propertyIdSchema.safeParse(id);
+    if (!propertyIdResult.success) {
+      return NextResponse.json({ error: "Property not found or access denied" }, { status: 404 });
+    }
+    const propertyId = propertyIdResult.data;
 
     // Verify authentication
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

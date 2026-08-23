@@ -671,7 +671,7 @@ const WaitlistModal: React.FC<WaitlistModalProps> = ({ isOpen, onClose, onSucces
                     href={submittedData?.referralCode ? `/refer?ref=${encodeURIComponent(submittedData.referralCode)}` : '/refer'}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-accent/90 hover:bg-accent text-secondary font-semibold shadow transition-all duration-200"
+                    className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-accent/90 hover:bg-accent text-primary font-semibold shadow transition-all duration-200"
                   >
                     <Gift className="w-4 h-4" />
                     Refer a friend & get rewards

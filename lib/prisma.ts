@@ -16,8 +16,11 @@ const globalForPrisma = globalThis as unknown as {
 }
 
 // Initialize driver adapter (required in Prisma v7)
-const connectionString = `${process.env.DATABASE_URL}`
-const adapter = new PrismaPg({ connectionString })
+// const connectionString = process.env.DATABASE_URL
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+})
 
 // Instantiate PrismaClient with adapter and logging
 export const prisma =

@@ -8,15 +8,34 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import * as React from 'react';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import prisma from '@/lib/prisma';
 import { renderEmail } from '@/emails';
+import { z } from 'zod';
+import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
+
+const campaignIdSchema = z.string().uuid('Invalid campaign ID');
+
+export const openApiGET: OpenApiMetadata = {
+  method: 'get',
+  summary: 'Preview email campaign',
+  description: 'Render a campaign template to HTML for preview in the admin UI.',
+  tags: ['Admin', 'Emails'],
+  security: [{ bearerAuth: [] }],
+  parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+  responses: {
+    '200': { description: 'Campaign preview rendered successfully' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Admin access required' },
+    '404': { description: 'Campaign not found' },
+  },
+};
 
 async function requireAdmin() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { error: 'Unauthorized', status: 401 as const };
 
   const { data: userRow } = await supabase
@@ -42,8 +61,16 @@ export async function GET(
   }
 
   const { id } = await params;
+  const campaignIdResult = campaignIdSchema.safeParse(id);
+  if (!campaignIdResult.success) {
+    return new Response(JSON.stringify({ error: 'Not found' }), {
+      status: 404,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+  const campaignId = campaignIdResult.data;
 
-  const campaign = await prisma.email_campaigns.findUnique({ where: { id } });
+  const campaign = await prisma.email_campaigns.findUnique({ where: { id: campaignId } });
   if (!campaign) {
     return new Response(JSON.stringify({ error: 'Not found' }), {
       status: 404,

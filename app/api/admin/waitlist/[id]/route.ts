@@ -4,13 +4,29 @@
  * Admin-only.
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, getAuthUser } from "@/lib/supabase/server";
+import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
+
+export const openApiDELETE: OpenApiMetadata = {
+  method: 'delete',
+  summary: 'Remove waitlist subscriber',
+  description: 'Delete a waitlist subscriber by ID. Admin only.',
+  tags: ['Admin'],
+  security: [{ bearerAuth: [] }],
+  parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Waitlist subscriber ID' }],
+  responses: {
+    '200': { description: 'Waitlist subscriber removed' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Forbidden' },
+    '500': { description: 'Internal server error' },
+  },
+}
 
 async function requireAdmin() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { supabase, error: 'Unauthorized', status: 401 as const };
 
   const { data: userRow } = await supabase

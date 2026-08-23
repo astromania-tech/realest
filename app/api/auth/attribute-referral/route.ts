@@ -7,6 +7,35 @@ import {
   recordReferralEvent,
 } from '@/lib/reward-engine';
 import { buildReferralShareUrl } from '@/lib/referral-system';
+import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
+
+export const openApiPOST: OpenApiMetadata = {
+  method: 'post',
+  summary: 'Attribute signup referral',
+  description: 'Attach a newly created profile to a referral code and trigger referral rewards and notifications.',
+  tags: ['Auth'],
+  security: [{ bearerAuth: [] }],
+  requestBody: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          required: ['email', 'refCode'],
+          properties: {
+            email: { type: 'string', format: 'email' },
+            refCode: { type: 'string' },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    '200': { description: 'Referral attribution accepted' },
+    '400': { description: 'Invalid JSON or missing fields' },
+    '404': { description: 'Profile not found or attribution window expired' },
+  },
+}
 
 /**
  * POST /api/auth/attribute-referral

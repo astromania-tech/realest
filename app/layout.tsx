@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { RealEstThemeProvider } from "@/components/providers/RealEstThemeProvider";
 import { LogoutModalProvider } from "@/components/providers/LogoutModalProvider";
+import { AuthProvider } from "@/components/providers/AuthProvider";
 import { CookieBanner } from "@/components/shared";
 import "@/lib/styles/globals.css";
 
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
     "real estate Nigeria",
   ],
   authors: [
-    { name: "RealEST Team" },
+    { name: "RealEST Connect Team" },
     { name: "AstroMANIA Enterprise", url: "https://astromania.tech" },
     { name: "Precious Okoyen", url: "https://x17green.tech" }
   ],
@@ -127,6 +128,9 @@ export default function RootLayout({
           content="width=device-width, initial-scale=1, viewport-fit=cover"
         />
 
+        {/* Facebook Domain Verification */}
+        <meta name="facebook-domain-verification" content="z7pfwg97pwbgwceyc5102mv8v5rt5c" />
+
         {/* Apple specific meta tags */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
@@ -183,25 +187,31 @@ export default function RootLayout({
           />
         </noscript>
         {/* <!-- End Meta Pixel Code --> */}
+
+        {/* <!-- Start of realestconnecthelp Zendesk Widget script --> */}
+        <script id="ze-snippet" src="https://static.zdassets.com/ekr/snippet.js?key=16241a82-2e89-4760-a55a-eebed2ba144a"></script>
+        {/* <!-- End of realestconnecthelp Zendesk Widget script --> */}
       </head>
       <body className="font-body antialiased">
         <RealEstThemeProvider defaultTheme="system" enableSystem={true}>
-          <LogoutModalProvider>
-            <noscript>
-              <div className="fixed inset-0 bg-background flex items-center justify-center z-50">
-                <div className="text-center p-8">
-                  <h1 className="text-h1 mb-4">JavaScript Required</h1>
-                  <p className="text-body-m text-muted-foreground">
-                    RealEST requires JavaScript to function properly. Please enable
-                    JavaScript in your browser.
-                  </p>
+          <AuthProvider>
+            <LogoutModalProvider>
+              <noscript>
+                <div className="fixed inset-0 bg-background flex items-center justify-center z-50">
+                  <div className="text-center p-8">
+                    <h1 className="text-h1 mb-4">JavaScript Required</h1>
+                    <p className="text-body-m text-muted-foreground">
+                      RealEST requires JavaScript to function properly. Please enable
+                      JavaScript in your browser.
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </noscript>
-            {children}
-            <CookieBanner />
-            <Analytics />
-          </LogoutModalProvider>
+              </noscript>
+              {children}
+              <CookieBanner />
+              <Analytics />
+            </LogoutModalProvider>
+          </AuthProvider>
         </RealEstThemeProvider>
       </body>
     </html>

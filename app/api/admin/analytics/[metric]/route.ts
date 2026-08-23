@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 
@@ -16,13 +16,32 @@ type RouteParams = {
   }>
 }
 
+export const openApiGET = {
+  method: 'get',
+  summary: 'Metric time series',
+  description: 'Fetch time-series metric data for a given metric identifier (users, properties, inquiries, revenue, performance). Admin-only.',
+  tags: ['admin','analytics'],
+  parameters: [
+    { name: 'metric', in: 'path', required: true, schema: { type: 'string', enum: ['users','properties','inquiries','revenue','performance'] }, description: 'Metric identifier' },
+    { name: 'period', in: 'query', schema: { type: 'string', enum: ['7d','30d','90d','1y','all'] }, description: 'Date range for the metric' },
+    { name: 'group_by', in: 'query', schema: { type: 'string', enum: ['day','week','month'] }, description: 'Granularity for grouping' },
+    { name: 'include_comparison', in: 'query', schema: { type: 'boolean' }, description: 'Include comparison to previous period' },
+  ],
+  responses: {
+    200: { description: 'Metric time series payload' },
+    400: { description: 'Invalid metric or query params' },
+    401: { description: 'Unauthorized' },
+    403: { description: 'Forbidden' },
+  },
+} as const;
+
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const supabase = await createClient()
     const { metric } = await params
 
     // Verify admin authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const { data: { user }, error: authError } = await getAuthUser()
     if (authError || !user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -155,6 +174,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     )
   }
 }
+
 
 // Helper: group a date into a period string
 function groupDate(date: Date, groupBy: string): string {

@@ -425,6 +425,7 @@ const OwnerOnboarding: React.FC = () => {
                   <div className="text-center">
                     <ProfileUpload
                       size="xl"
+                      imageUrl={formData.profilePhotoUrl || undefined}
                       onUploadSuccess={(url) =>
                         updateFormData("profilePhotoUrl", url)
                       }
@@ -434,7 +435,8 @@ const OwnerOnboarding: React.FC = () => {
                       className="mx-auto mb-4"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Upload a profile photo to build trust with agents
+                      Upload a profile photo to build trust with agents. Your
+                      cropped photo will preview here immediately.
                     </p>
                   </div>
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import type { OpenApiMetadata } from '@/lib/openapi/route-metadata'
 
 // Query parameters schema for geocoding
 const geocodeQuerySchema = z.object({
@@ -7,6 +8,24 @@ const geocodeQuerySchema = z.object({
   state: z.string().optional(), // Nigerian state for better accuracy
   lga: z.string().optional(), // Local Government Area
 })
+
+export const openApiGET: OpenApiMetadata = {
+  method: 'get',
+  summary: 'Geocode an address',
+  description: 'Resolve a Nigerian address into coordinates and address components.',
+  tags: ['System'],
+  parameters: [
+    { name: 'address', in: 'query', required: true, schema: { type: 'string' } },
+    { name: 'state', in: 'query', schema: { type: 'string' } },
+    { name: 'lga', in: 'query', schema: { type: 'string' } },
+  ],
+  responses: {
+    '200': { description: 'Geocoding result' },
+    '400': { description: 'Invalid query parameters' },
+    '404': { description: 'Address not found' },
+    '503': { description: 'Geocoding service unavailable' },
+  },
+}
 
 type RouteParams = {
   params: Promise<{}>

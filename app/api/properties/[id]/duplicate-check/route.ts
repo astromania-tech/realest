@@ -1,9 +1,11 @@
 // realest/app/api/properties/[id]/duplicate-check/route.ts
-// realest/app/api/properties/[id]/duplicate-check/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
+
+const propertyIdSchema = z.string().uuid("Invalid property ID");
 
 const duplicateCheckSchema = z.object({
   address: z.string().optional(),
@@ -11,6 +13,62 @@ const duplicateCheckSchema = z.object({
   longitude: z.number().min(-180).max(180).optional(),
   radius: z.number().min(0.01).max(10).default(0.1), // km radius for proximity check
 });
+
+/**
+ * OpenAPI metadata for POST /api/properties/{id}/duplicate-check
+ * Check for potential duplicate property listings
+ */
+export const openApiPOST: OpenApiMetadata = {
+  method: "post",
+  summary: "Check for duplicate properties",
+  description: "Check for potential duplicate property listings based on address or geospatial proximity. Uses address matching and location-based radius search.",
+  tags: ["Properties"],
+  security: [{ bearerAuth: [] }],
+  parameters: [
+    {
+      name: "id",
+      in: "path",
+      required: true,
+      schema: { type: "string", format: "uuid" },
+      description: "Property ID to check",
+    },
+  ],
+  requestBody: {
+    required: true,
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          properties: {
+            address: { type: "string", description: "Address to check (optional, uses property address if not provided)" },
+            latitude: { type: "number", minimum: -90, maximum: 90, description: "Latitude for geo check" },
+            longitude: { type: "number", minimum: -180, maximum: 180, description: "Longitude for geo check" },
+            radius: { type: "number", minimum: 0.01, maximum: 10, default: 0.1, description: "Search radius in kilometers" },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    "200": {
+      description: "Duplicate check results",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+            properties: {
+              potentialDuplicates: { type: "array", items: { type: "object" } },
+              message: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    "400": { description: "Address or coordinates required" },
+    "401": { description: "Unauthorized" },
+    "404": { description: "Property not found or access denied" },
+  },
+};
 
 // POST /api/properties/[id]/duplicate-check - Check for potential duplicate properties
 export async function POST(
@@ -20,13 +78,17 @@ export async function POST(
   try {
     const supabase = await createClient();
     const { id } = await params;
-    const propertyId = id;
+    const propertyIdResult = propertyIdSchema.safeParse(id);
+    if (!propertyIdResult.success) {
+      return NextResponse.json({ error: "Property not found or access denied" }, { status: 404 });
+    }
+    const propertyId = propertyIdResult.data;
 
     // Get authenticated user
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

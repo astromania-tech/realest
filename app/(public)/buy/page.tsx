@@ -41,7 +41,7 @@ export default function BuyPage() {
       const { data, error } = await supabase
         .from("properties")
         .select("*")
-        .eq("status", "active")
+        .eq("status", "live")
         .eq("verification_status", "verified")
         .eq("listing_type", "for_sale")
         .limit(12);

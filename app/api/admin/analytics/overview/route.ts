@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 
@@ -13,12 +13,28 @@ type RouteParams = {
   params: Promise<{}>
 }
 
+export const openApiGET = {
+  method: 'get',
+  summary: 'Admin analytics overview',
+  description: 'High-level platform analytics: users, properties, inquiries, admin actions and optional trend data. Admin-only.',
+  tags: ['admin','analytics'],
+  parameters: [
+    { name: 'period', in: 'query', schema: { type: 'string', enum: ['7d','30d','90d','1y','all'] }, description: 'Date range for metrics' },
+    { name: 'include_trends', in: 'query', schema: { type: 'boolean' }, description: 'Include time series trend data' },
+  ],
+  responses: {
+    200: { description: 'Analytics overview JSON' },
+    401: { description: 'Unauthorized' },
+    403: { description: 'Forbidden' },
+  },
+} as const;
+
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const supabase = await createClient()
 
     // Verify admin authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const { data: { user }, error: authError } = await getAuthUser()
     if (authError || !user) {
       return NextResponse.json(
         { error: 'Unauthorized' },

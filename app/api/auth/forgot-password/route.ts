@@ -10,10 +10,42 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/service";
 import { deriveNumericOtp } from "@/lib/utils/otp";
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
 
 const schema = z.object({
   email: z.string().email("Invalid email address"),
 });
+
+export const openApiPOST: OpenApiMetadata = {
+  method: "post",
+  summary: "Request password reset email",
+  description: "Send a password reset email with a recovery link and OTP. Returns a generic success response to prevent account enumeration.",
+  tags: ["Auth"],
+  requestBody: {
+    required: true,
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          required: ["email"],
+          properties: {
+            email: { type: "string", format: "email" },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    "200": {
+      description: "Reset request accepted",
+      content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" } } } } },
+    },
+    "400": { description: "Invalid email" },
+    "500": { description: "Failed to generate reset link" },
+    "502": { description: "Failed to send reset email" },
+    "503": { description: "Email service is at capacity" },
+  },
+}
 
 export async function POST(request: NextRequest) {
   try {

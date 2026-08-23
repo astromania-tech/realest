@@ -11,9 +11,27 @@
  * Admin-only.
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import prisma from '@/lib/prisma';
 import { renderCampaignTemplate, executeBulkSend, CampaignRecipient } from '@/lib/emailBulkSender';
+import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
+
+export const openApiPOST: OpenApiMetadata = {
+  method: 'post',
+  summary: 'Send email campaign',
+  description: 'Execute a draft or scheduled campaign send using Resend broadcast or batch delivery.',
+  tags: ['Admin', 'Emails'],
+  security: [{ bearerAuth: [] }],
+  parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+  responses: {
+    '200': { description: 'Campaign sent successfully' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Admin access required' },
+    '404': { description: 'Campaign not found' },
+    '409': { description: 'Campaign cannot be sent in its current status' },
+    '500': { description: 'Campaign send failed' },
+  },
+};
 
 const FROM_EMAIL = process.env.FROM_EMAIL ?? 'RealEST Connect <info@connect.realest.ng>';
 const FROM_EMAIL_AUTH = process.env.FROM_EMAIL_AUTH ?? FROM_EMAIL;
@@ -41,7 +59,7 @@ async function requireAdmin() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
 
   if (!user) return { user: null, error: 'Unauthorized', status: 401 };
 
@@ -93,7 +111,8 @@ async function fetchDbSegmentRecipients(
   let query = supabase
     .from('users')
     .select('email, full_name')
-    .is('deleted_at', null);
+    .is('deleted_at', null)
+    .not('email', 'is', null);
 
   if (audienceFilter.role) {
     query = query.eq('role', audienceFilter.role);
@@ -154,7 +173,7 @@ export async function POST(
 
       result = await executeBulkSend({
         mode: 'broadcast',
-        audienceId: campaign.audience_id,
+        audience_id: campaign.audience_id,
         from,
         subject: campaign.subject,
         html,

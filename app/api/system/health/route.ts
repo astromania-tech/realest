@@ -1,5 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import type { OpenApiMetadata } from '@/lib/openapi/route-metadata'
+
+export const openApiGET: OpenApiMetadata = {
+  method: 'get',
+  summary: 'Get system health',
+  description: 'Check database connectivity and application health metrics.',
+  tags: ['System'],
+  responses: {
+    '200': { description: 'System healthy' },
+    '503': { description: 'System unhealthy' },
+  },
+}
 
 // GET /api/system/health - System health check
 export async function GET(request: NextRequest) {

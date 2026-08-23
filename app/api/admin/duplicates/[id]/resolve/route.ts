@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 
@@ -27,7 +27,7 @@ export async function PUT(
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
 
     if (authError || !user) {
       return NextResponse.json(
@@ -175,3 +175,16 @@ export async function PUT(
     )
   }
 }
+export const openApiPUT = {
+  method: 'put',
+  summary: 'Resolve duplicate property',
+  description: 'Admin endpoint to resolve a suspected duplicate property listing (keep both, keep master, reject duplicate).',
+  tags: ['admin','duplicates'],
+  responses: {
+    200: { description: 'Duplicate resolved' },
+    400: { description: 'Invalid request' },
+    401: { description: 'Unauthorized' },
+    403: { description: 'Forbidden' },
+    404: { description: 'Property not found' },
+  },
+} as const;

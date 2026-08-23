@@ -172,7 +172,7 @@ export type Poll_formsGroupByOutputType = {
   _max: Poll_formsMaxAggregateOutputType | null
 }
 
-type GetPoll_formsGroupByPayload<T extends poll_formsGroupByArgs> = Prisma.PrismaPromise<
+export type GetPoll_formsGroupByPayload<T extends poll_formsGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<Poll_formsGroupByOutputType, T['by']> &
       {
@@ -1250,6 +1250,11 @@ export type poll_formsFindManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Skip the first `n` poll_forms.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of poll_forms.
+   */
   distinct?: Prisma.Poll_formsScalarFieldEnum | Prisma.Poll_formsScalarFieldEnum[]
 }
 

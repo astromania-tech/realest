@@ -1,6 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { syncWaitlistContextToProfile } from '@/lib/reward-engine';
 import { createServiceClient } from '@/lib/supabase/service';
+import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
+
+export const openApiPOST: OpenApiMetadata = {
+  method: 'post',
+  summary: 'Sync waitlist context to profile',
+  description: 'Copy waitlist metadata and referral context to a newly created profile inside the sync window.',
+  tags: ['Auth'],
+  security: [{ bearerAuth: [] }],
+  requestBody: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          required: ['email'],
+          properties: {
+            email: { type: 'string', format: 'email' },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    '200': { description: 'Waitlist context synced' },
+    '400': { description: 'Invalid body or missing email' },
+    '404': { description: 'Profile not found or sync window expired' },
+  },
+}
 
 export async function POST(request: NextRequest) {
   let email = '';
@@ -32,7 +60,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const context = await syncWaitlistContextToProfile(email, profile.id, svc);
+  const context = await syncWaitlistContextToProfile(email, profile.id);
 
   return NextResponse.json({
     ok: true,

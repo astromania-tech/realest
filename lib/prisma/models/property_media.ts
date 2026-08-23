@@ -214,7 +214,7 @@ export type Property_mediaGroupByOutputType = {
   _max: Property_mediaMaxAggregateOutputType | null
 }
 
-type GetProperty_mediaGroupByPayload<T extends property_mediaGroupByArgs> = Prisma.PrismaPromise<
+export type GetProperty_mediaGroupByPayload<T extends property_mediaGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<Property_mediaGroupByOutputType, T['by']> &
       {
@@ -1272,6 +1272,11 @@ export type property_mediaFindManyArgs<ExtArgs extends runtime.Types.Extensions.
    * Skip the first `n` property_medias.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of property_medias.
+   */
   distinct?: Prisma.Property_mediaScalarFieldEnum | Prisma.Property_mediaScalarFieldEnum[]
 }
 

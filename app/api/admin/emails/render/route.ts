@@ -1,14 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { templateRegistry } from "@/emails/preview-registry";
 import { renderEmail } from "@/emails/utils/renderEmail";
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
+
+export const openApiGET: OpenApiMetadata = {
+  method: 'get',
+  summary: 'Render email template',
+  description: 'Render a selected email template to HTML for preview in the admin UI.',
+  tags: ['Admin', 'Emails'],
+  security: [{ bearerAuth: [] }],
+  parameters: [
+    { name: 'template', in: 'query', required: true, schema: { type: 'string' } },
+    { name: 'theme', in: 'query', schema: { type: 'string', enum: ['light', 'dark'] } },
+  ],
+  responses: {
+    '200': { description: 'Template rendered successfully' },
+    '400': { description: 'Missing template parameter' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Admin access required' },
+    '404': { description: 'Template not found' },
+  },
+};
 
 export async function GET(request: NextRequest) {
   // ── Auth guard ─────────────────────────────────────────────────────────────
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

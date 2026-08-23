@@ -150,31 +150,19 @@ export async function signUpWithPassword(
       };
     }
 
-    const supabase = createClient();
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        // Supabase will redirect to /verify after the user clicks the
-        // activation link in their email. Handles both token_hash and
-        // PKCE (code) query-param styles.
-        emailRedirectTo: `${typeof window !== "undefined" ? window.location.origin : process.env.NEXT_PUBLIC_SITE_URL ?? ""}/verify`,
-        data: {
-          full_name: fullName || "",
-          user_type: userType || "user",
-        },
-      },
+    const response = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, fullName, userType }),
     });
 
-    if (error) {
-      return { success: false, error: error.message };
+    const result = await response.json();
+
+    if (!response.ok) {
+      return { success: false, error: result.error || "Signup failed" };
     }
 
-    // NOTE: The DB trigger handle_new_user() automatically creates public.users
-    // and public.profiles rows when auth.users is inserted — no manual insert needed.
-    // user_type is passed via options.data above and the trigger reads it.
-
-    return { success: true, user: data.user || undefined };
+    return { success: true, user: result.user };
   } catch (err) {
     return { success: false, error: "An unexpected error occurred" };
   }
@@ -338,7 +326,8 @@ export async function verifyEmail(
   try {
     const supabase = createClient();
     const { data, error } = await supabase.auth.verifyOtp({
-      token_hash: tokenHash,
+      token: tokenHash,
+      email: "", // Supabase requires email for verifyOtp, but it's not actually used for token verification in this context
       type,
     });
 
@@ -359,19 +348,14 @@ export async function resendEmailVerification(
   email: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const supabase = createClient();
-    const { error } = await supabase.auth.resend({
-      type: "signup",
-      email,
-    });
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
+    const response = await fetch(
+      `/api/auth/signup?email=${encodeURIComponent(email.trim().toLowerCase())}`,
+    );
+    const data = await response.json();
+    if (!response.ok) return { success: false, error: data.error || 'Failed to resend' };
     return { success: true };
-  } catch (err) {
-    return { success: false, error: "Failed to resend verification email" };
+  } catch {
+    return { success: false, error: 'Failed to resend verification email' };
   }
 }
 

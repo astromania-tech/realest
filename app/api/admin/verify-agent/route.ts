@@ -1,7 +1,39 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { logAdminAction } from "@/lib/audit"
 import { prisma } from "@/lib/prisma"
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata"
+
+export const openApiPOST: OpenApiMetadata = {
+  method: 'post',
+  summary: 'Verify or reject an agent',
+  description: 'Admin action that approves or rejects an agent account.',
+  tags: ['Admin'],
+  security: [{ bearerAuth: [] }],
+  requestBody: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          required: ['agentId', 'action'],
+          properties: {
+            agentId: { type: 'string' },
+            action: { type: 'string', enum: ['approve', 'reject'] },
+            notes: { type: 'string' },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    '200': { description: 'Agent verification updated successfully' },
+    '400': { description: 'Missing agentId or action' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Forbidden' },
+    '500': { description: 'Internal server error' },
+  },
+}
 
 export async function POST(request: Request) {
   try {
@@ -14,7 +46,7 @@ export async function POST(request: Request) {
     const supabase = await createClient()
 
     // Ensure requester is admin
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await getAuthUser()
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
     const adminRow = await prisma.users.findUnique({ where: { id: user.id }, select: { role: true } })

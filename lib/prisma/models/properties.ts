@@ -358,7 +358,7 @@ export type PropertiesGroupByOutputType = {
   _max: PropertiesMaxAggregateOutputType | null
 }
 
-type GetPropertiesGroupByPayload<T extends propertiesGroupByArgs> = Prisma.PrismaPromise<
+export type GetPropertiesGroupByPayload<T extends propertiesGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<PropertiesGroupByOutputType, T['by']> &
       {
@@ -409,6 +409,7 @@ export type propertiesWhereInput = {
   property_details?: Prisma.Property_detailsListRelationFilter
   property_documents?: Prisma.Property_documentsListRelationFilter
   property_media?: Prisma.Property_mediaListRelationFilter
+  property_validation_jobs?: Prisma.Property_validation_jobsListRelationFilter
   reviews?: Prisma.ReviewsListRelationFilter
   saved_properties?: Prisma.Saved_propertiesListRelationFilter
 }
@@ -446,6 +447,7 @@ export type propertiesOrderByWithRelationInput = {
   property_details?: Prisma.property_detailsOrderByRelationAggregateInput
   property_documents?: Prisma.property_documentsOrderByRelationAggregateInput
   property_media?: Prisma.property_mediaOrderByRelationAggregateInput
+  property_validation_jobs?: Prisma.property_validation_jobsOrderByRelationAggregateInput
   reviews?: Prisma.reviewsOrderByRelationAggregateInput
   saved_properties?: Prisma.saved_propertiesOrderByRelationAggregateInput
 }
@@ -486,6 +488,7 @@ export type propertiesWhereUniqueInput = Prisma.AtLeast<{
   property_details?: Prisma.Property_detailsListRelationFilter
   property_documents?: Prisma.Property_documentsListRelationFilter
   property_media?: Prisma.Property_mediaListRelationFilter
+  property_validation_jobs?: Prisma.Property_validation_jobsListRelationFilter
   reviews?: Prisma.ReviewsListRelationFilter
   saved_properties?: Prisma.Saved_propertiesListRelationFilter
 }, "id">
@@ -585,6 +588,7 @@ export type propertiesCreateInput = {
   property_details?: Prisma.property_detailsCreateNestedManyWithoutPropertiesInput
   property_documents?: Prisma.property_documentsCreateNestedManyWithoutPropertiesInput
   property_media?: Prisma.property_mediaCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutPropertiesInput
 }
@@ -620,6 +624,7 @@ export type propertiesUncheckedCreateInput = {
   property_details?: Prisma.property_detailsUncheckedCreateNestedManyWithoutPropertiesInput
   property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutPropertiesInput
   property_media?: Prisma.property_mediaUncheckedCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutPropertiesInput
 }
@@ -655,6 +660,7 @@ export type propertiesUpdateInput = {
   property_details?: Prisma.property_detailsUpdateManyWithoutPropertiesNestedInput
   property_documents?: Prisma.property_documentsUpdateManyWithoutPropertiesNestedInput
   property_media?: Prisma.property_mediaUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUpdateManyWithoutPropertiesNestedInput
 }
@@ -690,6 +696,7 @@ export type propertiesUncheckedUpdateInput = {
   property_details?: Prisma.property_detailsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_media?: Prisma.property_mediaUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUncheckedUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutPropertiesNestedInput
 }
@@ -1084,6 +1091,20 @@ export type propertiesUpdateOneRequiredWithoutSaved_propertiesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.propertiesUpdateToOneWithWhereWithoutSaved_propertiesInput, Prisma.propertiesUpdateWithoutSaved_propertiesInput>, Prisma.propertiesUncheckedUpdateWithoutSaved_propertiesInput>
 }
 
+export type propertiesCreateNestedOneWithoutProperty_validation_jobsInput = {
+  create?: Prisma.XOR<Prisma.propertiesCreateWithoutProperty_validation_jobsInput, Prisma.propertiesUncheckedCreateWithoutProperty_validation_jobsInput>
+  connectOrCreate?: Prisma.propertiesCreateOrConnectWithoutProperty_validation_jobsInput
+  connect?: Prisma.propertiesWhereUniqueInput
+}
+
+export type propertiesUpdateOneRequiredWithoutProperty_validation_jobsNestedInput = {
+  create?: Prisma.XOR<Prisma.propertiesCreateWithoutProperty_validation_jobsInput, Prisma.propertiesUncheckedCreateWithoutProperty_validation_jobsInput>
+  connectOrCreate?: Prisma.propertiesCreateOrConnectWithoutProperty_validation_jobsInput
+  upsert?: Prisma.propertiesUpsertWithoutProperty_validation_jobsInput
+  connect?: Prisma.propertiesWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.propertiesUpdateToOneWithWhereWithoutProperty_validation_jobsInput, Prisma.propertiesUpdateWithoutProperty_validation_jobsInput>, Prisma.propertiesUncheckedUpdateWithoutProperty_validation_jobsInput>
+}
+
 export type propertiesCreateWithoutAgentsInput = {
   id?: string
   title: string
@@ -1114,6 +1135,7 @@ export type propertiesCreateWithoutAgentsInput = {
   property_details?: Prisma.property_detailsCreateNestedManyWithoutPropertiesInput
   property_documents?: Prisma.property_documentsCreateNestedManyWithoutPropertiesInput
   property_media?: Prisma.property_mediaCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutPropertiesInput
 }
@@ -1148,6 +1170,7 @@ export type propertiesUncheckedCreateWithoutAgentsInput = {
   property_details?: Prisma.property_detailsUncheckedCreateNestedManyWithoutPropertiesInput
   property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutPropertiesInput
   property_media?: Prisma.property_mediaUncheckedCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutPropertiesInput
 }
@@ -1239,6 +1262,7 @@ export type propertiesCreateWithoutInquiriesInput = {
   property_details?: Prisma.property_detailsCreateNestedManyWithoutPropertiesInput
   property_documents?: Prisma.property_documentsCreateNestedManyWithoutPropertiesInput
   property_media?: Prisma.property_mediaCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutPropertiesInput
 }
@@ -1273,6 +1297,7 @@ export type propertiesUncheckedCreateWithoutInquiriesInput = {
   property_details?: Prisma.property_detailsUncheckedCreateNestedManyWithoutPropertiesInput
   property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutPropertiesInput
   property_media?: Prisma.property_mediaUncheckedCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutPropertiesInput
 }
@@ -1323,6 +1348,7 @@ export type propertiesUpdateWithoutInquiriesInput = {
   property_details?: Prisma.property_detailsUpdateManyWithoutPropertiesNestedInput
   property_documents?: Prisma.property_documentsUpdateManyWithoutPropertiesNestedInput
   property_media?: Prisma.property_mediaUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUpdateManyWithoutPropertiesNestedInput
 }
@@ -1357,6 +1383,7 @@ export type propertiesUncheckedUpdateWithoutInquiriesInput = {
   property_details?: Prisma.property_detailsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_media?: Prisma.property_mediaUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUncheckedUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutPropertiesNestedInput
 }
@@ -1391,6 +1418,7 @@ export type propertiesCreateWithoutOwnersInput = {
   property_details?: Prisma.property_detailsCreateNestedManyWithoutPropertiesInput
   property_documents?: Prisma.property_documentsCreateNestedManyWithoutPropertiesInput
   property_media?: Prisma.property_mediaCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutPropertiesInput
 }
@@ -1425,6 +1453,7 @@ export type propertiesUncheckedCreateWithoutOwnersInput = {
   property_details?: Prisma.property_detailsUncheckedCreateNestedManyWithoutPropertiesInput
   property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutPropertiesInput
   property_media?: Prisma.property_mediaUncheckedCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutPropertiesInput
 }
@@ -1485,6 +1514,7 @@ export type propertiesCreateWithoutPaymentsInput = {
   property_details?: Prisma.property_detailsCreateNestedManyWithoutPropertiesInput
   property_documents?: Prisma.property_documentsCreateNestedManyWithoutPropertiesInput
   property_media?: Prisma.property_mediaCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutPropertiesInput
 }
@@ -1519,6 +1549,7 @@ export type propertiesUncheckedCreateWithoutPaymentsInput = {
   property_details?: Prisma.property_detailsUncheckedCreateNestedManyWithoutPropertiesInput
   property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutPropertiesInput
   property_media?: Prisma.property_mediaUncheckedCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutPropertiesInput
 }
@@ -1569,6 +1600,7 @@ export type propertiesUpdateWithoutPaymentsInput = {
   property_details?: Prisma.property_detailsUpdateManyWithoutPropertiesNestedInput
   property_documents?: Prisma.property_documentsUpdateManyWithoutPropertiesNestedInput
   property_media?: Prisma.property_mediaUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUpdateManyWithoutPropertiesNestedInput
 }
@@ -1603,6 +1635,7 @@ export type propertiesUncheckedUpdateWithoutPaymentsInput = {
   property_details?: Prisma.property_detailsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_media?: Prisma.property_mediaUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUncheckedUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutPropertiesNestedInput
 }
@@ -1637,6 +1670,7 @@ export type propertiesCreateWithoutProperty_detailsInput = {
   owners?: Prisma.ownersCreateNestedOneWithoutPropertiesInput
   property_documents?: Prisma.property_documentsCreateNestedManyWithoutPropertiesInput
   property_media?: Prisma.property_mediaCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutPropertiesInput
 }
@@ -1671,6 +1705,7 @@ export type propertiesUncheckedCreateWithoutProperty_detailsInput = {
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutPropertiesInput
   property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutPropertiesInput
   property_media?: Prisma.property_mediaUncheckedCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutPropertiesInput
 }
@@ -1721,6 +1756,7 @@ export type propertiesUpdateWithoutProperty_detailsInput = {
   owners?: Prisma.ownersUpdateOneWithoutPropertiesNestedInput
   property_documents?: Prisma.property_documentsUpdateManyWithoutPropertiesNestedInput
   property_media?: Prisma.property_mediaUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUpdateManyWithoutPropertiesNestedInput
 }
@@ -1755,6 +1791,7 @@ export type propertiesUncheckedUpdateWithoutProperty_detailsInput = {
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_media?: Prisma.property_mediaUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUncheckedUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutPropertiesNestedInput
 }
@@ -1789,6 +1826,7 @@ export type propertiesCreateWithoutProperty_documentsInput = {
   owners?: Prisma.ownersCreateNestedOneWithoutPropertiesInput
   property_details?: Prisma.property_detailsCreateNestedManyWithoutPropertiesInput
   property_media?: Prisma.property_mediaCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutPropertiesInput
 }
@@ -1823,6 +1861,7 @@ export type propertiesUncheckedCreateWithoutProperty_documentsInput = {
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutPropertiesInput
   property_details?: Prisma.property_detailsUncheckedCreateNestedManyWithoutPropertiesInput
   property_media?: Prisma.property_mediaUncheckedCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutPropertiesInput
 }
@@ -1873,6 +1912,7 @@ export type propertiesUpdateWithoutProperty_documentsInput = {
   owners?: Prisma.ownersUpdateOneWithoutPropertiesNestedInput
   property_details?: Prisma.property_detailsUpdateManyWithoutPropertiesNestedInput
   property_media?: Prisma.property_mediaUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUpdateManyWithoutPropertiesNestedInput
 }
@@ -1907,6 +1947,7 @@ export type propertiesUncheckedUpdateWithoutProperty_documentsInput = {
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_details?: Prisma.property_detailsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_media?: Prisma.property_mediaUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUncheckedUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutPropertiesNestedInput
 }
@@ -1941,6 +1982,7 @@ export type propertiesCreateWithoutProperty_mediaInput = {
   owners?: Prisma.ownersCreateNestedOneWithoutPropertiesInput
   property_details?: Prisma.property_detailsCreateNestedManyWithoutPropertiesInput
   property_documents?: Prisma.property_documentsCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutPropertiesInput
 }
@@ -1975,6 +2017,7 @@ export type propertiesUncheckedCreateWithoutProperty_mediaInput = {
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutPropertiesInput
   property_details?: Prisma.property_detailsUncheckedCreateNestedManyWithoutPropertiesInput
   property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutPropertiesInput
 }
@@ -2025,6 +2068,7 @@ export type propertiesUpdateWithoutProperty_mediaInput = {
   owners?: Prisma.ownersUpdateOneWithoutPropertiesNestedInput
   property_details?: Prisma.property_detailsUpdateManyWithoutPropertiesNestedInput
   property_documents?: Prisma.property_documentsUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUpdateManyWithoutPropertiesNestedInput
 }
@@ -2059,6 +2103,7 @@ export type propertiesUncheckedUpdateWithoutProperty_mediaInput = {
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_details?: Prisma.property_detailsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUncheckedUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutPropertiesNestedInput
 }
@@ -2094,6 +2139,7 @@ export type propertiesCreateWithoutReviewsInput = {
   property_details?: Prisma.property_detailsCreateNestedManyWithoutPropertiesInput
   property_documents?: Prisma.property_documentsCreateNestedManyWithoutPropertiesInput
   property_media?: Prisma.property_mediaCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutPropertiesInput
 }
 
@@ -2128,6 +2174,7 @@ export type propertiesUncheckedCreateWithoutReviewsInput = {
   property_details?: Prisma.property_detailsUncheckedCreateNestedManyWithoutPropertiesInput
   property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutPropertiesInput
   property_media?: Prisma.property_mediaUncheckedCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutPropertiesInput
 }
 
@@ -2178,6 +2225,7 @@ export type propertiesUpdateWithoutReviewsInput = {
   property_details?: Prisma.property_detailsUpdateManyWithoutPropertiesNestedInput
   property_documents?: Prisma.property_documentsUpdateManyWithoutPropertiesNestedInput
   property_media?: Prisma.property_mediaUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUpdateManyWithoutPropertiesNestedInput
 }
 
@@ -2212,6 +2260,7 @@ export type propertiesUncheckedUpdateWithoutReviewsInput = {
   property_details?: Prisma.property_detailsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_media?: Prisma.property_mediaUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutPropertiesNestedInput
 }
 
@@ -2246,6 +2295,7 @@ export type propertiesCreateWithoutSaved_propertiesInput = {
   property_details?: Prisma.property_detailsCreateNestedManyWithoutPropertiesInput
   property_documents?: Prisma.property_documentsCreateNestedManyWithoutPropertiesInput
   property_media?: Prisma.property_mediaCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsCreateNestedManyWithoutPropertiesInput
 }
 
@@ -2280,6 +2330,7 @@ export type propertiesUncheckedCreateWithoutSaved_propertiesInput = {
   property_details?: Prisma.property_detailsUncheckedCreateNestedManyWithoutPropertiesInput
   property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutPropertiesInput
   property_media?: Prisma.property_mediaUncheckedCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutPropertiesInput
 }
 
@@ -2330,6 +2381,7 @@ export type propertiesUpdateWithoutSaved_propertiesInput = {
   property_details?: Prisma.property_detailsUpdateManyWithoutPropertiesNestedInput
   property_documents?: Prisma.property_documentsUpdateManyWithoutPropertiesNestedInput
   property_media?: Prisma.property_mediaUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUpdateManyWithoutPropertiesNestedInput
 }
 
@@ -2364,7 +2416,164 @@ export type propertiesUncheckedUpdateWithoutSaved_propertiesInput = {
   property_details?: Prisma.property_detailsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_media?: Prisma.property_mediaUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUncheckedUpdateManyWithoutPropertiesNestedInput
+}
+
+export type propertiesCreateWithoutProperty_validation_jobsInput = {
+  id?: string
+  title: string
+  description?: string | null
+  price: runtime.Decimal | runtime.DecimalJsLike | number | string
+  property_type: string
+  listing_type?: string
+  address: string
+  city: string
+  state?: string | null
+  postal_code?: string | null
+  country?: string
+  latitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  longitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  bedrooms?: number | null
+  bathrooms?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  square_feet?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  year_built?: number | null
+  status?: string
+  verification_status?: string
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  listing_source?: string | null
+  price_frequency?: string | null
+  inquiries?: Prisma.inquiriesCreateNestedManyWithoutPropertiesInput
+  payments?: Prisma.paymentsCreateNestedManyWithoutPropertiesInput
+  agents?: Prisma.agentsCreateNestedOneWithoutPropertiesInput
+  owners?: Prisma.ownersCreateNestedOneWithoutPropertiesInput
+  property_details?: Prisma.property_detailsCreateNestedManyWithoutPropertiesInput
+  property_documents?: Prisma.property_documentsCreateNestedManyWithoutPropertiesInput
+  property_media?: Prisma.property_mediaCreateNestedManyWithoutPropertiesInput
+  reviews?: Prisma.reviewsCreateNestedManyWithoutPropertiesInput
+  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutPropertiesInput
+}
+
+export type propertiesUncheckedCreateWithoutProperty_validation_jobsInput = {
+  id?: string
+  owner_id?: string | null
+  title: string
+  description?: string | null
+  price: runtime.Decimal | runtime.DecimalJsLike | number | string
+  property_type: string
+  listing_type?: string
+  address: string
+  city: string
+  state?: string | null
+  postal_code?: string | null
+  country?: string
+  latitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  longitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  bedrooms?: number | null
+  bathrooms?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  square_feet?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  year_built?: number | null
+  status?: string
+  verification_status?: string
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  agent_id?: string | null
+  listing_source?: string | null
+  price_frequency?: string | null
+  inquiries?: Prisma.inquiriesUncheckedCreateNestedManyWithoutPropertiesInput
+  payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutPropertiesInput
+  property_details?: Prisma.property_detailsUncheckedCreateNestedManyWithoutPropertiesInput
+  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutPropertiesInput
+  property_media?: Prisma.property_mediaUncheckedCreateNestedManyWithoutPropertiesInput
+  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutPropertiesInput
+  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutPropertiesInput
+}
+
+export type propertiesCreateOrConnectWithoutProperty_validation_jobsInput = {
+  where: Prisma.propertiesWhereUniqueInput
+  create: Prisma.XOR<Prisma.propertiesCreateWithoutProperty_validation_jobsInput, Prisma.propertiesUncheckedCreateWithoutProperty_validation_jobsInput>
+}
+
+export type propertiesUpsertWithoutProperty_validation_jobsInput = {
+  update: Prisma.XOR<Prisma.propertiesUpdateWithoutProperty_validation_jobsInput, Prisma.propertiesUncheckedUpdateWithoutProperty_validation_jobsInput>
+  create: Prisma.XOR<Prisma.propertiesCreateWithoutProperty_validation_jobsInput, Prisma.propertiesUncheckedCreateWithoutProperty_validation_jobsInput>
+  where?: Prisma.propertiesWhereInput
+}
+
+export type propertiesUpdateToOneWithWhereWithoutProperty_validation_jobsInput = {
+  where?: Prisma.propertiesWhereInput
+  data: Prisma.XOR<Prisma.propertiesUpdateWithoutProperty_validation_jobsInput, Prisma.propertiesUncheckedUpdateWithoutProperty_validation_jobsInput>
+}
+
+export type propertiesUpdateWithoutProperty_validation_jobsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  price?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  property_type?: Prisma.StringFieldUpdateOperationsInput | string
+  listing_type?: Prisma.StringFieldUpdateOperationsInput | string
+  address?: Prisma.StringFieldUpdateOperationsInput | string
+  city?: Prisma.StringFieldUpdateOperationsInput | string
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postal_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.StringFieldUpdateOperationsInput | string
+  latitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  longitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  bedrooms?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  bathrooms?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  square_feet?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  year_built?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  verification_status?: Prisma.StringFieldUpdateOperationsInput | string
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inquiries?: Prisma.inquiriesUpdateManyWithoutPropertiesNestedInput
+  payments?: Prisma.paymentsUpdateManyWithoutPropertiesNestedInput
+  agents?: Prisma.agentsUpdateOneWithoutPropertiesNestedInput
+  owners?: Prisma.ownersUpdateOneWithoutPropertiesNestedInput
+  property_details?: Prisma.property_detailsUpdateManyWithoutPropertiesNestedInput
+  property_documents?: Prisma.property_documentsUpdateManyWithoutPropertiesNestedInput
+  property_media?: Prisma.property_mediaUpdateManyWithoutPropertiesNestedInput
+  reviews?: Prisma.reviewsUpdateManyWithoutPropertiesNestedInput
+  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutPropertiesNestedInput
+}
+
+export type propertiesUncheckedUpdateWithoutProperty_validation_jobsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  owner_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  price?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  property_type?: Prisma.StringFieldUpdateOperationsInput | string
+  listing_type?: Prisma.StringFieldUpdateOperationsInput | string
+  address?: Prisma.StringFieldUpdateOperationsInput | string
+  city?: Prisma.StringFieldUpdateOperationsInput | string
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postal_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.StringFieldUpdateOperationsInput | string
+  latitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  longitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  bedrooms?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  bathrooms?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  square_feet?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  year_built?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  verification_status?: Prisma.StringFieldUpdateOperationsInput | string
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  agent_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inquiries?: Prisma.inquiriesUncheckedUpdateManyWithoutPropertiesNestedInput
+  payments?: Prisma.paymentsUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_details?: Prisma.property_detailsUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_media?: Prisma.property_mediaUncheckedUpdateManyWithoutPropertiesNestedInput
+  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutPropertiesNestedInput
+  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutPropertiesNestedInput
 }
 
 export type propertiesCreateManyAgentsInput = {
@@ -2424,6 +2633,7 @@ export type propertiesUpdateWithoutAgentsInput = {
   property_details?: Prisma.property_detailsUpdateManyWithoutPropertiesNestedInput
   property_documents?: Prisma.property_documentsUpdateManyWithoutPropertiesNestedInput
   property_media?: Prisma.property_mediaUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUpdateManyWithoutPropertiesNestedInput
 }
@@ -2458,6 +2668,7 @@ export type propertiesUncheckedUpdateWithoutAgentsInput = {
   property_details?: Prisma.property_detailsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_media?: Prisma.property_mediaUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUncheckedUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutPropertiesNestedInput
 }
@@ -2546,6 +2757,7 @@ export type propertiesUpdateWithoutOwnersInput = {
   property_details?: Prisma.property_detailsUpdateManyWithoutPropertiesNestedInput
   property_documents?: Prisma.property_documentsUpdateManyWithoutPropertiesNestedInput
   property_media?: Prisma.property_mediaUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUpdateManyWithoutPropertiesNestedInput
 }
@@ -2580,6 +2792,7 @@ export type propertiesUncheckedUpdateWithoutOwnersInput = {
   property_details?: Prisma.property_detailsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_media?: Prisma.property_mediaUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUncheckedUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutPropertiesNestedInput
 }
@@ -2622,6 +2835,7 @@ export type PropertiesCountOutputType = {
   property_details: number
   property_documents: number
   property_media: number
+  property_validation_jobs: number
   reviews: number
   saved_properties: number
 }
@@ -2632,6 +2846,7 @@ export type PropertiesCountOutputTypeSelect<ExtArgs extends runtime.Types.Extens
   property_details?: boolean | PropertiesCountOutputTypeCountProperty_detailsArgs
   property_documents?: boolean | PropertiesCountOutputTypeCountProperty_documentsArgs
   property_media?: boolean | PropertiesCountOutputTypeCountProperty_mediaArgs
+  property_validation_jobs?: boolean | PropertiesCountOutputTypeCountProperty_validation_jobsArgs
   reviews?: boolean | PropertiesCountOutputTypeCountReviewsArgs
   saved_properties?: boolean | PropertiesCountOutputTypeCountSaved_propertiesArgs
 }
@@ -2684,6 +2899,13 @@ export type PropertiesCountOutputTypeCountProperty_mediaArgs<ExtArgs extends run
 /**
  * PropertiesCountOutputType without action
  */
+export type PropertiesCountOutputTypeCountProperty_validation_jobsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.property_validation_jobsWhereInput
+}
+
+/**
+ * PropertiesCountOutputType without action
+ */
 export type PropertiesCountOutputTypeCountReviewsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.reviewsWhereInput
 }
@@ -2729,6 +2951,7 @@ export type propertiesSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   property_details?: boolean | Prisma.properties$property_detailsArgs<ExtArgs>
   property_documents?: boolean | Prisma.properties$property_documentsArgs<ExtArgs>
   property_media?: boolean | Prisma.properties$property_mediaArgs<ExtArgs>
+  property_validation_jobs?: boolean | Prisma.properties$property_validation_jobsArgs<ExtArgs>
   reviews?: boolean | Prisma.properties$reviewsArgs<ExtArgs>
   saved_properties?: boolean | Prisma.properties$saved_propertiesArgs<ExtArgs>
   _count?: boolean | Prisma.PropertiesCountOutputTypeDefaultArgs<ExtArgs>
@@ -2831,6 +3054,7 @@ export type propertiesInclude<ExtArgs extends runtime.Types.Extensions.InternalA
   property_details?: boolean | Prisma.properties$property_detailsArgs<ExtArgs>
   property_documents?: boolean | Prisma.properties$property_documentsArgs<ExtArgs>
   property_media?: boolean | Prisma.properties$property_mediaArgs<ExtArgs>
+  property_validation_jobs?: boolean | Prisma.properties$property_validation_jobsArgs<ExtArgs>
   reviews?: boolean | Prisma.properties$reviewsArgs<ExtArgs>
   saved_properties?: boolean | Prisma.properties$saved_propertiesArgs<ExtArgs>
   _count?: boolean | Prisma.PropertiesCountOutputTypeDefaultArgs<ExtArgs>
@@ -2854,6 +3078,7 @@ export type $propertiesPayload<ExtArgs extends runtime.Types.Extensions.Internal
     property_details: Prisma.$property_detailsPayload<ExtArgs>[]
     property_documents: Prisma.$property_documentsPayload<ExtArgs>[]
     property_media: Prisma.$property_mediaPayload<ExtArgs>[]
+    property_validation_jobs: Prisma.$property_validation_jobsPayload<ExtArgs>[]
     reviews: Prisma.$reviewsPayload<ExtArgs>[]
     saved_properties: Prisma.$saved_propertiesPayload<ExtArgs>[]
   }
@@ -3284,6 +3509,7 @@ export interface Prisma__propertiesClient<T, Null = never, ExtArgs extends runti
   property_details<T extends Prisma.properties$property_detailsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.properties$property_detailsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$property_detailsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   property_documents<T extends Prisma.properties$property_documentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.properties$property_documentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$property_documentsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   property_media<T extends Prisma.properties$property_mediaArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.properties$property_mediaArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$property_mediaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  property_validation_jobs<T extends Prisma.properties$property_validation_jobsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.properties$property_validation_jobsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$property_validation_jobsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   reviews<T extends Prisma.properties$reviewsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.properties$reviewsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$reviewsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   saved_properties<T extends Prisma.properties$saved_propertiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.properties$saved_propertiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$saved_propertiesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -3536,6 +3762,11 @@ export type propertiesFindManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Skip the first `n` properties.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of properties.
+   */
   distinct?: Prisma.PropertiesScalarFieldEnum | Prisma.PropertiesScalarFieldEnum[]
 }
 
@@ -3891,6 +4122,30 @@ export type properties$property_mediaArgs<ExtArgs extends runtime.Types.Extensio
   take?: number
   skip?: number
   distinct?: Prisma.Property_mediaScalarFieldEnum | Prisma.Property_mediaScalarFieldEnum[]
+}
+
+/**
+ * properties.property_validation_jobs
+ */
+export type properties$property_validation_jobsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the property_validation_jobs
+   */
+  select?: Prisma.property_validation_jobsSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the property_validation_jobs
+   */
+  omit?: Prisma.property_validation_jobsOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.property_validation_jobsInclude<ExtArgs> | null
+  where?: Prisma.property_validation_jobsWhereInput
+  orderBy?: Prisma.property_validation_jobsOrderByWithRelationInput | Prisma.property_validation_jobsOrderByWithRelationInput[]
+  cursor?: Prisma.property_validation_jobsWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Property_validation_jobsScalarFieldEnum | Prisma.Property_validation_jobsScalarFieldEnum[]
 }
 
 /**

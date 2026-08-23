@@ -5,16 +5,71 @@
  * Admin-only.
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import prisma from '@/lib/prisma';
 import { Prisma } from '@/lib/prisma/client';
+import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
+
+export const openApiGET: OpenApiMetadata = {
+  method: 'get',
+  summary: 'List email campaigns',
+  description: 'Return paginated admin email campaigns with optional status filtering.',
+  tags: ['Admin', 'Emails'],
+  security: [{ bearerAuth: [] }],
+  parameters: [
+    { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+    { name: 'limit', in: 'query', schema: { type: 'integer', default: 20 } },
+    { name: 'status', in: 'query', schema: { type: 'string' } },
+  ],
+  responses: {
+    '200': { description: 'Campaigns loaded successfully' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Admin access required' },
+  },
+};
+
+export const openApiPOST: OpenApiMetadata = {
+  method: 'post',
+  summary: 'Create email campaign',
+  description: 'Create a draft email campaign for a Resend audience or database segment.',
+  tags: ['Admin', 'Emails'],
+  security: [{ bearerAuth: [] }],
+  requestBody: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          required: ['name', 'template_name', 'subject', 'audience_type', 'send_mode'],
+          properties: {
+            name: { type: 'string' },
+            template_name: { type: 'string' },
+            subject: { type: 'string' },
+            audience_type: { type: 'string', enum: ['resend_audience', 'db_segment'] },
+            audience_id: { type: 'string' },
+            audience_filter: { type: 'object' },
+            send_mode: { type: 'string', enum: ['broadcast', 'batch'] },
+            template_props: { type: 'object' },
+            scheduled_at: { type: 'string', format: 'date-time' },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    '201': { description: 'Draft campaign created successfully' },
+    '400': { description: 'Invalid campaign payload' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Admin access required' },
+  },
+};
 
 // ── Auth helper ───────────────────────────────────────────────────────────────
 async function requireAdmin() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
 
   if (!user) return { user: null, profileId: null, error: 'Unauthorized', status: 401 };
 

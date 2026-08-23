@@ -1,4 +1,14 @@
-import { createServiceClient } from '@/lib/supabase/service';
+/**
+ * lib/reward-engine.ts
+ *
+ * Reward engine — fully migrated from Supabase JS client to Prisma.
+ * Architecture rule: Supabase = auth only. Prisma = all DB operations.
+ *
+ * All functions retain their original signatures so call-sites need
+ * no changes, except the `client` parameter is now gone (Prisma is a
+ * singleton; no client needs to be threaded through).
+ */
+import { prisma, type Prisma } from '@/lib/prisma';
 import {
   WAITLIST_REWARD_KEY,
   buildReferralShareUrl,
@@ -13,8 +23,9 @@ import {
   isWaitlistPersona,
   type WaitlistPersona,
 } from '@/lib/referral-system';
+// import type { Prisma } from '@/lib/prisma';
 
-type ServiceClient = ReturnType<typeof createServiceClient>;
+// ─── Shared types ─────────────────────────────────────────────────────────────
 
 export interface WaitlistLikeRecord {
   id: string;
@@ -27,134 +38,135 @@ export interface WaitlistLikeRecord {
   subscribed_at: string | null;
 }
 
-function getClient(client?: ServiceClient) {
-  return client ?? createServiceClient();
-}
+// ─── recordReferralEvent ──────────────────────────────────────────────────────
 
-export async function recordReferralEvent(
-  event: {
-    referrerWaitlistId?: string | null;
-    referrerProfileId?: string | null;
-    referredWaitlistId?: string | null;
-    referredProfileId?: string | null;
-    referralCode?: string | null;
-    eventType: string;
-    metadata?: Record<string, unknown>;
-  },
-  client?: ServiceClient,
-) {
-  const svc = getClient(client);
-  await svc.from('referral_events').insert({
-    referrer_waitlist_id: event.referrerWaitlistId ?? null,
-    referrer_profile_id: event.referrerProfileId ?? null,
-    referred_waitlist_id: event.referredWaitlistId ?? null,
-    referred_profile_id: event.referredProfileId ?? null,
-    referral_code: event.referralCode ?? null,
-    event_type: event.eventType,
-    metadata: event.metadata ?? {},
+export async function recordReferralEvent(event: {
+  referrerWaitlistId?: string | null;
+  referrerProfileId?: string | null;
+  referredWaitlistId?: string | null;
+  referredProfileId?: string | null;
+  referralCode?: string | null;
+  eventType: string;
+  metadata?: Record<string, unknown>;
+}): Promise<void> {
+  await prisma.referral_events.create({
+    data: {
+      referrer_waitlist_id: event.referrerWaitlistId ?? null,
+      referrer_profile_id: event.referrerProfileId ?? null,
+      referred_waitlist_id: event.referredWaitlistId ?? null,
+      referred_profile_id: event.referredProfileId ?? null,
+      referral_code: event.referralCode ?? null,
+      event_type: event.eventType,
+      metadata: (event.metadata as Prisma.InputJsonValue) ?? {},
+    },
   });
 }
+
+// ─── ensureWaitlistCohortReward ───────────────────────────────────────────────
 
 export async function ensureWaitlistCohortReward(
   waitlistRecord: WaitlistLikeRecord,
-  client?: ServiceClient,
-) {
-  const svc = getClient(client);
-  if (!isWaitlistPersona(waitlistRecord.persona) || !isSupplySidePersona(waitlistRecord.persona)) {
+): Promise<void> {
+  if (
+    !isWaitlistPersona(waitlistRecord.persona) ||
+    !isSupplySidePersona(waitlistRecord.persona)
+  ) {
     return;
   }
 
-  const { data: existing } = await svc
-    .from('reward_entitlements')
-    .select('id')
-    .eq('waitlist_id', waitlistRecord.id)
-    .eq('reward_key', WAITLIST_REWARD_KEY)
-    .maybeSingle();
+  const existing = await prisma.reward_entitlements.findFirst({
+    where: {
+      waitlist_id: waitlistRecord.id,
+      reward_key: WAITLIST_REWARD_KEY,
+    },
+    select: { id: true },
+  });
 
-  if (existing) {
-    return;
-  }
+  if (existing) return;
 
-  await svc.from('reward_entitlements').insert({
-    user_email: waitlistRecord.email,
-    waitlist_id: waitlistRecord.id,
-    reward_key: WAITLIST_REWARD_KEY,
-    source_event: 'waitlist_joined',
-    status: 'active',
-    granted_at: new Date().toISOString(),
-    expires_at: getLaunchRewardWindowEnd().toISOString(),
-    metadata: {
-      persona: waitlistRecord.persona,
-      reward_copy: getWaitlistRewardCopy(waitlistRecord.persona),
-      referral_code: waitlistRecord.referral_code,
+  const entitlement = await prisma.reward_entitlements.create({
+    data: {
+      user_email: waitlistRecord.email,
+      waitlist_id: waitlistRecord.id,
+      reward_key: WAITLIST_REWARD_KEY,
+      source_event: 'waitlist_joined',
+      status: 'active',
+      granted_at: new Date(),
+      expires_at: getLaunchRewardWindowEnd(),
+      metadata: ({
+        persona: waitlistRecord.persona,
+        reward_copy: getWaitlistRewardCopy(waitlistRecord.persona),
+        referral_code: waitlistRecord.referral_code,
+      } as Prisma.InputJsonValue),
     },
   });
 
-  await recordReferralEvent(
-    {
-      referrerWaitlistId: waitlistRecord.id,
-      referralCode: waitlistRecord.referral_code,
-      eventType: 'reward_entitlement_granted',
-      metadata: { reward_key: WAITLIST_REWARD_KEY },
-    },
-    svc,
-  );
+  await recordReferralEvent({
+    referrerWaitlistId: waitlistRecord.id,
+    referralCode: waitlistRecord.referral_code,
+    eventType: 'reward_entitlement_granted',
+    metadata: { reward_key: WAITLIST_REWARD_KEY },
+  });
 }
 
-export async function ensureReferralMilestoneRewards(
-  params: {
-    userEmail: string;
-    referralCount: number;
-    referralCode?: string | null;
-    waitlistId?: string | null;
-    profileId?: string | null;
-  },
-  client?: ServiceClient,
-) {
-  const svc = getClient(client);
+// ─── ensureReferralMilestoneRewards ───────────────────────────────────────────
+
+export async function ensureReferralMilestoneRewards(params: {
+  userEmail: string;
+  referralCount: number;
+  referralCode?: string | null;
+  waitlistId?: string | null;
+  profileId?: string | null;
+}): Promise<void> {
   const reachedMilestones = getReachedMilestones(params.referralCount);
 
   for (const milestone of reachedMilestones) {
-    const existingQuery = svc
-      .from('reward_entitlements')
-      .select('id')
-      .eq('reward_key', milestone.key)
-      .eq('user_email', params.userEmail)
-      .limit(1);
+    const existing = await prisma.reward_entitlements.findFirst({
+      where: {
+        reward_key: milestone.key,
+        user_email: params.userEmail,
+      },
+      select: { id: true },
+    });
 
-    const { data: existingRows } = await existingQuery;
-    if (existingRows && existingRows.length > 0) {
-      continue;
-    }
+    if (existing) continue;
 
-    await svc.from('reward_entitlements').insert({
-      user_email: params.userEmail,
-      waitlist_id: params.waitlistId ?? null,
-      profile_id: params.profileId ?? null,
-      reward_key: milestone.key,
-      source_event: 'referral_count_incremented',
-      source_referral_count: milestone.count,
-      status: 'active',
-      granted_at: new Date().toISOString(),
-      metadata: {
-        reward_label: milestone.label,
-        reward_description: milestone.description,
-        referral_code: params.referralCode ?? null,
+    await prisma.reward_entitlements.create({
+      data: {
+        user_email: params.userEmail,
+        waitlist_id: params.waitlistId ?? null,
+        profile_id: params.profileId ?? null,
+        reward_key: milestone.key,
+        source_event: 'referral_count_incremented',
+        source_referral_count: milestone.count,
+        status: 'active',
+        granted_at: new Date(),
+        metadata: ({
+          reward_label: milestone.label,
+          reward_description: milestone.description,
+          referral_code: params.referralCode ?? null,
+        } as Prisma.InputJsonValue),
       },
     });
   }
 }
 
-export async function recomputeWaitlistRankings(client?: ServiceClient) {
-  const svc = getClient(client);
-  const { data: rows, error } = await svc
-    .from('waitlist')
-    .select('id, email, first_name, referral_code, referral_count, persona, poll_completion_count, subscribed_at')
-    .eq('status', 'active');
+// ─── recomputeWaitlistRankings ────────────────────────────────────────────────
 
-  if (error || !rows) {
-    throw error ?? new Error('Unable to load waitlist rows');
-  }
+export async function recomputeWaitlistRankings(): Promise<void> {
+  const rows = await prisma.waitlist.findMany({
+    where: { status: 'active' },
+    select: {
+      id: true,
+      email: true,
+      first_name: true,
+      referral_code: true,
+      referral_count: true,
+      persona: true,
+      poll_completion_count: true,
+      subscribed_at: true,
+    },
+  });
 
   const rankedRows = rows
     .map((row) => {
@@ -171,108 +183,129 @@ export async function recomputeWaitlistRankings(client?: ServiceClient) {
         waitlist_reward_eligible: isSupplySidePersona(persona),
       };
     })
-    .sort((left, right) => {
-      if (right.queue_score !== left.queue_score) {
-        return right.queue_score - left.queue_score;
-      }
-      const leftDate = left.subscribed_at ? new Date(left.subscribed_at).getTime() : 0;
-      const rightDate = right.subscribed_at ? new Date(right.subscribed_at).getTime() : 0;
-      return leftDate - rightDate;
+    .sort((a, b) => {
+      if (b.queue_score !== a.queue_score) return b.queue_score - a.queue_score;
+      const aDate = a.subscribed_at ? new Date(a.subscribed_at).getTime() : 0;
+      const bDate = b.subscribed_at ? new Date(b.subscribed_at).getTime() : 0;
+      return aDate - bDate;
     });
 
+  // Process all rows — update rankings, history, and rewards
   for (const [index, row] of rankedRows.entries()) {
     const rank = index + 1;
-    await svc
-      .from('waitlist')
-      .update({
+
+    await prisma.waitlist.update({
+      where: { id: row.id },
+      data: {
         queue_score: row.queue_score,
         queue_rank: rank,
         candidate_role: row.candidate_role,
         waitlist_reward_eligible: row.waitlist_reward_eligible,
-      })
-      .eq('id', row.id);
-
-    await svc.from('waitlist_rank_history').insert({
-      waitlist_id: row.id,
-      rank,
-      score: row.queue_score,
-      reason: 'recompute',
+      },
     });
 
-    await ensureReferralMilestoneRewards(
-      {
-        userEmail: row.email,
-        referralCount: row.referral_count ?? 0,
-        referralCode: row.referral_code,
-        waitlistId: row.id,
+    await prisma.waitlist_rank_history.create({
+      data: {
+        waitlist_id: row.id,
+        rank,
+        score: row.queue_score,
+        reason: 'recompute',
       },
-      svc,
-    );
+    });
 
-    await ensureWaitlistCohortReward(
-      {
-        id: row.id,
-        email: row.email,
-        first_name: row.first_name,
-        referral_code: row.referral_code,
-        referral_count: row.referral_count,
-        persona: row.persona,
-        poll_completion_count: row.poll_completion_count,
-        subscribed_at: row.subscribed_at,
-      },
-      svc,
-    );
+    await ensureReferralMilestoneRewards({
+      userEmail: row.email,
+      referralCount: row.referral_count ?? 0,
+      referralCode: row.referral_code,
+      waitlistId: row.id,
+    });
+
+    await ensureWaitlistCohortReward({
+      id: row.id,
+      email: row.email,
+      first_name: row.first_name,
+      referral_code: row.referral_code,
+      referral_count: row.referral_count,
+      persona: row.persona,
+      poll_completion_count: row.poll_completion_count,
+      subscribed_at: row.subscribed_at?.toISOString() ?? null,
+    });
   }
 }
 
-export async function syncWaitlistContextToProfile(email: string, profileId: string, client?: ServiceClient) {
-  const svc = getClient(client);
+// ─── syncWaitlistContextToProfile ────────────────────────────────────────────
+
+export async function syncWaitlistContextToProfile(
+  email: string,
+  profileId: string,
+): Promise<{
+  persona: WaitlistPersona;
+  candidateRole: string;
+  queueRank: number | null;
+  queueScore: number;
+  referralCount: number | null;
+  referralCode: string | null;
+  shareUrl: string | null;
+} | null> {
   const normalizedEmail = email.trim().toLowerCase();
-  const { data: waitlistRow } = await svc
-    .from('waitlist')
-    .select('id, email, persona, referral_code, referral_count, queue_rank, queue_score, candidate_role, waitlist_reward_eligible')
-    .eq('email', normalizedEmail)
-    .maybeSingle();
 
-  if (!waitlistRow) {
-    return null;
-  }
+  const waitlistRow = await prisma.waitlist.findUnique({
+    where: { email: normalizedEmail },
+    select: {
+      id: true,
+      email: true,
+      persona: true,
+      referral_code: true,
+      referral_count: true,
+      queue_rank: true,
+      queue_score: true,
+      candidate_role: true,
+      waitlist_reward_eligible: true,
+    },
+  });
 
-  const persona = isWaitlistPersona(waitlistRow.persona) ? waitlistRow.persona : 'buyer_renter';
+  if (!waitlistRow) return null;
+
+  const persona = isWaitlistPersona(waitlistRow.persona)
+    ? waitlistRow.persona
+    : 'buyer_renter';
   const candidateRole = getCandidateRoleFromPersona(persona);
   const launchRewardWindowEnd = isSupplySidePersona(persona)
-    ? getLaunchRewardWindowEnd().toISOString()
+    ? getLaunchRewardWindowEnd()
     : null;
 
-  await svc.from('profiles').update({
-    waitlist_persona: persona,
-    candidate_role: candidateRole,
-    launch_reward_window_ends_at: launchRewardWindowEnd,
-  }).eq('id', profileId);
+  await prisma.profiles.update({
+    where: { id: profileId },
+    data: {
+      waitlist_persona: persona,
+      candidate_role: candidateRole,
+      launch_reward_window_ends_at: launchRewardWindowEnd,
+    },
+  });
 
   if (candidateRole !== 'user') {
-    await svc.from('users').update({ role: candidateRole }).eq('id', profileId);
+    await prisma.users.update({
+      where: { id: profileId },
+      data: { role: candidateRole as any },
+    });
   }
 
-  await svc
-    .from('reward_entitlements')
-    .update({ profile_id: profileId })
-    .eq('user_email', normalizedEmail)
-    .is('profile_id', null);
-
-  await recordReferralEvent(
-    {
-      referredWaitlistId: waitlistRow.id,
-      referredProfileId: profileId,
-      referralCode: waitlistRow.referral_code,
-      eventType: 'account_created_from_waitlist',
-      metadata: {
-        persona,
-        candidate_role: candidateRole,
-      },
+  // Link any unlinked reward entitlements to this profile
+  await prisma.reward_entitlements.updateMany({
+    where: {
+      user_email: normalizedEmail,
+      profile_id: null,
     },
-    svc,
-  );
+    data: { profile_id: profileId },
+  });
+
+  await recordReferralEvent({
+    referredWaitlistId: waitlistRow.id,
+    referredProfileId: profileId,
+    referralCode: waitlistRow.referral_code,
+    eventType: 'account_created_from_waitlist',
+    metadata: { persona, candidate_role: candidateRole },
+  });
 
   return {
     persona,
@@ -281,98 +314,143 @@ export async function syncWaitlistContextToProfile(email: string, profileId: str
     queueScore: waitlistRow.queue_score,
     referralCount: waitlistRow.referral_count,
     referralCode: waitlistRow.referral_code,
-    shareUrl: waitlistRow.referral_code ? buildReferralShareUrl(waitlistRow.referral_code) : null,
+    shareUrl: waitlistRow.referral_code
+      ? buildReferralShareUrl(waitlistRow.referral_code)
+      : null,
   };
 }
 
-export async function getReferralSummaryForEmail(email: string, client?: ServiceClient) {
-  const svc = getClient(client);
+// ─── getReferralSummaryForEmail ───────────────────────────────────────────────
+
+export async function getReferralSummaryForEmail(email: string) {
   const normalizedEmail = email.trim().toLowerCase();
-  const { data: waitlistRow } = await svc
-    .from('waitlist')
-    .select('id, email, first_name, referral_code, referral_count, queue_rank, queue_score, persona')
-    .eq('email', normalizedEmail)
-    .maybeSingle();
 
-  const { data: profileRow } = await svc
-    .from('profiles')
-    .select('id, full_name, referral_code, referral_count, waitlist_persona, candidate_role, launch_reward_window_ends_at')
-    .eq('email', normalizedEmail)
-    .maybeSingle();
+  const [waitlistRow, profileRow, entitlements] = await Promise.all([
+    prisma.waitlist.findUnique({
+      where: { email: normalizedEmail },
+      select: {
+        id: true,
+        email: true,
+        first_name: true,
+        referral_code: true,
+        referral_count: true,
+        queue_rank: true,
+        queue_score: true,
+        persona: true,
+      },
+    }),
+    prisma.profiles.findFirst({
+      where: { email: normalizedEmail },
+      select: {
+        id: true,
+        full_name: true,
+        referral_code: true,
+        referral_count: true,
+        waitlist_persona: true,
+        candidate_role: true,
+        launch_reward_window_ends_at: true,
+      },
+    }),
+    prisma.reward_entitlements.findMany({
+      where: { user_email: normalizedEmail },
+      select: {
+        id: true,
+        reward_key: true,
+        status: true,
+        granted_at: true,
+        expires_at: true,
+        metadata: true,
+      },
+      orderBy: { granted_at: 'desc' },
+    }),
+  ]);
 
-  const referralCount = Math.max(waitlistRow?.referral_count ?? 0, profileRow?.referral_count ?? 0);
-  const referralCode = profileRow?.referral_code ?? waitlistRow?.referral_code ?? null;
-  const currentMilestone = getCurrentMilestone(referralCount);
-  const nextMilestone = getNextMilestone(referralCount);
+  const referralCount = Math.max(
+    waitlistRow?.referral_count ?? 0,
+    profileRow?.referral_count ?? 0,
+  );
+  const referralCode =
+    profileRow?.referral_code ?? waitlistRow?.referral_code ?? null;
   const persona = isWaitlistPersona(profileRow?.waitlist_persona)
     ? profileRow.waitlist_persona
     : isWaitlistPersona(waitlistRow?.persona)
-      ? waitlistRow.persona
-      : null;
-
-  const { data: entitlements } = await svc
-    .from('reward_entitlements')
-    .select('id, reward_key, status, granted_at, expires_at, metadata')
-    .eq('user_email', normalizedEmail)
-    .order('granted_at', { ascending: false });
+    ? waitlistRow.persona
+    : null;
 
   return {
     email: normalizedEmail,
-    firstName: profileRow?.full_name?.split(' ')[0] ?? waitlistRow?.first_name ?? 'there',
+    firstName:
+      profileRow?.full_name?.split(' ')[0] ??
+      waitlistRow?.first_name ??
+      'there',
     referralCode,
     referralCount,
-    currentMilestone,
-    nextMilestone,
+    currentMilestone: getCurrentMilestone(referralCount),
+    nextMilestone: getNextMilestone(referralCount),
     queueRank: waitlistRow?.queue_rank ?? null,
     queueScore: waitlistRow?.queue_score ?? null,
     persona,
-    candidateRole: profileRow?.candidate_role ?? (persona ? getCandidateRoleFromPersona(persona) : 'user'),
-    entitlements: entitlements ?? [],
-    launchRewardWindowEndsAt: profileRow?.launch_reward_window_ends_at ?? null,
+    candidateRole:
+      profileRow?.candidate_role ??
+      (persona ? getCandidateRoleFromPersona(persona) : 'user'),
+    entitlements,
+    launchRewardWindowEndsAt:
+      profileRow?.launch_reward_window_ends_at ?? null,
     shareUrl: referralCode ? buildReferralShareUrl(referralCode) : null,
   };
 }
 
-export async function redeemFirstListingWaiver(profileId: string, listingId: string, client?: ServiceClient) {
-  const svc = getClient(client);
-  const now = new Date().toISOString();
-  const { data: entitlement } = await svc
-    .from('reward_entitlements')
-    .select('id, expires_at, status, profile_id')
-    .eq('profile_id', profileId)
-    .eq('reward_key', WAITLIST_REWARD_KEY)
-    .eq('status', 'active')
-    .order('granted_at', { ascending: true })
-    .limit(1)
-    .maybeSingle();
+// ─── redeemFirstListingWaiver ─────────────────────────────────────────────────
+
+export async function redeemFirstListingWaiver(
+  profileId: string,
+  listingId: string,
+): Promise<{ redeemed: boolean; reason?: string; entitlementId?: string }> {
+  const now = new Date();
+
+  const entitlement = await prisma.reward_entitlements.findFirst({
+    where: {
+      profile_id: profileId,
+      reward_key: WAITLIST_REWARD_KEY,
+      status: 'active',
+    },
+    orderBy: { granted_at: 'asc' },
+    select: { id: true, expires_at: true, status: true },
+  });
 
   if (!entitlement) {
     return { redeemed: false, reason: 'No active first-listing fee waiver found.' };
   }
 
   if (entitlement.expires_at && entitlement.expires_at < now) {
-    await svc.from('reward_entitlements').update({ status: 'expired' }).eq('id', entitlement.id);
+    await prisma.reward_entitlements.update({
+      where: { id: entitlement.id },
+      data: { status: 'expired' },
+    });
     return { redeemed: false, reason: 'The first-listing fee waiver has expired.' };
   }
 
-  await svc.from('reward_entitlements').update({ status: 'redeemed' }).eq('id', entitlement.id);
-  await svc.from('reward_redemptions').insert({
-    entitlement_id: entitlement.id,
-    profile_id: profileId,
-    redemption_context: 'first_listing_fee_waiver',
-    redemption_reference_id: listingId,
-    redeemed_at: now,
-    metadata: { listing_id: listingId },
+  await prisma.reward_entitlements.update({
+    where: { id: entitlement.id },
+    data: { status: 'redeemed' },
   });
 
-  await recordReferralEvent(
-    {
-      referredProfileId: profileId,
-      eventType: 'first_listing_fee_waiver_redeemed',
-      metadata: { listing_id: listingId, entitlement_id: entitlement.id },
+  await prisma.reward_redemptions.create({
+    data: {
+      entitlement_id: entitlement.id,
+      profile_id: profileId,
+      redemption_context: 'first_listing_fee_waiver',
+      redemption_reference_id: listingId,
+      redeemed_at: now,
+      metadata: { listing_id: listingId },
     },
-    svc,
-  );
+  });
+
+  await recordReferralEvent({
+    referredProfileId: profileId,
+    eventType: 'first_listing_fee_waiver_redeemed',
+    metadata: { listing_id: listingId, entitlement_id: entitlement.id },
+  });
 
   return { redeemed: true, entitlementId: entitlement.id };
 }

@@ -1,7 +1,53 @@
 // realest/app/api/properties/owner/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
+
+/**
+ * OpenAPI metadata for GET /api/properties/owner
+ * Retrieve authenticated user's properties
+ */
+export const openApiGET: OpenApiMetadata = {
+  method: "get",
+  summary: "Get user's properties",
+  description: "Retrieve all properties owned or managed by the authenticated user. Only accessible to property owners and agents. Supports pagination.",
+  tags: ["Properties"],
+  security: [{ bearerAuth: [] }],
+  parameters: [
+    {
+      name: "page",
+      in: "query",
+      schema: { type: "integer", minimum: 1, default: 1 },
+      description: "Page number",
+    },
+    {
+      name: "limit",
+      in: "query",
+      schema: { type: "integer", minimum: 1, maximum: 50, default: 20 },
+      description: "Properties per page",
+    },
+  ],
+  responses: {
+    "200": {
+      description: "User properties list with pagination",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+            properties: {
+              properties: { type: "array", items: { type: "object" } },
+              pagination: { type: "object" },
+            },
+          },
+        },
+      },
+    },
+    "401": { description: "Unauthorized" },
+    "403": { description: "User must be an owner or agent" },
+    "404": { description: "Owner/agent profile not found" },
+  },
+};
 
 // GET /api/properties/owner - Get current user's properties (owner/agent)
 export async function GET(request: NextRequest) {
@@ -12,7 +58,7 @@ export async function GET(request: NextRequest) {
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

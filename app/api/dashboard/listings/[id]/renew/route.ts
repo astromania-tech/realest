@@ -1,9 +1,26 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
+}
+
+export const openApiPOST: OpenApiMetadata = {
+  method: 'post',
+  summary: 'Renew dashboard property',
+  description: 'Renew a live or expired property listing and set it back to live status.',
+  tags: ['Dashboard'],
+  security: [{ bearerAuth: [] }],
+  parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Property ID' }],
+  responses: {
+    '200': { description: 'Property renewed successfully' },
+    '400': { description: 'Cannot renew property' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Forbidden - Property owners only' },
+    '404': { description: 'Property not found or access denied' },
+  },
 }
 
 export async function POST(request: Request, { params }: RouteParams) {
@@ -16,7 +33,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

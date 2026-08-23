@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { prisma, Prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import type { OpenApiMetadata } from '@/lib/openapi/route-metadata'
 
 // Query schema for property exploration
 const exploreQuerySchema = z.object({
@@ -35,6 +36,42 @@ const exploreQuerySchema = z.object({
 })
 
 type ExploreQuery = z.infer<typeof exploreQuerySchema>
+
+/**
+ * OpenAPI metadata for GET /api/properties/explore
+ * Advanced property discovery with Nigerian market context
+ */
+export const openApiGET: OpenApiMetadata = {
+  method: 'get',
+  summary: 'Explore properties with advanced filters',
+  description: 'Advanced property search with location, price, features, and Nigerian infrastructure filters. Supports geospatial radius search, pagination, and multiple sorting options.',
+  tags: ['Properties'],
+  parameters: [
+    { name: 'state', in: 'query', schema: { type: 'string' }, description: 'State filter (e.g., Lagos, Abuja)' },
+    { name: 'latitude', in: 'query', schema: { type: 'number' }, description: 'Latitude for geospatial search' },
+    { name: 'longitude', in: 'query', schema: { type: 'number' }, description: 'Longitude for geospatial search' },
+    { name: 'radius_km', in: 'query', schema: { type: 'number', minimum: 1, maximum: 100 }, description: 'Search radius in km' },
+    { name: 'property_type', in: 'query', schema: { type: 'string', enum: ['house', 'apartment', 'land', 'commercial', 'event_center', 'hotel', 'shop', 'office'] } },
+    { name: 'min_price', in: 'query', schema: { type: 'number', minimum: 0 } },
+    { name: 'max_price', in: 'query', schema: { type: 'number', minimum: 0 } },
+    { name: 'bedrooms', in: 'query', schema: { type: 'integer', minimum: 0 } },
+    { name: 'bathrooms', in: 'query', schema: { type: 'integer', minimum: 0 } },
+    { name: 'has_bq', in: 'query', schema: { type: 'boolean' }, description: 'Has Boys Quarters' },
+    { name: 'nepa_status', in: 'query', schema: { type: 'string', enum: ['stable', 'intermittent', 'poor', 'none', 'generator_only'] } },
+    { name: 'water_source', in: 'query', schema: { type: 'string', enum: ['borehole', 'public_water', 'well', 'water_vendor', 'none'] } },
+    { name: 'internet_type', in: 'query', schema: { type: 'string', enum: ['fiber', 'starlink', '4g', '3g', 'none'] } },
+    { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 } },
+    { name: 'per_page', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 50, default: 20 } },
+    { name: 'sort_by', in: 'query', schema: { type: 'string', enum: ['newest', 'price_asc', 'price_desc', 'distance'], default: 'newest' } },
+  ],
+  responses: {
+    '200': {
+      description: 'Featured and matching properties with pagination',
+      content: { 'application/json': { schema: { type: 'object', properties: { properties: { type: 'array' }, pagination: { type: 'object' } } } } },
+    },
+    '400': { description: 'Invalid filter parameters' },
+  },
+};
 
 export async function GET(request: NextRequest) {
   try {

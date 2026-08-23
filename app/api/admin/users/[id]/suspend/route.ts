@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const { id } = await params
 
     // Verify admin authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const { data: { user }, error: authError } = await getAuthUser()
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -208,3 +208,24 @@ function getModerationMessage(action: string, userName: string): string {
       return `Action completed for user ${userName}.`
   }
 }
+
+export const openApiPOST = {
+  method: 'post',
+  summary: 'Moderate user account (suspend/ban)',
+  description: 'Admin endpoint to suspend, unsuspend, ban, or unban a user account.',
+  tags: ['admin','users'],
+  parameters: [
+    { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
+  ],
+  requestBody: {
+    required: true,
+    content: { 'application/json': { schema: { type: 'object' } } },
+  },
+  responses: {
+    200: { description: 'Moderation action applied' },
+    400: { description: 'Invalid request' },
+    401: { description: 'Unauthorized' },
+    403: { description: 'Forbidden' },
+    404: { description: 'User not found' },
+  },
+} as const;

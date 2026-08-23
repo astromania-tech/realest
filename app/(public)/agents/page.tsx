@@ -9,10 +9,10 @@ export default async function AgentsDirectoryPage({ searchParams }: { searchPara
   // Fetch verified agents with optional state filter
   let query = supabase
     .from("agents")
-    .select("id, agency_name, license_number, verified_at, state, profiles(full_name, avatar_url), properties:properties(count) ")
-    .eq("verification_status", "approved")
+    .select("id, agency_name, license_number, verified, verification_date, profiles(full_name, avatar_url, state), properties:properties(count) ")
+    .eq("verified", true)
     .limit(50)
-  if (stateFilter) query = query.eq("state", stateFilter)
+  if (stateFilter) query = query.eq("profiles.state", stateFilter)
 
   const { data: agents } = await query
 
@@ -21,8 +21,8 @@ export default async function AgentsDirectoryPage({ searchParams }: { searchPara
     full_name: a.profiles?.full_name ?? null,
     agency_name: a.agency_name ?? null,
     license_number: a.license_number ?? null,
-    state: a.state ?? null,
-    verified_at: a.verified_at ?? null,
+    state: a.profiles?.state ?? null,
+    verified_at: a.verification_date ?? null,
     profile_photo_url: a.profiles?.avatar_url ?? null,
     properties_count: Array.isArray(a.properties) ? a.properties.length : null,
     average_rating: null,

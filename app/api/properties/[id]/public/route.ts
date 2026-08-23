@@ -1,5 +1,61 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
+
+const propertyIdSchema = z.string().uuid("Invalid property ID");
+
+/**
+ * OpenAPI metadata for GET /api/properties/{id}/public
+ * Retrieve public property or listing details
+ */
+export const openApiGET: OpenApiMetadata = {
+  method: "get",
+  summary: "Get public property details",
+  description: "Retrieve public property or listing details. Public view is available only for published (live) properties. Can retrieve owner-listed properties or agent-created listings via source parameter.",
+  tags: ["Properties"],
+  parameters: [
+    {
+      name: "id",
+      in: "path",
+      required: true,
+      schema: { type: "string", format: "uuid" },
+      description: "Property ID",
+    },
+    {
+      name: "source",
+      in: "query",
+      schema: { type: "string", enum: ["owner", "agent"], default: "owner" },
+      description: "Property source: owner-listed or agent-created",
+    },
+  ],
+  responses: {
+    "200": {
+      description: "Public property details with all media and owner/agent info",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+            properties: {
+              id: { type: "string", format: "uuid" },
+              title: { type: "string" },
+              description: { type: "string" },
+              price: { type: "number" },
+              state: { type: "string" },
+              city: { type: "string" },
+              bedrooms: { type: "integer" },
+              bathrooms: { type: "integer" },
+              media: { type: "array", items: { type: "object" } },
+              owner: { type: "object" },
+              agent: { type: "object" },
+            },
+          },
+        },
+      },
+    },
+    "404": { description: "Property not found or not published" },
+  },
+};
 
 /**
  * GET /api/properties/[id]/public
@@ -17,13 +73,18 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const propertyIdResult = propertyIdSchema.safeParse(id);
+    if (!propertyIdResult.success) {
+      return NextResponse.json({ error: "Property not found" }, { status: 404 });
+    }
+    const propertyId = propertyIdResult.data;
     const url = new URL(request.url);
     const source = url.searchParams.get("source") ?? "owner";
     const isAgent = source === "agent";
 
     const property = await prisma.properties.findFirst({
       where: {
-        id,
+        id: propertyId,
         status: "live",
         listing_source: isAgent ? "agent" : { not: "agent" },
       },

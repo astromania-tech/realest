@@ -1,0 +1,139 @@
+{
+  "info": {
+    "_postman_id": "realest-api-collection",
+    "name": "RealEST API - ML Validation",
+    "description": "Nigerian property marketplace API - Admin validation endpoints for documents, images, and duplicate detection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{supabase_jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Admin - Validation",
+      "description": "Document, image, and duplicate detection endpoints",
+      "item": [
+        {
+          "name": "Document Validation",
+          "description": "Validate property legal documents (title deed, survey plan, etc.)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "propertyId",
+                  "value": "550e8400-e29b-41d4-a716-446655440000",
+                  "type": "text"
+                },
+                {
+                  "key": "documentType",
+                  "value": "title_deed",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/validation/document",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "validation", "document"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Image Validation",
+          "description": "Validate property photos for deepfakes, manipulation, and quality",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "propertyId",
+                  "value": "550e8400-e29b-41d4-a716-446655440000",
+                  "type": "text"
+                },
+                {
+                  "key": "propertyType",
+                  "value": "house",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/validation/image",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "validation", "image"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Duplicate Detection",
+          "description": "Check for duplicate or similar property listings",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"propertyId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"images\": [],\n  \"location\": {\n    \"lat\": 6.5244,\n    \"lng\": 3.3792\n  },\n  \"description\": \"Beautiful 3-bedroom house with pool\",\n  \"address\": \"123 Lekki Avenue, Lagos\",\n  \"propertyType\": \"house\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/validation/duplicates",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "validation", "duplicates"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string",
+      "description": "API base URL. Change to production URL when deploying."
+    },
+    {
+      "key": "supabase_jwt_token",
+      "value": "",
+      "type": "string",
+      "description": "Your Supabase JWT authentication token. Get from login response."
+    },
+    {
+      "key": "property_id",
+      "value": "550e8400-e29b-41d4-a716-446655440000",
+      "type": "string",
+      "description": "UUID of the property being validated"
+    }
+  ]
+}

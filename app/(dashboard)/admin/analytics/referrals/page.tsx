@@ -1,7 +1,7 @@
 /**
  * /admin/analytics/referrals — Referral system analytics (server component)
  */
-import { createClient } from '@/lib/supabase/server';
+import { createClient, getAuthUser} from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -64,7 +64,7 @@ function fmt(d: string | null) {
 
 export default async function ReferralsPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await getAuthUser();
   if (!user) redirect('/login');
   const { data: userRow } = await supabase.from('users').select('role').eq('id', user.id).single();
   if (userRow?.role !== 'admin') redirect('/');

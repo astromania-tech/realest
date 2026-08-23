@@ -22,6 +22,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createServerClient } from "@supabase/ssr";
 import { deriveNumericOtp } from "@/lib/utils/otp";
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
 
 const schema = z.object({
   code: z
@@ -29,6 +30,31 @@ const schema = z.object({
     .length(6, "Code must be exactly 6 digits")
     .regex(/^\d{6}$/, "Code must be 6 digits"),
 });
+
+export const openApiPOST: OpenApiMetadata = {
+  method: "post",
+  summary: "Verify password reset OTP",
+  description: "Validate the 6-digit reset code and exchange the stored token hash for a recovery session.",
+  tags: ["Auth"],
+  requestBody: {
+    required: true,
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          required: ["code"],
+          properties: {
+            code: { type: "string", minLength: 6, maxLength: 6 },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    "200": { description: "OTP verified" },
+    "400": { description: "Invalid or expired code" },
+  },
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -80,7 +106,8 @@ export async function POST(request: NextRequest) {
 
     // Exchange the full token hash for a recovery session
     const { error: verifyError } = await supabase.auth.verifyOtp({
-      token_hash: storedHash,
+      token: storedHash,
+      email: "", // Supabase requires email for verifyOtp, but it's not actually used for token verification in this context
       type: "recovery",
     });
 

@@ -80,12 +80,12 @@ export type PrismaVersion = {
 }
 
 /**
- * Prisma Client JS version: 7.4.2
- * Query Engine version: 94a226be1cf2967af2541cca5529f0f7ba866919
+ * Prisma Client JS version: 7.8.0
+ * Query Engine version: 3c6e192761c0362d496ed980de936e2f3cebcd3a
  */
 export const prismaVersion: PrismaVersion = {
-  client: "7.4.2",
-  engine: "94a226be1cf2967af2541cca5529f0f7ba866919"
+  client: "7.8.0",
+  engine: "3c6e192761c0362d496ed980de936e2f3cebcd3a"
 }
 
 /**
@@ -398,7 +398,6 @@ export const ModelName = {
   property_media: 'property_media',
   reviews: 'reviews',
   saved_properties: 'saved_properties',
-  spatial_ref_sys: 'spatial_ref_sys',
   users: 'users',
   waitlist: 'waitlist',
   poll_responses: 'poll_responses',
@@ -406,7 +405,13 @@ export const ModelName = {
   poll_questions: 'poll_questions',
   poll_submissions: 'poll_submissions',
   poll_submission_answers: 'poll_submission_answers',
-  email_campaigns: 'email_campaigns'
+  email_campaigns: 'email_campaigns',
+  property_validation_jobs: 'property_validation_jobs',
+  referral_events: 'referral_events',
+  reward_catalog: 'reward_catalog',
+  reward_entitlements: 'reward_entitlements',
+  reward_redemptions: 'reward_redemptions',
+  waitlist_rank_history: 'waitlist_rank_history'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -422,7 +427,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "admin_audit_log" | "agents" | "inquiries" | "kyc_requests" | "notifications" | "owners" | "payments" | "profiles" | "properties" | "property_details" | "property_documents" | "property_media" | "reviews" | "saved_properties" | "spatial_ref_sys" | "users" | "waitlist" | "poll_responses" | "poll_forms" | "poll_questions" | "poll_submissions" | "poll_submission_answers" | "email_campaigns"
+    modelProps: "admin_audit_log" | "agents" | "inquiries" | "kyc_requests" | "notifications" | "owners" | "payments" | "profiles" | "properties" | "property_details" | "property_documents" | "property_media" | "reviews" | "saved_properties" | "users" | "waitlist" | "poll_responses" | "poll_forms" | "poll_questions" | "poll_submissions" | "poll_submission_answers" | "email_campaigns" | "property_validation_jobs" | "referral_events" | "reward_catalog" | "reward_entitlements" | "reward_redemptions" | "waitlist_rank_history"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1462,80 +1467,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    spatial_ref_sys: {
-      payload: Prisma.$spatial_ref_sysPayload<ExtArgs>
-      fields: Prisma.spatial_ref_sysFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.spatial_ref_sysFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$spatial_ref_sysPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.spatial_ref_sysFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$spatial_ref_sysPayload>
-        }
-        findFirst: {
-          args: Prisma.spatial_ref_sysFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$spatial_ref_sysPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.spatial_ref_sysFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$spatial_ref_sysPayload>
-        }
-        findMany: {
-          args: Prisma.spatial_ref_sysFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$spatial_ref_sysPayload>[]
-        }
-        create: {
-          args: Prisma.spatial_ref_sysCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$spatial_ref_sysPayload>
-        }
-        createMany: {
-          args: Prisma.spatial_ref_sysCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.spatial_ref_sysCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$spatial_ref_sysPayload>[]
-        }
-        delete: {
-          args: Prisma.spatial_ref_sysDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$spatial_ref_sysPayload>
-        }
-        update: {
-          args: Prisma.spatial_ref_sysUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$spatial_ref_sysPayload>
-        }
-        deleteMany: {
-          args: Prisma.spatial_ref_sysDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.spatial_ref_sysUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.spatial_ref_sysUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$spatial_ref_sysPayload>[]
-        }
-        upsert: {
-          args: Prisma.spatial_ref_sysUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$spatial_ref_sysPayload>
-        }
-        aggregate: {
-          args: Prisma.Spatial_ref_sysAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateSpatial_ref_sys>
-        }
-        groupBy: {
-          args: Prisma.spatial_ref_sysGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.Spatial_ref_sysGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.spatial_ref_sysCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.Spatial_ref_sysCountAggregateOutputType> | number
-        }
-      }
-    }
     users: {
       payload: Prisma.$usersPayload<ExtArgs>
       fields: Prisma.usersFieldRefs
@@ -2128,6 +2059,450 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    property_validation_jobs: {
+      payload: Prisma.$property_validation_jobsPayload<ExtArgs>
+      fields: Prisma.property_validation_jobsFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.property_validation_jobsFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_validation_jobsPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.property_validation_jobsFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_validation_jobsPayload>
+        }
+        findFirst: {
+          args: Prisma.property_validation_jobsFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_validation_jobsPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.property_validation_jobsFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_validation_jobsPayload>
+        }
+        findMany: {
+          args: Prisma.property_validation_jobsFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_validation_jobsPayload>[]
+        }
+        create: {
+          args: Prisma.property_validation_jobsCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_validation_jobsPayload>
+        }
+        createMany: {
+          args: Prisma.property_validation_jobsCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.property_validation_jobsCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_validation_jobsPayload>[]
+        }
+        delete: {
+          args: Prisma.property_validation_jobsDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_validation_jobsPayload>
+        }
+        update: {
+          args: Prisma.property_validation_jobsUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_validation_jobsPayload>
+        }
+        deleteMany: {
+          args: Prisma.property_validation_jobsDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.property_validation_jobsUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.property_validation_jobsUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_validation_jobsPayload>[]
+        }
+        upsert: {
+          args: Prisma.property_validation_jobsUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_validation_jobsPayload>
+        }
+        aggregate: {
+          args: Prisma.Property_validation_jobsAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateProperty_validation_jobs>
+        }
+        groupBy: {
+          args: Prisma.property_validation_jobsGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Property_validation_jobsGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.property_validation_jobsCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Property_validation_jobsCountAggregateOutputType> | number
+        }
+      }
+    }
+    referral_events: {
+      payload: Prisma.$referral_eventsPayload<ExtArgs>
+      fields: Prisma.referral_eventsFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.referral_eventsFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$referral_eventsPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.referral_eventsFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$referral_eventsPayload>
+        }
+        findFirst: {
+          args: Prisma.referral_eventsFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$referral_eventsPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.referral_eventsFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$referral_eventsPayload>
+        }
+        findMany: {
+          args: Prisma.referral_eventsFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$referral_eventsPayload>[]
+        }
+        create: {
+          args: Prisma.referral_eventsCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$referral_eventsPayload>
+        }
+        createMany: {
+          args: Prisma.referral_eventsCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.referral_eventsCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$referral_eventsPayload>[]
+        }
+        delete: {
+          args: Prisma.referral_eventsDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$referral_eventsPayload>
+        }
+        update: {
+          args: Prisma.referral_eventsUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$referral_eventsPayload>
+        }
+        deleteMany: {
+          args: Prisma.referral_eventsDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.referral_eventsUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.referral_eventsUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$referral_eventsPayload>[]
+        }
+        upsert: {
+          args: Prisma.referral_eventsUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$referral_eventsPayload>
+        }
+        aggregate: {
+          args: Prisma.Referral_eventsAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateReferral_events>
+        }
+        groupBy: {
+          args: Prisma.referral_eventsGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Referral_eventsGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.referral_eventsCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Referral_eventsCountAggregateOutputType> | number
+        }
+      }
+    }
+    reward_catalog: {
+      payload: Prisma.$reward_catalogPayload<ExtArgs>
+      fields: Prisma.reward_catalogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.reward_catalogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_catalogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.reward_catalogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_catalogPayload>
+        }
+        findFirst: {
+          args: Prisma.reward_catalogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_catalogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.reward_catalogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_catalogPayload>
+        }
+        findMany: {
+          args: Prisma.reward_catalogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_catalogPayload>[]
+        }
+        create: {
+          args: Prisma.reward_catalogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_catalogPayload>
+        }
+        createMany: {
+          args: Prisma.reward_catalogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.reward_catalogCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_catalogPayload>[]
+        }
+        delete: {
+          args: Prisma.reward_catalogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_catalogPayload>
+        }
+        update: {
+          args: Prisma.reward_catalogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_catalogPayload>
+        }
+        deleteMany: {
+          args: Prisma.reward_catalogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.reward_catalogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.reward_catalogUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_catalogPayload>[]
+        }
+        upsert: {
+          args: Prisma.reward_catalogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_catalogPayload>
+        }
+        aggregate: {
+          args: Prisma.Reward_catalogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateReward_catalog>
+        }
+        groupBy: {
+          args: Prisma.reward_catalogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Reward_catalogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.reward_catalogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Reward_catalogCountAggregateOutputType> | number
+        }
+      }
+    }
+    reward_entitlements: {
+      payload: Prisma.$reward_entitlementsPayload<ExtArgs>
+      fields: Prisma.reward_entitlementsFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.reward_entitlementsFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_entitlementsPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.reward_entitlementsFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_entitlementsPayload>
+        }
+        findFirst: {
+          args: Prisma.reward_entitlementsFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_entitlementsPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.reward_entitlementsFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_entitlementsPayload>
+        }
+        findMany: {
+          args: Prisma.reward_entitlementsFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_entitlementsPayload>[]
+        }
+        create: {
+          args: Prisma.reward_entitlementsCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_entitlementsPayload>
+        }
+        createMany: {
+          args: Prisma.reward_entitlementsCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.reward_entitlementsCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_entitlementsPayload>[]
+        }
+        delete: {
+          args: Prisma.reward_entitlementsDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_entitlementsPayload>
+        }
+        update: {
+          args: Prisma.reward_entitlementsUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_entitlementsPayload>
+        }
+        deleteMany: {
+          args: Prisma.reward_entitlementsDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.reward_entitlementsUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.reward_entitlementsUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_entitlementsPayload>[]
+        }
+        upsert: {
+          args: Prisma.reward_entitlementsUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_entitlementsPayload>
+        }
+        aggregate: {
+          args: Prisma.Reward_entitlementsAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateReward_entitlements>
+        }
+        groupBy: {
+          args: Prisma.reward_entitlementsGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Reward_entitlementsGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.reward_entitlementsCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Reward_entitlementsCountAggregateOutputType> | number
+        }
+      }
+    }
+    reward_redemptions: {
+      payload: Prisma.$reward_redemptionsPayload<ExtArgs>
+      fields: Prisma.reward_redemptionsFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.reward_redemptionsFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_redemptionsPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.reward_redemptionsFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_redemptionsPayload>
+        }
+        findFirst: {
+          args: Prisma.reward_redemptionsFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_redemptionsPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.reward_redemptionsFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_redemptionsPayload>
+        }
+        findMany: {
+          args: Prisma.reward_redemptionsFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_redemptionsPayload>[]
+        }
+        create: {
+          args: Prisma.reward_redemptionsCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_redemptionsPayload>
+        }
+        createMany: {
+          args: Prisma.reward_redemptionsCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.reward_redemptionsCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_redemptionsPayload>[]
+        }
+        delete: {
+          args: Prisma.reward_redemptionsDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_redemptionsPayload>
+        }
+        update: {
+          args: Prisma.reward_redemptionsUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_redemptionsPayload>
+        }
+        deleteMany: {
+          args: Prisma.reward_redemptionsDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.reward_redemptionsUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.reward_redemptionsUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_redemptionsPayload>[]
+        }
+        upsert: {
+          args: Prisma.reward_redemptionsUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$reward_redemptionsPayload>
+        }
+        aggregate: {
+          args: Prisma.Reward_redemptionsAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateReward_redemptions>
+        }
+        groupBy: {
+          args: Prisma.reward_redemptionsGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Reward_redemptionsGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.reward_redemptionsCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Reward_redemptionsCountAggregateOutputType> | number
+        }
+      }
+    }
+    waitlist_rank_history: {
+      payload: Prisma.$waitlist_rank_historyPayload<ExtArgs>
+      fields: Prisma.waitlist_rank_historyFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.waitlist_rank_historyFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$waitlist_rank_historyPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.waitlist_rank_historyFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$waitlist_rank_historyPayload>
+        }
+        findFirst: {
+          args: Prisma.waitlist_rank_historyFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$waitlist_rank_historyPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.waitlist_rank_historyFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$waitlist_rank_historyPayload>
+        }
+        findMany: {
+          args: Prisma.waitlist_rank_historyFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$waitlist_rank_historyPayload>[]
+        }
+        create: {
+          args: Prisma.waitlist_rank_historyCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$waitlist_rank_historyPayload>
+        }
+        createMany: {
+          args: Prisma.waitlist_rank_historyCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.waitlist_rank_historyCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$waitlist_rank_historyPayload>[]
+        }
+        delete: {
+          args: Prisma.waitlist_rank_historyDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$waitlist_rank_historyPayload>
+        }
+        update: {
+          args: Prisma.waitlist_rank_historyUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$waitlist_rank_historyPayload>
+        }
+        deleteMany: {
+          args: Prisma.waitlist_rank_historyDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.waitlist_rank_historyUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.waitlist_rank_historyUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$waitlist_rank_historyPayload>[]
+        }
+        upsert: {
+          args: Prisma.waitlist_rank_historyUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$waitlist_rank_historyPayload>
+        }
+        aggregate: {
+          args: Prisma.Waitlist_rank_historyAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWaitlist_rank_history>
+        }
+        groupBy: {
+          args: Prisma.waitlist_rank_historyGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Waitlist_rank_historyGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.waitlist_rank_historyCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Waitlist_rank_historyCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -2416,17 +2791,6 @@ export const Saved_propertiesScalarFieldEnum = {
 export type Saved_propertiesScalarFieldEnum = (typeof Saved_propertiesScalarFieldEnum)[keyof typeof Saved_propertiesScalarFieldEnum]
 
 
-export const Spatial_ref_sysScalarFieldEnum = {
-  srid: 'srid',
-  auth_name: 'auth_name',
-  auth_srid: 'auth_srid',
-  srtext: 'srtext',
-  proj4text: 'proj4text'
-} as const
-
-export type Spatial_ref_sysScalarFieldEnum = (typeof Spatial_ref_sysScalarFieldEnum)[keyof typeof Spatial_ref_sysScalarFieldEnum]
-
-
 export const UsersScalarFieldEnum = {
   id: 'id',
   email: 'email',
@@ -2469,15 +2833,15 @@ export const WaitlistScalarFieldEnum = {
   referral_code: 'referral_code',
   referred_by: 'referred_by',
   referral_count: 'referral_count',
+  created_at: 'created_at',
+  updated_at: 'updated_at',
   persona: 'persona',
   persona_details: 'persona_details',
   queue_score: 'queue_score',
   queue_rank: 'queue_rank',
   candidate_role: 'candidate_role',
   poll_completion_count: 'poll_completion_count',
-  waitlist_reward_eligible: 'waitlist_reward_eligible',
-  created_at: 'created_at',
-  updated_at: 'updated_at'
+  waitlist_reward_eligible: 'waitlist_reward_eligible'
 } as const
 
 export type WaitlistScalarFieldEnum = (typeof WaitlistScalarFieldEnum)[keyof typeof WaitlistScalarFieldEnum]
@@ -2575,6 +2939,101 @@ export const Email_campaignsScalarFieldEnum = {
 } as const
 
 export type Email_campaignsScalarFieldEnum = (typeof Email_campaignsScalarFieldEnum)[keyof typeof Email_campaignsScalarFieldEnum]
+
+
+export const Property_validation_jobsScalarFieldEnum = {
+  id: 'id',
+  property_id: 'property_id',
+  job_kind: 'job_kind',
+  source: 'source',
+  status: 'status',
+  attempts: 'attempts',
+  retry_count: 'retry_count',
+  last_error: 'last_error',
+  failure_reason: 'failure_reason',
+  final_property_status: 'final_property_status',
+  queued_at: 'queued_at',
+  started_at: 'started_at',
+  finished_at: 'finished_at',
+  updated_at: 'updated_at',
+  next_retry_at: 'next_retry_at',
+  request_payload: 'request_payload',
+  result: 'result',
+  requested_by: 'requested_by'
+} as const
+
+export type Property_validation_jobsScalarFieldEnum = (typeof Property_validation_jobsScalarFieldEnum)[keyof typeof Property_validation_jobsScalarFieldEnum]
+
+
+export const Referral_eventsScalarFieldEnum = {
+  id: 'id',
+  referrer_waitlist_id: 'referrer_waitlist_id',
+  referrer_profile_id: 'referrer_profile_id',
+  referred_waitlist_id: 'referred_waitlist_id',
+  referred_profile_id: 'referred_profile_id',
+  referral_code: 'referral_code',
+  event_type: 'event_type',
+  metadata: 'metadata',
+  created_at: 'created_at'
+} as const
+
+export type Referral_eventsScalarFieldEnum = (typeof Referral_eventsScalarFieldEnum)[keyof typeof Referral_eventsScalarFieldEnum]
+
+
+export const Reward_catalogScalarFieldEnum = {
+  id: 'id',
+  key: 'key',
+  name: 'name',
+  reward_system: 'reward_system',
+  description: 'description',
+  is_redeemable: 'is_redeemable',
+  metadata: 'metadata',
+  created_at: 'created_at'
+} as const
+
+export type Reward_catalogScalarFieldEnum = (typeof Reward_catalogScalarFieldEnum)[keyof typeof Reward_catalogScalarFieldEnum]
+
+
+export const Reward_entitlementsScalarFieldEnum = {
+  id: 'id',
+  user_email: 'user_email',
+  waitlist_id: 'waitlist_id',
+  profile_id: 'profile_id',
+  reward_key: 'reward_key',
+  source_event: 'source_event',
+  source_referral_count: 'source_referral_count',
+  status: 'status',
+  granted_at: 'granted_at',
+  expires_at: 'expires_at',
+  metadata: 'metadata'
+} as const
+
+export type Reward_entitlementsScalarFieldEnum = (typeof Reward_entitlementsScalarFieldEnum)[keyof typeof Reward_entitlementsScalarFieldEnum]
+
+
+export const Reward_redemptionsScalarFieldEnum = {
+  id: 'id',
+  entitlement_id: 'entitlement_id',
+  profile_id: 'profile_id',
+  redemption_context: 'redemption_context',
+  redemption_reference_id: 'redemption_reference_id',
+  redeemed_at: 'redeemed_at',
+  metadata: 'metadata'
+} as const
+
+export type Reward_redemptionsScalarFieldEnum = (typeof Reward_redemptionsScalarFieldEnum)[keyof typeof Reward_redemptionsScalarFieldEnum]
+
+
+export const Waitlist_rank_historyScalarFieldEnum = {
+  id: 'id',
+  waitlist_id: 'waitlist_id',
+  rank: 'rank',
+  score: 'score',
+  reason: 'reason',
+  created_at: 'created_at'
+} as const
+
+export type Waitlist_rank_historyScalarFieldEnum = (typeof Waitlist_rank_historyScalarFieldEnum)[keyof typeof Waitlist_rank_historyScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -2828,6 +3287,21 @@ export type PrismaClientOptions = ({
    * ```
    */
   comments?: runtime.SqlCommenterPlugin[]
+  /**
+   * Optional maximum size for the query plan cache. If not provided, a default size will be used.
+   * A value of `0` can be used to disable the cache entirely. A higher cache size can improve
+   * performance for applications that execute a large number of unique queries, while a smaller
+   * cache size can reduce memory usage.
+   * 
+   * @example
+   * ```
+   * const prisma = new PrismaClient({
+   *   adapter,
+   *   queryPlanCacheMaxSize: 100,
+   * })
+   * ```
+   */
+  queryPlanCacheMaxSize?: number
 }
 export type GlobalOmitConfig = {
   admin_audit_log?: Prisma.admin_audit_logOmit
@@ -2844,7 +3318,6 @@ export type GlobalOmitConfig = {
   property_media?: Prisma.property_mediaOmit
   reviews?: Prisma.reviewsOmit
   saved_properties?: Prisma.saved_propertiesOmit
-  spatial_ref_sys?: Prisma.spatial_ref_sysOmit
   users?: Prisma.usersOmit
   waitlist?: Prisma.waitlistOmit
   poll_responses?: Prisma.poll_responsesOmit
@@ -2853,6 +3326,12 @@ export type GlobalOmitConfig = {
   poll_submissions?: Prisma.poll_submissionsOmit
   poll_submission_answers?: Prisma.poll_submission_answersOmit
   email_campaigns?: Prisma.email_campaignsOmit
+  property_validation_jobs?: Prisma.property_validation_jobsOmit
+  referral_events?: Prisma.referral_eventsOmit
+  reward_catalog?: Prisma.reward_catalogOmit
+  reward_entitlements?: Prisma.reward_entitlementsOmit
+  reward_redemptions?: Prisma.reward_redemptionsOmit
+  waitlist_rank_history?: Prisma.waitlist_rank_historyOmit
 }
 
 /* Types for Logging */

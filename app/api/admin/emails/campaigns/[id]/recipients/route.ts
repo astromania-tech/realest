@@ -7,14 +7,33 @@
  * Admin-only.
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import prisma from '@/lib/prisma';
+import { z } from 'zod';
+import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
+
+const campaignIdSchema = z.string().uuid('Invalid campaign ID');
+
+export const openApiGET: OpenApiMetadata = {
+  method: 'get',
+  summary: 'List campaign recipients',
+  description: 'Return recipients for a Resend audience or database-backed campaign segment.',
+  tags: ['Admin', 'Emails'],
+  security: [{ bearerAuth: [] }],
+  parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+  responses: {
+    '200': { description: 'Campaign recipients loaded successfully' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Admin access required' },
+    '404': { description: 'Campaign not found' },
+  },
+};
 
 async function requireAdmin() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { supabase, error: 'Unauthorized', status: 401 as const };
 
   const { data: userRow } = await supabase
@@ -35,23 +54,26 @@ export async function GET(
   if (error) return NextResponse.json({ error }, { status });
 
   const { id } = await params;
+  const campaignIdResult = campaignIdSchema.safeParse(id);
+  if (!campaignIdResult.success) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  const campaignId = campaignIdResult.data;
 
-  const campaign = await prisma.email_campaigns.findUnique({ where: { id } });
-  if (!campaign) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  const campaignRecord = await prisma.email_campaigns.findUnique({ where: { id: campaignId } });
+  if (!campaignRecord) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  if (campaign.audience_type === 'resend_audience') {
+  if (campaignRecord.audience_type === 'resend_audience') {
     // Recipients are Resend-managed — return metadata only
     return NextResponse.json({
       type: 'resend_audience',
-      audienceId: campaign.audience_id,
-      total: campaign.total_recipients ?? null,
+      audienceId: campaignRecord.audience_id,
+      total: campaignRecord.total_recipients ?? null,
       recipients: [],
       note: 'Recipients are managed by Resend. View them in the Resend dashboard.',
     });
   }
 
   // db_segment — re-run the audience filter query
-  const audienceFilter = (campaign.audience_filter as Record<string, unknown>) ?? {};
+  const audienceFilter = (campaignRecord.audience_filter as Record<string, unknown>) ?? {};
 
   let query = supabase
     .from('users')

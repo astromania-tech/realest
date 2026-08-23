@@ -40,7 +40,7 @@ export interface CampaignRecipient {
 
 export interface BroadcastSendOptions {
   mode: 'broadcast';
-  audienceId: string;
+  audience_id: string;
   from: string;
   subject: string;
   /** Pre-rendered HTML string */
@@ -138,7 +138,7 @@ async function sendBroadcast(opts: BroadcastSendOptions): Promise<BulkSendResult
         text: string;
       }) => Promise<{ data: { id: string } | null; error: { message: string } | null }>;
     }).create({
-      audience_id: opts.audienceId,
+      audience_id: opts.audience_id,
       from: opts.from,
       name: opts.name ?? `Campaign ${new Date().toISOString()}`,
       subject: opts.subject,

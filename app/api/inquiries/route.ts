@@ -1,8 +1,9 @@
 // realest/app/api/inquiries/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
 
 const createInquirySchema = z.object({
   property_id: z.string().uuid(),
@@ -15,6 +16,68 @@ const updateInquirySchema = z.object({
   status: z.enum(["pending", "responded", "closed"]).optional(),
 });
 
+/**
+ * OpenAPI metadata for GET /api/inquiries
+ * Documented endpoint: Get user's inquiries
+ */
+export const openApiGET: OpenApiMetadata = {
+  method: 'get',
+  summary: 'Get user inquiries',
+  description: 'Get inquiries relevant to authenticated user. Users see inquiries they sent; owners see inquiries on their properties.',
+  tags: ['Inquiries', 'User'],
+  security: [{ bearerAuth: [] }],
+  responses: {
+    '200': {
+      description: 'List of inquiries',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              inquiries: {
+                type: 'array',
+                items: { $ref: '#/components/schemas/Inquiry' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '401': {
+      description: 'Unauthorized',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '403': {
+      description: 'Forbidden - invalid user type',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '404': {
+      description: 'User not found',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '500': {
+      description: 'Server error',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+  },
+}
+
 // GET /api/inquiries - Get user's inquiries (user or owner)
 export async function GET(request: NextRequest) {
   try {
@@ -24,7 +87,7 @@ export async function GET(request: NextRequest) {
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -103,6 +166,99 @@ export async function GET(request: NextRequest) {
   }
 }
 
+/**
+ * OpenAPI metadata for POST /api/inquiries
+ * Documented endpoint: Create new inquiry
+ */
+export const openApiPOST: OpenApiMetadata = {
+  method: 'post',
+  summary: 'Create property inquiry',
+  description: 'Send an inquiry about a property. Only users can send inquiries. Owner is automatically identified from property.',
+  tags: ['Inquiries', 'User'],
+  security: [{ bearerAuth: [] }],
+  requestBody: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          required: ['property_id', 'message'],
+          properties: {
+            property_id: {
+              type: 'string',
+              format: 'uuid',
+              description: 'Property to inquire about',
+            },
+            message: {
+              type: 'string',
+              minLength: 10,
+              description: 'Inquiry message',
+            },
+            contact_phone: {
+              type: 'string',
+              description: 'Contact phone (optional)',
+            },
+            contact_email: {
+              type: 'string',
+              format: 'email',
+              description: 'Contact email (optional)',
+            },
+          },
+          'x-source': '@/lib/validations/inquiry.ts → createInquirySchema',
+        },
+      },
+    },
+  },
+  responses: {
+    '201': {
+      description: 'Inquiry created successfully',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              inquiry: { $ref: '#/components/schemas/Inquiry' },
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    '400': {
+      description: 'Invalid inquiry data',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '401': {
+      description: 'Unauthorized',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '403': {
+      description: 'Forbidden - only users can send inquiries',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '404': {
+      description: 'Property not found or not available',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+  },
+}
+
 // POST /api/inquiries - Create new inquiry
 export async function POST(request: NextRequest) {
   try {
@@ -112,7 +268,7 @@ export async function POST(request: NextRequest) {
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

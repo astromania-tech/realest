@@ -1,9 +1,25 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
+}
+
+export const openApiPOST: OpenApiMetadata = {
+  method: 'post',
+  summary: 'Check dashboard listing duplicates',
+  description: 'Run duplicate detection for a dashboard listing using address, location, and title heuristics.',
+  tags: ['Dashboard'],
+  security: [{ bearerAuth: [] }],
+  parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Property ID' }],
+  responses: {
+    '200': { description: 'Duplicate analysis completed' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Forbidden' },
+    '404': { description: 'Property not found' },
+  },
 }
 
 export async function GET(request: Request, { params }: RouteParams) {
@@ -16,7 +32,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

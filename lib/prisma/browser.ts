@@ -101,11 +101,6 @@ export type reviews = Prisma.reviewsModel
  */
 export type saved_properties = Prisma.saved_propertiesModel
 /**
- * Model spatial_ref_sys
- * This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
- */
-export type spatial_ref_sys = Prisma.spatial_ref_sysModel
-/**
  * Model users
  * This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
  */
@@ -147,3 +142,33 @@ export type poll_submission_answers = Prisma.poll_submission_answersModel
  * Email marketing campaign records — tracks both Resend broadcast and DB-segment batch sends.
  */
 export type email_campaigns = Prisma.email_campaignsModel
+/**
+ * Model property_validation_jobs
+ * 
+ */
+export type property_validation_jobs = Prisma.property_validation_jobsModel
+/**
+ * Model referral_events
+ * This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+ */
+export type referral_events = Prisma.referral_eventsModel
+/**
+ * Model reward_catalog
+ * This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+ */
+export type reward_catalog = Prisma.reward_catalogModel
+/**
+ * Model reward_entitlements
+ * This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+ */
+export type reward_entitlements = Prisma.reward_entitlementsModel
+/**
+ * Model reward_redemptions
+ * This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+ */
+export type reward_redemptions = Prisma.reward_redemptionsModel
+/**
+ * Model waitlist_rank_history
+ * This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+ */
+export type waitlist_rank_history = Prisma.waitlist_rank_historyModel

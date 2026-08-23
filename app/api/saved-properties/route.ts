@@ -1,7 +1,8 @@
 // realest/app/api/saved-properties/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
 
 // Note: This assumes we add a 'saved_properties' table to the database
 // Table structure:
@@ -9,6 +10,61 @@ import { prisma } from "@/lib/prisma";
 // - user_id: uuid (FK to profiles.id)
 // - property_id: uuid (FK to properties.id)
 // - created_at: timestamp
+
+/**
+ * OpenAPI metadata for GET /api/saved-properties
+ * Documented endpoint: Get user's saved/favorite properties
+ */
+export const openApiGET: OpenApiMetadata = {
+  method: 'get',
+  summary: 'Get saved properties',
+  description: 'Retrieve all properties saved/favorited by the authenticated user.',
+  tags: ['Properties', 'User'],
+  security: [{ bearerAuth: [] }],
+  responses: {
+    '200': {
+      description: 'List of saved properties',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              saved_properties: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    user_id: { type: 'string' },
+                    property_id: { type: 'string' },
+                    created_at: { type: 'string', format: 'date-time' },
+                    properties: { $ref: '#/components/schemas/Property' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '401': {
+      description: 'Unauthorized',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '500': {
+      description: 'Server error',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+  },
+}
 
 // GET /api/saved-properties - Get user's saved properties
 export async function GET(request: NextRequest) {
@@ -19,7 +75,7 @@ export async function GET(request: NextRequest) {
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -49,6 +105,75 @@ export async function GET(request: NextRequest) {
   }
 }
 
+/**
+ * OpenAPI metadata for POST /api/saved-properties
+ * Documented endpoint: Save property to favorites
+ */
+export const openApiPOST: OpenApiMetadata = {
+  method: 'post',
+  summary: 'Save property to favorites',
+  description: 'Add a property to the authenticated user\'s saved properties list.',
+  tags: ['Properties', 'User'],
+  security: [{ bearerAuth: [] }],
+  requestBody: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          required: ['property_id'],
+          properties: {
+            property_id: {
+              type: 'string',
+              description: 'ID of the property to save',
+            },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    '201': {
+      description: 'Property saved successfully',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              saved_property: { type: 'object' },
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    '400': {
+      description: 'Invalid request or property already saved',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '401': {
+      description: 'Unauthorized',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '404': {
+      description: 'Property not found or not available',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+  },
+}
+
 // POST /api/saved-properties - Save a property to favorites
 export async function POST(request: NextRequest) {
   try {
@@ -58,7 +183,7 @@ export async function POST(request: NextRequest) {
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -117,6 +242,66 @@ export async function POST(request: NextRequest) {
   }
 }
 
+/**
+ * OpenAPI metadata for DELETE /api/saved-properties
+ * Documented endpoint: Remove saved property
+ */
+export const openApiDELETE: OpenApiMetadata = {
+  method: 'delete',
+  summary: 'Remove property from favorites',
+  description: 'Remove a property from the authenticated user\'s saved properties list.',
+  tags: ['Properties', 'User'],
+  security: [{ bearerAuth: [] }],
+  parameters: [
+    {
+      name: 'property_id',
+      in: 'query',
+      required: true,
+      schema: { type: 'string' },
+      description: 'Property ID to remove from saved',
+    },
+  ],
+  responses: {
+    '200': {
+      description: 'Property removed successfully',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    '400': {
+      description: 'Invalid request',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '401': {
+      description: 'Unauthorized',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '404': {
+      description: 'Saved property not found',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+  },
+}
+
 // DELETE /api/saved-properties - Remove a property from favorites
 export async function DELETE(request: NextRequest) {
   try {
@@ -126,7 +311,7 @@ export async function DELETE(request: NextRequest) {
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

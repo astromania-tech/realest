@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 // Base user types
 export type UserRole = "user" | "owner" | "agent" | "admin" | "system_owner";
@@ -107,6 +108,7 @@ const userCache = new Map<string, { data: UserProfile; timestamp: number }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export function useUser(): UseUserReturn {
+  const { user: authUser, isLoading: authLoading } = useAuth();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [role, setRole] = useState<UserRole | null>(null);
@@ -181,7 +183,7 @@ export function useUser(): UseUserReturn {
           .eq("user_type", "owner")
           .order("submitted_at", { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
         return {
           owner_details: ownerData
@@ -227,7 +229,7 @@ export function useUser(): UseUserReturn {
           .eq("user_type", "agent")
           .order("submitted_at", { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
         return {
           agent_details: agentData
@@ -356,34 +358,15 @@ export function useUser(): UseUserReturn {
     [fetchUserRole, fetchBasicProfile, fetchOwnerDetails, fetchAgentDetails],
   );
 
-  // Initialize user data
-  const initializeUser = useCallback(async () => {
+  // Initialize user data — driven by AuthProvider's authUser
+  const initializeUser = useCallback(async (currentUser: User) => {
     try {
       setIsLoading(true);
       setError(null);
 
-      const {
-        data: { user: authUser },
-        error: authError,
-      } = await supabase.auth.getUser();
+      setUser(currentUser);
 
-      if (authError) {
-        setError(authError.message);
-        setIsLoading(false);
-        return;
-      }
-
-      if (!authUser) {
-        setUser(null);
-        setProfile(null);
-        setRole(null);
-        setIsLoading(false);
-        return;
-      }
-
-      setUser(authUser);
-
-      const userProfile = await fetchCompleteProfile(authUser.id);
+      const userProfile = await fetchCompleteProfile(currentUser.id);
 
       if (userProfile) {
         setProfile(userProfile);
@@ -397,16 +380,16 @@ export function useUser(): UseUserReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [supabase, fetchCompleteProfile]);
+  }, [fetchCompleteProfile]);
 
   // Refresh user data
   const refresh = useCallback(async () => {
-    if (user?.id) {
+    if (user) {
       // Clear cache for this user
       userCache.delete(user.id);
-      await initializeUser();
+      await initializeUser(user);
     }
-  }, [user?.id, initializeUser]);
+  }, [user, initializeUser]);
 
   // Update profile
   const updateProfile = useCallback(
@@ -488,37 +471,22 @@ export function useUser(): UseUserReturn {
     }
   }, [supabase]);
 
-  // Initialize on mount
+  // React to AuthProvider's user changes
   useEffect(() => {
-    if (!isInitialized.current) {
-      isInitialized.current = true;
-      initializeUser();
+    if (authLoading) return; // wait for AuthProvider to resolve
+
+    if (authUser) {
+      initializeUser(authUser);
+    } else {
+      // signed out
+      setUser(null);
+      setProfile(null);
+      setRole(null);
+      setError(null);
+      setIsLoading(false);
+      userCache.clear();
     }
-  }, [initializeUser]);
-
-  // Listen for auth state changes
-  useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "SIGNED_IN" && session?.user) {
-        setUser(session.user);
-        const userProfile = await fetchCompleteProfile(session.user.id);
-        if (userProfile) {
-          setProfile(userProfile);
-          setRole(userProfile.user_type);
-        }
-      } else if (event === "SIGNED_OUT") {
-        setUser(null);
-        setProfile(null);
-        setRole(null);
-        setError(null);
-        userCache.clear();
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [supabase, fetchCompleteProfile]);
+  }, [authUser, authLoading, initializeUser]);
 
   return {
     user,

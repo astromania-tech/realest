@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { Header, Footer } from "@/components/layout"
 import { HeroSection, ComingSoonHero } from "@/components/marketing"
@@ -16,7 +16,7 @@ export default async function HomePage() {
   // Only fetch user data if authentication is enabled
   if (enableAuth) {
     const supabase = await createClient()
-    const { data: userData } = await supabase.auth.getUser()
+    const { data: userData } = await getAuthUser()
     user = userData.user
 
     // Redirect to dashboard if user is logged in and we're in full site mode

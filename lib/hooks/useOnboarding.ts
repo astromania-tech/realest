@@ -83,13 +83,25 @@ export function useOnboarding(
 
   // Initialize form data from existing profile
   useEffect(() => {
+    if (!userLoading && user?.email) {
+      setState((prev) => ({
+        ...prev,
+        formData: {
+          ...prev.formData,
+          email: prev.formData.email || user.email || "",
+        },
+      }));
+    }
+  }, [userLoading, user?.email]);
+
+  // Initialize profile-backed form data when a profile already exists
+  useEffect(() => {
     if (profile && !userLoading) {
       setState((prev) => ({
         ...prev,
         formData: {
           ...prev.formData,
           fullName: profile.full_name || "",
-          email: profile.email || "",
           phone: profile.phone || "",
           bio: profile.bio || "",
           profilePhotoUrl: profile.avatar_url || "",

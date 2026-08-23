@@ -68,14 +68,14 @@ export type WaitlistMinAggregateOutputType = {
   referral_code: string | null
   referred_by: string | null
   referral_count: number | null
+  created_at: Date | null
+  updated_at: Date | null
   persona: string | null
   queue_score: number | null
   queue_rank: number | null
   candidate_role: string | null
   poll_completion_count: number | null
   waitlist_reward_eligible: boolean | null
-  created_at: Date | null
-  updated_at: Date | null
 }
 
 export type WaitlistMaxAggregateOutputType = {
@@ -102,14 +102,14 @@ export type WaitlistMaxAggregateOutputType = {
   referral_code: string | null
   referred_by: string | null
   referral_count: number | null
+  created_at: Date | null
+  updated_at: Date | null
   persona: string | null
   queue_score: number | null
   queue_rank: number | null
   candidate_role: string | null
   poll_completion_count: number | null
   waitlist_reward_eligible: boolean | null
-  created_at: Date | null
-  updated_at: Date | null
 }
 
 export type WaitlistCountAggregateOutputType = {
@@ -137,6 +137,8 @@ export type WaitlistCountAggregateOutputType = {
   referral_code: number
   referred_by: number
   referral_count: number
+  created_at: number
+  updated_at: number
   persona: number
   persona_details: number
   queue_score: number
@@ -144,8 +146,6 @@ export type WaitlistCountAggregateOutputType = {
   candidate_role: number
   poll_completion_count: number
   waitlist_reward_eligible: number
-  created_at: number
-  updated_at: number
   _all: number
 }
 
@@ -190,14 +190,14 @@ export type WaitlistMinAggregateInputType = {
   referral_code?: true
   referred_by?: true
   referral_count?: true
+  created_at?: true
+  updated_at?: true
   persona?: true
   queue_score?: true
   queue_rank?: true
   candidate_role?: true
   poll_completion_count?: true
   waitlist_reward_eligible?: true
-  created_at?: true
-  updated_at?: true
 }
 
 export type WaitlistMaxAggregateInputType = {
@@ -224,14 +224,14 @@ export type WaitlistMaxAggregateInputType = {
   referral_code?: true
   referred_by?: true
   referral_count?: true
+  created_at?: true
+  updated_at?: true
   persona?: true
   queue_score?: true
   queue_rank?: true
   candidate_role?: true
   poll_completion_count?: true
   waitlist_reward_eligible?: true
-  created_at?: true
-  updated_at?: true
 }
 
 export type WaitlistCountAggregateInputType = {
@@ -259,6 +259,8 @@ export type WaitlistCountAggregateInputType = {
   referral_code?: true
   referred_by?: true
   referral_count?: true
+  created_at?: true
+  updated_at?: true
   persona?: true
   persona_details?: true
   queue_score?: true
@@ -266,8 +268,6 @@ export type WaitlistCountAggregateInputType = {
   candidate_role?: true
   poll_completion_count?: true
   waitlist_reward_eligible?: true
-  created_at?: true
-  updated_at?: true
   _all?: true
 }
 
@@ -382,15 +382,15 @@ export type WaitlistGroupByOutputType = {
   referral_code: string | null
   referred_by: string | null
   referral_count: number | null
-  persona: string | null
+  created_at: Date | null
+  updated_at: Date | null
+  persona: string
   persona_details: runtime.JsonValue | null
   queue_score: number
   queue_rank: number | null
   candidate_role: string | null
   poll_completion_count: number
   waitlist_reward_eligible: boolean
-  created_at: Date | null
-  updated_at: Date | null
   _count: WaitlistCountAggregateOutputType | null
   _avg: WaitlistAvgAggregateOutputType | null
   _sum: WaitlistSumAggregateOutputType | null
@@ -398,7 +398,7 @@ export type WaitlistGroupByOutputType = {
   _max: WaitlistMaxAggregateOutputType | null
 }
 
-type GetWaitlistGroupByPayload<T extends waitlistGroupByArgs> = Prisma.PrismaPromise<
+export type GetWaitlistGroupByPayload<T extends waitlistGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<WaitlistGroupByOutputType, T['by']> &
       {
@@ -441,17 +441,21 @@ export type waitlistWhereInput = {
   referral_code?: Prisma.StringNullableFilter<"waitlist"> | string | null
   referred_by?: Prisma.UuidNullableFilter<"waitlist"> | string | null
   referral_count?: Prisma.IntNullableFilter<"waitlist"> | number | null
-  persona?: Prisma.StringNullableFilter<"waitlist"> | string | null
+  created_at?: Prisma.DateTimeNullableFilter<"waitlist"> | Date | string | null
+  updated_at?: Prisma.DateTimeNullableFilter<"waitlist"> | Date | string | null
+  persona?: Prisma.StringFilter<"waitlist"> | string
   persona_details?: Prisma.JsonNullableFilter<"waitlist">
   queue_score?: Prisma.IntFilter<"waitlist"> | number
   queue_rank?: Prisma.IntNullableFilter<"waitlist"> | number | null
   candidate_role?: Prisma.StringNullableFilter<"waitlist"> | string | null
   poll_completion_count?: Prisma.IntFilter<"waitlist"> | number
   waitlist_reward_eligible?: Prisma.BoolFilter<"waitlist"> | boolean
-  created_at?: Prisma.DateTimeNullableFilter<"waitlist"> | Date | string | null
-  updated_at?: Prisma.DateTimeNullableFilter<"waitlist"> | Date | string | null
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: Prisma.Referral_eventsListRelationFilter
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: Prisma.Referral_eventsListRelationFilter
+  reward_entitlements?: Prisma.Reward_entitlementsListRelationFilter
   referrer?: Prisma.XOR<Prisma.WaitlistNullableScalarRelationFilter, Prisma.waitlistWhereInput> | null
   referrals?: Prisma.WaitlistListRelationFilter
+  waitlist_rank_history?: Prisma.Waitlist_rank_historyListRelationFilter
 }
 
 export type waitlistOrderByWithRelationInput = {
@@ -479,17 +483,21 @@ export type waitlistOrderByWithRelationInput = {
   referral_code?: Prisma.SortOrderInput | Prisma.SortOrder
   referred_by?: Prisma.SortOrderInput | Prisma.SortOrder
   referral_count?: Prisma.SortOrderInput | Prisma.SortOrder
-  persona?: Prisma.SortOrderInput | Prisma.SortOrder
+  created_at?: Prisma.SortOrderInput | Prisma.SortOrder
+  updated_at?: Prisma.SortOrderInput | Prisma.SortOrder
+  persona?: Prisma.SortOrder
   persona_details?: Prisma.SortOrderInput | Prisma.SortOrder
   queue_score?: Prisma.SortOrder
   queue_rank?: Prisma.SortOrderInput | Prisma.SortOrder
   candidate_role?: Prisma.SortOrderInput | Prisma.SortOrder
   poll_completion_count?: Prisma.SortOrder
   waitlist_reward_eligible?: Prisma.SortOrder
-  created_at?: Prisma.SortOrderInput | Prisma.SortOrder
-  updated_at?: Prisma.SortOrderInput | Prisma.SortOrder
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: Prisma.referral_eventsOrderByRelationAggregateInput
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: Prisma.referral_eventsOrderByRelationAggregateInput
+  reward_entitlements?: Prisma.reward_entitlementsOrderByRelationAggregateInput
   referrer?: Prisma.waitlistOrderByWithRelationInput
   referrals?: Prisma.waitlistOrderByRelationAggregateInput
+  waitlist_rank_history?: Prisma.waitlist_rank_historyOrderByRelationAggregateInput
 }
 
 export type waitlistWhereUniqueInput = Prisma.AtLeast<{
@@ -520,17 +528,21 @@ export type waitlistWhereUniqueInput = Prisma.AtLeast<{
   utm_campaign?: Prisma.StringNullableFilter<"waitlist"> | string | null
   referred_by?: Prisma.UuidNullableFilter<"waitlist"> | string | null
   referral_count?: Prisma.IntNullableFilter<"waitlist"> | number | null
-  persona?: Prisma.StringNullableFilter<"waitlist"> | string | null
+  created_at?: Prisma.DateTimeNullableFilter<"waitlist"> | Date | string | null
+  updated_at?: Prisma.DateTimeNullableFilter<"waitlist"> | Date | string | null
+  persona?: Prisma.StringFilter<"waitlist"> | string
   persona_details?: Prisma.JsonNullableFilter<"waitlist">
   queue_score?: Prisma.IntFilter<"waitlist"> | number
   queue_rank?: Prisma.IntNullableFilter<"waitlist"> | number | null
   candidate_role?: Prisma.StringNullableFilter<"waitlist"> | string | null
   poll_completion_count?: Prisma.IntFilter<"waitlist"> | number
   waitlist_reward_eligible?: Prisma.BoolFilter<"waitlist"> | boolean
-  created_at?: Prisma.DateTimeNullableFilter<"waitlist"> | Date | string | null
-  updated_at?: Prisma.DateTimeNullableFilter<"waitlist"> | Date | string | null
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: Prisma.Referral_eventsListRelationFilter
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: Prisma.Referral_eventsListRelationFilter
+  reward_entitlements?: Prisma.Reward_entitlementsListRelationFilter
   referrer?: Prisma.XOR<Prisma.WaitlistNullableScalarRelationFilter, Prisma.waitlistWhereInput> | null
   referrals?: Prisma.WaitlistListRelationFilter
+  waitlist_rank_history?: Prisma.Waitlist_rank_historyListRelationFilter
 }, "id" | "email" | "referral_code">
 
 export type waitlistOrderByWithAggregationInput = {
@@ -558,15 +570,15 @@ export type waitlistOrderByWithAggregationInput = {
   referral_code?: Prisma.SortOrderInput | Prisma.SortOrder
   referred_by?: Prisma.SortOrderInput | Prisma.SortOrder
   referral_count?: Prisma.SortOrderInput | Prisma.SortOrder
-  persona?: Prisma.SortOrderInput | Prisma.SortOrder
+  created_at?: Prisma.SortOrderInput | Prisma.SortOrder
+  updated_at?: Prisma.SortOrderInput | Prisma.SortOrder
+  persona?: Prisma.SortOrder
   persona_details?: Prisma.SortOrderInput | Prisma.SortOrder
   queue_score?: Prisma.SortOrder
   queue_rank?: Prisma.SortOrderInput | Prisma.SortOrder
   candidate_role?: Prisma.SortOrderInput | Prisma.SortOrder
   poll_completion_count?: Prisma.SortOrder
   waitlist_reward_eligible?: Prisma.SortOrder
-  created_at?: Prisma.SortOrderInput | Prisma.SortOrder
-  updated_at?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.waitlistCountOrderByAggregateInput
   _avg?: Prisma.waitlistAvgOrderByAggregateInput
   _max?: Prisma.waitlistMaxOrderByAggregateInput
@@ -602,15 +614,15 @@ export type waitlistScalarWhereWithAggregatesInput = {
   referral_code?: Prisma.StringNullableWithAggregatesFilter<"waitlist"> | string | null
   referred_by?: Prisma.UuidNullableWithAggregatesFilter<"waitlist"> | string | null
   referral_count?: Prisma.IntNullableWithAggregatesFilter<"waitlist"> | number | null
-  persona?: Prisma.StringNullableWithAggregatesFilter<"waitlist"> | string | null
+  created_at?: Prisma.DateTimeNullableWithAggregatesFilter<"waitlist"> | Date | string | null
+  updated_at?: Prisma.DateTimeNullableWithAggregatesFilter<"waitlist"> | Date | string | null
+  persona?: Prisma.StringWithAggregatesFilter<"waitlist"> | string
   persona_details?: Prisma.JsonNullableWithAggregatesFilter<"waitlist">
   queue_score?: Prisma.IntWithAggregatesFilter<"waitlist"> | number
   queue_rank?: Prisma.IntNullableWithAggregatesFilter<"waitlist"> | number | null
   candidate_role?: Prisma.StringNullableWithAggregatesFilter<"waitlist"> | string | null
   poll_completion_count?: Prisma.IntWithAggregatesFilter<"waitlist"> | number
   waitlist_reward_eligible?: Prisma.BoolWithAggregatesFilter<"waitlist"> | boolean
-  created_at?: Prisma.DateTimeNullableWithAggregatesFilter<"waitlist"> | Date | string | null
-  updated_at?: Prisma.DateTimeNullableWithAggregatesFilter<"waitlist"> | Date | string | null
 }
 
 export type waitlistCreateInput = {
@@ -637,17 +649,21 @@ export type waitlistCreateInput = {
   utm_campaign?: string | null
   referral_code?: string | null
   referral_count?: number | null
-  persona?: string | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  persona?: string
   persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   queue_score?: number
   queue_rank?: number | null
   candidate_role?: string | null
   poll_completion_count?: number
   waitlist_reward_eligible?: boolean
-  created_at?: Date | string | null
-  updated_at?: Date | string | null
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: Prisma.referral_eventsCreateNestedManyWithoutWaitlist_referral_events_referred_waitlist_idTowaitlistInput
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: Prisma.referral_eventsCreateNestedManyWithoutWaitlist_referral_events_referrer_waitlist_idTowaitlistInput
+  reward_entitlements?: Prisma.reward_entitlementsCreateNestedManyWithoutWaitlistInput
   referrer?: Prisma.waitlistCreateNestedOneWithoutReferralsInput
   referrals?: Prisma.waitlistCreateNestedManyWithoutReferrerInput
+  waitlist_rank_history?: Prisma.waitlist_rank_historyCreateNestedManyWithoutWaitlistInput
 }
 
 export type waitlistUncheckedCreateInput = {
@@ -675,16 +691,20 @@ export type waitlistUncheckedCreateInput = {
   referral_code?: string | null
   referred_by?: string | null
   referral_count?: number | null
-  persona?: string | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  persona?: string
   persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   queue_score?: number
   queue_rank?: number | null
   candidate_role?: string | null
   poll_completion_count?: number
   waitlist_reward_eligible?: boolean
-  created_at?: Date | string | null
-  updated_at?: Date | string | null
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutWaitlist_referral_events_referred_waitlist_idTowaitlistInput
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutWaitlist_referral_events_referrer_waitlist_idTowaitlistInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedCreateNestedManyWithoutWaitlistInput
   referrals?: Prisma.waitlistUncheckedCreateNestedManyWithoutReferrerInput
+  waitlist_rank_history?: Prisma.waitlist_rank_historyUncheckedCreateNestedManyWithoutWaitlistInput
 }
 
 export type waitlistUpdateInput = {
@@ -711,17 +731,21 @@ export type waitlistUpdateInput = {
   utm_campaign?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referral_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referral_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  persona?: Prisma.StringFieldUpdateOperationsInput | string
   persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   queue_score?: Prisma.IntFieldUpdateOperationsInput | number
   queue_rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   candidate_role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   poll_completion_count?: Prisma.IntFieldUpdateOperationsInput | number
   waitlist_reward_eligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: Prisma.referral_eventsUpdateManyWithoutWaitlist_referral_events_referred_waitlist_idTowaitlistNestedInput
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: Prisma.referral_eventsUpdateManyWithoutWaitlist_referral_events_referrer_waitlist_idTowaitlistNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUpdateManyWithoutWaitlistNestedInput
   referrer?: Prisma.waitlistUpdateOneWithoutReferralsNestedInput
   referrals?: Prisma.waitlistUpdateManyWithoutReferrerNestedInput
+  waitlist_rank_history?: Prisma.waitlist_rank_historyUpdateManyWithoutWaitlistNestedInput
 }
 
 export type waitlistUncheckedUpdateInput = {
@@ -749,16 +773,20 @@ export type waitlistUncheckedUpdateInput = {
   referral_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referred_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referral_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  persona?: Prisma.StringFieldUpdateOperationsInput | string
   persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   queue_score?: Prisma.IntFieldUpdateOperationsInput | number
   queue_rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   candidate_role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   poll_completion_count?: Prisma.IntFieldUpdateOperationsInput | number
   waitlist_reward_eligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: Prisma.referral_eventsUncheckedUpdateManyWithoutWaitlist_referral_events_referred_waitlist_idTowaitlistNestedInput
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: Prisma.referral_eventsUncheckedUpdateManyWithoutWaitlist_referral_events_referrer_waitlist_idTowaitlistNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedUpdateManyWithoutWaitlistNestedInput
   referrals?: Prisma.waitlistUncheckedUpdateManyWithoutReferrerNestedInput
+  waitlist_rank_history?: Prisma.waitlist_rank_historyUncheckedUpdateManyWithoutWaitlistNestedInput
 }
 
 export type waitlistCreateManyInput = {
@@ -786,15 +814,15 @@ export type waitlistCreateManyInput = {
   referral_code?: string | null
   referred_by?: string | null
   referral_count?: number | null
-  persona?: string | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  persona?: string
   persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   queue_score?: number
   queue_rank?: number | null
   candidate_role?: string | null
   poll_completion_count?: number
   waitlist_reward_eligible?: boolean
-  created_at?: Date | string | null
-  updated_at?: Date | string | null
 }
 
 export type waitlistUpdateManyMutationInput = {
@@ -821,15 +849,15 @@ export type waitlistUpdateManyMutationInput = {
   utm_campaign?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referral_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referral_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  persona?: Prisma.StringFieldUpdateOperationsInput | string
   persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   queue_score?: Prisma.IntFieldUpdateOperationsInput | number
   queue_rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   candidate_role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   poll_completion_count?: Prisma.IntFieldUpdateOperationsInput | number
   waitlist_reward_eligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type waitlistUncheckedUpdateManyInput = {
@@ -857,15 +885,15 @@ export type waitlistUncheckedUpdateManyInput = {
   referral_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referred_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referral_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  persona?: Prisma.StringFieldUpdateOperationsInput | string
   persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   queue_score?: Prisma.IntFieldUpdateOperationsInput | number
   queue_rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   candidate_role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   poll_completion_count?: Prisma.IntFieldUpdateOperationsInput | number
   waitlist_reward_eligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type WaitlistNullableScalarRelationFilter = {
@@ -908,6 +936,8 @@ export type waitlistCountOrderByAggregateInput = {
   referral_code?: Prisma.SortOrder
   referred_by?: Prisma.SortOrder
   referral_count?: Prisma.SortOrder
+  created_at?: Prisma.SortOrder
+  updated_at?: Prisma.SortOrder
   persona?: Prisma.SortOrder
   persona_details?: Prisma.SortOrder
   queue_score?: Prisma.SortOrder
@@ -915,8 +945,6 @@ export type waitlistCountOrderByAggregateInput = {
   candidate_role?: Prisma.SortOrder
   poll_completion_count?: Prisma.SortOrder
   waitlist_reward_eligible?: Prisma.SortOrder
-  created_at?: Prisma.SortOrder
-  updated_at?: Prisma.SortOrder
 }
 
 export type waitlistAvgOrderByAggregateInput = {
@@ -951,14 +979,14 @@ export type waitlistMaxOrderByAggregateInput = {
   referral_code?: Prisma.SortOrder
   referred_by?: Prisma.SortOrder
   referral_count?: Prisma.SortOrder
+  created_at?: Prisma.SortOrder
+  updated_at?: Prisma.SortOrder
   persona?: Prisma.SortOrder
   queue_score?: Prisma.SortOrder
   queue_rank?: Prisma.SortOrder
   candidate_role?: Prisma.SortOrder
   poll_completion_count?: Prisma.SortOrder
   waitlist_reward_eligible?: Prisma.SortOrder
-  created_at?: Prisma.SortOrder
-  updated_at?: Prisma.SortOrder
 }
 
 export type waitlistMinOrderByAggregateInput = {
@@ -985,14 +1013,14 @@ export type waitlistMinOrderByAggregateInput = {
   referral_code?: Prisma.SortOrder
   referred_by?: Prisma.SortOrder
   referral_count?: Prisma.SortOrder
+  created_at?: Prisma.SortOrder
+  updated_at?: Prisma.SortOrder
   persona?: Prisma.SortOrder
   queue_score?: Prisma.SortOrder
   queue_rank?: Prisma.SortOrder
   candidate_role?: Prisma.SortOrder
   poll_completion_count?: Prisma.SortOrder
   waitlist_reward_eligible?: Prisma.SortOrder
-  created_at?: Prisma.SortOrder
-  updated_at?: Prisma.SortOrder
 }
 
 export type waitlistSumOrderByAggregateInput = {
@@ -1001,6 +1029,11 @@ export type waitlistSumOrderByAggregateInput = {
   queue_score?: Prisma.SortOrder
   queue_rank?: Prisma.SortOrder
   poll_completion_count?: Prisma.SortOrder
+}
+
+export type WaitlistScalarRelationFilter = {
+  is?: Prisma.waitlistWhereInput
+  isNot?: Prisma.waitlistWhereInput
 }
 
 export type waitlistCreateinterestsInput = {
@@ -1070,6 +1103,68 @@ export type waitlistUncheckedUpdateManyWithoutReferrerNestedInput = {
   deleteMany?: Prisma.waitlistScalarWhereInput | Prisma.waitlistScalarWhereInput[]
 }
 
+export type waitlistCreateNestedOneWithoutReferral_events_referral_events_referred_waitlist_idTowaitlistInput = {
+  create?: Prisma.XOR<Prisma.waitlistCreateWithoutReferral_events_referral_events_referred_waitlist_idTowaitlistInput, Prisma.waitlistUncheckedCreateWithoutReferral_events_referral_events_referred_waitlist_idTowaitlistInput>
+  connectOrCreate?: Prisma.waitlistCreateOrConnectWithoutReferral_events_referral_events_referred_waitlist_idTowaitlistInput
+  connect?: Prisma.waitlistWhereUniqueInput
+}
+
+export type waitlistCreateNestedOneWithoutReferral_events_referral_events_referrer_waitlist_idTowaitlistInput = {
+  create?: Prisma.XOR<Prisma.waitlistCreateWithoutReferral_events_referral_events_referrer_waitlist_idTowaitlistInput, Prisma.waitlistUncheckedCreateWithoutReferral_events_referral_events_referrer_waitlist_idTowaitlistInput>
+  connectOrCreate?: Prisma.waitlistCreateOrConnectWithoutReferral_events_referral_events_referrer_waitlist_idTowaitlistInput
+  connect?: Prisma.waitlistWhereUniqueInput
+}
+
+export type waitlistUpdateOneWithoutReferral_events_referral_events_referred_waitlist_idTowaitlistNestedInput = {
+  create?: Prisma.XOR<Prisma.waitlistCreateWithoutReferral_events_referral_events_referred_waitlist_idTowaitlistInput, Prisma.waitlistUncheckedCreateWithoutReferral_events_referral_events_referred_waitlist_idTowaitlistInput>
+  connectOrCreate?: Prisma.waitlistCreateOrConnectWithoutReferral_events_referral_events_referred_waitlist_idTowaitlistInput
+  upsert?: Prisma.waitlistUpsertWithoutReferral_events_referral_events_referred_waitlist_idTowaitlistInput
+  disconnect?: Prisma.waitlistWhereInput | boolean
+  delete?: Prisma.waitlistWhereInput | boolean
+  connect?: Prisma.waitlistWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.waitlistUpdateToOneWithWhereWithoutReferral_events_referral_events_referred_waitlist_idTowaitlistInput, Prisma.waitlistUpdateWithoutReferral_events_referral_events_referred_waitlist_idTowaitlistInput>, Prisma.waitlistUncheckedUpdateWithoutReferral_events_referral_events_referred_waitlist_idTowaitlistInput>
+}
+
+export type waitlistUpdateOneWithoutReferral_events_referral_events_referrer_waitlist_idTowaitlistNestedInput = {
+  create?: Prisma.XOR<Prisma.waitlistCreateWithoutReferral_events_referral_events_referrer_waitlist_idTowaitlistInput, Prisma.waitlistUncheckedCreateWithoutReferral_events_referral_events_referrer_waitlist_idTowaitlistInput>
+  connectOrCreate?: Prisma.waitlistCreateOrConnectWithoutReferral_events_referral_events_referrer_waitlist_idTowaitlistInput
+  upsert?: Prisma.waitlistUpsertWithoutReferral_events_referral_events_referrer_waitlist_idTowaitlistInput
+  disconnect?: Prisma.waitlistWhereInput | boolean
+  delete?: Prisma.waitlistWhereInput | boolean
+  connect?: Prisma.waitlistWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.waitlistUpdateToOneWithWhereWithoutReferral_events_referral_events_referrer_waitlist_idTowaitlistInput, Prisma.waitlistUpdateWithoutReferral_events_referral_events_referrer_waitlist_idTowaitlistInput>, Prisma.waitlistUncheckedUpdateWithoutReferral_events_referral_events_referrer_waitlist_idTowaitlistInput>
+}
+
+export type waitlistCreateNestedOneWithoutReward_entitlementsInput = {
+  create?: Prisma.XOR<Prisma.waitlistCreateWithoutReward_entitlementsInput, Prisma.waitlistUncheckedCreateWithoutReward_entitlementsInput>
+  connectOrCreate?: Prisma.waitlistCreateOrConnectWithoutReward_entitlementsInput
+  connect?: Prisma.waitlistWhereUniqueInput
+}
+
+export type waitlistUpdateOneWithoutReward_entitlementsNestedInput = {
+  create?: Prisma.XOR<Prisma.waitlistCreateWithoutReward_entitlementsInput, Prisma.waitlistUncheckedCreateWithoutReward_entitlementsInput>
+  connectOrCreate?: Prisma.waitlistCreateOrConnectWithoutReward_entitlementsInput
+  upsert?: Prisma.waitlistUpsertWithoutReward_entitlementsInput
+  disconnect?: Prisma.waitlistWhereInput | boolean
+  delete?: Prisma.waitlistWhereInput | boolean
+  connect?: Prisma.waitlistWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.waitlistUpdateToOneWithWhereWithoutReward_entitlementsInput, Prisma.waitlistUpdateWithoutReward_entitlementsInput>, Prisma.waitlistUncheckedUpdateWithoutReward_entitlementsInput>
+}
+
+export type waitlistCreateNestedOneWithoutWaitlist_rank_historyInput = {
+  create?: Prisma.XOR<Prisma.waitlistCreateWithoutWaitlist_rank_historyInput, Prisma.waitlistUncheckedCreateWithoutWaitlist_rank_historyInput>
+  connectOrCreate?: Prisma.waitlistCreateOrConnectWithoutWaitlist_rank_historyInput
+  connect?: Prisma.waitlistWhereUniqueInput
+}
+
+export type waitlistUpdateOneRequiredWithoutWaitlist_rank_historyNestedInput = {
+  create?: Prisma.XOR<Prisma.waitlistCreateWithoutWaitlist_rank_historyInput, Prisma.waitlistUncheckedCreateWithoutWaitlist_rank_historyInput>
+  connectOrCreate?: Prisma.waitlistCreateOrConnectWithoutWaitlist_rank_historyInput
+  upsert?: Prisma.waitlistUpsertWithoutWaitlist_rank_historyInput
+  connect?: Prisma.waitlistWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.waitlistUpdateToOneWithWhereWithoutWaitlist_rank_historyInput, Prisma.waitlistUpdateWithoutWaitlist_rank_historyInput>, Prisma.waitlistUncheckedUpdateWithoutWaitlist_rank_historyInput>
+}
+
 export type waitlistCreateWithoutReferralsInput = {
   id?: string
   email: string
@@ -1094,16 +1189,20 @@ export type waitlistCreateWithoutReferralsInput = {
   utm_campaign?: string | null
   referral_code?: string | null
   referral_count?: number | null
-  persona?: string | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  persona?: string
   persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   queue_score?: number
   queue_rank?: number | null
   candidate_role?: string | null
   poll_completion_count?: number
   waitlist_reward_eligible?: boolean
-  created_at?: Date | string | null
-  updated_at?: Date | string | null
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: Prisma.referral_eventsCreateNestedManyWithoutWaitlist_referral_events_referred_waitlist_idTowaitlistInput
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: Prisma.referral_eventsCreateNestedManyWithoutWaitlist_referral_events_referrer_waitlist_idTowaitlistInput
+  reward_entitlements?: Prisma.reward_entitlementsCreateNestedManyWithoutWaitlistInput
   referrer?: Prisma.waitlistCreateNestedOneWithoutReferralsInput
+  waitlist_rank_history?: Prisma.waitlist_rank_historyCreateNestedManyWithoutWaitlistInput
 }
 
 export type waitlistUncheckedCreateWithoutReferralsInput = {
@@ -1131,15 +1230,19 @@ export type waitlistUncheckedCreateWithoutReferralsInput = {
   referral_code?: string | null
   referred_by?: string | null
   referral_count?: number | null
-  persona?: string | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  persona?: string
   persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   queue_score?: number
   queue_rank?: number | null
   candidate_role?: string | null
   poll_completion_count?: number
   waitlist_reward_eligible?: boolean
-  created_at?: Date | string | null
-  updated_at?: Date | string | null
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutWaitlist_referral_events_referred_waitlist_idTowaitlistInput
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutWaitlist_referral_events_referrer_waitlist_idTowaitlistInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedCreateNestedManyWithoutWaitlistInput
+  waitlist_rank_history?: Prisma.waitlist_rank_historyUncheckedCreateNestedManyWithoutWaitlistInput
 }
 
 export type waitlistCreateOrConnectWithoutReferralsInput = {
@@ -1171,16 +1274,20 @@ export type waitlistCreateWithoutReferrerInput = {
   utm_campaign?: string | null
   referral_code?: string | null
   referral_count?: number | null
-  persona?: string | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  persona?: string
   persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   queue_score?: number
   queue_rank?: number | null
   candidate_role?: string | null
   poll_completion_count?: number
   waitlist_reward_eligible?: boolean
-  created_at?: Date | string | null
-  updated_at?: Date | string | null
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: Prisma.referral_eventsCreateNestedManyWithoutWaitlist_referral_events_referred_waitlist_idTowaitlistInput
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: Prisma.referral_eventsCreateNestedManyWithoutWaitlist_referral_events_referrer_waitlist_idTowaitlistInput
+  reward_entitlements?: Prisma.reward_entitlementsCreateNestedManyWithoutWaitlistInput
   referrals?: Prisma.waitlistCreateNestedManyWithoutReferrerInput
+  waitlist_rank_history?: Prisma.waitlist_rank_historyCreateNestedManyWithoutWaitlistInput
 }
 
 export type waitlistUncheckedCreateWithoutReferrerInput = {
@@ -1207,16 +1314,20 @@ export type waitlistUncheckedCreateWithoutReferrerInput = {
   utm_campaign?: string | null
   referral_code?: string | null
   referral_count?: number | null
-  persona?: string | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  persona?: string
   persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   queue_score?: number
   queue_rank?: number | null
   candidate_role?: string | null
   poll_completion_count?: number
   waitlist_reward_eligible?: boolean
-  created_at?: Date | string | null
-  updated_at?: Date | string | null
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutWaitlist_referral_events_referred_waitlist_idTowaitlistInput
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutWaitlist_referral_events_referrer_waitlist_idTowaitlistInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedCreateNestedManyWithoutWaitlistInput
   referrals?: Prisma.waitlistUncheckedCreateNestedManyWithoutReferrerInput
+  waitlist_rank_history?: Prisma.waitlist_rank_historyUncheckedCreateNestedManyWithoutWaitlistInput
 }
 
 export type waitlistCreateOrConnectWithoutReferrerInput = {
@@ -1264,16 +1375,20 @@ export type waitlistUpdateWithoutReferralsInput = {
   utm_campaign?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referral_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referral_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  persona?: Prisma.StringFieldUpdateOperationsInput | string
   persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   queue_score?: Prisma.IntFieldUpdateOperationsInput | number
   queue_rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   candidate_role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   poll_completion_count?: Prisma.IntFieldUpdateOperationsInput | number
   waitlist_reward_eligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: Prisma.referral_eventsUpdateManyWithoutWaitlist_referral_events_referred_waitlist_idTowaitlistNestedInput
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: Prisma.referral_eventsUpdateManyWithoutWaitlist_referral_events_referrer_waitlist_idTowaitlistNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUpdateManyWithoutWaitlistNestedInput
   referrer?: Prisma.waitlistUpdateOneWithoutReferralsNestedInput
+  waitlist_rank_history?: Prisma.waitlist_rank_historyUpdateManyWithoutWaitlistNestedInput
 }
 
 export type waitlistUncheckedUpdateWithoutReferralsInput = {
@@ -1301,15 +1416,19 @@ export type waitlistUncheckedUpdateWithoutReferralsInput = {
   referral_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referred_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referral_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  persona?: Prisma.StringFieldUpdateOperationsInput | string
   persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   queue_score?: Prisma.IntFieldUpdateOperationsInput | number
   queue_rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   candidate_role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   poll_completion_count?: Prisma.IntFieldUpdateOperationsInput | number
   waitlist_reward_eligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: Prisma.referral_eventsUncheckedUpdateManyWithoutWaitlist_referral_events_referred_waitlist_idTowaitlistNestedInput
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: Prisma.referral_eventsUncheckedUpdateManyWithoutWaitlist_referral_events_referrer_waitlist_idTowaitlistNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedUpdateManyWithoutWaitlistNestedInput
+  waitlist_rank_history?: Prisma.waitlist_rank_historyUncheckedUpdateManyWithoutWaitlistNestedInput
 }
 
 export type waitlistUpsertWithWhereUniqueWithoutReferrerInput = {
@@ -1356,15 +1475,719 @@ export type waitlistScalarWhereInput = {
   referral_code?: Prisma.StringNullableFilter<"waitlist"> | string | null
   referred_by?: Prisma.UuidNullableFilter<"waitlist"> | string | null
   referral_count?: Prisma.IntNullableFilter<"waitlist"> | number | null
-  persona?: Prisma.StringNullableFilter<"waitlist"> | string | null
+  created_at?: Prisma.DateTimeNullableFilter<"waitlist"> | Date | string | null
+  updated_at?: Prisma.DateTimeNullableFilter<"waitlist"> | Date | string | null
+  persona?: Prisma.StringFilter<"waitlist"> | string
   persona_details?: Prisma.JsonNullableFilter<"waitlist">
   queue_score?: Prisma.IntFilter<"waitlist"> | number
   queue_rank?: Prisma.IntNullableFilter<"waitlist"> | number | null
   candidate_role?: Prisma.StringNullableFilter<"waitlist"> | string | null
   poll_completion_count?: Prisma.IntFilter<"waitlist"> | number
   waitlist_reward_eligible?: Prisma.BoolFilter<"waitlist"> | boolean
-  created_at?: Prisma.DateTimeNullableFilter<"waitlist"> | Date | string | null
-  updated_at?: Prisma.DateTimeNullableFilter<"waitlist"> | Date | string | null
+}
+
+export type waitlistCreateWithoutReferral_events_referral_events_referred_waitlist_idTowaitlistInput = {
+  id?: string
+  email: string
+  first_name: string
+  last_name?: string | null
+  phone?: string | null
+  source?: string | null
+  status?: string | null
+  interests?: Prisma.waitlistCreateinterestsInput | string[]
+  location_preference?: string | null
+  property_type_preference?: string | null
+  budget_range?: string | null
+  subscribed_at?: Date | string | null
+  unsubscribed_at?: Date | string | null
+  last_contacted_at?: Date | string | null
+  contact_count?: number | null
+  referrer_url?: string | null
+  user_agent?: string | null
+  ip_address?: string | null
+  utm_source?: string | null
+  utm_medium?: string | null
+  utm_campaign?: string | null
+  referral_code?: string | null
+  referral_count?: number | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  persona?: string
+  persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  queue_score?: number
+  queue_rank?: number | null
+  candidate_role?: string | null
+  poll_completion_count?: number
+  waitlist_reward_eligible?: boolean
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: Prisma.referral_eventsCreateNestedManyWithoutWaitlist_referral_events_referrer_waitlist_idTowaitlistInput
+  reward_entitlements?: Prisma.reward_entitlementsCreateNestedManyWithoutWaitlistInput
+  referrer?: Prisma.waitlistCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.waitlistCreateNestedManyWithoutReferrerInput
+  waitlist_rank_history?: Prisma.waitlist_rank_historyCreateNestedManyWithoutWaitlistInput
+}
+
+export type waitlistUncheckedCreateWithoutReferral_events_referral_events_referred_waitlist_idTowaitlistInput = {
+  id?: string
+  email: string
+  first_name: string
+  last_name?: string | null
+  phone?: string | null
+  source?: string | null
+  status?: string | null
+  interests?: Prisma.waitlistCreateinterestsInput | string[]
+  location_preference?: string | null
+  property_type_preference?: string | null
+  budget_range?: string | null
+  subscribed_at?: Date | string | null
+  unsubscribed_at?: Date | string | null
+  last_contacted_at?: Date | string | null
+  contact_count?: number | null
+  referrer_url?: string | null
+  user_agent?: string | null
+  ip_address?: string | null
+  utm_source?: string | null
+  utm_medium?: string | null
+  utm_campaign?: string | null
+  referral_code?: string | null
+  referred_by?: string | null
+  referral_count?: number | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  persona?: string
+  persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  queue_score?: number
+  queue_rank?: number | null
+  candidate_role?: string | null
+  poll_completion_count?: number
+  waitlist_reward_eligible?: boolean
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutWaitlist_referral_events_referrer_waitlist_idTowaitlistInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedCreateNestedManyWithoutWaitlistInput
+  referrals?: Prisma.waitlistUncheckedCreateNestedManyWithoutReferrerInput
+  waitlist_rank_history?: Prisma.waitlist_rank_historyUncheckedCreateNestedManyWithoutWaitlistInput
+}
+
+export type waitlistCreateOrConnectWithoutReferral_events_referral_events_referred_waitlist_idTowaitlistInput = {
+  where: Prisma.waitlistWhereUniqueInput
+  create: Prisma.XOR<Prisma.waitlistCreateWithoutReferral_events_referral_events_referred_waitlist_idTowaitlistInput, Prisma.waitlistUncheckedCreateWithoutReferral_events_referral_events_referred_waitlist_idTowaitlistInput>
+}
+
+export type waitlistCreateWithoutReferral_events_referral_events_referrer_waitlist_idTowaitlistInput = {
+  id?: string
+  email: string
+  first_name: string
+  last_name?: string | null
+  phone?: string | null
+  source?: string | null
+  status?: string | null
+  interests?: Prisma.waitlistCreateinterestsInput | string[]
+  location_preference?: string | null
+  property_type_preference?: string | null
+  budget_range?: string | null
+  subscribed_at?: Date | string | null
+  unsubscribed_at?: Date | string | null
+  last_contacted_at?: Date | string | null
+  contact_count?: number | null
+  referrer_url?: string | null
+  user_agent?: string | null
+  ip_address?: string | null
+  utm_source?: string | null
+  utm_medium?: string | null
+  utm_campaign?: string | null
+  referral_code?: string | null
+  referral_count?: number | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  persona?: string
+  persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  queue_score?: number
+  queue_rank?: number | null
+  candidate_role?: string | null
+  poll_completion_count?: number
+  waitlist_reward_eligible?: boolean
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: Prisma.referral_eventsCreateNestedManyWithoutWaitlist_referral_events_referred_waitlist_idTowaitlistInput
+  reward_entitlements?: Prisma.reward_entitlementsCreateNestedManyWithoutWaitlistInput
+  referrer?: Prisma.waitlistCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.waitlistCreateNestedManyWithoutReferrerInput
+  waitlist_rank_history?: Prisma.waitlist_rank_historyCreateNestedManyWithoutWaitlistInput
+}
+
+export type waitlistUncheckedCreateWithoutReferral_events_referral_events_referrer_waitlist_idTowaitlistInput = {
+  id?: string
+  email: string
+  first_name: string
+  last_name?: string | null
+  phone?: string | null
+  source?: string | null
+  status?: string | null
+  interests?: Prisma.waitlistCreateinterestsInput | string[]
+  location_preference?: string | null
+  property_type_preference?: string | null
+  budget_range?: string | null
+  subscribed_at?: Date | string | null
+  unsubscribed_at?: Date | string | null
+  last_contacted_at?: Date | string | null
+  contact_count?: number | null
+  referrer_url?: string | null
+  user_agent?: string | null
+  ip_address?: string | null
+  utm_source?: string | null
+  utm_medium?: string | null
+  utm_campaign?: string | null
+  referral_code?: string | null
+  referred_by?: string | null
+  referral_count?: number | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  persona?: string
+  persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  queue_score?: number
+  queue_rank?: number | null
+  candidate_role?: string | null
+  poll_completion_count?: number
+  waitlist_reward_eligible?: boolean
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutWaitlist_referral_events_referred_waitlist_idTowaitlistInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedCreateNestedManyWithoutWaitlistInput
+  referrals?: Prisma.waitlistUncheckedCreateNestedManyWithoutReferrerInput
+  waitlist_rank_history?: Prisma.waitlist_rank_historyUncheckedCreateNestedManyWithoutWaitlistInput
+}
+
+export type waitlistCreateOrConnectWithoutReferral_events_referral_events_referrer_waitlist_idTowaitlistInput = {
+  where: Prisma.waitlistWhereUniqueInput
+  create: Prisma.XOR<Prisma.waitlistCreateWithoutReferral_events_referral_events_referrer_waitlist_idTowaitlistInput, Prisma.waitlistUncheckedCreateWithoutReferral_events_referral_events_referrer_waitlist_idTowaitlistInput>
+}
+
+export type waitlistUpsertWithoutReferral_events_referral_events_referred_waitlist_idTowaitlistInput = {
+  update: Prisma.XOR<Prisma.waitlistUpdateWithoutReferral_events_referral_events_referred_waitlist_idTowaitlistInput, Prisma.waitlistUncheckedUpdateWithoutReferral_events_referral_events_referred_waitlist_idTowaitlistInput>
+  create: Prisma.XOR<Prisma.waitlistCreateWithoutReferral_events_referral_events_referred_waitlist_idTowaitlistInput, Prisma.waitlistUncheckedCreateWithoutReferral_events_referral_events_referred_waitlist_idTowaitlistInput>
+  where?: Prisma.waitlistWhereInput
+}
+
+export type waitlistUpdateToOneWithWhereWithoutReferral_events_referral_events_referred_waitlist_idTowaitlistInput = {
+  where?: Prisma.waitlistWhereInput
+  data: Prisma.XOR<Prisma.waitlistUpdateWithoutReferral_events_referral_events_referred_waitlist_idTowaitlistInput, Prisma.waitlistUncheckedUpdateWithoutReferral_events_referral_events_referred_waitlist_idTowaitlistInput>
+}
+
+export type waitlistUpdateWithoutReferral_events_referral_events_referred_waitlist_idTowaitlistInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  first_name?: Prisma.StringFieldUpdateOperationsInput | string
+  last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  interests?: Prisma.waitlistUpdateinterestsInput | string[]
+  location_preference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  property_type_preference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  budget_range?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subscribed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  unsubscribed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  last_contacted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  contact_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  referrer_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  user_agent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ip_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  utm_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  utm_medium?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  utm_campaign?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referral_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referral_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  persona?: Prisma.StringFieldUpdateOperationsInput | string
+  persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  queue_score?: Prisma.IntFieldUpdateOperationsInput | number
+  queue_rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  candidate_role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  poll_completion_count?: Prisma.IntFieldUpdateOperationsInput | number
+  waitlist_reward_eligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: Prisma.referral_eventsUpdateManyWithoutWaitlist_referral_events_referrer_waitlist_idTowaitlistNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUpdateManyWithoutWaitlistNestedInput
+  referrer?: Prisma.waitlistUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.waitlistUpdateManyWithoutReferrerNestedInput
+  waitlist_rank_history?: Prisma.waitlist_rank_historyUpdateManyWithoutWaitlistNestedInput
+}
+
+export type waitlistUncheckedUpdateWithoutReferral_events_referral_events_referred_waitlist_idTowaitlistInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  first_name?: Prisma.StringFieldUpdateOperationsInput | string
+  last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  interests?: Prisma.waitlistUpdateinterestsInput | string[]
+  location_preference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  property_type_preference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  budget_range?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subscribed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  unsubscribed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  last_contacted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  contact_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  referrer_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  user_agent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ip_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  utm_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  utm_medium?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  utm_campaign?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referral_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referred_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referral_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  persona?: Prisma.StringFieldUpdateOperationsInput | string
+  persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  queue_score?: Prisma.IntFieldUpdateOperationsInput | number
+  queue_rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  candidate_role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  poll_completion_count?: Prisma.IntFieldUpdateOperationsInput | number
+  waitlist_reward_eligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: Prisma.referral_eventsUncheckedUpdateManyWithoutWaitlist_referral_events_referrer_waitlist_idTowaitlistNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedUpdateManyWithoutWaitlistNestedInput
+  referrals?: Prisma.waitlistUncheckedUpdateManyWithoutReferrerNestedInput
+  waitlist_rank_history?: Prisma.waitlist_rank_historyUncheckedUpdateManyWithoutWaitlistNestedInput
+}
+
+export type waitlistUpsertWithoutReferral_events_referral_events_referrer_waitlist_idTowaitlistInput = {
+  update: Prisma.XOR<Prisma.waitlistUpdateWithoutReferral_events_referral_events_referrer_waitlist_idTowaitlistInput, Prisma.waitlistUncheckedUpdateWithoutReferral_events_referral_events_referrer_waitlist_idTowaitlistInput>
+  create: Prisma.XOR<Prisma.waitlistCreateWithoutReferral_events_referral_events_referrer_waitlist_idTowaitlistInput, Prisma.waitlistUncheckedCreateWithoutReferral_events_referral_events_referrer_waitlist_idTowaitlistInput>
+  where?: Prisma.waitlistWhereInput
+}
+
+export type waitlistUpdateToOneWithWhereWithoutReferral_events_referral_events_referrer_waitlist_idTowaitlistInput = {
+  where?: Prisma.waitlistWhereInput
+  data: Prisma.XOR<Prisma.waitlistUpdateWithoutReferral_events_referral_events_referrer_waitlist_idTowaitlistInput, Prisma.waitlistUncheckedUpdateWithoutReferral_events_referral_events_referrer_waitlist_idTowaitlistInput>
+}
+
+export type waitlistUpdateWithoutReferral_events_referral_events_referrer_waitlist_idTowaitlistInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  first_name?: Prisma.StringFieldUpdateOperationsInput | string
+  last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  interests?: Prisma.waitlistUpdateinterestsInput | string[]
+  location_preference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  property_type_preference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  budget_range?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subscribed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  unsubscribed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  last_contacted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  contact_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  referrer_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  user_agent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ip_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  utm_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  utm_medium?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  utm_campaign?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referral_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referral_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  persona?: Prisma.StringFieldUpdateOperationsInput | string
+  persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  queue_score?: Prisma.IntFieldUpdateOperationsInput | number
+  queue_rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  candidate_role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  poll_completion_count?: Prisma.IntFieldUpdateOperationsInput | number
+  waitlist_reward_eligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: Prisma.referral_eventsUpdateManyWithoutWaitlist_referral_events_referred_waitlist_idTowaitlistNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUpdateManyWithoutWaitlistNestedInput
+  referrer?: Prisma.waitlistUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.waitlistUpdateManyWithoutReferrerNestedInput
+  waitlist_rank_history?: Prisma.waitlist_rank_historyUpdateManyWithoutWaitlistNestedInput
+}
+
+export type waitlistUncheckedUpdateWithoutReferral_events_referral_events_referrer_waitlist_idTowaitlistInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  first_name?: Prisma.StringFieldUpdateOperationsInput | string
+  last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  interests?: Prisma.waitlistUpdateinterestsInput | string[]
+  location_preference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  property_type_preference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  budget_range?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subscribed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  unsubscribed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  last_contacted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  contact_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  referrer_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  user_agent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ip_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  utm_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  utm_medium?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  utm_campaign?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referral_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referred_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referral_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  persona?: Prisma.StringFieldUpdateOperationsInput | string
+  persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  queue_score?: Prisma.IntFieldUpdateOperationsInput | number
+  queue_rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  candidate_role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  poll_completion_count?: Prisma.IntFieldUpdateOperationsInput | number
+  waitlist_reward_eligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: Prisma.referral_eventsUncheckedUpdateManyWithoutWaitlist_referral_events_referred_waitlist_idTowaitlistNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedUpdateManyWithoutWaitlistNestedInput
+  referrals?: Prisma.waitlistUncheckedUpdateManyWithoutReferrerNestedInput
+  waitlist_rank_history?: Prisma.waitlist_rank_historyUncheckedUpdateManyWithoutWaitlistNestedInput
+}
+
+export type waitlistCreateWithoutReward_entitlementsInput = {
+  id?: string
+  email: string
+  first_name: string
+  last_name?: string | null
+  phone?: string | null
+  source?: string | null
+  status?: string | null
+  interests?: Prisma.waitlistCreateinterestsInput | string[]
+  location_preference?: string | null
+  property_type_preference?: string | null
+  budget_range?: string | null
+  subscribed_at?: Date | string | null
+  unsubscribed_at?: Date | string | null
+  last_contacted_at?: Date | string | null
+  contact_count?: number | null
+  referrer_url?: string | null
+  user_agent?: string | null
+  ip_address?: string | null
+  utm_source?: string | null
+  utm_medium?: string | null
+  utm_campaign?: string | null
+  referral_code?: string | null
+  referral_count?: number | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  persona?: string
+  persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  queue_score?: number
+  queue_rank?: number | null
+  candidate_role?: string | null
+  poll_completion_count?: number
+  waitlist_reward_eligible?: boolean
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: Prisma.referral_eventsCreateNestedManyWithoutWaitlist_referral_events_referred_waitlist_idTowaitlistInput
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: Prisma.referral_eventsCreateNestedManyWithoutWaitlist_referral_events_referrer_waitlist_idTowaitlistInput
+  referrer?: Prisma.waitlistCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.waitlistCreateNestedManyWithoutReferrerInput
+  waitlist_rank_history?: Prisma.waitlist_rank_historyCreateNestedManyWithoutWaitlistInput
+}
+
+export type waitlistUncheckedCreateWithoutReward_entitlementsInput = {
+  id?: string
+  email: string
+  first_name: string
+  last_name?: string | null
+  phone?: string | null
+  source?: string | null
+  status?: string | null
+  interests?: Prisma.waitlistCreateinterestsInput | string[]
+  location_preference?: string | null
+  property_type_preference?: string | null
+  budget_range?: string | null
+  subscribed_at?: Date | string | null
+  unsubscribed_at?: Date | string | null
+  last_contacted_at?: Date | string | null
+  contact_count?: number | null
+  referrer_url?: string | null
+  user_agent?: string | null
+  ip_address?: string | null
+  utm_source?: string | null
+  utm_medium?: string | null
+  utm_campaign?: string | null
+  referral_code?: string | null
+  referred_by?: string | null
+  referral_count?: number | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  persona?: string
+  persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  queue_score?: number
+  queue_rank?: number | null
+  candidate_role?: string | null
+  poll_completion_count?: number
+  waitlist_reward_eligible?: boolean
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutWaitlist_referral_events_referred_waitlist_idTowaitlistInput
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutWaitlist_referral_events_referrer_waitlist_idTowaitlistInput
+  referrals?: Prisma.waitlistUncheckedCreateNestedManyWithoutReferrerInput
+  waitlist_rank_history?: Prisma.waitlist_rank_historyUncheckedCreateNestedManyWithoutWaitlistInput
+}
+
+export type waitlistCreateOrConnectWithoutReward_entitlementsInput = {
+  where: Prisma.waitlistWhereUniqueInput
+  create: Prisma.XOR<Prisma.waitlistCreateWithoutReward_entitlementsInput, Prisma.waitlistUncheckedCreateWithoutReward_entitlementsInput>
+}
+
+export type waitlistUpsertWithoutReward_entitlementsInput = {
+  update: Prisma.XOR<Prisma.waitlistUpdateWithoutReward_entitlementsInput, Prisma.waitlistUncheckedUpdateWithoutReward_entitlementsInput>
+  create: Prisma.XOR<Prisma.waitlistCreateWithoutReward_entitlementsInput, Prisma.waitlistUncheckedCreateWithoutReward_entitlementsInput>
+  where?: Prisma.waitlistWhereInput
+}
+
+export type waitlistUpdateToOneWithWhereWithoutReward_entitlementsInput = {
+  where?: Prisma.waitlistWhereInput
+  data: Prisma.XOR<Prisma.waitlistUpdateWithoutReward_entitlementsInput, Prisma.waitlistUncheckedUpdateWithoutReward_entitlementsInput>
+}
+
+export type waitlistUpdateWithoutReward_entitlementsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  first_name?: Prisma.StringFieldUpdateOperationsInput | string
+  last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  interests?: Prisma.waitlistUpdateinterestsInput | string[]
+  location_preference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  property_type_preference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  budget_range?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subscribed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  unsubscribed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  last_contacted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  contact_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  referrer_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  user_agent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ip_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  utm_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  utm_medium?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  utm_campaign?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referral_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referral_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  persona?: Prisma.StringFieldUpdateOperationsInput | string
+  persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  queue_score?: Prisma.IntFieldUpdateOperationsInput | number
+  queue_rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  candidate_role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  poll_completion_count?: Prisma.IntFieldUpdateOperationsInput | number
+  waitlist_reward_eligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: Prisma.referral_eventsUpdateManyWithoutWaitlist_referral_events_referred_waitlist_idTowaitlistNestedInput
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: Prisma.referral_eventsUpdateManyWithoutWaitlist_referral_events_referrer_waitlist_idTowaitlistNestedInput
+  referrer?: Prisma.waitlistUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.waitlistUpdateManyWithoutReferrerNestedInput
+  waitlist_rank_history?: Prisma.waitlist_rank_historyUpdateManyWithoutWaitlistNestedInput
+}
+
+export type waitlistUncheckedUpdateWithoutReward_entitlementsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  first_name?: Prisma.StringFieldUpdateOperationsInput | string
+  last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  interests?: Prisma.waitlistUpdateinterestsInput | string[]
+  location_preference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  property_type_preference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  budget_range?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subscribed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  unsubscribed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  last_contacted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  contact_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  referrer_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  user_agent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ip_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  utm_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  utm_medium?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  utm_campaign?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referral_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referred_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referral_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  persona?: Prisma.StringFieldUpdateOperationsInput | string
+  persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  queue_score?: Prisma.IntFieldUpdateOperationsInput | number
+  queue_rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  candidate_role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  poll_completion_count?: Prisma.IntFieldUpdateOperationsInput | number
+  waitlist_reward_eligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: Prisma.referral_eventsUncheckedUpdateManyWithoutWaitlist_referral_events_referred_waitlist_idTowaitlistNestedInput
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: Prisma.referral_eventsUncheckedUpdateManyWithoutWaitlist_referral_events_referrer_waitlist_idTowaitlistNestedInput
+  referrals?: Prisma.waitlistUncheckedUpdateManyWithoutReferrerNestedInput
+  waitlist_rank_history?: Prisma.waitlist_rank_historyUncheckedUpdateManyWithoutWaitlistNestedInput
+}
+
+export type waitlistCreateWithoutWaitlist_rank_historyInput = {
+  id?: string
+  email: string
+  first_name: string
+  last_name?: string | null
+  phone?: string | null
+  source?: string | null
+  status?: string | null
+  interests?: Prisma.waitlistCreateinterestsInput | string[]
+  location_preference?: string | null
+  property_type_preference?: string | null
+  budget_range?: string | null
+  subscribed_at?: Date | string | null
+  unsubscribed_at?: Date | string | null
+  last_contacted_at?: Date | string | null
+  contact_count?: number | null
+  referrer_url?: string | null
+  user_agent?: string | null
+  ip_address?: string | null
+  utm_source?: string | null
+  utm_medium?: string | null
+  utm_campaign?: string | null
+  referral_code?: string | null
+  referral_count?: number | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  persona?: string
+  persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  queue_score?: number
+  queue_rank?: number | null
+  candidate_role?: string | null
+  poll_completion_count?: number
+  waitlist_reward_eligible?: boolean
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: Prisma.referral_eventsCreateNestedManyWithoutWaitlist_referral_events_referred_waitlist_idTowaitlistInput
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: Prisma.referral_eventsCreateNestedManyWithoutWaitlist_referral_events_referrer_waitlist_idTowaitlistInput
+  reward_entitlements?: Prisma.reward_entitlementsCreateNestedManyWithoutWaitlistInput
+  referrer?: Prisma.waitlistCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.waitlistCreateNestedManyWithoutReferrerInput
+}
+
+export type waitlistUncheckedCreateWithoutWaitlist_rank_historyInput = {
+  id?: string
+  email: string
+  first_name: string
+  last_name?: string | null
+  phone?: string | null
+  source?: string | null
+  status?: string | null
+  interests?: Prisma.waitlistCreateinterestsInput | string[]
+  location_preference?: string | null
+  property_type_preference?: string | null
+  budget_range?: string | null
+  subscribed_at?: Date | string | null
+  unsubscribed_at?: Date | string | null
+  last_contacted_at?: Date | string | null
+  contact_count?: number | null
+  referrer_url?: string | null
+  user_agent?: string | null
+  ip_address?: string | null
+  utm_source?: string | null
+  utm_medium?: string | null
+  utm_campaign?: string | null
+  referral_code?: string | null
+  referred_by?: string | null
+  referral_count?: number | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  persona?: string
+  persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  queue_score?: number
+  queue_rank?: number | null
+  candidate_role?: string | null
+  poll_completion_count?: number
+  waitlist_reward_eligible?: boolean
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutWaitlist_referral_events_referred_waitlist_idTowaitlistInput
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: Prisma.referral_eventsUncheckedCreateNestedManyWithoutWaitlist_referral_events_referrer_waitlist_idTowaitlistInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedCreateNestedManyWithoutWaitlistInput
+  referrals?: Prisma.waitlistUncheckedCreateNestedManyWithoutReferrerInput
+}
+
+export type waitlistCreateOrConnectWithoutWaitlist_rank_historyInput = {
+  where: Prisma.waitlistWhereUniqueInput
+  create: Prisma.XOR<Prisma.waitlistCreateWithoutWaitlist_rank_historyInput, Prisma.waitlistUncheckedCreateWithoutWaitlist_rank_historyInput>
+}
+
+export type waitlistUpsertWithoutWaitlist_rank_historyInput = {
+  update: Prisma.XOR<Prisma.waitlistUpdateWithoutWaitlist_rank_historyInput, Prisma.waitlistUncheckedUpdateWithoutWaitlist_rank_historyInput>
+  create: Prisma.XOR<Prisma.waitlistCreateWithoutWaitlist_rank_historyInput, Prisma.waitlistUncheckedCreateWithoutWaitlist_rank_historyInput>
+  where?: Prisma.waitlistWhereInput
+}
+
+export type waitlistUpdateToOneWithWhereWithoutWaitlist_rank_historyInput = {
+  where?: Prisma.waitlistWhereInput
+  data: Prisma.XOR<Prisma.waitlistUpdateWithoutWaitlist_rank_historyInput, Prisma.waitlistUncheckedUpdateWithoutWaitlist_rank_historyInput>
+}
+
+export type waitlistUpdateWithoutWaitlist_rank_historyInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  first_name?: Prisma.StringFieldUpdateOperationsInput | string
+  last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  interests?: Prisma.waitlistUpdateinterestsInput | string[]
+  location_preference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  property_type_preference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  budget_range?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subscribed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  unsubscribed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  last_contacted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  contact_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  referrer_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  user_agent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ip_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  utm_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  utm_medium?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  utm_campaign?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referral_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referral_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  persona?: Prisma.StringFieldUpdateOperationsInput | string
+  persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  queue_score?: Prisma.IntFieldUpdateOperationsInput | number
+  queue_rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  candidate_role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  poll_completion_count?: Prisma.IntFieldUpdateOperationsInput | number
+  waitlist_reward_eligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: Prisma.referral_eventsUpdateManyWithoutWaitlist_referral_events_referred_waitlist_idTowaitlistNestedInput
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: Prisma.referral_eventsUpdateManyWithoutWaitlist_referral_events_referrer_waitlist_idTowaitlistNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUpdateManyWithoutWaitlistNestedInput
+  referrer?: Prisma.waitlistUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.waitlistUpdateManyWithoutReferrerNestedInput
+}
+
+export type waitlistUncheckedUpdateWithoutWaitlist_rank_historyInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  first_name?: Prisma.StringFieldUpdateOperationsInput | string
+  last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  interests?: Prisma.waitlistUpdateinterestsInput | string[]
+  location_preference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  property_type_preference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  budget_range?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subscribed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  unsubscribed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  last_contacted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  contact_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  referrer_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  user_agent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ip_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  utm_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  utm_medium?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  utm_campaign?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referral_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referred_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referral_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  persona?: Prisma.StringFieldUpdateOperationsInput | string
+  persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  queue_score?: Prisma.IntFieldUpdateOperationsInput | number
+  queue_rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  candidate_role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  poll_completion_count?: Prisma.IntFieldUpdateOperationsInput | number
+  waitlist_reward_eligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: Prisma.referral_eventsUncheckedUpdateManyWithoutWaitlist_referral_events_referred_waitlist_idTowaitlistNestedInput
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: Prisma.referral_eventsUncheckedUpdateManyWithoutWaitlist_referral_events_referrer_waitlist_idTowaitlistNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedUpdateManyWithoutWaitlistNestedInput
+  referrals?: Prisma.waitlistUncheckedUpdateManyWithoutReferrerNestedInput
 }
 
 export type waitlistCreateManyReferrerInput = {
@@ -1391,15 +2214,15 @@ export type waitlistCreateManyReferrerInput = {
   utm_campaign?: string | null
   referral_code?: string | null
   referral_count?: number | null
-  persona?: string | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  persona?: string
   persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   queue_score?: number
   queue_rank?: number | null
   candidate_role?: string | null
   poll_completion_count?: number
   waitlist_reward_eligible?: boolean
-  created_at?: Date | string | null
-  updated_at?: Date | string | null
 }
 
 export type waitlistUpdateWithoutReferrerInput = {
@@ -1426,16 +2249,20 @@ export type waitlistUpdateWithoutReferrerInput = {
   utm_campaign?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referral_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referral_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  persona?: Prisma.StringFieldUpdateOperationsInput | string
   persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   queue_score?: Prisma.IntFieldUpdateOperationsInput | number
   queue_rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   candidate_role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   poll_completion_count?: Prisma.IntFieldUpdateOperationsInput | number
   waitlist_reward_eligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: Prisma.referral_eventsUpdateManyWithoutWaitlist_referral_events_referred_waitlist_idTowaitlistNestedInput
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: Prisma.referral_eventsUpdateManyWithoutWaitlist_referral_events_referrer_waitlist_idTowaitlistNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUpdateManyWithoutWaitlistNestedInput
   referrals?: Prisma.waitlistUpdateManyWithoutReferrerNestedInput
+  waitlist_rank_history?: Prisma.waitlist_rank_historyUpdateManyWithoutWaitlistNestedInput
 }
 
 export type waitlistUncheckedUpdateWithoutReferrerInput = {
@@ -1462,16 +2289,20 @@ export type waitlistUncheckedUpdateWithoutReferrerInput = {
   utm_campaign?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referral_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referral_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  persona?: Prisma.StringFieldUpdateOperationsInput | string
   persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   queue_score?: Prisma.IntFieldUpdateOperationsInput | number
   queue_rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   candidate_role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   poll_completion_count?: Prisma.IntFieldUpdateOperationsInput | number
   waitlist_reward_eligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: Prisma.referral_eventsUncheckedUpdateManyWithoutWaitlist_referral_events_referred_waitlist_idTowaitlistNestedInput
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: Prisma.referral_eventsUncheckedUpdateManyWithoutWaitlist_referral_events_referrer_waitlist_idTowaitlistNestedInput
+  reward_entitlements?: Prisma.reward_entitlementsUncheckedUpdateManyWithoutWaitlistNestedInput
   referrals?: Prisma.waitlistUncheckedUpdateManyWithoutReferrerNestedInput
+  waitlist_rank_history?: Prisma.waitlist_rank_historyUncheckedUpdateManyWithoutWaitlistNestedInput
 }
 
 export type waitlistUncheckedUpdateManyWithoutReferrerInput = {
@@ -1498,15 +2329,15 @@ export type waitlistUncheckedUpdateManyWithoutReferrerInput = {
   utm_campaign?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referral_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referral_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  persona?: Prisma.StringFieldUpdateOperationsInput | string
   persona_details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   queue_score?: Prisma.IntFieldUpdateOperationsInput | number
   queue_rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   candidate_role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   poll_completion_count?: Prisma.IntFieldUpdateOperationsInput | number
   waitlist_reward_eligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 
@@ -1515,11 +2346,19 @@ export type waitlistUncheckedUpdateManyWithoutReferrerInput = {
  */
 
 export type WaitlistCountOutputType = {
+  referral_events_referral_events_referred_waitlist_idTowaitlist: number
+  referral_events_referral_events_referrer_waitlist_idTowaitlist: number
+  reward_entitlements: number
   referrals: number
+  waitlist_rank_history: number
 }
 
 export type WaitlistCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: boolean | WaitlistCountOutputTypeCountReferral_events_referral_events_referred_waitlist_idTowaitlistArgs
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: boolean | WaitlistCountOutputTypeCountReferral_events_referral_events_referrer_waitlist_idTowaitlistArgs
+  reward_entitlements?: boolean | WaitlistCountOutputTypeCountReward_entitlementsArgs
   referrals?: boolean | WaitlistCountOutputTypeCountReferralsArgs
+  waitlist_rank_history?: boolean | WaitlistCountOutputTypeCountWaitlist_rank_historyArgs
 }
 
 /**
@@ -1535,8 +2374,36 @@ export type WaitlistCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Ext
 /**
  * WaitlistCountOutputType without action
  */
+export type WaitlistCountOutputTypeCountReferral_events_referral_events_referred_waitlist_idTowaitlistArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.referral_eventsWhereInput
+}
+
+/**
+ * WaitlistCountOutputType without action
+ */
+export type WaitlistCountOutputTypeCountReferral_events_referral_events_referrer_waitlist_idTowaitlistArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.referral_eventsWhereInput
+}
+
+/**
+ * WaitlistCountOutputType without action
+ */
+export type WaitlistCountOutputTypeCountReward_entitlementsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.reward_entitlementsWhereInput
+}
+
+/**
+ * WaitlistCountOutputType without action
+ */
 export type WaitlistCountOutputTypeCountReferralsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.waitlistWhereInput
+}
+
+/**
+ * WaitlistCountOutputType without action
+ */
+export type WaitlistCountOutputTypeCountWaitlist_rank_historyArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.waitlist_rank_historyWhereInput
 }
 
 
@@ -1565,6 +2432,8 @@ export type waitlistSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   referral_code?: boolean
   referred_by?: boolean
   referral_count?: boolean
+  created_at?: boolean
+  updated_at?: boolean
   persona?: boolean
   persona_details?: boolean
   queue_score?: boolean
@@ -1572,10 +2441,12 @@ export type waitlistSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   candidate_role?: boolean
   poll_completion_count?: boolean
   waitlist_reward_eligible?: boolean
-  created_at?: boolean
-  updated_at?: boolean
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: boolean | Prisma.waitlist$referral_events_referral_events_referred_waitlist_idTowaitlistArgs<ExtArgs>
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: boolean | Prisma.waitlist$referral_events_referral_events_referrer_waitlist_idTowaitlistArgs<ExtArgs>
+  reward_entitlements?: boolean | Prisma.waitlist$reward_entitlementsArgs<ExtArgs>
   referrer?: boolean | Prisma.waitlist$referrerArgs<ExtArgs>
   referrals?: boolean | Prisma.waitlist$referralsArgs<ExtArgs>
+  waitlist_rank_history?: boolean | Prisma.waitlist$waitlist_rank_historyArgs<ExtArgs>
   _count?: boolean | Prisma.WaitlistCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["waitlist"]>
 
@@ -1604,6 +2475,8 @@ export type waitlistSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   referral_code?: boolean
   referred_by?: boolean
   referral_count?: boolean
+  created_at?: boolean
+  updated_at?: boolean
   persona?: boolean
   persona_details?: boolean
   queue_score?: boolean
@@ -1611,8 +2484,6 @@ export type waitlistSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   candidate_role?: boolean
   poll_completion_count?: boolean
   waitlist_reward_eligible?: boolean
-  created_at?: boolean
-  updated_at?: boolean
   referrer?: boolean | Prisma.waitlist$referrerArgs<ExtArgs>
 }, ExtArgs["result"]["waitlist"]>
 
@@ -1641,6 +2512,8 @@ export type waitlistSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   referral_code?: boolean
   referred_by?: boolean
   referral_count?: boolean
+  created_at?: boolean
+  updated_at?: boolean
   persona?: boolean
   persona_details?: boolean
   queue_score?: boolean
@@ -1648,8 +2521,6 @@ export type waitlistSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   candidate_role?: boolean
   poll_completion_count?: boolean
   waitlist_reward_eligible?: boolean
-  created_at?: boolean
-  updated_at?: boolean
   referrer?: boolean | Prisma.waitlist$referrerArgs<ExtArgs>
 }, ExtArgs["result"]["waitlist"]>
 
@@ -1678,6 +2549,8 @@ export type waitlistSelectScalar = {
   referral_code?: boolean
   referred_by?: boolean
   referral_count?: boolean
+  created_at?: boolean
+  updated_at?: boolean
   persona?: boolean
   persona_details?: boolean
   queue_score?: boolean
@@ -1685,14 +2558,16 @@ export type waitlistSelectScalar = {
   candidate_role?: boolean
   poll_completion_count?: boolean
   waitlist_reward_eligible?: boolean
-  created_at?: boolean
-  updated_at?: boolean
 }
 
-export type waitlistOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "first_name" | "last_name" | "phone" | "source" | "status" | "interests" | "location_preference" | "property_type_preference" | "budget_range" | "subscribed_at" | "unsubscribed_at" | "last_contacted_at" | "contact_count" | "referrer_url" | "user_agent" | "ip_address" | "utm_source" | "utm_medium" | "utm_campaign" | "referral_code" | "referred_by" | "referral_count" | "persona" | "persona_details" | "queue_score" | "queue_rank" | "candidate_role" | "poll_completion_count" | "waitlist_reward_eligible" | "created_at" | "updated_at", ExtArgs["result"]["waitlist"]>
+export type waitlistOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "first_name" | "last_name" | "phone" | "source" | "status" | "interests" | "location_preference" | "property_type_preference" | "budget_range" | "subscribed_at" | "unsubscribed_at" | "last_contacted_at" | "contact_count" | "referrer_url" | "user_agent" | "ip_address" | "utm_source" | "utm_medium" | "utm_campaign" | "referral_code" | "referred_by" | "referral_count" | "created_at" | "updated_at" | "persona" | "persona_details" | "queue_score" | "queue_rank" | "candidate_role" | "poll_completion_count" | "waitlist_reward_eligible", ExtArgs["result"]["waitlist"]>
 export type waitlistInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  referral_events_referral_events_referred_waitlist_idTowaitlist?: boolean | Prisma.waitlist$referral_events_referral_events_referred_waitlist_idTowaitlistArgs<ExtArgs>
+  referral_events_referral_events_referrer_waitlist_idTowaitlist?: boolean | Prisma.waitlist$referral_events_referral_events_referrer_waitlist_idTowaitlistArgs<ExtArgs>
+  reward_entitlements?: boolean | Prisma.waitlist$reward_entitlementsArgs<ExtArgs>
   referrer?: boolean | Prisma.waitlist$referrerArgs<ExtArgs>
   referrals?: boolean | Prisma.waitlist$referralsArgs<ExtArgs>
+  waitlist_rank_history?: boolean | Prisma.waitlist$waitlist_rank_historyArgs<ExtArgs>
   _count?: boolean | Prisma.WaitlistCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type waitlistIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1705,8 +2580,12 @@ export type waitlistIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
 export type $waitlistPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "waitlist"
   objects: {
+    referral_events_referral_events_referred_waitlist_idTowaitlist: Prisma.$referral_eventsPayload<ExtArgs>[]
+    referral_events_referral_events_referrer_waitlist_idTowaitlist: Prisma.$referral_eventsPayload<ExtArgs>[]
+    reward_entitlements: Prisma.$reward_entitlementsPayload<ExtArgs>[]
     referrer: Prisma.$waitlistPayload<ExtArgs> | null
     referrals: Prisma.$waitlistPayload<ExtArgs>[]
+    waitlist_rank_history: Prisma.$waitlist_rank_historyPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1730,6 +2609,9 @@ export type $waitlistPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     utm_source: string | null
     utm_medium: string | null
     utm_campaign: string | null
+    /**
+     * Auto-generated unique invite code, e.g. "A3F9B2C1"
+     */
     referral_code: string | null
     /**
      * UUID of the waitlist entry whose referral_code was used at signup
@@ -1739,15 +2621,15 @@ export type $waitlistPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
      * Cached count of successful referrals (incremented atomically)
      */
     referral_count: number | null
-    persona: string | null
+    created_at: Date | null
+    updated_at: Date | null
+    persona: string
     persona_details: runtime.JsonValue | null
     queue_score: number
     queue_rank: number | null
     candidate_role: string | null
     poll_completion_count: number
     waitlist_reward_eligible: boolean
-    created_at: Date | null
-    updated_at: Date | null
   }, ExtArgs["result"]["waitlist"]>
   composites: {}
 }
@@ -2142,8 +3024,12 @@ readonly fields: waitlistFieldRefs;
  */
 export interface Prisma__waitlistClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  referral_events_referral_events_referred_waitlist_idTowaitlist<T extends Prisma.waitlist$referral_events_referral_events_referred_waitlist_idTowaitlistArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.waitlist$referral_events_referral_events_referred_waitlist_idTowaitlistArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$referral_eventsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  referral_events_referral_events_referrer_waitlist_idTowaitlist<T extends Prisma.waitlist$referral_events_referral_events_referrer_waitlist_idTowaitlistArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.waitlist$referral_events_referral_events_referrer_waitlist_idTowaitlistArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$referral_eventsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  reward_entitlements<T extends Prisma.waitlist$reward_entitlementsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.waitlist$reward_entitlementsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$reward_entitlementsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   referrer<T extends Prisma.waitlist$referrerArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.waitlist$referrerArgs<ExtArgs>>): Prisma.Prisma__waitlistClient<runtime.Types.Result.GetResult<Prisma.$waitlistPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   referrals<T extends Prisma.waitlist$referralsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.waitlist$referralsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$waitlistPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  waitlist_rank_history<T extends Prisma.waitlist$waitlist_rank_historyArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.waitlist$waitlist_rank_historyArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$waitlist_rank_historyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2197,6 +3083,8 @@ export interface waitlistFieldRefs {
   readonly referral_code: Prisma.FieldRef<"waitlist", 'String'>
   readonly referred_by: Prisma.FieldRef<"waitlist", 'String'>
   readonly referral_count: Prisma.FieldRef<"waitlist", 'Int'>
+  readonly created_at: Prisma.FieldRef<"waitlist", 'DateTime'>
+  readonly updated_at: Prisma.FieldRef<"waitlist", 'DateTime'>
   readonly persona: Prisma.FieldRef<"waitlist", 'String'>
   readonly persona_details: Prisma.FieldRef<"waitlist", 'Json'>
   readonly queue_score: Prisma.FieldRef<"waitlist", 'Int'>
@@ -2204,8 +3092,6 @@ export interface waitlistFieldRefs {
   readonly candidate_role: Prisma.FieldRef<"waitlist", 'String'>
   readonly poll_completion_count: Prisma.FieldRef<"waitlist", 'Int'>
   readonly waitlist_reward_eligible: Prisma.FieldRef<"waitlist", 'Boolean'>
-  readonly created_at: Prisma.FieldRef<"waitlist", 'DateTime'>
-  readonly updated_at: Prisma.FieldRef<"waitlist", 'DateTime'>
 }
     
 
@@ -2402,6 +3288,11 @@ export type waitlistFindManyArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Skip the first `n` waitlists.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of waitlists.
+   */
   distinct?: Prisma.WaitlistScalarFieldEnum | Prisma.WaitlistScalarFieldEnum[]
 }
 
@@ -2602,6 +3493,78 @@ export type waitlistDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
 }
 
 /**
+ * waitlist.referral_events_referral_events_referred_waitlist_idTowaitlist
+ */
+export type waitlist$referral_events_referral_events_referred_waitlist_idTowaitlistArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the referral_events
+   */
+  select?: Prisma.referral_eventsSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the referral_events
+   */
+  omit?: Prisma.referral_eventsOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.referral_eventsInclude<ExtArgs> | null
+  where?: Prisma.referral_eventsWhereInput
+  orderBy?: Prisma.referral_eventsOrderByWithRelationInput | Prisma.referral_eventsOrderByWithRelationInput[]
+  cursor?: Prisma.referral_eventsWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Referral_eventsScalarFieldEnum | Prisma.Referral_eventsScalarFieldEnum[]
+}
+
+/**
+ * waitlist.referral_events_referral_events_referrer_waitlist_idTowaitlist
+ */
+export type waitlist$referral_events_referral_events_referrer_waitlist_idTowaitlistArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the referral_events
+   */
+  select?: Prisma.referral_eventsSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the referral_events
+   */
+  omit?: Prisma.referral_eventsOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.referral_eventsInclude<ExtArgs> | null
+  where?: Prisma.referral_eventsWhereInput
+  orderBy?: Prisma.referral_eventsOrderByWithRelationInput | Prisma.referral_eventsOrderByWithRelationInput[]
+  cursor?: Prisma.referral_eventsWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Referral_eventsScalarFieldEnum | Prisma.Referral_eventsScalarFieldEnum[]
+}
+
+/**
+ * waitlist.reward_entitlements
+ */
+export type waitlist$reward_entitlementsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the reward_entitlements
+   */
+  select?: Prisma.reward_entitlementsSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the reward_entitlements
+   */
+  omit?: Prisma.reward_entitlementsOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.reward_entitlementsInclude<ExtArgs> | null
+  where?: Prisma.reward_entitlementsWhereInput
+  orderBy?: Prisma.reward_entitlementsOrderByWithRelationInput | Prisma.reward_entitlementsOrderByWithRelationInput[]
+  cursor?: Prisma.reward_entitlementsWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Reward_entitlementsScalarFieldEnum | Prisma.Reward_entitlementsScalarFieldEnum[]
+}
+
+/**
  * waitlist.referrer
  */
 export type waitlist$referrerArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2642,6 +3605,30 @@ export type waitlist$referralsArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.WaitlistScalarFieldEnum | Prisma.WaitlistScalarFieldEnum[]
+}
+
+/**
+ * waitlist.waitlist_rank_history
+ */
+export type waitlist$waitlist_rank_historyArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the waitlist_rank_history
+   */
+  select?: Prisma.waitlist_rank_historySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the waitlist_rank_history
+   */
+  omit?: Prisma.waitlist_rank_historyOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.waitlist_rank_historyInclude<ExtArgs> | null
+  where?: Prisma.waitlist_rank_historyWhereInput
+  orderBy?: Prisma.waitlist_rank_historyOrderByWithRelationInput | Prisma.waitlist_rank_historyOrderByWithRelationInput[]
+  cursor?: Prisma.waitlist_rank_historyWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Waitlist_rank_historyScalarFieldEnum | Prisma.Waitlist_rank_historyScalarFieldEnum[]
 }
 
 /**

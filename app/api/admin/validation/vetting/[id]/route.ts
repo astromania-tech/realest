@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
+import type { OpenApiMetadata } from '@/lib/openapi/route-metadata'
 
 // Validation schema for vetting actions
 const vettingUpdateSchema = z.object({
@@ -20,6 +21,40 @@ const vettingUpdateSchema = z.object({
   issue_details: z.string().optional(),
 })
 
+export const openApiPOST: OpenApiMetadata = {
+  method: 'post',
+  summary: 'Update vetting action',
+  description: 'Approve, reject, schedule, or flag a property in the vetting workflow.',
+  tags: ['Admin'],
+  security: [{ bearerAuth: [] }],
+  parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Property ID' }],
+  requestBody: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          required: ['action'],
+          properties: {
+            action: { type: 'string', enum: ['approve', 'reject', 'schedule', 'flag_issue'] },
+            notes: { type: 'string' },
+            scheduled_date: { type: 'string' },
+            rejection_reason: { type: 'string' },
+            issue_details: { type: 'string' },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    '200': { description: 'Vetting action completed successfully' },
+    '400': { description: 'Invalid request data' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Admin access required' },
+    '404': { description: 'Property not found or not eligible for vetting' },
+  },
+}
+
 type RouteParams = {
   params: Promise<{
     id: string
@@ -32,7 +67,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const { id } = await params
 
     // Verify admin authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const { data: { user }, error: authError } = await getAuthUser()
     if (authError || !user) {
       return NextResponse.json(
         { error: 'Unauthorized' },

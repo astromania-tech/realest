@@ -1,7 +1,7 @@
 /**
  * /admin/emails/campaigns — Campaign list page (server component with auth guard)
  */
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser} from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import prisma from "@/lib/prisma";
@@ -50,7 +50,7 @@ export default async function EmailCampaignsPage() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
 
   if (!user) redirect("/login");
 

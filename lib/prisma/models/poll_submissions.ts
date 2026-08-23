@@ -186,7 +186,7 @@ export type Poll_submissionsGroupByOutputType = {
   _max: Poll_submissionsMaxAggregateOutputType | null
 }
 
-type GetPoll_submissionsGroupByPayload<T extends poll_submissionsGroupByArgs> = Prisma.PrismaPromise<
+export type GetPoll_submissionsGroupByPayload<T extends poll_submissionsGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<Poll_submissionsGroupByOutputType, T['by']> &
       {
@@ -214,8 +214,8 @@ export type poll_submissionsWhereInput = {
   referral_code?: Prisma.StringNullableFilter<"poll_submissions"> | string | null
   source?: Prisma.StringFilter<"poll_submissions"> | string
   created_at?: Prisma.DateTimeFilter<"poll_submissions"> | Date | string
-  form?: Prisma.XOR<Prisma.Poll_formsScalarRelationFilter, Prisma.poll_formsWhereInput>
   answers?: Prisma.Poll_submission_answersListRelationFilter
+  form?: Prisma.XOR<Prisma.Poll_formsScalarRelationFilter, Prisma.poll_formsWhereInput>
 }
 
 export type poll_submissionsOrderByWithRelationInput = {
@@ -228,8 +228,8 @@ export type poll_submissionsOrderByWithRelationInput = {
   referral_code?: Prisma.SortOrderInput | Prisma.SortOrder
   source?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
-  form?: Prisma.poll_formsOrderByWithRelationInput
   answers?: Prisma.poll_submission_answersOrderByRelationAggregateInput
+  form?: Prisma.poll_formsOrderByWithRelationInput
 }
 
 export type poll_submissionsWhereUniqueInput = Prisma.AtLeast<{
@@ -245,8 +245,8 @@ export type poll_submissionsWhereUniqueInput = Prisma.AtLeast<{
   referral_code?: Prisma.StringNullableFilter<"poll_submissions"> | string | null
   source?: Prisma.StringFilter<"poll_submissions"> | string
   created_at?: Prisma.DateTimeFilter<"poll_submissions"> | Date | string
-  form?: Prisma.XOR<Prisma.Poll_formsScalarRelationFilter, Prisma.poll_formsWhereInput>
   answers?: Prisma.Poll_submission_answersListRelationFilter
+  form?: Prisma.XOR<Prisma.Poll_formsScalarRelationFilter, Prisma.poll_formsWhereInput>
 }, "id">
 
 export type poll_submissionsOrderByWithAggregationInput = {
@@ -288,8 +288,8 @@ export type poll_submissionsCreateInput = {
   referral_code?: string | null
   source?: string
   created_at?: Date | string
-  form: Prisma.poll_formsCreateNestedOneWithoutSubmissionsInput
   answers?: Prisma.poll_submission_answersCreateNestedManyWithoutSubmissionInput
+  form: Prisma.poll_formsCreateNestedOneWithoutSubmissionsInput
 }
 
 export type poll_submissionsUncheckedCreateInput = {
@@ -314,8 +314,8 @@ export type poll_submissionsUpdateInput = {
   referral_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   source?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  form?: Prisma.poll_formsUpdateOneRequiredWithoutSubmissionsNestedInput
   answers?: Prisma.poll_submission_answersUpdateManyWithoutSubmissionNestedInput
+  form?: Prisma.poll_formsUpdateOneRequiredWithoutSubmissionsNestedInput
 }
 
 export type poll_submissionsUncheckedUpdateInput = {
@@ -689,8 +689,8 @@ export type poll_submissionsSelect<ExtArgs extends runtime.Types.Extensions.Inte
   referral_code?: boolean
   source?: boolean
   created_at?: boolean
-  form?: boolean | Prisma.poll_formsDefaultArgs<ExtArgs>
   answers?: boolean | Prisma.poll_submissions$answersArgs<ExtArgs>
+  form?: boolean | Prisma.poll_formsDefaultArgs<ExtArgs>
   _count?: boolean | Prisma.Poll_submissionsCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["poll_submissions"]>
 
@@ -734,8 +734,8 @@ export type poll_submissionsSelectScalar = {
 
 export type poll_submissionsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "form_id" | "segment" | "full_name" | "email" | "opt_in_email_results" | "referral_code" | "source" | "created_at", ExtArgs["result"]["poll_submissions"]>
 export type poll_submissionsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  form?: boolean | Prisma.poll_formsDefaultArgs<ExtArgs>
   answers?: boolean | Prisma.poll_submissions$answersArgs<ExtArgs>
+  form?: boolean | Prisma.poll_formsDefaultArgs<ExtArgs>
   _count?: boolean | Prisma.Poll_submissionsCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type poll_submissionsIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -748,8 +748,8 @@ export type poll_submissionsIncludeUpdateManyAndReturn<ExtArgs extends runtime.T
 export type $poll_submissionsPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "poll_submissions"
   objects: {
-    form: Prisma.$poll_formsPayload<ExtArgs>
     answers: Prisma.$poll_submission_answersPayload<ExtArgs>[]
+    form: Prisma.$poll_formsPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1155,8 +1155,8 @@ readonly fields: poll_submissionsFieldRefs;
  */
 export interface Prisma__poll_submissionsClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  form<T extends Prisma.poll_formsDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.poll_formsDefaultArgs<ExtArgs>>): Prisma.Prisma__poll_formsClient<runtime.Types.Result.GetResult<Prisma.$poll_formsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   answers<T extends Prisma.poll_submissions$answersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.poll_submissions$answersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$poll_submission_answersPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  form<T extends Prisma.poll_formsDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.poll_formsDefaultArgs<ExtArgs>>): Prisma.Prisma__poll_formsClient<runtime.Types.Result.GetResult<Prisma.$poll_formsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1391,6 +1391,11 @@ export type poll_submissionsFindManyArgs<ExtArgs extends runtime.Types.Extension
    * Skip the first `n` poll_submissions.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of poll_submissions.
+   */
   distinct?: Prisma.Poll_submissionsScalarFieldEnum | Prisma.Poll_submissionsScalarFieldEnum[]
 }
 

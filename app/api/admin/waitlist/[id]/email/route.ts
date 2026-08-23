@@ -8,10 +8,43 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import * as React from 'react';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { renderEmailFull } from '@/emails';
 import { Resend } from 'resend';
 import { interpolateSubject } from '@/lib/utils/interpolateSubject';
+import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
+
+export const openApiPOST: OpenApiMetadata = {
+  method: 'post',
+  summary: 'Send waitlist subscriber email',
+  description: 'Send a single template email to one waitlist subscriber.',
+  tags: ['Admin'],
+  security: [{ bearerAuth: [] }],
+  parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Waitlist subscriber ID' }],
+  requestBody: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          required: ['template_name'],
+          properties: {
+            template_name: { type: 'string' },
+            template_props: { type: 'object' },
+            subject: { type: 'string' },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    '200': { description: 'Email sent successfully' },
+    '400': { description: 'template_name is required' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Forbidden' },
+    '404': { description: 'Subscriber not found' },
+  },
+}
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM_EMAIL_WAITLIST = process.env.FROM_EMAIL_WAITLIST ?? process.env.FROM_EMAIL ?? 'RealEST <hello@connect.realest.ng>';
@@ -20,7 +53,7 @@ async function requireAdmin() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { supabase, error: 'Unauthorized', status: 401 as const };
 
   const { data: userRow } = await supabase

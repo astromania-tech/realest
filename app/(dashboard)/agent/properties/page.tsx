@@ -1,43 +1,54 @@
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/server"
+import { getAuthUser } from "@/lib/supabase/server"
+import { prisma } from "@/lib/prisma"
 import { PropertiesList, type PropertyListItem } from "@/components/agent/PropertiesList"
 
 export default async function AgentPropertiesPage() {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getAuthUser()
   if (!user) {
     redirect("/login?redirect=/agent/properties")
   }
 
-  const { data: userRow } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single()
+  const userRow = await prisma.users.findUnique({
+    where: { id: user.id },
+    select: { role: true },
+  })
 
   if (!userRow || userRow.role !== "agent") {
     redirect("/")
   }
 
+  const agentRow = await prisma.agents.findUnique({
+    where: { profile_id: user.id },
+    select: { id: true },
+  })
 
-  // Look up agent's id using the current user's profile id
-  const { data: agentRow } = await supabase
-    .from("agents")
-    .select("id")
-    .eq("profile_id", user.id)
-    .single()
-
-  let properties: PropertyListItem[] = []
-  if (agentRow) {
-    const { data: props } = await supabase
-      .from("properties")
-      .select("id, title, status, price, price_frequency, views_count, inquiries_count, created_at")
-      .eq("agent_id", agentRow.id)
-      .order("created_at", { ascending: false })
-    properties = (props ?? []) as PropertyListItem[]
+  if (!agentRow) {
+    redirect("/")
   }
+
+  const properties = await prisma.properties.findMany({
+    where: { agent_id: agentRow.id },
+    select: {
+      id: true,
+      title: true,
+      status: true,
+      price: true,
+      price_frequency: true,
+      created_at: true,
+    },
+    orderBy: { created_at: "desc" },
+  })
+
+  const mappedProperties: PropertyListItem[] = properties.map((property) => ({
+    id: property.id,
+    title: property.title,
+    status: property.status,
+    price: property.price != null ? Number(property.price) : null,
+    price_frequency: property.price_frequency as PropertyListItem["price_frequency"],
+    created_at: property.created_at ? property.created_at.toISOString() : null,
+  }))
 
   return (
     <div className="space-y-6">
@@ -45,7 +56,7 @@ export default async function AgentPropertiesPage() {
         <h1 className="font-heading text-2xl">Manage Properties</h1>
         <Link href="/agent/properties/new" className="text-primary underline">New Property</Link>
       </div>
-      <PropertiesList properties={properties} />
+      <PropertiesList properties={mappedProperties} />
     </div>
   )
 }

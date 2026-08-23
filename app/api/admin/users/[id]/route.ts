@@ -1,17 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { prisma } from '@/lib/prisma'
+import { z } from 'zod'
 
 type RouteParams = {
   params: Promise<{ id: string }>
 }
 
+const userIdSchema = z.string().uuid('Invalid user ID')
+
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const supabase = await createClient()
     const { id } = await params
+    const userIdResult = userIdSchema.safeParse(id)
+    if (!userIdResult.success) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+    const userId = userIdResult.data
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const { data: { user }, error: authError } = await getAuthUser()
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -24,7 +32,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // Fetch target user
     const targetUser = await prisma.users.findUnique({
-      where: { id },
+      where: { id: userId },
       include: {
         profiles: {
           select: {
@@ -46,14 +54,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // Count properties and inquiries separately (no Prisma relation on users)
     const [propCountResult, sentInqCount, receivedInqCount] = await Promise.all([
-      prisma.properties.count({ where: { owner_id: id } }),
-      prisma.inquiries.count({ where: { sender_id: id } }),
-      prisma.inquiries.count({ where: { owner_id: id } }),
+      prisma.properties.count({ where: { owner_id: userId } }),
+      prisma.inquiries.count({ where: { sender_id: userId } }),
+      prisma.inquiries.count({ where: { owner_id: userId } }),
     ])
 
     // Fetch user's properties
     const properties = await prisma.properties.findMany({
-      where: { owner_id: id },
+      where: { owner_id: userId },
       select: {
         id: true,
         title: true,
@@ -68,7 +76,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       orderBy: { created_at: 'desc' },
     })
     const sentInquiries = await prisma.inquiries.findMany({
-      where: { sender_id: id },
+      where: { sender_id: userId },
       select: {
         id: true,
         property_id: true,
@@ -83,7 +91,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // Fetch received inquiries (latest 10)
     const receivedInquiries = await prisma.inquiries.findMany({
-      where: { owner_id: id },
+      where: { owner_id: userId },
       select: {
         id: true,
         property_id: true,
@@ -140,3 +148,19 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+
+export const openApiGET = {
+  method: 'get',
+  summary: 'Get user details',
+  description: 'Admin endpoint to fetch a single user profile, stats, properties and recent inquiries.',
+  tags: ['admin','users'],
+  parameters: [
+    { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
+  ],
+  responses: {
+    200: { description: 'User details' },
+    401: { description: 'Unauthorized' },
+    403: { description: 'Forbidden' },
+    404: { description: 'User not found' },
+  },
+} as const;

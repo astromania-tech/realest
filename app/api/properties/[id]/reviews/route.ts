@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
+
+const propertyIdSchema = z.string().uuid("Invalid property ID");
 
 // Schema for creating a review
 const createReviewSchema = z.object({
@@ -12,6 +15,102 @@ const createReviewSchema = z.object({
 
 type CreateReviewInput = z.infer<typeof createReviewSchema>;
 
+/**
+ * OpenAPI metadata for GET /api/properties/{id}/reviews
+ * Retrieves user reviews for a property
+ */
+export const openApiGET: OpenApiMetadata = {
+  method: "get",
+  summary: "Get property reviews",
+  description: "Retrieve all reviews and ratings for a property. Only shows reviews for published properties. Includes pagination and rating statistics.",
+  tags: ["Properties"],
+  parameters: [
+    {
+      name: "id",
+      in: "path",
+      required: true,
+      schema: { type: "string", format: "uuid" },
+      description: "Property ID",
+    },
+    {
+      name: "page",
+      in: "query",
+      schema: { type: "integer", minimum: 1, default: 1 },
+      description: "Page number",
+    },
+    {
+      name: "per_page",
+      in: "query",
+      schema: { type: "integer", minimum: 1, maximum: 50, default: 10 },
+      description: "Reviews per page",
+    },
+  ],
+  responses: {
+    "200": {
+      description: "Reviews list with pagination and stats",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+            properties: {
+              data: { type: "array", items: { type: "object" } },
+              pagination: { type: "object" },
+              stats: { type: "object", properties: { average_rating: { type: "number" }, total_reviews: { type: "integer" } } },
+            },
+          },
+        },
+      },
+    },
+    "404": { description: "Property not found" },
+  },
+};
+
+/**
+ * OpenAPI metadata for POST /api/properties/{id}/reviews
+ * Create a review for a property
+ */
+export const openApiPOST: OpenApiMetadata = {
+  method: "post",
+  summary: "Create property review",
+  description: "Submit a review and rating for a property. Can review the owner or agent. Requires authentication.",
+  tags: ["Properties"],
+  security: [{ bearerAuth: [] }],
+  parameters: [
+    {
+      name: "id",
+      in: "path",
+      required: true,
+      schema: { type: "string", format: "uuid" },
+      description: "Property ID",
+    },
+  ],
+  requestBody: {
+    required: true,
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          required: ["rating", "comment"],
+          properties: {
+            rating: { type: "integer", minimum: 1, maximum: 5, description: "Rating from 1 to 5" },
+            comment: { type: "string", minLength: 10, maxLength: 1000, description: "Review comment" },
+            target_type: { type: "string", enum: ["owner", "agent"], description: "Who the review is for" },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    "201": {
+      description: "Review created successfully",
+      content: { "application/json": { schema: { type: "object" } } },
+    },
+    "400": { description: "Invalid request (comment too short or rating out of range)" },
+    "401": { description: "Unauthorized" },
+    "404": { description: "Property not found" },
+  },
+};
+
 // GET /api/properties/[id]/reviews - Get reviews for a property
 export async function GET(
   request: NextRequest,
@@ -19,7 +118,11 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const propertyId = id;
+    const propertyIdResult = propertyIdSchema.safeParse(id);
+    if (!propertyIdResult.success) {
+      return NextResponse.json({ error: "Property not found" }, { status: 404 });
+    }
+    const propertyId = propertyIdResult.data;
 
     // Parse query parameters
     const url = new URL(request.url);
@@ -31,11 +134,11 @@ export async function GET(
 
     // Verify property exists and is live
     const property = await prisma.properties.findUnique({
-      where: { id: propertyId, status: "live" },
-      select: { id: true, owner_id: true },
+      where: { id: propertyId },
+      select: { id: true, owner_id: true, status: true },
     });
 
-    if (!property) {
+    if (!property || property.status !== "live") {
       return NextResponse.json(
         { error: "Property not found" },
         { status: 404 },
@@ -109,13 +212,17 @@ export async function POST(
   try {
     const supabase = await createClient();
     const { id } = await params;
-    const propertyId = id;
+    const propertyIdResult = propertyIdSchema.safeParse(id);
+    if (!propertyIdResult.success) {
+      return NextResponse.json({ error: "Property not found" }, { status: 404 });
+    }
+    const propertyId = propertyIdResult.data;
 
     // Get authenticated user
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
 
     if (authError || !user) {
       return NextResponse.json(
@@ -130,9 +237,16 @@ export async function POST(
 
     // Verify property exists and is live
     const property = await prisma.properties.findUnique({
-      where: { id: propertyId, status: "live" },
-      select: { id: true, owner_id: true },
+      where: { id: propertyId },
+      select: { id: true, owner_id: true, status: true },
     });
+
+    if (!property || property.status !== "live") {
+      return NextResponse.json(
+        { error: "Property not found" },
+        { status: 404 },
+      );
+    }
 
     if (!property) {
       return NextResponse.json(

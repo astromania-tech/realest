@@ -1,22 +1,72 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { z } from "zod";
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
+
+const inquiryIdSchema = z.string().uuid("Invalid inquiry ID");
 
 interface RouteParams {
   params: Promise<{ id: string }>;
+}
+
+export const openApiGET: OpenApiMetadata = {
+  method: 'get',
+  summary: 'Get owner inquiry',
+  description: 'Fetch a single inquiry that belongs to the owner dashboard.',
+  tags: ['Dashboard'],
+  security: [{ bearerAuth: [] }],
+  parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Inquiry ID' }],
+  responses: {
+    '200': { description: 'Inquiry retrieved successfully' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Access denied' },
+    '404': { description: 'Inquiry not found' },
+  },
+}
+
+export const openApiPUT: OpenApiMetadata = {
+  method: 'put',
+  summary: 'Update owner inquiry',
+  description: 'Update the status of an inquiry in the owner dashboard.',
+  tags: ['Dashboard'],
+  security: [{ bearerAuth: [] }],
+  parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Inquiry ID' }],
+  requestBody: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: { status: { type: 'string', enum: ['new', 'read', 'responded', 'closed'] } },
+        },
+      },
+    },
+  },
+  responses: {
+    '200': { description: 'Inquiry updated successfully' },
+    '400': { description: 'Invalid status or query data' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Access denied' },
+    '404': { description: 'Inquiry not found' },
+  },
 }
 
 export async function GET(request: Request, { params }: RouteParams) {
   try {
     const supabase = await createClient();
     const { id } = await params;
-    const inquiryId = id;
+    const inquiryIdResult = inquiryIdSchema.safeParse(id);
+    if (!inquiryIdResult.success) {
+      return NextResponse.json({ error: "Inquiry not found" }, { status: 404 });
+    }
+    const inquiryId = inquiryIdResult.data;
 
     // Verify authentication
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -72,13 +122,17 @@ export async function PUT(request: Request, { params }: RouteParams) {
   try {
     const supabase = await createClient();
     const { id } = await params;
-    const inquiryId = id;
+    const inquiryIdResult = inquiryIdSchema.safeParse(id);
+    if (!inquiryIdResult.success) {
+      return NextResponse.json({ error: "Inquiry not found" }, { status: 404 });
+    }
+    const inquiryId = inquiryIdResult.data;
 
     // Verify authentication
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

@@ -1,4 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
+import type { OpenApiMetadata } from '@/lib/openapi/route-metadata'
+
+export const openApiGET: OpenApiMetadata = {
+  method: 'get',
+  summary: 'List property amenities',
+  description: 'Return categorized Nigerian property amenities with optional category and search filtering.',
+  tags: ['System'],
+  parameters: [
+    { name: 'category', in: 'query', schema: { type: 'string' } },
+    { name: 'search', in: 'query', schema: { type: 'string' } },
+  ],
+  responses: {
+    '200': { description: 'Amenities loaded successfully' },
+  },
+}
 
 // GET /api/system/amenities - Available amenities list
 export async function GET(request: NextRequest) {

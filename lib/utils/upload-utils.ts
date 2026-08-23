@@ -35,7 +35,7 @@ export async function generateSignedUrl(input: SignedUrlInput): Promise<SignedUr
       throw new Error("Property ID required for property-related uploads");
     }
 
-    // Check if user owns the property or is admin
+    // Check if user owns the property, is the assigned agent, or is admin
     const { data: userRow } = await supabase
       .from("users")
       .select("role")
@@ -62,20 +62,23 @@ export async function generateSignedUrl(input: SignedUrlInput): Promise<SignedUr
       // Supabase returns a single object for many-to-one FK joins
       const ownersData = property.owners as { profile_id: string } | { profile_id: string }[] | null;
       const ownerProfileId = Array.isArray(ownersData) ? ownersData[0]?.profile_id : ownersData?.profile_id;
-      if (ownerProfileId !== input.user_id && property.agent_id !== input.user_id) {
+      const { data: agentRow } = await supabase
+        .from("agents")
+        .select("id, profile_id")
+        .eq("profile_id", input.user_id)
+        .maybeSingle();
+
+      if (ownerProfileId !== input.user_id && property.agent_id !== agentRow?.id) {
         throw new Error(`Access denied: You don't own property ${input.property_id}`);
       }
     }
   } else if (input.bucket === "avatars") {
-    // For avatars, just verify the user exists
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("id", input.user_id)
-      .single();
+    // For avatars, only require an authenticated user.
+    // Onboarding can upload a photo before the full profile row exists.
+    const { data: authUser, error: authError } = await supabase.auth.getUser();
 
-    if (!profile) {
-      throw new Error("User not found");
+    if (authError || !authUser?.user || authUser.user.id !== input.user_id) {
+      throw new Error("Unauthorized: user session is invalid");
     }
   }
 

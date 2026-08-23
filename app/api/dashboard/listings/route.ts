@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { propertyListingSchema } from '@/lib/validations/property'
 import { redeemFirstListingWaiver } from '@/lib/reward-engine'
+import type { OpenApiMetadata } from '@/lib/openapi/route-metadata'
 
 const querySchema = z.object({
   page: z.string().optional().transform(val => val ? parseInt(val) : 1),
@@ -11,6 +12,48 @@ const querySchema = z.object({
   status: z.enum(['draft', 'pending_ml_validation', 'pending_vetting', 'live', 'rejected', 'unlisted']).optional(),
   sort: z.enum(['newest', 'oldest', 'price_high', 'price_low', 'views']).optional().default('newest')
 })
+
+export const openApiGET: OpenApiMetadata = {
+  method: 'get',
+  summary: 'List dashboard properties',
+  description: 'Return the authenticated owner or admin properties with pagination, status filtering, and sorting.',
+  tags: ['Dashboard'],
+  security: [{ bearerAuth: [] }],
+  parameters: [
+    { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+    { name: 'limit', in: 'query', schema: { type: 'integer', default: 10 } },
+    { name: 'status', in: 'query', schema: { type: 'string' } },
+    { name: 'sort', in: 'query', schema: { type: 'string', enum: ['newest', 'oldest', 'price_high', 'price_low', 'views'] } },
+  ],
+  responses: {
+    '200': { description: 'Paginated property list' },
+    '400': { description: 'Invalid query parameters' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Forbidden - Property owners only' },
+  },
+}
+
+export const openApiPOST: OpenApiMetadata = {
+  method: 'post',
+  summary: 'Create dashboard property',
+  description: 'Create a new property listing from the owner dashboard and queue it for validation.',
+  tags: ['Dashboard'],
+  security: [{ bearerAuth: [] }],
+  requestBody: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: { $ref: '#/components/schemas/PropertyListing' },
+      },
+    },
+  },
+  responses: {
+    '201': { description: 'Property created successfully' },
+    '400': { description: 'Invalid property data' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Forbidden - Property owners only' },
+  },
+}
 
 export async function GET(request: Request) {
   try {
@@ -136,9 +179,9 @@ export async function POST(request: Request) {
       select: { role: true },
     })
 
-    if (!userRowPost || !['owner', 'admin'].includes(userRowPost.role)) {
+    if (!userRowPost || !['owner', 'admin', 'agent'].includes(userRowPost.role)) {
       return NextResponse.json(
-        { error: 'Forbidden - Property owners only' },
+        { error: 'Forbidden' },
         { status: 403 }
       )
     }
@@ -171,27 +214,43 @@ export async function POST(request: Request) {
 
     const isDuplicate = existingProperties.length > 0
 
-    // Look up owner record (properties.owner_id now references owners.id)
-    const ownerRec = await prisma.owners.upsert({
-      where: { profile_id: user.id },
-      create: { profile_id: user.id },
-      update: {},
-      select: { id: true },
-    })
+    let ownerId: string | null = null;
+    let agentId: string | null = null;
+    let includeData: any = {};
+
+    if (userRowPost.role === 'owner') {
+      const ownerRec = await prisma.owners.upsert({
+        where: { profile_id: user.id },
+        create: { profile_id: user.id },
+        update: {},
+        select: { id: true },
+      })
+      ownerId = ownerRec.id;
+      includeData = { owners: { include: { profiles: { select: { full_name: true, email: true } } } } };
+    } else if (userRowPost.role === 'agent') {
+      // Agents should already be created, but we upsert to be safe
+      const agentRec = await prisma.agents.upsert({
+        where: { profile_id: user.id },
+        create: { profile_id: user.id, license_number: 'PENDING', agency_name: 'Independent', specialization: [], verified: false },
+        update: {},
+        select: { id: true },
+      })
+      agentId = agentRec.id;
+      includeData = { agent: { include: { profiles: { select: { full_name: true, email: true } } } } };
+    }
 
     // Create property (only pass schema-valid fields)
     const { images: _images, documents: _documents, verification_status: _vs, toilets: _toilets, ...validPropertyData } = propertyData as any
     const property = await prisma.properties.create({
       data: {
         ...validPropertyData,
-        owner_id: ownerRec.id,
-        status: 'pending_ml_validation',
+        owner_id: ownerId,
+        agent_id: agentId,
+        status: 'draft',
         created_at: new Date(),
         updated_at: new Date(),
       },
-      include: {
-        owners: { include: { profiles: { select: { full_name: true, email: true } } } },
-      },
+      include: includeData,
     })
 
     if (isDuplicate) {

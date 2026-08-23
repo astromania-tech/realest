@@ -1,7 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
 
 const closeSchema = z.object({
   reason: z
@@ -17,6 +18,36 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
+export const openApiPOST: OpenApiMetadata = {
+  method: 'post',
+  summary: 'Close owner inquiry',
+  description: 'Close an inquiry and notify the other party.',
+  tags: ['Dashboard'],
+  security: [{ bearerAuth: [] }],
+  parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Inquiry ID' }],
+  requestBody: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            reason: { type: 'string', enum: ['resolved', 'no_longer_interested', 'duplicate', 'spam', 'other'] },
+            notes: { type: 'string' },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    '200': { description: 'Inquiry closed successfully' },
+    '400': { description: 'Invalid close data' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Access denied' },
+    '404': { description: 'Inquiry not found' },
+  },
+}
+
 export async function POST(request: Request, { params }: RouteParams) {
   try {
     const supabase = await createClient();
@@ -27,7 +58,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

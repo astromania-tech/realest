@@ -8,17 +8,43 @@
  * Admin-only.
  */
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { createServiceClient } from '@/lib/supabase/service';
 
 async function requireAdminUser() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await getAuthUser();
   if (!user) return { error: 'Unauthorized', status: 401 };
   const { data: row } = await supabase.from('users').select('role').eq('id', user.id).single();
   if (row?.role !== 'admin') return { error: 'Forbidden', status: 403 };
   return { error: null, status: 200 };
 }
+
+export const openApiGET = {
+  method: 'get',
+  summary: 'Admin poll responses overview',
+  description: 'Aggregated poll responses with totals and breakdowns by campaign ref tag. Admin-only.',
+  tags: ['admin', 'analytics'],
+  responses: {
+    200: {
+      description: 'Aggregated poll responses',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              total: { type: 'number' },
+              questions: { type: 'object' },
+              refTags: { type: 'array', items: { type: 'string' } },
+            },
+          },
+        },
+      },
+    },
+    401: { description: 'Unauthorized' },
+    403: { description: 'Forbidden' },
+  },
+} as const;
 
 export async function GET() {
   const { error, status } = await requireAdminUser();

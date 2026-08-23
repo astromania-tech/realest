@@ -1,10 +1,41 @@
 import { NextResponse } from "next/server"
 import { randomBytes } from "crypto"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { createServiceClient } from "@/lib/supabase/service"
 import { logAdminAction } from "@/lib/audit"
 import { sendSubAdminInvitationEmail } from "@/lib/emailService"
 import { prisma } from "@/lib/prisma"
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata"
+
+export const openApiPOST: OpenApiMetadata = {
+  method: 'post',
+  summary: 'Create sub-admin account',
+  description: 'Invite a new sub-admin by creating a user, profile, and reset link.',
+  tags: ['Admin'],
+  security: [{ bearerAuth: [] }],
+  requestBody: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          required: ['email', 'full_name'],
+          properties: {
+            email: { type: 'string', format: 'email' },
+            full_name: { type: 'string' },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    '200': { description: 'Sub-admin created successfully' },
+    '400': { description: 'Missing email or full_name' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Forbidden' },
+    '500': { description: 'Failed to create sub-admin' },
+  },
+}
 
 export async function POST(request: Request) {
   try {
@@ -18,7 +49,7 @@ export async function POST(request: Request) {
     }
 
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await getAuthUser()
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
     const adminRow = await prisma.users.findUnique({ where: { id: user.id }, select: { role: true } })

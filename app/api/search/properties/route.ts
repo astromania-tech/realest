@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma, Prisma } from "@/lib/prisma";
 import { z } from "zod";
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
 
 const searchSchema = z.object({
   query: z.string().optional(),
@@ -24,6 +25,144 @@ const searchSchema = z.object({
   page: z.number().min(1).default(1),
   limit: z.number().min(1).max(50).default(20),
 });
+
+/**
+ * OpenAPI metadata for GET /api/search/properties
+ * Documented endpoint: Advanced property search with geospatial support
+ */
+export const openApiGET: OpenApiMetadata = {
+  method: 'get',
+  summary: 'Advanced property search',
+  description: 'Search verified, live properties with support for text search, filters, sorting, and geospatial queries. Results limited to verified properties.',
+  tags: ['Properties', 'Search'],
+  parameters: [
+    {
+      name: 'query',
+      in: 'query',
+      schema: { type: 'string' },
+      description: 'Search query (title, description, or address)',
+    },
+    {
+      name: 'state',
+      in: 'query',
+      schema: { type: 'string' },
+      description: 'Nigerian state',
+    },
+    {
+      name: 'city',
+      in: 'query',
+      schema: { type: 'string' },
+      description: 'City name',
+    },
+    {
+      name: 'property_type',
+      in: 'query',
+      schema: { type: 'string' },
+      description: 'Property type',
+    },
+    {
+      name: 'listing_type',
+      in: 'query',
+      schema: { type: 'string', enum: ['for_sale', 'for_rent', 'for_lease', 'short_let'] },
+      description: 'Listing type',
+    },
+    {
+      name: 'min_price',
+      in: 'query',
+      schema: { type: 'number' },
+      description: 'Minimum price (Naira)',
+    },
+    {
+      name: 'max_price',
+      in: 'query',
+      schema: { type: 'number' },
+      description: 'Maximum price (Naira)',
+    },
+    {
+      name: 'bedrooms',
+      in: 'query',
+      schema: { type: 'integer', minimum: 0 },
+      description: 'Number of bedrooms',
+    },
+    {
+      name: 'bathrooms',
+      in: 'query',
+      schema: { type: 'integer', minimum: 0 },
+      description: 'Minimum number of bathrooms',
+    },
+    {
+      name: 'latitude',
+      in: 'query',
+      schema: { type: 'number' },
+      description: 'Latitude for geospatial search',
+    },
+    {
+      name: 'longitude',
+      in: 'query',
+      schema: { type: 'number' },
+      description: 'Longitude for geospatial search',
+    },
+    {
+      name: 'radius',
+      in: 'query',
+      schema: { type: 'number', default: 10 },
+      description: 'Search radius in kilometers (used with lat/long)',
+    },
+    {
+      name: 'sort_by',
+      in: 'query',
+      schema: { type: 'string', enum: ['newest', 'oldest', 'price_asc', 'price_desc'], default: 'newest' },
+      description: 'Sort order',
+    },
+    {
+      name: 'page',
+      in: 'query',
+      schema: { type: 'integer', minimum: 1, default: 1 },
+      description: 'Page number',
+    },
+    {
+      name: 'limit',
+      in: 'query',
+      schema: { type: 'integer', minimum: 1, maximum: 50, default: 20 },
+      description: 'Results per page',
+    },
+  ],
+  responses: {
+    '200': {
+      description: 'Search results with pagination',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              properties: {
+                type: 'array',
+                items: { $ref: '#/components/schemas/Property' },
+              },
+              pagination: { type: 'object' },
+            },
+          },
+        },
+      },
+    },
+    '400': {
+      description: 'Invalid search parameters',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '500': {
+      description: 'Server error',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+  },
+}
 
 // GET /api/search/properties - Advanced property search
 export async function GET(request: NextRequest) {

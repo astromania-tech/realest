@@ -242,7 +242,7 @@ export type Property_documentsGroupByOutputType = {
   _max: Property_documentsMaxAggregateOutputType | null
 }
 
-type GetProperty_documentsGroupByPayload<T extends property_documentsGroupByArgs> = Prisma.PrismaPromise<
+export type GetProperty_documentsGroupByPayload<T extends property_documentsGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<Property_documentsGroupByOutputType, T['by']> &
       {
@@ -1574,6 +1574,11 @@ export type property_documentsFindManyArgs<ExtArgs extends runtime.Types.Extensi
    * Skip the first `n` property_documents.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of property_documents.
+   */
   distinct?: Prisma.Property_documentsScalarFieldEnum | Prisma.Property_documentsScalarFieldEnum[]
 }
 

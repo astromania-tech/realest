@@ -6,14 +6,86 @@
  * Admin-only.
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import prisma from '@/lib/prisma';
+import { z } from 'zod';
+import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
+
+const campaignIdSchema = z.string().uuid('Invalid campaign ID');
+
+export const openApiGET: OpenApiMetadata = {
+  method: 'get',
+  summary: 'Get email campaign',
+  description: 'Return a single admin email campaign with owner details.',
+  tags: ['Admin', 'Emails'],
+  security: [{ bearerAuth: [] }],
+  parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+  responses: {
+    '200': { description: 'Campaign loaded successfully' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Admin access required' },
+    '404': { description: 'Campaign not found' },
+  },
+};
+
+export const openApiPATCH: OpenApiMetadata = {
+  method: 'patch',
+  summary: 'Update draft email campaign',
+  description: 'Update a draft campaign before it is sent.',
+  tags: ['Admin', 'Emails'],
+  security: [{ bearerAuth: [] }],
+  parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+  requestBody: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+            template_name: { type: 'string' },
+            subject: { type: 'string' },
+            audience_type: { type: 'string', enum: ['resend_audience', 'db_segment'] },
+            audience_id: { type: 'string' },
+            audience_filter: { type: 'object' },
+            send_mode: { type: 'string', enum: ['broadcast', 'batch'] },
+            template_props: { type: 'object' },
+            scheduled_at: { type: 'string', format: 'date-time' },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    '200': { description: 'Campaign updated successfully' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Admin access required' },
+    '404': { description: 'Campaign not found' },
+    '409': { description: 'Campaign is not in draft status' },
+  },
+};
+
+export const openApiDELETE: OpenApiMetadata = {
+  method: 'delete',
+  summary: 'Delete draft email campaign',
+  description: 'Delete a campaign while it is still in draft status.',
+  tags: ['Admin', 'Emails'],
+  security: [{ bearerAuth: [] }],
+  parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+  responses: {
+    '200': { description: 'Campaign deleted successfully' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Admin access required' },
+    '404': { description: 'Campaign not found' },
+    '409': { description: 'Campaign is not in draft status' },
+  },
+};
 
 async function requireAdmin() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
 
   if (!user) return { user: null, error: 'Unauthorized', status: 401 };
 
@@ -37,9 +109,12 @@ export async function GET(
   if (error) return NextResponse.json({ error }, { status });
 
   const { id } = await params;
+  const campaignIdResult = campaignIdSchema.safeParse(id);
+  if (!campaignIdResult.success) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  const campaignId = campaignIdResult.data;
 
   const campaign = await prisma.email_campaigns.findUnique({
-    where: { id },
+    where: { id: campaignId },
     include: { profiles: { select: { full_name: true, email: true } } },
   });
 
@@ -57,8 +132,11 @@ export async function PATCH(
   if (error) return NextResponse.json({ error }, { status });
 
   const { id } = await params;
+  const campaignIdResult = campaignIdSchema.safeParse(id);
+  if (!campaignIdResult.success) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  const campaignId = campaignIdResult.data;
 
-  const existing = await prisma.email_campaigns.findUnique({ where: { id } });
+  const existing = await prisma.email_campaigns.findUnique({ where: { id: campaignId } });
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   if (existing.status !== 'draft') {
@@ -90,7 +168,7 @@ export async function PATCH(
   }
 
   const updated = await prisma.email_campaigns.update({
-    where: { id },
+    where: { id: campaignId },
     data: { ...updateData, updated_at: new Date() },
   });
 
@@ -106,8 +184,11 @@ export async function DELETE(
   if (error) return NextResponse.json({ error }, { status });
 
   const { id } = await params;
+  const campaignIdResult = campaignIdSchema.safeParse(id);
+  if (!campaignIdResult.success) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  const campaignId = campaignIdResult.data;
 
-  const existing = await prisma.email_campaigns.findUnique({ where: { id } });
+  const existing = await prisma.email_campaigns.findUnique({ where: { id: campaignId } });
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   if (existing.status !== 'draft') {
@@ -117,7 +198,7 @@ export async function DELETE(
     );
   }
 
-  await prisma.email_campaigns.delete({ where: { id } });
+  await prisma.email_campaigns.delete({ where: { id: campaignId } });
 
   return NextResponse.json({ success: true });
 }

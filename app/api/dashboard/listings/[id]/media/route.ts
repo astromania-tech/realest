@@ -1,23 +1,80 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { generateSignedUrl } from "@/lib/utils/upload-utils";
+import { z } from "zod";
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
+
+const propertyIdSchema = z.string().uuid("Invalid property ID");
 
 interface RouteParams {
   params: Promise<{ id: string }>;
+}
+
+export const openApiGET: OpenApiMetadata = {
+  method: 'get',
+  summary: 'List dashboard property media',
+  description: 'Retrieve all media files associated with a property in the dashboard.',
+  tags: ['Dashboard'],
+  security: [{ bearerAuth: [] }],
+  parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Property ID' }],
+  responses: {
+    '200': { description: 'Media list retrieved successfully' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Forbidden' },
+    '404': { description: 'Property not found or access denied' },
+  },
+}
+
+export const openApiPOST: OpenApiMetadata = {
+  method: 'post',
+  summary: 'Upload dashboard property media',
+  description: 'Upload a media file for a property and store the signed upload result.',
+  tags: ['Dashboard'],
+  security: [{ bearerAuth: [] }],
+  parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Property ID' }],
+  requestBody: {
+    required: true,
+    content: {
+      'multipart/form-data': {
+        schema: {
+          type: 'object',
+          required: ['file', 'media_type'],
+          properties: {
+            file: { type: 'string', format: 'binary' },
+            media_type: { type: 'string', enum: ['image', 'video', 'virtual_tour'] },
+            alt_text: { type: 'string' },
+            is_featured: { type: 'boolean' },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    '201': { description: 'Media uploaded successfully' },
+    '400': { description: 'Invalid file type, size, or missing file' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Forbidden' },
+    '404': { description: 'Property not found or access denied' },
+  },
 }
 
 export async function GET(request: Request, { params }: RouteParams) {
   try {
     const supabase = await createClient();
     const { id } = await params;
-    const propertyId = id;
+    const propertyIdResult = propertyIdSchema.safeParse(id);
+    if (!propertyIdResult.success) {
+      return NextResponse.json({ error: "Property not found or access denied" }, { status: 404 });
+    }
+    const propertyId = propertyIdResult.data;
 
     // Verify authentication
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -27,14 +84,24 @@ export async function GET(request: Request, { params }: RouteParams) {
       where: { id: user.id },
       select: { role: true },
     });
-    if (!userRow || !["owner", "admin"].includes(userRow.role)) {
+    if (!userRow || !["owner", "agent", "admin"].includes(userRow.role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Verify property ownership (unless admin)
+    // Verify property ownership or agent assignment (unless admin)
     if (userRow.role !== "admin") {
+      const accessFilter =
+        userRow.role === "agent"
+          ? {
+              OR: [
+                { owners: { profile_id: user.id } },
+                { agent: { profile_id: user.id } },
+              ],
+            }
+          : { owners: { profile_id: user.id } };
+
       const property = await prisma.properties.findFirst({
-        where: { id: propertyId, owner_id: user.id },
+        where: { id: propertyId, ...accessFilter },
         select: { id: true },
       });
       if (!property) {
@@ -63,15 +130,18 @@ export async function GET(request: Request, { params }: RouteParams) {
 
 export async function POST(request: Request, { params }: RouteParams) {
   try {
-    const supabase = await createClient();
     const { id } = await params;
-    const propertyId = id;
+    const propertyIdResult = propertyIdSchema.safeParse(id);
+    if (!propertyIdResult.success) {
+      return NextResponse.json({ error: "Property not found or access denied" }, { status: 404 });
+    }
+    const propertyId = propertyIdResult.data;
 
     // Verify authentication
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -81,14 +151,18 @@ export async function POST(request: Request, { params }: RouteParams) {
       where: { id: user.id },
       select: { role: true },
     });
-    if (!userRow || !["owner", "admin"].includes(userRow.role)) {
+    if (!userRow || !["owner", "agent", "admin"].includes(userRow.role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Verify property ownership (unless admin)
     if (userRow.role !== "admin") {
+      const accessFilter = userRow.role === "agent"
+        ? { id: propertyId, agent: { profile_id: user.id } }
+        : { id: propertyId, owners: { profile_id: user.id } };
+
       const property = await prisma.properties.findFirst({
-        where: { id: propertyId, owner_id: user.id },
+        where: accessFilter,
         select: { id: true },
       });
       if (!property) {
@@ -167,17 +241,25 @@ export async function POST(request: Request, { params }: RouteParams) {
       });
     }
 
-    // Save media record via Prisma
-    const mediaRecord = await prisma.property_media.create({
-      data: {
+    // Save media record via Supabase service client (bypass RLS)
+    const serviceSupabase = createServiceClient();
+    const { data: mediaRecord, error: insertError } = await serviceSupabase
+      .from("property_media")
+      .insert({
         property_id: propertyId,
         media_type: mediaType,
         media_url: publicUrl,
         file_name: file.name,
         display_order: nextOrder,
         is_featured: isFeatured,
-      },
-    });
+      })
+      .select()
+      .maybeSingle();
+
+    if (insertError) {
+      console.error("Failed to insert media record via service client:", insertError);
+      return NextResponse.json({ error: "Failed to save media record" }, { status: 500 });
+    }
 
     return NextResponse.json(
       { data: mediaRecord, message: "Media uploaded successfully" },

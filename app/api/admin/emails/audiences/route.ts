@@ -9,7 +9,21 @@
  */
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, getAuthUser } from "@/lib/supabase/server";
+import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
+
+export const openApiGET: OpenApiMetadata = {
+  method: 'get',
+  summary: 'List admin email audiences',
+  description: 'Return configured Resend audiences and database-backed audience segments with counts.',
+  tags: ['Admin', 'Emails'],
+  security: [{ bearerAuth: [] }],
+  responses: {
+    '200': { description: 'Audience sources loaded successfully' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Admin access required' },
+  },
+};
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -94,7 +108,7 @@ export async function GET() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

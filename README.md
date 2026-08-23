@@ -203,6 +203,18 @@ npm test
 
 5. Create a pull request with a clear description
 
+### OpenAPI Generation
+
+When API routes change, regenerate the canonical OpenAPI artifact with:
+
+```bash
+node scripts/generate-api-spec.mjs
+```
+
+Do not edit `lib/openapi/generated.json` by hand. Always regenerate it from the source routes so the Swagger output stays in sync.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the contribution workflow and API documentation rules.
+
 ### Design System Compliance
 
 All contributions must adhere to:

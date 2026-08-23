@@ -1,12 +1,66 @@
 // realest/app/api/properties/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { 
   propertyListingSchema, 
   propertyDetailsSchema 
 } from "@/lib/validations/property";
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
+
+const propertyIdSchema = z.string().uuid("Invalid property ID");
+
+/**
+ * OpenAPI metadata for GET /api/properties/[id]
+ * Documented endpoint: Get single property with full details
+ */
+export const openApiGET: OpenApiMetadata = {
+  method: 'get',
+  summary: 'Get property details',
+  description: 'Retrieve complete property details including media, documents, and inquiries. Live properties are publicly viewable.',
+  tags: ['Properties'],
+  parameters: [
+    {
+      name: 'id',
+      in: 'path',
+      required: true,
+      schema: { type: 'string' },
+      description: 'Property ID',
+    },
+  ],
+  responses: {
+    '200': {
+      description: 'Property details retrieved successfully',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              property: { $ref: '#/components/schemas/PropertyDetails' },
+            },
+          },
+        },
+      },
+    },
+    '404': {
+      description: 'Property not found or not accessible',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '500': {
+      description: 'Server error',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+  },
+}
 
 // GET /api/properties/[id] - Get single property with full details
 export async function GET(
@@ -16,9 +70,14 @@ export async function GET(
   try {
     const supabase = await createClient();
     const { id } = await params;
+    const propertyIdResult = propertyIdSchema.safeParse(id);
+    if (!propertyIdResult.success) {
+      return NextResponse.json({ error: "Property not found" }, { status: 404 });
+    }
+    const propertyId = propertyIdResult.data;
 
     const property = await prisma.properties.findUnique({
-      where: { id },
+      where: { id: propertyId },
       include: {
         property_details: true,
         property_media: true,
@@ -49,7 +108,7 @@ export async function GET(
     }
 
     // Visibility check — only live properties are public; owners can see their own
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await getAuthUser();
 
     // Resolve owner record: properties.owner_id → owners.id (not profiles.id)
     let ownerRecord: { id: string } | null = null;
@@ -79,6 +138,86 @@ export async function GET(
 const updatePropertySchema = propertyListingSchema.partial();
 const updatePropertyDetailsSchema = propertyDetailsSchema.partial();
 
+/**
+ * OpenAPI metadata for PUT /api/properties/[id]
+ * Documented endpoint: Update property
+ */
+export const openApiPUT: OpenApiMetadata = {
+  method: 'put',
+  summary: 'Update property details',
+  description: 'Update property details before verification. Only available for draft or pending properties. Requires owner role.',
+  tags: ['Properties'],
+  security: [{ bearerAuth: [] }],
+  parameters: [
+    {
+      name: 'id',
+      in: 'path',
+      required: true,
+      schema: { type: 'string' },
+      description: 'Property ID',
+    },
+  ],
+  requestBody: {
+    required: true,
+    description: 'Updated property fields (all optional)',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            title: { type: 'string' },
+            description: { type: 'string' },
+            price: { type: 'number' },
+            bedrooms: { type: 'integer' },
+            bathrooms: { type: 'integer' },
+          },
+          'x-source': '@/lib/validations/property.ts → propertyListingSchema (partial)',
+        },
+      },
+    },
+  },
+  responses: {
+    '200': {
+      description: 'Property updated successfully',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              property: { $ref: '#/components/schemas/Property' },
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    '400': {
+      description: 'Invalid data or property is already verified',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '401': {
+      description: 'Unauthorized',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '404': {
+      description: 'Property not found or access denied',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+  },
+}
+
 // PUT /api/properties/[id] - Update property (owner only, pre-verification)
 export async function PUT(
   request: NextRequest,
@@ -87,15 +226,20 @@ export async function PUT(
   try {
     const supabase = await createClient();
     const { id } = await params;
+    const propertyIdResult = propertyIdSchema.safeParse(id);
+    if (!propertyIdResult.success) {
+      return NextResponse.json({ error: "Property not found or access denied" }, { status: 404 });
+    }
+    const propertyId = propertyIdResult.data;
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Check ownership via Prisma
     const property = await prisma.properties.findUnique({
-      where: { id },
+      where: { id: propertyId },
       select: { owner_id: true, agent_id: true, status: true, verification_status: true },
     });
 
@@ -130,7 +274,7 @@ export async function PUT(
     if (detailsFields.length > 0) {
       try {
         await prisma.property_details.updateMany({
-          where: { property_id: id },
+          where: { property_id: propertyId },
           data: { ...validatedDetailsData as any, updated_at: new Date() },
         });
       } catch (detailsError) {
@@ -148,6 +292,66 @@ export async function PUT(
   }
 }
 
+/**
+ * OpenAPI metadata for DELETE /api/properties/[id]
+ * Documented endpoint: Delete property
+ */
+export const openApiDELETE: OpenApiMetadata = {
+  method: 'delete',
+  summary: 'Delete property',
+  description: 'Delete a property listing. Only available for draft properties. Requires owner role.',
+  tags: ['Properties'],
+  security: [{ bearerAuth: [] }],
+  parameters: [
+    {
+      name: 'id',
+      in: 'path',
+      required: true,
+      schema: { type: 'string' },
+      description: 'Property ID',
+    },
+  ],
+  responses: {
+    '200': {
+      description: 'Property deleted successfully',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    '400': {
+      description: 'Cannot delete published properties',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '401': {
+      description: 'Unauthorized',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '404': {
+      description: 'Property not found or access denied',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+  },
+}
+
 // DELETE /api/properties/[id] - Delete property (owner only, draft status)
 export async function DELETE(
   request: NextRequest,
@@ -156,14 +360,19 @@ export async function DELETE(
   try {
     const supabase = await createClient();
     const { id } = await params;
+    const propertyIdResult = propertyIdSchema.safeParse(id);
+    if (!propertyIdResult.success) {
+      return NextResponse.json({ error: "Property not found or access denied" }, { status: 404 });
+    }
+    const propertyId = propertyIdResult.data;
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const property = await prisma.properties.findUnique({
-      where: { id },
+      where: { id: propertyId },
       select: { owner_id: true, status: true },
     });
 
@@ -176,7 +385,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Cannot delete published properties" }, { status: 400 });
     }
 
-    await prisma.properties.delete({ where: { id } });
+    await prisma.properties.delete({ where: { id: propertyId } });
 
     return NextResponse.json({ message: "Property deleted successfully" });
   } catch (error) {

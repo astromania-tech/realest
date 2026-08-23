@@ -1,9 +1,11 @@
 // realest/app/api/properties/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { prisma, Prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { propertyListingSchema, propertyDraftSchema, propertyDetailsSchema } from "@/lib/validations/property";
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
+import { zodToSchema } from "@/lib/openapi/zod-to-schema";
 
 const searchQuerySchema = z.object({
   query: z.string().optional(),
@@ -21,6 +23,148 @@ const searchQuerySchema = z.object({
   page: z.number().min(1).default(1),
   limit: z.number().min(1).max(50).default(20),
 });
+
+/**
+ * OpenAPI metadata for GET /api/properties
+ * Documented endpoint: Search & list properties with filters
+ */
+export const openApiGET: OpenApiMetadata = {
+  method: 'get',
+  summary: 'Search and list properties',
+  description: 'Search properties by location, type, price, and other filters. Returns paginated results.',
+  tags: ['Properties'],
+  parameters: [
+    {
+      name: 'query',
+      in: 'query',
+      schema: { type: 'string' },
+      description: 'Search query (title, description, or address)',
+    },
+    {
+      name: 'state',
+      in: 'query',
+      schema: { type: 'string' },
+      description: 'Filter by Nigerian state',
+    },
+    {
+      name: 'city',
+      in: 'query',
+      schema: { type: 'string' },
+      description: 'Filter by city',
+    },
+    {
+      name: 'property_type',
+      in: 'query',
+      schema: { type: 'string', enum: ['house', 'apartment', 'land', 'commercial', 'event_center', 'hotel', 'shop', 'office', 'duplex', 'bungalow', 'flat', 'self_contained', 'mini_flat', 'room_and_parlor', 'single_room', 'penthouse', 'terrace', 'detached_house', 'warehouse', 'showroom', 'restaurant', 'residential_land', 'commercial_land', 'mixed_use_land', 'farmland'] },
+      description: 'Filter by property type',
+    },
+    {
+      name: 'listing_type',
+      in: 'query',
+      schema: { type: 'string', enum: ['for_rent', 'for_sale', 'for_lease', 'short_let'] },
+      description: 'Filter by listing type',
+    },
+    {
+      name: 'min_price',
+      in: 'query',
+      schema: { type: 'number' },
+      description: 'Minimum price (Naira)',
+    },
+    {
+      name: 'max_price',
+      in: 'query',
+      schema: { type: 'number' },
+      description: 'Maximum price (Naira)',
+    },
+    {
+      name: 'bedrooms',
+      in: 'query',
+      schema: { type: 'integer', minimum: 0 },
+      description: 'Minimum number of bedrooms',
+    },
+    {
+      name: 'bathrooms',
+      in: 'query',
+      schema: { type: 'integer', minimum: 0 },
+      description: 'Minimum number of bathrooms',
+    },
+    {
+      name: 'nepa_status',
+      in: 'query',
+      schema: { type: 'string' },
+      description: 'NEPA/electricity status',
+    },
+    {
+      name: 'has_bq',
+      in: 'query',
+      schema: { type: 'boolean' },
+      description: 'Has Boys Quarters (BQ)',
+    },
+    {
+      name: 'gated_community',
+      in: 'query',
+      schema: { type: 'boolean' },
+      description: 'Is in gated community',
+    },
+    {
+      name: 'page',
+      in: 'query',
+      schema: { type: 'integer', minimum: 1, default: 1 },
+      description: 'Page number for pagination',
+    },
+    {
+      name: 'limit',
+      in: 'query',
+      schema: { type: 'integer', minimum: 1, maximum: 50, default: 20 },
+      description: 'Results per page',
+    },
+  ],
+  responses: {
+    '200': {
+      description: 'Properties list with pagination',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              properties: {
+                type: 'array',
+                items: {
+                  $ref: '#/components/schemas/PropertyListing',
+                },
+              },
+              pagination: {
+                type: 'object',
+                properties: {
+                  page: { type: 'integer' },
+                  limit: { type: 'integer' },
+                  total: { type: 'integer' },
+                  pages: { type: 'integer' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '400': {
+      description: 'Invalid search parameters',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '500': {
+      description: 'Server error',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+  },
+}
 
 // GET /api/properties - List properties with search and filters
 export async function GET(request: NextRequest) {
@@ -102,12 +246,91 @@ export async function GET(request: NextRequest) {
   }
 }
 
+/**
+ * OpenAPI metadata for POST /api/properties
+ * Documented endpoint: Create new property listing
+ */
+export const openApiPOST: OpenApiMetadata = {
+  method: 'post',
+  summary: 'Create new property listing',
+  description: 'Create a new property listing. Requires owner or agent role. Drafts stay editable; submitted listings are automatically queued for ML validation.',
+  tags: ['Properties'],
+  security: [{ bearerAuth: [] }],
+  requestBody: {
+    required: true,
+    description: 'Property details for creation',
+    content: {
+      'application/json': {
+        schema: {
+          $ref: '#/components/schemas/PropertyListing',
+          'x-source': '@/lib/validations/property.ts → propertyListingSchema',
+        },
+      },
+    },
+  },
+  responses: {
+    '201': {
+      description: 'Property created successfully',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              property: { $ref: '#/components/schemas/Property' },
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    '400': {
+      description: 'Invalid property data or validation error',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '401': {
+      description: 'Unauthorized - authentication required',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '403': {
+      description: 'Forbidden - user role insufficient',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '409': {
+      description: 'Conflict - duplicate property detected',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
+              duplicates: { type: 'array' },
+            },
+          },
+        },
+      },
+    },
+  },
+}
+
 // POST /api/properties - Create new property
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -124,6 +347,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const isDraft = body.status === "draft";
     const validatedData = isDraft ? propertyDraftSchema.parse(body) : propertyListingSchema.parse(body);
+    const nextStatus = isDraft ? "draft" : "pending_ml_validation";
 
     // Duplicate check (skip for drafts)
     if (!isDraft) {
@@ -203,7 +427,7 @@ export async function POST(request: NextRequest) {
         bathrooms: validatedData.bathrooms,
         square_feet: validatedData.square_feet,
         year_built: validatedData.year_built,
-        status: body.status || "draft",
+        status: nextStatus,
         listing_source: userRow.role === "agent" ? "agent" : "owner",
       },
     });
@@ -234,7 +458,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         property,
-        message: "Property created successfully. Add photos and documents to complete your listing.",
+        message: isDraft
+          ? "Draft saved successfully. Add photos and documents to complete your listing."
+          : "Property created successfully and queued for ML validation before human vetting.",
       },
       { status: 201 },
     );

@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getAuthUser} from "@/lib/supabase/server"
 import { type AgentItem } from "@/components/admin/VerifyAgentRow"
 import { VerifyAgentsList } from "@/components/admin/VerifyAgentsList"
 
 export default async function VerifyAgentsPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getAuthUser()
   if (!user) redirect("/login?redirect=/admin/verify-agents")
 
   const { data: userData } = await supabase

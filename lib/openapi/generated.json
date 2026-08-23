@@ -1,0 +1,6287 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "RealEST Property Marketplace API",
+    "description": "Nigerian property marketplace API with ML validation, geospatial search, and intelligent matching",
+    "version": "2.0.0",
+    "contact": {
+      "name": "RealEST Support",
+      "email": "support@realest.ng"
+    },
+    "license": {
+      "name": "Proprietary"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Development server"
+    },
+    {
+      "url": "https://realest.ng",
+      "description": "Production server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Supabase JWT Auth token"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": false
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message"
+          },
+          "code": {
+            "type": "string",
+            "description": "Error code"
+          },
+          "details": {
+            "type": "object",
+            "description": "Error details"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "success",
+          "error",
+          "timestamp"
+        ]
+      },
+      "PropertyListing": {
+        "type": "object",
+        "description": "Nigerian property listing for rent or sale",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 100
+          },
+          "description": {
+            "type": "string",
+            "minLength": 50
+          },
+          "property_type": {
+            "type": "string",
+            "enum": [
+              "house",
+              "apartment",
+              "land",
+              "commercial",
+              "event_center",
+              "hotel",
+              "shop",
+              "office",
+              "duplex",
+              "bungalow",
+              "flat",
+              "self_contained",
+              "mini_flat",
+              "room_and_parlor",
+              "single_room",
+              "penthouse",
+              "terrace",
+              "detached_house",
+              "warehouse",
+              "showroom",
+              "restaurant",
+              "residential_land",
+              "commercial_land",
+              "mixed_use_land",
+              "farmland"
+            ]
+          },
+          "listing_type": {
+            "type": "string",
+            "enum": [
+              "for_rent",
+              "for_sale",
+              "for_lease",
+              "short_let",
+              "location"
+            ]
+          },
+          "listing_source": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "agent"
+            ],
+            "default": "owner"
+          },
+          "address": {
+            "type": "string",
+            "minLength": 5
+          },
+          "city": {
+            "type": "string",
+            "minLength": 2
+          },
+          "state": {
+            "type": "string",
+            "minLength": 2
+          },
+          "latitude": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "longitude": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "bedrooms": {
+            "type": "number",
+            "minimum": 0
+          },
+          "bathrooms": {
+            "type": "number",
+            "minimum": 0
+          },
+          "price": {
+            "type": "number",
+            "minimum": 1000
+          },
+          "price_frequency": {
+            "type": "string",
+            "enum": [
+              "monthly",
+              "yearly",
+              "sale",
+              "nightly",
+              "daily"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "active",
+              "inactive",
+              "sold",
+              "rented",
+              "pending_ml_validation"
+            ]
+          },
+          "verification_status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "verified",
+              "rejected"
+            ]
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "maxItems": 20
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "property_type",
+          "listing_type",
+          "address",
+          "city",
+          "state",
+          "latitude",
+          "longitude",
+          "price"
+        ],
+        "x-source": "lib/validations/property.ts → propertyListingSchema"
+      },
+      "PropertyMedia": {
+        "type": "object",
+        "description": "Property media (images, videos)",
+        "properties": {
+          "property_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "media_type": {
+            "type": "string",
+            "enum": [
+              "image",
+              "video"
+            ]
+          },
+          "media_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "file_name": {
+            "type": "string"
+          },
+          "display_order": {
+            "type": "number",
+            "minimum": 0
+          },
+          "is_featured": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "property_id",
+          "media_type",
+          "media_url",
+          "file_name"
+        ],
+        "x-source": "lib/validations/property.ts → propertyMediaSchema"
+      },
+      "PropertyDocument": {
+        "type": "object",
+        "description": "Property legal documents",
+        "properties": {
+          "property_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "document_type": {
+            "type": "string",
+            "enum": [
+              "title_deed",
+              "building_permit",
+              "energy_certificate",
+              "survey",
+              "inspection_report",
+              "other"
+            ]
+          },
+          "document_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "file_name": {
+            "type": "string"
+          },
+          "verification_status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "verified",
+              "rejected"
+            ]
+          }
+        },
+        "required": [
+          "property_id",
+          "document_type",
+          "document_url",
+          "file_name"
+        ],
+        "x-source": "lib/validations/property.ts → propertyDocumentSchema"
+      },
+      "DocumentValidationResponse": {
+        "type": "object",
+        "description": "Document validation result from ML pipeline",
+        "properties": {
+          "isValid": {
+            "type": "boolean"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "documentType": {
+            "type": "string",
+            "nullable": true
+          },
+          "extractedText": {
+            "type": "string"
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "checks": {
+            "type": "object",
+            "properties": {
+              "isAuthentic": {
+                "type": "boolean"
+              },
+              "hasRequiredFields": {
+                "type": "boolean"
+              },
+              "matchesTemplate": {
+                "type": "boolean"
+              },
+              "hasWatermark": {
+                "type": "boolean"
+              },
+              "textQuality": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "pageCount": {
+                "type": "number"
+              },
+              "size": {
+                "type": "number"
+              },
+              "format": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "x-source": "lib/types/validation.ts → DocumentValidationResult"
+      },
+      "ImageValidationResponse": {
+        "type": "object",
+        "description": "Image validation result from ML pipeline",
+        "properties": {
+          "isValid": {
+            "type": "boolean"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "checks": {
+            "type": "object",
+            "properties": {
+              "isRealPhoto": {
+                "type": "boolean"
+              },
+              "isManipulated": {
+                "type": "boolean"
+              },
+              "hasAdultContent": {
+                "type": "boolean"
+              },
+              "hasPropertyContent": {
+                "type": "boolean"
+              },
+              "qualityScore": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              },
+              "format": {
+                "type": "string"
+              },
+              "size": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "x-source": "lib/types/validation.ts → ImageValidationResult"
+      },
+      "DuplicateCheckResponse": {
+        "type": "object",
+        "description": "Duplicate detection result",
+        "properties": {
+          "isDuplicate": {
+            "type": "boolean"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "matchedProperties": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "address": {
+                  "type": "string"
+                },
+                "similarityScore": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "matchType": {
+                  "type": "string",
+                  "enum": [
+                    "image",
+                    "location",
+                    "description",
+                    "combined"
+                  ]
+                },
+                "details": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "checks": {
+            "type": "object",
+            "properties": {
+              "imageSimilarity": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "locationProximity": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "textSimilarity": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "metadataSimilarity": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            }
+          }
+        },
+        "x-source": "lib/types/validation.ts → DuplicateCheckResult"
+      }
+    }
+  },
+  "paths": {
+    "/api/properties": {
+      "post": {
+        "method": "post",
+        "summary": "Create new property listing",
+        "description": "Create a new property listing. Requires owner or agent role. Drafts stay editable; submitted listings are automatically queued for ML validation.",
+        "tags": [
+          "Properties"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Property details for creation",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PropertyListing",
+                "x-source": "@/lib/validations/property.ts → propertyListingSchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Property created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "property": {
+                      "$ref": "#/components/schemas/Property"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid property data or validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - user role insufficient",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict - duplicate property detected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "duplicates": {
+                      "type": "array"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "postProperties"
+      },
+      "get": {
+        "method": "get",
+        "summary": "Search and list properties",
+        "description": "Search properties by location, type, price, and other filters. Returns paginated results.",
+        "tags": [
+          "Properties"
+        ],
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search query (title, description, or address)"
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by Nigerian state"
+          },
+          {
+            "name": "city",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by city"
+          },
+          {
+            "name": "property_type",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "house",
+                "apartment",
+                "land",
+                "commercial",
+                "event_center",
+                "hotel",
+                "shop",
+                "office",
+                "duplex",
+                "bungalow",
+                "flat",
+                "self_contained",
+                "mini_flat",
+                "room_and_parlor",
+                "single_room",
+                "penthouse",
+                "terrace",
+                "detached_house",
+                "warehouse",
+                "showroom",
+                "restaurant",
+                "residential_land",
+                "commercial_land",
+                "mixed_use_land",
+                "farmland"
+              ]
+            },
+            "description": "Filter by property type"
+          },
+          {
+            "name": "listing_type",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "for_rent",
+                "for_sale",
+                "for_lease",
+                "short_let"
+              ]
+            },
+            "description": "Filter by listing type"
+          },
+          {
+            "name": "min_price",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "description": "Minimum price (Naira)"
+          },
+          {
+            "name": "max_price",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "description": "Maximum price (Naira)"
+          },
+          {
+            "name": "bedrooms",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "description": "Minimum number of bedrooms"
+          },
+          {
+            "name": "bathrooms",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "description": "Minimum number of bathrooms"
+          },
+          {
+            "name": "nepa_status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "NEPA/electricity status"
+          },
+          {
+            "name": "has_bq",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Has Boys Quarters (BQ)"
+          },
+          {
+            "name": "gated_community",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Is in gated community"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "description": "Page number for pagination"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20
+            },
+            "description": "Results per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Properties list with pagination",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "properties": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PropertyListing"
+                      }
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "properties": {
+                        "page": {
+                          "type": "integer"
+                        },
+                        "limit": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        },
+                        "pages": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid search parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "getProperties"
+      }
+    },
+    "/api/admin/validation/document": {
+      "post": {
+        "method": "post",
+        "summary": "Validate property document",
+        "description": "Admin endpoint to validate a property document (PDF/JPEG) using ML and OCR.",
+        "tags": [
+          "Admin - Validation"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Document validation result"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Property not found"
+          }
+        },
+        "operationId": "postAdminValidationDocument"
+      }
+    },
+    "/api/admin/validation/image": {
+      "post": {
+        "method": "post",
+        "summary": "Validate property image",
+        "description": "Admin endpoint to validate a property image using ML services.",
+        "tags": [
+          "Admin - Validation"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Image validation result"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Property not found"
+          }
+        },
+        "operationId": "postAdminValidationImage"
+      }
+    },
+    "/api/admin/validation/duplicates": {
+      "post": {
+        "method": "post",
+        "summary": "Duplicate detection",
+        "description": "Admin endpoint to run duplicate detection for a property using images, location and description.",
+        "tags": [
+          "Admin - Validation"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Duplicate check result"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Property not found"
+          }
+        },
+        "operationId": "postAdminValidationDuplicates"
+      }
+    },
+    "/api/properties/{id}": {
+      "get": {
+        "method": "get",
+        "summary": "Get property details",
+        "description": "Retrieve complete property details including media, documents, and inquiries. Live properties are publicly viewable.",
+        "tags": [
+          "Properties"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Property ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Property details retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "property": {
+                      "$ref": "#/components/schemas/PropertyDetails"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Property not found or not accessible",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "getPropertiesId"
+      },
+      "put": {
+        "method": "put",
+        "summary": "Update property details",
+        "description": "Update property details before verification. Only available for draft or pending properties. Requires owner role.",
+        "tags": [
+          "Properties"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Property ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Updated property fields (all optional)",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "price": {
+                    "type": "number"
+                  },
+                  "bedrooms": {
+                    "type": "integer"
+                  },
+                  "bathrooms": {
+                    "type": "integer"
+                  }
+                },
+                "x-source": "@/lib/validations/property.ts → propertyListingSchema (partial)"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Property updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "property": {
+                      "$ref": "#/components/schemas/Property"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data or property is already verified",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Property not found or access denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "putPropertiesId"
+      },
+      "delete": {
+        "method": "delete",
+        "summary": "Delete property",
+        "description": "Delete a property listing. Only available for draft properties. Requires owner role.",
+        "tags": [
+          "Properties"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Property ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Property deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Cannot delete published properties",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Property not found or access denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "deletePropertiesId"
+      }
+    },
+    "/api/properties/{id}/media": {
+      "get": {
+        "method": "get",
+        "summary": "Get property media files",
+        "description": "Retrieve all media (images, videos) associated with a property. Published properties are visible to all users; draft properties only to the owner.",
+        "tags": [
+          "Properties - Media"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Property ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Media list retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "media": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "property_id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "media_type": {
+                            "type": "string",
+                            "enum": [
+                              "image",
+                              "video"
+                            ]
+                          },
+                          "media_url": {
+                            "type": "string",
+                            "format": "url"
+                          },
+                          "is_featured": {
+                            "type": "boolean"
+                          },
+                          "display_order": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Property not found or not accessible",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "getPropertiesIdMedia"
+      },
+      "post": {
+        "method": "post",
+        "summary": "Upload media for property",
+        "description": "Upload a new media file (image or video) to a property. Only property owner can upload. Media can only be added to draft properties.",
+        "tags": [
+          "Properties - Media"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Property ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "media_type",
+                  "media_url"
+                ],
+                "properties": {
+                  "media_type": {
+                    "type": "string",
+                    "enum": [
+                      "image",
+                      "video"
+                    ],
+                    "description": "Type of media"
+                  },
+                  "media_url": {
+                    "type": "string",
+                    "format": "url",
+                    "description": "URL to media file"
+                  },
+                  "is_featured": {
+                    "type": "boolean",
+                    "description": "Mark as primary/featured image"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Media uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "media": {
+                      "type": "object"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or property is published"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Property not found or access denied"
+          }
+        },
+        "operationId": "postPropertiesIdMedia"
+      }
+    },
+    "/api/properties/{id}/documents": {
+      "get": {
+        "method": "get",
+        "summary": "Get property documents",
+        "description": "Retrieve all property documents (title deeds, permits, etc). Only accessible to property owner or admin.",
+        "tags": [
+          "Properties - Documents"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Property ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Documents list retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "documents": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "property_id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "document_type": {
+                            "type": "string"
+                          },
+                          "document_url": {
+                            "type": "string",
+                            "format": "url"
+                          },
+                          "file_name": {
+                            "type": "string"
+                          },
+                          "verification_status": {
+                            "type": "string",
+                            "enum": [
+                              "pending",
+                              "approved",
+                              "rejected"
+                            ]
+                          },
+                          "created_at": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Access denied"
+          },
+          "404": {
+            "description": "Property not found"
+          }
+        },
+        "operationId": "getPropertiesIdDocuments"
+      },
+      "post": {
+        "method": "post",
+        "summary": "Upload property document",
+        "description": "Upload property verification documents (title deeds, permits, etc). Only owner can upload. Triggers ML validation service.",
+        "tags": [
+          "Properties - Documents"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Property ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "document_type",
+                  "document_url",
+                  "file_name"
+                ],
+                "properties": {
+                  "document_type": {
+                    "type": "string",
+                    "description": "Type of document (title_deed, permit, etc)"
+                  },
+                  "document_url": {
+                    "type": "string",
+                    "format": "url",
+                    "description": "URL to document file"
+                  },
+                  "file_name": {
+                    "type": "string",
+                    "description": "Original file name"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Document uploaded and submitted for verification",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "document": {
+                      "type": "object"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or property is published"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Property not found or access denied"
+          }
+        },
+        "operationId": "postPropertiesIdDocuments"
+      }
+    },
+    "/api/properties/{id}/reviews": {
+      "get": {
+        "method": "get",
+        "summary": "Get property reviews",
+        "description": "Retrieve all reviews and ratings for a property. Only shows reviews for published properties. Includes pagination and rating statistics.",
+        "tags": [
+          "Properties - Reviews"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Property ID"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10
+            },
+            "description": "Reviews per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reviews list with pagination and stats",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "pagination": {
+                      "type": "object"
+                    },
+                    "stats": {
+                      "type": "object",
+                      "properties": {
+                        "average_rating": {
+                          "type": "number"
+                        },
+                        "total_reviews": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Property not found"
+          }
+        },
+        "operationId": "getPropertiesIdReviews"
+      },
+      "post": {
+        "method": "post",
+        "summary": "Create property review",
+        "description": "Submit a review and rating for a property. Can review the owner or agent. Requires authentication.",
+        "tags": [
+          "Properties - Reviews"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Property ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "rating",
+                  "comment"
+                ],
+                "properties": {
+                  "rating": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5,
+                    "description": "Rating from 1 to 5"
+                  },
+                  "comment": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 1000,
+                    "description": "Review comment"
+                  },
+                  "target_type": {
+                    "type": "string",
+                    "enum": [
+                      "owner",
+                      "agent"
+                    ],
+                    "description": "Who the review is for"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Review created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (comment too short or rating out of range)"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Property not found"
+          }
+        },
+        "operationId": "postPropertiesIdReviews"
+      }
+    },
+    "/api/properties/{id}/favorites": {
+      "post": {
+        "method": "post",
+        "summary": "Save property to favorites",
+        "description": "Add a property to the authenticated user's saved/favorite properties. Property must be published.",
+        "tags": [
+          "Properties - Favorites"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Property ID"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Property saved to favorites",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Property not found"
+          },
+          "409": {
+            "description": "Property already saved to favorites"
+          }
+        },
+        "operationId": "postPropertiesIdFavorites"
+      },
+      "delete": {
+        "method": "delete",
+        "summary": "Remove property from favorites",
+        "description": "Remove a property from the authenticated user's saved/favorite properties.",
+        "tags": [
+          "Properties - Favorites"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Property ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Property removed from favorites",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Property not found in favorites"
+          }
+        },
+        "operationId": "deletePropertiesIdFavorites"
+      }
+    },
+    "/api/properties/{id}/duplicate-check": {
+      "post": {
+        "method": "post",
+        "summary": "Check for duplicate properties",
+        "description": "Check for potential duplicate property listings based on address or geospatial proximity. Uses address matching and location-based radius search.",
+        "tags": [
+          "Properties"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Property ID to check"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "address": {
+                    "type": "string",
+                    "description": "Address to check (optional, uses property address if not provided)"
+                  },
+                  "latitude": {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90,
+                    "description": "Latitude for geo check"
+                  },
+                  "longitude": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180,
+                    "description": "Longitude for geo check"
+                  },
+                  "radius": {
+                    "type": "number",
+                    "minimum": 0.01,
+                    "maximum": 10,
+                    "default": 0.1,
+                    "description": "Search radius in kilometers"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Duplicate check results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "potentialDuplicates": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Address or coordinates required"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Property not found or access denied"
+          }
+        },
+        "operationId": "postPropertiesIdDuplicateCheck"
+      }
+    },
+    "/api/properties/{id}/public": {
+      "get": {
+        "method": "get",
+        "summary": "Get public property details",
+        "description": "Retrieve public property or listing details. Public view is available only for published (live) properties. Can retrieve owner-listed properties or agent-created listings via source parameter.",
+        "tags": [
+          "Properties - Public"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Property ID"
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "owner",
+                "agent"
+              ],
+              "default": "owner"
+            },
+            "description": "Property source: owner-listed or agent-created"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public property details with all media and owner/agent info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "price": {
+                      "type": "number"
+                    },
+                    "state": {
+                      "type": "string"
+                    },
+                    "city": {
+                      "type": "string"
+                    },
+                    "bedrooms": {
+                      "type": "integer"
+                    },
+                    "bathrooms": {
+                      "type": "integer"
+                    },
+                    "media": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "owner": {
+                      "type": "object"
+                    },
+                    "agent": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Property not found or not published"
+          }
+        },
+        "operationId": "getPropertiesIdPublic"
+      }
+    },
+    "/api/properties/owner": {
+      "get": {
+        "method": "get",
+        "summary": "Get user's properties",
+        "description": "Retrieve all properties owned or managed by the authenticated user. Only accessible to property owners and agents. Supports pagination.",
+        "tags": [
+          "Properties - Owner"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20
+            },
+            "description": "Properties per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User properties list with pagination",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "properties": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "pagination": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "User must be an owner or agent"
+          },
+          "404": {
+            "description": "Owner/agent profile not found"
+          }
+        },
+        "operationId": "getPropertiesOwner"
+      }
+    },
+    "/api/properties/explore": {
+      "get": {
+        "method": "get",
+        "summary": "Explore properties with advanced filters",
+        "description": "Advanced property search with location, price, features, and Nigerian infrastructure filters. Supports geospatial radius search, pagination, and multiple sorting options.",
+        "tags": [
+          "Properties - Search"
+        ],
+        "parameters": [
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "State filter (e.g., Lagos, Abuja)"
+          },
+          {
+            "name": "latitude",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "description": "Latitude for geospatial search"
+          },
+          {
+            "name": "longitude",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "description": "Longitude for geospatial search"
+          },
+          {
+            "name": "radius_km",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "description": "Search radius in km"
+          },
+          {
+            "name": "property_type",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "house",
+                "apartment",
+                "land",
+                "commercial",
+                "event_center",
+                "hotel",
+                "shop",
+                "office"
+              ]
+            }
+          },
+          {
+            "name": "min_price",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "max_price",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "bedrooms",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "bathrooms",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "has_bq",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Has Boys Quarters"
+          },
+          {
+            "name": "nepa_status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "stable",
+                "intermittent",
+                "poor",
+                "none",
+                "generator_only"
+              ]
+            }
+          },
+          {
+            "name": "water_source",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "borehole",
+                "public_water",
+                "well",
+                "water_vendor",
+                "none"
+              ]
+            }
+          },
+          {
+            "name": "internet_type",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "fiber",
+                "starlink",
+                "4g",
+                "3g",
+                "none"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20
+            }
+          },
+          {
+            "name": "sort_by",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "newest",
+                "price_asc",
+                "price_desc",
+                "distance"
+              ],
+              "default": "newest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Featured and matching properties with pagination",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "properties": {
+                      "type": "array"
+                    },
+                    "pagination": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid filter parameters"
+          }
+        },
+        "operationId": "getPropertiesExplore"
+      }
+    },
+    "/api/saved-properties": {
+      "get": {
+        "method": "get",
+        "summary": "Get saved properties",
+        "description": "Retrieve all properties saved/favorited by the authenticated user.",
+        "tags": [
+          "Properties - Favorites"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of saved properties",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "saved_properties": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "user_id": {
+                            "type": "string"
+                          },
+                          "property_id": {
+                            "type": "string"
+                          },
+                          "created_at": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "properties": {
+                            "$ref": "#/components/schemas/Property"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "getSavedProperties"
+      },
+      "post": {
+        "method": "post",
+        "summary": "Save property to favorites",
+        "description": "Add a property to the authenticated user's saved properties list.",
+        "tags": [
+          "Properties - Favorites"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "property_id"
+                ],
+                "properties": {
+                  "property_id": {
+                    "type": "string",
+                    "description": "ID of the property to save"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Property saved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "saved_property": {
+                      "type": "object"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or property already saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Property not found or not available",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "postSavedProperties"
+      },
+      "delete": {
+        "method": "delete",
+        "summary": "Remove property from favorites",
+        "description": "Remove a property from the authenticated user's saved properties list.",
+        "tags": [
+          "Properties - Favorites"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "property_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Property ID to remove from saved"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Property removed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Saved property not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "deleteSavedProperties"
+      }
+    },
+    "/api/search/properties": {
+      "get": {
+        "method": "get",
+        "summary": "Advanced property search",
+        "description": "Search verified, live properties with support for text search, filters, sorting, and geospatial queries. Results limited to verified properties.",
+        "tags": [
+          "Properties - Search"
+        ],
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search query (title, description, or address)"
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Nigerian state"
+          },
+          {
+            "name": "city",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "City name"
+          },
+          {
+            "name": "property_type",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Property type"
+          },
+          {
+            "name": "listing_type",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "for_sale",
+                "for_rent",
+                "for_lease",
+                "short_let"
+              ]
+            },
+            "description": "Listing type"
+          },
+          {
+            "name": "min_price",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "description": "Minimum price (Naira)"
+          },
+          {
+            "name": "max_price",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "description": "Maximum price (Naira)"
+          },
+          {
+            "name": "bedrooms",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "description": "Number of bedrooms"
+          },
+          {
+            "name": "bathrooms",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "description": "Minimum number of bathrooms"
+          },
+          {
+            "name": "latitude",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "description": "Latitude for geospatial search"
+          },
+          {
+            "name": "longitude",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "description": "Longitude for geospatial search"
+          },
+          {
+            "name": "radius",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "default": 10
+            },
+            "description": "Search radius in kilometers (used with lat/long)"
+          },
+          {
+            "name": "sort_by",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "newest",
+                "oldest",
+                "price_asc",
+                "price_desc"
+              ],
+              "default": "newest"
+            },
+            "description": "Sort order"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20
+            },
+            "description": "Results per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results with pagination",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "properties": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Property"
+                      }
+                    },
+                    "pagination": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid search parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "getSearchProperties"
+      }
+    },
+    "/api/inquiries": {
+      "get": {
+        "method": "get",
+        "summary": "Get user inquiries",
+        "description": "Get inquiries relevant to authenticated user. Users see inquiries they sent; owners see inquiries on their properties.",
+        "tags": [
+          "Dashboard - Owner Inquiries"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of inquiries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "inquiries": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Inquiry"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - invalid user type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "getInquiries"
+      },
+      "post": {
+        "method": "post",
+        "summary": "Create property inquiry",
+        "description": "Send an inquiry about a property. Only users can send inquiries. Owner is automatically identified from property.",
+        "tags": [
+          "Dashboard - Owner Inquiries"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "property_id",
+                  "message"
+                ],
+                "properties": {
+                  "property_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Property to inquire about"
+                  },
+                  "message": {
+                    "type": "string",
+                    "minLength": 10,
+                    "description": "Inquiry message"
+                  },
+                  "contact_phone": {
+                    "type": "string",
+                    "description": "Contact phone (optional)"
+                  },
+                  "contact_email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Contact email (optional)"
+                  }
+                },
+                "x-source": "@/lib/validations/inquiry.ts → createInquirySchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Inquiry created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "inquiry": {
+                      "$ref": "#/components/schemas/Inquiry"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid inquiry data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - only users can send inquiries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Property not found or not available",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "postInquiries"
+      }
+    },
+    "/api/profile": {
+      "get": {
+        "method": "get",
+        "summary": "Get user profile",
+        "description": "Retrieve the authenticated user's profile information.",
+        "tags": [
+          "Profile"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "profile": {
+                      "$ref": "#/components/schemas/Profile"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Profile not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "getProfile"
+      },
+      "put": {
+        "method": "put",
+        "summary": "Update user profile",
+        "description": "Update the authenticated user's profile information.",
+        "tags": [
+          "Profile"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "full_name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "description": "User full name"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "pattern": "^\\+234[0-9]{10}$",
+                    "description": "Nigerian phone number in +234... format"
+                  },
+                  "bio": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "description": "User bio/description"
+                  }
+                },
+                "x-source": "@/lib/validations/profile.ts → updateProfileSchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "profile": {
+                      "$ref": "#/components/schemas/Profile"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid profile data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "putProfile"
+      }
+    },
+    "/api/auth/attribute-referral": {
+      "post": {
+        "method": "post",
+        "summary": "Attribute signup referral",
+        "description": "Attach a newly created profile to a referral code and trigger referral rewards and notifications.",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "refCode"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "refCode": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Referral attribution accepted"
+          },
+          "400": {
+            "description": "Invalid JSON or missing fields"
+          },
+          "404": {
+            "description": "Profile not found or attribution window expired"
+          }
+        },
+        "operationId": "postAuthAttributeReferral"
+      }
+    },
+    "/api/auth/forgot-password": {
+      "post": {
+        "method": "post",
+        "summary": "Request password reset email",
+        "description": "Send a password reset email with a recovery link and OTP. Returns a generic success response to prevent account enumeration.",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reset request accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid email"
+          },
+          "500": {
+            "description": "Failed to generate reset link"
+          },
+          "502": {
+            "description": "Failed to send reset email"
+          },
+          "503": {
+            "description": "Email service is at capacity"
+          }
+        },
+        "operationId": "postAuthForgotPassword"
+      }
+    },
+    "/api/auth/password-changed": {
+      "post": {
+        "method": "post",
+        "summary": "Send password changed notification",
+        "description": "Send a confirmation email after the user successfully changes their password.",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Password change notification processed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "operationId": "postAuthPasswordChanged"
+      }
+    },
+    "/api/auth/sync-waitlist-context": {
+      "post": {
+        "method": "post",
+        "summary": "Sync waitlist context to profile",
+        "description": "Copy waitlist metadata and referral context to a newly created profile inside the sync window.",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Waitlist context synced"
+          },
+          "400": {
+            "description": "Invalid body or missing email"
+          },
+          "404": {
+            "description": "Profile not found or sync window expired"
+          }
+        },
+        "operationId": "postAuthSyncWaitlistContext"
+      }
+    },
+    "/api/auth/verify-reset-otp": {
+      "post": {
+        "method": "post",
+        "summary": "Verify password reset OTP",
+        "description": "Validate the 6-digit reset code and exchange the stored token hash for a recovery session.",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "code"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "minLength": 6,
+                    "maxLength": 6
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP verified"
+          },
+          "400": {
+            "description": "Invalid or expired code"
+          }
+        },
+        "operationId": "postAuthVerifyResetOtp"
+      }
+    },
+    "/api/dashboard/listings": {
+      "get": {
+        "method": "get",
+        "summary": "List dashboard properties",
+        "description": "Return the authenticated owner or admin properties with pagination, status filtering, and sorting.",
+        "tags": [
+          "Dashboard - Listings"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "newest",
+                "oldest",
+                "price_high",
+                "price_low",
+                "views"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated property list"
+          },
+          "400": {
+            "description": "Invalid query parameters"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - Property owners only"
+          }
+        },
+        "operationId": "getDashboardListings"
+      },
+      "post": {
+        "method": "post",
+        "summary": "Create dashboard property",
+        "description": "Create a new property listing from the owner dashboard and queue it for validation.",
+        "tags": [
+          "Dashboard - Listings"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PropertyListing"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Property created successfully"
+          },
+          "400": {
+            "description": "Invalid property data"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - Property owners only"
+          }
+        },
+        "operationId": "postDashboardListings"
+      }
+    },
+    "/api/dashboard/listings/{id}/documents": {
+      "get": {
+        "method": "get",
+        "summary": "List dashboard property documents",
+        "description": "Retrieve all legal documents associated with a property.",
+        "tags": [
+          "Dashboard - Listings"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Property ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Document list retrieved successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Property not found or access denied"
+          }
+        },
+        "operationId": "getDashboardListingsIdDocuments"
+      },
+      "post": {
+        "method": "post",
+        "summary": "Upload dashboard property document",
+        "description": "Upload a legal or compliance document for a property.",
+        "tags": [
+          "Dashboard - Listings"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Property ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file",
+                  "document_type"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "document_type": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Document uploaded successfully"
+          },
+          "400": {
+            "description": "Invalid file or document type"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Property not found or access denied"
+          }
+        },
+        "operationId": "postDashboardListingsIdDocuments"
+      }
+    },
+    "/api/dashboard/listings/{id}/duplicate-check": {
+      "post": {
+        "method": "post",
+        "summary": "Check dashboard listing duplicates",
+        "description": "Run duplicate detection for a dashboard listing using address, location, and title heuristics.",
+        "tags": [
+          "Dashboard - Listings"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Property ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Duplicate analysis completed"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Property not found"
+          }
+        },
+        "operationId": "postDashboardListingsIdDuplicateCheck"
+      }
+    },
+    "/api/dashboard/listings/{id}/media": {
+      "get": {
+        "method": "get",
+        "summary": "List dashboard property media",
+        "description": "Retrieve all media files associated with a property in the dashboard.",
+        "tags": [
+          "Dashboard - Listings"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Property ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Media list retrieved successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Property not found or access denied"
+          }
+        },
+        "operationId": "getDashboardListingsIdMedia"
+      },
+      "post": {
+        "method": "post",
+        "summary": "Upload dashboard property media",
+        "description": "Upload a media file for a property and store the signed upload result.",
+        "tags": [
+          "Dashboard - Listings"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Property ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file",
+                  "media_type"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "media_type": {
+                    "type": "string",
+                    "enum": [
+                      "image",
+                      "video",
+                      "virtual_tour"
+                    ]
+                  },
+                  "alt_text": {
+                    "type": "string"
+                  },
+                  "is_featured": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Media uploaded successfully"
+          },
+          "400": {
+            "description": "Invalid file type, size, or missing file"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Property not found or access denied"
+          }
+        },
+        "operationId": "postDashboardListingsIdMedia"
+      }
+    },
+    "/api/dashboard/listings/{id}/renew": {
+      "post": {
+        "method": "post",
+        "summary": "Renew dashboard property",
+        "description": "Renew a live or expired property listing and set it back to live status.",
+        "tags": [
+          "Dashboard - Listings"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Property ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Property renewed successfully"
+          },
+          "400": {
+            "description": "Cannot renew property"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - Property owners only"
+          },
+          "404": {
+            "description": "Property not found or access denied"
+          }
+        },
+        "operationId": "postDashboardListingsIdRenew"
+      }
+    },
+    "/api/dashboard/listings/{id}": {
+      "get": {
+        "method": "get",
+        "summary": "Get dashboard property",
+        "description": "Fetch a single property with all owner dashboard relations, media, documents, and inquiries.",
+        "tags": [
+          "Dashboard - Listings"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Property ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Property retrieved successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - Property owners only"
+          },
+          "404": {
+            "description": "Property not found or access denied"
+          }
+        },
+        "operationId": "getDashboardListingsId"
+      },
+      "put": {
+        "method": "put",
+        "summary": "Update dashboard property",
+        "description": "Update owner-managed property fields before verification.",
+        "tags": [
+          "Dashboard - Listings"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Property ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Partial property update payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Property updated successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - Property owners only"
+          },
+          "404": {
+            "description": "Property not found or access denied"
+          }
+        },
+        "operationId": "putDashboardListingsId"
+      },
+      "delete": {
+        "method": "delete",
+        "summary": "Delete dashboard property",
+        "description": "Delete a draft, unlisted, or rejected property from the dashboard.",
+        "tags": [
+          "Dashboard - Listings"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Property ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Property deleted successfully"
+          },
+          "400": {
+            "description": "Cannot delete property"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - Property owners only"
+          },
+          "404": {
+            "description": "Property not found or access denied"
+          }
+        },
+        "operationId": "deleteDashboardListingsId"
+      }
+    },
+    "/api/dashboard/owner/inquiries": {
+      "get": {
+        "method": "get",
+        "summary": "List owner inquiries",
+        "description": "Return inquiries received on properties owned by the authenticated owner.",
+        "tags": [
+          "Dashboard - Owner Inquiries"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "newest",
+                "oldest",
+                "property"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated inquiry list"
+          },
+          "400": {
+            "description": "Invalid query parameters"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - Property owners only"
+          }
+        },
+        "operationId": "getDashboardOwnerInquiries"
+      }
+    },
+    "/api/dashboard/owner/inquiries/{id}/close": {
+      "post": {
+        "method": "post",
+        "summary": "Close owner inquiry",
+        "description": "Close an inquiry and notify the other party.",
+        "tags": [
+          "Dashboard - Owner Inquiries"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Inquiry ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "enum": [
+                      "resolved",
+                      "no_longer_interested",
+                      "duplicate",
+                      "spam",
+                      "other"
+                    ]
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Inquiry closed successfully"
+          },
+          "400": {
+            "description": "Invalid close data"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Access denied"
+          },
+          "404": {
+            "description": "Inquiry not found"
+          }
+        },
+        "operationId": "postDashboardOwnerInquiriesIdClose"
+      }
+    },
+    "/api/dashboard/owner/inquiries/{id}/respond": {
+      "post": {
+        "method": "post",
+        "summary": "Respond to owner inquiry",
+        "description": "Send a response to an inquiry and mark it as responded.",
+        "tags": [
+          "Dashboard - Owner Inquiries"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Inquiry ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "response_message"
+                ],
+                "properties": {
+                  "response_message": {
+                    "type": "string"
+                  },
+                  "contact_phone": {
+                    "type": "string"
+                  },
+                  "contact_email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "schedule_viewing": {
+                    "type": "boolean"
+                  },
+                  "viewing_date": {
+                    "type": "string"
+                  },
+                  "viewing_time": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Response sent successfully"
+          },
+          "400": {
+            "description": "Invalid response data"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Access denied - Only property owners can respond to inquiries"
+          },
+          "404": {
+            "description": "Inquiry not found"
+          }
+        },
+        "operationId": "postDashboardOwnerInquiriesIdRespond"
+      }
+    },
+    "/api/dashboard/owner/inquiries/{id}": {
+      "get": {
+        "method": "get",
+        "summary": "Get owner inquiry",
+        "description": "Fetch a single inquiry that belongs to the owner dashboard.",
+        "tags": [
+          "Dashboard - Owner Inquiries"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Inquiry ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Inquiry retrieved successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Access denied"
+          },
+          "404": {
+            "description": "Inquiry not found"
+          }
+        },
+        "operationId": "getDashboardOwnerInquiriesId"
+      },
+      "put": {
+        "method": "put",
+        "summary": "Update owner inquiry",
+        "description": "Update the status of an inquiry in the owner dashboard.",
+        "tags": [
+          "Dashboard - Owner Inquiries"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Inquiry ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "new",
+                      "read",
+                      "responded",
+                      "closed"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Inquiry updated successfully"
+          },
+          "400": {
+            "description": "Invalid status or query data"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Access denied"
+          },
+          "404": {
+            "description": "Inquiry not found"
+          }
+        },
+        "operationId": "putDashboardOwnerInquiriesId"
+      }
+    },
+    "/api/admin/properties": {
+      "get": {
+        "method": "get",
+        "summary": "List admin review properties",
+        "description": "Get properties waiting for admin review or in a specific status.",
+        "tags": [
+          "Admin - Properties"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Properties loaded successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Admin access required"
+          }
+        },
+        "operationId": "getAdminProperties"
+      },
+      "put": {
+        "method": "put",
+        "summary": "Validate admin property review",
+        "description": "Approve a property for vetting or reject it from the admin queue.",
+        "tags": [
+          "Admin - Properties"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "property_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "live",
+                      "rejected"
+                    ]
+                  },
+                  "rejection_reason": {
+                    "type": "string"
+                  },
+                  "admin_notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Property updated successfully"
+          },
+          "400": {
+            "description": "Property ID is required or invalid data"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Admin access required"
+          }
+        },
+        "operationId": "putAdminProperties"
+      },
+      "post": {
+        "method": "post",
+        "summary": "Create admin property listing",
+        "description": "Create a property from the admin console and link it to the internal RealEST Connect listings account.",
+        "tags": [
+          "Admin - Properties"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PropertyListing"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Property created successfully"
+          },
+          "400": {
+            "description": "Invalid property data"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Admin access required"
+          }
+        },
+        "operationId": "postAdminProperties"
+      }
+    },
+    "/api/admin/reports/vetting": {
+      "get": {
+        "method": "get",
+        "summary": "Get vetting report",
+        "description": "Generate admin vetting summary statistics for a chosen time period and status filter.",
+        "tags": [
+          "Admin - Reports"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "7d",
+                "30d",
+                "90d"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vetting report generated"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Admin access required"
+          }
+        },
+        "operationId": "getAdminReportsVetting"
+      }
+    },
+    "/api/admin/subadmins": {
+      "post": {
+        "method": "post",
+        "summary": "Create sub-admin account",
+        "description": "Invite a new sub-admin by creating a user, profile, and reset link.",
+        "tags": [
+          "Admin - Subadmins"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "full_name"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "full_name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sub-admin created successfully"
+          },
+          "400": {
+            "description": "Missing email or full_name"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Failed to create sub-admin"
+          }
+        },
+        "operationId": "postAdminSubadmins"
+      }
+    },
+    "/api/admin/users": {
+      "get": {
+        "method": "get",
+        "summary": "List admin users",
+        "description": "Return a searchable, paginated list of platform users for admin management.",
+        "tags": [
+          "Admin - Users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "newest",
+                "oldest",
+                "name",
+                "type"
+              ]
+            }
+          },
+          {
+            "name": "user_type",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "user",
+                "owner",
+                "agent",
+                "admin"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "suspended",
+                "banned"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Users loaded successfully"
+          },
+          "400": {
+            "description": "Invalid query parameters"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Admin access required"
+          }
+        },
+        "operationId": "getAdminUsers"
+      }
+    },
+    "/api/admin/validation/ml": {
+      "get": {
+        "method": "get",
+        "summary": "Get ML validation queue",
+        "description": "List properties awaiting ML validation with paging and status filters.",
+        "tags": [
+          "Admin - Validation"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "newest",
+                "oldest",
+                "priority"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "processing",
+                "completed"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ML queue loaded successfully"
+          },
+          "400": {
+            "description": "Invalid query parameters"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Admin access required"
+          }
+        },
+        "operationId": "getAdminValidationMl"
+      }
+    },
+    "/api/admin/validation/vetting": {
+      "get": {
+        "method": "get",
+        "summary": "Get vetting queue",
+        "description": "List properties in the vetting queue with paging and urgency filters.",
+        "tags": [
+          "Admin - Validation"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "newest",
+                "oldest",
+                "urgent",
+                "location"
+              ]
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "priority",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "low",
+                "medium",
+                "high",
+                "urgent"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vetting queue loaded successfully"
+          },
+          "400": {
+            "description": "Invalid query parameters"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Admin access required"
+          }
+        },
+        "operationId": "getAdminValidationVetting"
+      }
+    },
+    "/api/admin/validation/vetting/{id}": {
+      "post": {
+        "method": "post",
+        "summary": "Update vetting action",
+        "description": "Approve, reject, schedule, or flag a property in the vetting workflow.",
+        "tags": [
+          "Admin - Validation"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Property ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "action"
+                ],
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "approve",
+                      "reject",
+                      "schedule",
+                      "flag_issue"
+                    ]
+                  },
+                  "notes": {
+                    "type": "string"
+                  },
+                  "scheduled_date": {
+                    "type": "string"
+                  },
+                  "rejection_reason": {
+                    "type": "string"
+                  },
+                  "issue_details": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Vetting action completed successfully"
+          },
+          "400": {
+            "description": "Invalid request data"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Admin access required"
+          },
+          "404": {
+            "description": "Property not found or not eligible for vetting"
+          }
+        },
+        "operationId": "postAdminValidationVettingId"
+      }
+    },
+    "/api/admin/verify-agent": {
+      "post": {
+        "method": "post",
+        "summary": "Verify or reject an agent",
+        "description": "Admin action that approves or rejects an agent account.",
+        "tags": [
+          "Admin - Verification"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "agentId",
+                  "action"
+                ],
+                "properties": {
+                  "agentId": {
+                    "type": "string"
+                  },
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "approve",
+                      "reject"
+                    ]
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Agent verification updated successfully"
+          },
+          "400": {
+            "description": "Missing agentId or action"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "operationId": "postAdminVerifyAgent"
+      }
+    },
+    "/api/admin/waitlist/{id}/email": {
+      "post": {
+        "method": "post",
+        "summary": "Send waitlist subscriber email",
+        "description": "Send a single template email to one waitlist subscriber.",
+        "tags": [
+          "Admin - Waitlist"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Waitlist subscriber ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "template_name"
+                ],
+                "properties": {
+                  "template_name": {
+                    "type": "string"
+                  },
+                  "template_props": {
+                    "type": "object"
+                  },
+                  "subject": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email sent successfully"
+          },
+          "400": {
+            "description": "template_name is required"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Subscriber not found"
+          }
+        },
+        "operationId": "postAdminWaitlistIdEmail"
+      }
+    },
+    "/api/admin/waitlist/{id}": {
+      "delete": {
+        "method": "delete",
+        "summary": "Remove waitlist subscriber",
+        "description": "Delete a waitlist subscriber by ID. Admin only.",
+        "tags": [
+          "Admin - Waitlist"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Waitlist subscriber ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Waitlist subscriber removed"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "operationId": "deleteAdminWaitlistId"
+      }
+    },
+    "/api/notifications": {
+      "get": {
+        "method": "get",
+        "summary": "List notifications",
+        "description": "Retrieve the authenticated user's notifications and unread count.",
+        "tags": [
+          "Notifications"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "unread_only",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notifications loaded successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "operationId": "getNotifications"
+      },
+      "post": {
+        "method": "post",
+        "summary": "Mark notifications read",
+        "description": "Mark all notifications as read for the authenticated user.",
+        "tags": [
+          "Notifications"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "All notifications marked as read"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "operationId": "postNotifications"
+      }
+    },
+    "/api/referral/invite": {
+      "post": {
+        "method": "post",
+        "summary": "Send referral invite",
+        "description": "Send a referral invite email using the inviter's referral code.",
+        "tags": [
+          "Referral"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "inviteeEmail",
+                  "referralCode"
+                ],
+                "properties": {
+                  "inviteeEmail": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "inviteeName": {
+                    "type": "string"
+                  },
+                  "referralCode": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Invite email sent"
+          },
+          "400": {
+            "description": "Invalid JSON body or missing fields"
+          },
+          "404": {
+            "description": "Referral code not found"
+          },
+          "429": {
+            "description": "Too many invites"
+          }
+        },
+        "operationId": "postReferralInvite"
+      }
+    },
+    "/api/referral/me": {
+      "get": {
+        "method": "get",
+        "summary": "Get my referral summary",
+        "description": "Return the authenticated user's referral summary and progress.",
+        "tags": [
+          "Referral"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Referral summary loaded"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "operationId": "getReferralMe"
+      }
+    },
+    "/api/referral/resolve": {
+      "get": {
+        "method": "get",
+        "summary": "Resolve referral code",
+        "description": "Resolve a referral code to inviter details and milestone context.",
+        "tags": [
+          "Referral"
+        ],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Referral code resolved"
+          },
+          "400": {
+            "description": "Referral code is required"
+          },
+          "404": {
+            "description": "Referral code not found"
+          }
+        },
+        "operationId": "getReferralResolve"
+      }
+    },
+    "/api/system/amenities": {
+      "get": {
+        "method": "get",
+        "summary": "List property amenities",
+        "description": "Return categorized Nigerian property amenities with optional category and search filtering.",
+        "tags": [
+          "System"
+        ],
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Amenities loaded successfully"
+          }
+        },
+        "operationId": "getSystemAmenities"
+      }
+    },
+    "/api/system/geocode": {
+      "get": {
+        "method": "get",
+        "summary": "Geocode an address",
+        "description": "Resolve a Nigerian address into coordinates and address components.",
+        "tags": [
+          "System"
+        ],
+        "parameters": [
+          {
+            "name": "address",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "lga",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Geocoding result"
+          },
+          "400": {
+            "description": "Invalid query parameters"
+          },
+          "404": {
+            "description": "Address not found"
+          },
+          "503": {
+            "description": "Geocoding service unavailable"
+          }
+        },
+        "operationId": "getSystemGeocode"
+      }
+    },
+    "/api/system/health": {
+      "get": {
+        "method": "get",
+        "summary": "Get system health",
+        "description": "Check database connectivity and application health metrics.",
+        "tags": [
+          "System"
+        ],
+        "responses": {
+          "200": {
+            "description": "System healthy"
+          },
+          "503": {
+            "description": "System unhealthy"
+          }
+        },
+        "operationId": "getSystemHealth"
+      }
+    },
+    "/api/system/status": {
+      "get": {
+        "method": "get",
+        "summary": "Get system status",
+        "description": "Return application mode, feature flags, and operational statistics.",
+        "tags": [
+          "System"
+        ],
+        "responses": {
+          "200": {
+            "description": "System status loaded"
+          },
+          "500": {
+            "description": "Failed to retrieve system status"
+          }
+        },
+        "operationId": "getSystemStatus"
+      }
+    },
+    "/api/upload/signed-url": {
+      "post": {
+        "method": "post",
+        "summary": "Generate signed upload URL",
+        "description": "Create a signed URL for direct file upload to storage.",
+        "tags": [
+          "Upload"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed URL generated"
+          },
+          "400": {
+            "description": "Invalid file data"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "operationId": "postUploadSignedUrl"
+      }
+    },
+    "/api/waitlist": {
+      "post": {
+        "method": "post",
+        "summary": "Join waitlist",
+        "description": "Subscribe a user to the waitlist and trigger referral/cohort workflows.",
+        "tags": [
+          "Waitlist"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "firstName",
+                  "persona"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "firstName": {
+                    "type": "string"
+                  },
+                  "lastName": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string"
+                  },
+                  "ref": {
+                    "type": "string"
+                  },
+                  "persona": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Waitlist subscription accepted"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "429": {
+            "description": "Rate limited"
+          }
+        },
+        "operationId": "postWaitlist"
+      }
+    },
+    "/api/admin/emails/audiences": {
+      "get": {
+        "method": "get",
+        "summary": "List admin email audiences",
+        "description": "Return configured Resend audiences and database-backed audience segments with counts.",
+        "tags": [
+          "Admin - Emails"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Audience sources loaded successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Admin access required"
+          }
+        },
+        "operationId": "getAdminEmailsAudiences"
+      }
+    },
+    "/api/admin/emails/campaigns": {
+      "get": {
+        "method": "get",
+        "summary": "List email campaigns",
+        "description": "Return paginated admin email campaigns with optional status filtering.",
+        "tags": [
+          "Admin - Emails"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Campaigns loaded successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Admin access required"
+          }
+        },
+        "operationId": "getAdminEmailsCampaigns"
+      },
+      "post": {
+        "method": "post",
+        "summary": "Create email campaign",
+        "description": "Create a draft email campaign for a Resend audience or database segment.",
+        "tags": [
+          "Admin - Emails"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "template_name",
+                  "subject",
+                  "audience_type",
+                  "send_mode"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "template_name": {
+                    "type": "string"
+                  },
+                  "subject": {
+                    "type": "string"
+                  },
+                  "audience_type": {
+                    "type": "string",
+                    "enum": [
+                      "resend_audience",
+                      "db_segment"
+                    ]
+                  },
+                  "audience_id": {
+                    "type": "string"
+                  },
+                  "audience_filter": {
+                    "type": "object"
+                  },
+                  "send_mode": {
+                    "type": "string",
+                    "enum": [
+                      "broadcast",
+                      "batch"
+                    ]
+                  },
+                  "template_props": {
+                    "type": "object"
+                  },
+                  "scheduled_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Draft campaign created successfully"
+          },
+          "400": {
+            "description": "Invalid campaign payload"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Admin access required"
+          }
+        },
+        "operationId": "postAdminEmailsCampaigns"
+      }
+    },
+    "/api/admin/emails/campaigns/{id}/preview": {
+      "get": {
+        "method": "get",
+        "summary": "Preview email campaign",
+        "description": "Render a campaign template to HTML for preview in the admin UI.",
+        "tags": [
+          "Admin - Emails"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Campaign preview rendered successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Admin access required"
+          },
+          "404": {
+            "description": "Campaign not found"
+          }
+        },
+        "operationId": "getAdminEmailsCampaignsIdPreview"
+      }
+    },
+    "/api/admin/emails/campaigns/{id}/recipients": {
+      "get": {
+        "method": "get",
+        "summary": "List campaign recipients",
+        "description": "Return recipients for a Resend audience or database-backed campaign segment.",
+        "tags": [
+          "Admin - Emails"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Campaign recipients loaded successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Admin access required"
+          },
+          "404": {
+            "description": "Campaign not found"
+          }
+        },
+        "operationId": "getAdminEmailsCampaignsIdRecipients"
+      }
+    },
+    "/api/admin/emails/campaigns/{id}": {
+      "get": {
+        "method": "get",
+        "summary": "Get email campaign",
+        "description": "Return a single admin email campaign with owner details.",
+        "tags": [
+          "Admin - Emails"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Campaign loaded successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Admin access required"
+          },
+          "404": {
+            "description": "Campaign not found"
+          }
+        },
+        "operationId": "getAdminEmailsCampaignsId"
+      },
+      "delete": {
+        "method": "delete",
+        "summary": "Delete draft email campaign",
+        "description": "Delete a campaign while it is still in draft status.",
+        "tags": [
+          "Admin - Emails"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Campaign deleted successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Admin access required"
+          },
+          "404": {
+            "description": "Campaign not found"
+          },
+          "409": {
+            "description": "Campaign is not in draft status"
+          }
+        },
+        "operationId": "deleteAdminEmailsCampaignsId"
+      }
+    },
+    "/api/admin/emails/campaigns/{id}/send": {
+      "post": {
+        "method": "post",
+        "summary": "Send email campaign",
+        "description": "Execute a draft or scheduled campaign send using Resend broadcast or batch delivery.",
+        "tags": [
+          "Admin - Emails"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Campaign sent successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Admin access required"
+          },
+          "404": {
+            "description": "Campaign not found"
+          },
+          "409": {
+            "description": "Campaign cannot be sent in its current status"
+          },
+          "500": {
+            "description": "Campaign send failed"
+          }
+        },
+        "operationId": "postAdminEmailsCampaignsIdSend"
+      }
+    },
+    "/api/admin/emails/render": {
+      "get": {
+        "method": "get",
+        "summary": "Render email template",
+        "description": "Render a selected email template to HTML for preview in the admin UI.",
+        "tags": [
+          "Admin - Emails"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "template",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "theme",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "light",
+                "dark"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Template rendered successfully"
+          },
+          "400": {
+            "description": "Missing template parameter"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Admin access required"
+          },
+          "404": {
+            "description": "Template not found"
+          }
+        },
+        "operationId": "getAdminEmailsRender"
+      }
+    },
+    "/api/admin/emails/send-test": {
+      "post": {
+        "method": "post",
+        "summary": "Send a test email",
+        "description": "Render an email template and send it to a single recipient for admin validation.",
+        "tags": [
+          "Admin - Emails"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "template",
+                  "to"
+                ],
+                "properties": {
+                  "template": {
+                    "type": "string"
+                  },
+                  "to": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Test email sent successfully"
+          },
+          "400": {
+            "description": "Invalid template or recipient"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Admin access required"
+          },
+          "404": {
+            "description": "Unknown template"
+          },
+          "500": {
+            "description": "Failed to render or send email"
+          },
+          "502": {
+            "description": "Resend rejected the request"
+          }
+        },
+        "operationId": "postAdminEmailsSendTest"
+      }
+    },
+    "/api/admin/analytics/overview": {
+      "get": {
+        "method": "get",
+        "summary": "Admin analytics overview",
+        "description": "High-level platform analytics: users, properties, inquiries, admin actions and optional trend data. Admin-only.",
+        "tags": [
+          "Admin - Analytics"
+        ],
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "7d",
+                "30d",
+                "90d",
+                "1y",
+                "all"
+              ]
+            },
+            "description": "Date range for metrics"
+          },
+          {
+            "name": "include_trends",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Include time series trend data"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Analytics overview JSON"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "operationId": "getAdminAnalyticsOverview"
+      }
+    },
+    "/api/admin/analytics/polls": {
+      "get": {
+        "method": "get",
+        "summary": "Admin poll responses overview",
+        "description": "Aggregated poll responses with totals and breakdowns by campaign ref tag. Admin-only.",
+        "tags": [
+          "Admin - Analytics"
+        ],
+        "responses": {
+          "200": {
+            "description": "Aggregated poll responses",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "total": {
+                      "type": "number"
+                    },
+                    "questions": {
+                      "type": "object"
+                    },
+                    "refTags": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "operationId": "getAdminAnalyticsPolls"
+      }
+    },
+    "/api/admin/analytics/referrals": {
+      "get": {
+        "method": "get",
+        "summary": "Referral analytics",
+        "description": "Referral program summary: top referrers and referred entries (admin-only).",
+        "tags": [
+          "Admin - Analytics"
+        ],
+        "responses": {
+          "200": {
+            "description": "Referral analytics payload"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "operationId": "getAdminAnalyticsReferrals"
+      }
+    },
+    "/api/admin/analytics/{metric}": {
+      "get": {
+        "method": "get",
+        "summary": "Metric time series",
+        "description": "Fetch time-series metric data for a given metric identifier (users, properties, inquiries, revenue, performance). Admin-only.",
+        "tags": [
+          "Admin - Analytics"
+        ],
+        "parameters": [
+          {
+            "name": "metric",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "users",
+                "properties",
+                "inquiries",
+                "revenue",
+                "performance"
+              ]
+            },
+            "description": "Metric identifier"
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "7d",
+                "30d",
+                "90d",
+                "1y",
+                "all"
+              ]
+            },
+            "description": "Date range for the metric"
+          },
+          {
+            "name": "group_by",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "day",
+                "week",
+                "month"
+              ]
+            },
+            "description": "Granularity for grouping"
+          },
+          {
+            "name": "include_comparison",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Include comparison to previous period"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Metric time series payload"
+          },
+          "400": {
+            "description": "Invalid metric or query params"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "operationId": "getAdminAnalyticsMetric"
+      }
+    },
+    "/api/admin/duplicates/{id}/resolve": {
+      "put": {
+        "method": "put",
+        "summary": "Resolve duplicate property",
+        "description": "Admin endpoint to resolve a suspected duplicate property listing (keep both, keep master, reject duplicate).",
+        "tags": [
+          "Admin - Duplicates"
+        ],
+        "responses": {
+          "200": {
+            "description": "Duplicate resolved"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Property not found"
+          }
+        },
+        "operationId": "putAdminDuplicatesIdResolve"
+      }
+    },
+    "/api/admin/properties/{id}/ml-update": {
+      "put": {
+        "method": "put",
+        "summary": "Admin ML validation update for property",
+        "description": "Admin endpoint to apply ML validation results and update property status.",
+        "tags": [
+          "Admin - Properties"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "ML update applied"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Property not found"
+          }
+        },
+        "operationId": "putAdminPropertiesIdMlUpdate"
+      }
+    },
+    "/api/admin/properties/{id}/vet": {
+      "put": {
+        "method": "put",
+        "summary": "Vetting decision for property",
+        "description": "Admin endpoint to approve (live) or reject a property during physical vetting.",
+        "tags": [
+          "Admin - Properties"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Vetting applied"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Property not found"
+          }
+        },
+        "operationId": "putAdminPropertiesIdVet"
+      }
+    },
+    "/api/admin/users/{id}": {
+      "get": {
+        "method": "get",
+        "summary": "Get user details",
+        "description": "Admin endpoint to fetch a single user profile, stats, properties and recent inquiries.",
+        "tags": [
+          "Admin - Users"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User details"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        },
+        "operationId": "getAdminUsersId"
+      }
+    },
+    "/api/admin/users/{id}/suspend": {
+      "post": {
+        "method": "post",
+        "summary": "Moderate user account (suspend/ban)",
+        "description": "Admin endpoint to suspend, unsuspend, ban, or unban a user account.",
+        "tags": [
+          "Admin - Users"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Moderation action applied"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        },
+        "operationId": "postAdminUsersIdSuspend"
+      }
+    },
+    "/api/admin/validation/ml/{id}": {
+      "post": {
+        "method": "post",
+        "summary": "Update ML validation status for a property",
+        "description": "Admin endpoint to approve/reject/flag a property after ML validation.",
+        "tags": [
+          "Admin - Validation"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "ML update applied"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Property not found"
+          }
+        },
+        "operationId": "postAdminValidationMlId"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Authentication and recovery flows"
+    },
+    {
+      "name": "Properties - Search",
+      "description": "Property search and discovery"
+    },
+    {
+      "name": "Properties - Public",
+      "description": "Public property discovery and detail pages"
+    },
+    {
+      "name": "Properties - Owner",
+      "description": "Owner-facing property listing operations"
+    },
+    {
+      "name": "Properties - Media",
+      "description": "Property media management"
+    },
+    {
+      "name": "Properties - Documents",
+      "description": "Property document management"
+    },
+    {
+      "name": "Properties - Reviews",
+      "description": "Property reviews and feedback"
+    },
+    {
+      "name": "Properties - Favorites",
+      "description": "Saved property actions"
+    },
+    {
+      "name": "Properties",
+      "description": "Public property browsing and listing operations"
+    },
+    {
+      "name": "Profile",
+      "description": "Authenticated user profile management"
+    },
+    {
+      "name": "Dashboard - Listings",
+      "description": "Listing management from the dashboard"
+    },
+    {
+      "name": "Dashboard - Owner Inquiries",
+      "description": "Owner inbox and inquiry actions"
+    },
+    {
+      "name": "Admin - Validation",
+      "description": "ML, duplicate, image, and document checks"
+    },
+    {
+      "name": "Admin - Analytics",
+      "description": "Platform reporting and metrics"
+    },
+    {
+      "name": "Admin - Emails",
+      "description": "Campaigns, previews, audiences, and test sends"
+    },
+    {
+      "name": "Admin - Properties",
+      "description": "Admin property review and moderation"
+    },
+    {
+      "name": "Admin - Reports",
+      "description": "Manual vetting and operational reports"
+    },
+    {
+      "name": "Admin - Duplicates",
+      "description": "Duplicate resolution workflows"
+    },
+    {
+      "name": "Admin - Users",
+      "description": "User moderation and account management"
+    },
+    {
+      "name": "Admin - Waitlist",
+      "description": "Waitlist administration"
+    },
+    {
+      "name": "Admin - Subadmins",
+      "description": "Sub-admin management"
+    },
+    {
+      "name": "Admin - Verification",
+      "description": "Agent verification workflows"
+    },
+    {
+      "name": "Notifications",
+      "description": "User notification management"
+    },
+    {
+      "name": "Referral",
+      "description": "Referral and invite flows"
+    },
+    {
+      "name": "System",
+      "description": "System status, health, and configuration"
+    },
+    {
+      "name": "Upload",
+      "description": "Upload and signed URL operations"
+    },
+    {
+      "name": "Waitlist",
+      "description": "Waitlist signup and follow-up"
+    }
+  ]
+}

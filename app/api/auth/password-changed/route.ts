@@ -10,10 +10,28 @@
  * No request body needed — the user identity is read from the session cookie.
  */
 
+import { getAuthUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { sendPasswordChangedEmail } from "@/lib/emailService";
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
+
+export const openApiPOST: OpenApiMetadata = {
+  method: "post",
+  summary: "Send password changed notification",
+  description: "Send a confirmation email after the user successfully changes their password.",
+  tags: ["Auth"],
+  security: [{ bearerAuth: [] }],
+  responses: {
+    "200": {
+      description: "Password change notification processed",
+      content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" } } } } },
+    },
+    "401": { description: "Not authenticated" },
+    "500": { description: "Internal server error" },
+  },
+}
 
 export async function POST() {
   try {
@@ -40,7 +58,7 @@ export async function POST() {
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
 
     if (authError || !user) {
       // Not authenticated — skip silently (user may have already been signed out)

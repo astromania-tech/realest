@@ -1,8 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { Resend } from "resend";
 import { templateRegistry } from "@/emails/preview-registry";
 import { renderEmailFull } from "@/emails/utils/renderEmail";
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
+
+export const openApiPOST: OpenApiMetadata = {
+  method: 'post',
+  summary: 'Send a test email',
+  description: 'Render an email template and send it to a single recipient for admin validation.',
+  tags: ['Admin', 'Emails'],
+  security: [{ bearerAuth: [] }],
+  requestBody: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          required: ['template', 'to'],
+          properties: {
+            template: { type: 'string' },
+            to: { type: 'string', format: 'email' },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    '200': { description: 'Test email sent successfully' },
+    '400': { description: 'Invalid template or recipient' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Admin access required' },
+    '404': { description: 'Unknown template' },
+    '500': { description: 'Failed to render or send email' },
+    '502': { description: 'Resend rejected the request' },
+  },
+};
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM_EMAIL =
@@ -16,7 +49,7 @@ export async function POST(request: NextRequest) {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

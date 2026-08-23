@@ -117,6 +117,7 @@ export function isRouteAccessible(pathname: string): boolean {
       '/',              // Home page (coming soon)
       '/not-found',     // 404 page
       '/favicon.ico',   // Browser favicon
+      '/manifest.json', // PWA manifest
       '/sneak-peek',    // Email link: sneak peek preview
       '/early-access',  // Email link: early access sign-up
       '/refer',         // Email link: referral landing

@@ -1,7 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
 
 const respondSchema = z.object({
   response_message: z
@@ -22,6 +23,41 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
+export const openApiPOST: OpenApiMetadata = {
+  method: 'post',
+  summary: 'Respond to owner inquiry',
+  description: 'Send a response to an inquiry and mark it as responded.',
+  tags: ['Dashboard'],
+  security: [{ bearerAuth: [] }],
+  parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Inquiry ID' }],
+  requestBody: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          required: ['response_message'],
+          properties: {
+            response_message: { type: 'string' },
+            contact_phone: { type: 'string' },
+            contact_email: { type: 'string', format: 'email' },
+            schedule_viewing: { type: 'boolean' },
+            viewing_date: { type: 'string' },
+            viewing_time: { type: 'string' },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    '200': { description: 'Response sent successfully' },
+    '400': { description: 'Invalid response data' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Access denied - Only property owners can respond to inquiries' },
+    '404': { description: 'Inquiry not found' },
+  },
+}
+
 export async function POST(request: Request, { params }: RouteParams) {
   try {
     const supabase = await createClient();
@@ -32,7 +68,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

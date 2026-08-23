@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { AgentOnboarding, OwnerOnboarding } from "@/components/onboarding";
 
 export const metadata: Metadata = {
@@ -18,25 +18,18 @@ export default async function OnboardingLayout({
   const {
     data: { user },
     error: authError,
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
 
   if (authError || !user) {
     redirect("/login");
   }
 
-  // Query public.users — role is the single source of truth (not profiles.user_type)
-  const { data: userData, error: userError } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  const userType =
+    user.app_metadata?.role || user.user_metadata?.user_type || null;
 
-  if (userError || !userData) {
-    // No users row means account setup is incomplete
+  if (!userType) {
     redirect("/login");
   }
-
-  const userType = userData.role;
 
   // Check if user has already completed onboarding
   if (userType === "agent") {
