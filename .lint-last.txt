@@ -1,0 +1,637 @@
+
+> realest-marketplace@0.1.0 lint
+> npm run ci:filenames && eslint .
+
+
+> realest-marketplace@0.1.0 ci:filenames
+> node scripts/check-filenames.js
+
+Filename conventions OK.
+
+L:\home\projects\realest\app\(auth)\login\LoginClient.tsx
+  117:14  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(auth)\otp\OtpClient.tsx
+  203:14  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(auth)\register\RegisterClient.tsx
+  97:14  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(auth)\verify\VerifyClient.tsx
+  19:23  warning  'Mail' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(dashboard)\admin\cms\analytics\page.tsx
+  9:3  warning  'BarChart3' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(dashboard)\admin\cms\chat\page.tsx
+   7:10  warning  'Textarea' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  10:45  warning  'User' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(dashboard)\admin\cms\users\page.tsx
+  14:3  warning  'Search' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+  18:3  warning  'Ban' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  22:3  warning  'TrendingUp' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(dashboard)\admin\emails\campaigns\[id]\page.tsx
+  29:10  warning  'cn' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(dashboard)\admin\emails\campaigns\new\page.tsx
+  116:10  warning  'sendNow' is assigned a value but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+  116:19  warning  'setSendNow' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(dashboard)\admin\emails\campaigns\page.tsx
+  24:51  warning  'XCircle' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(dashboard)\admin\users\[id]\page.tsx
+  10:33  warning  'Mail' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+  10:39  warning  'Phone' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+  10:46  warning  'MapPin' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(dashboard)\admin\validation\ml\[id]\page.tsx
+  7:60  warning  'MapPin' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(dashboard)\admin\validation\vetting\[id]\page.tsx
+  7:59  warning  'FileText' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(dashboard)\agent\page.tsx
+  15:10  warning  'BarChart3' is defined but never used. Allowed unused vars must match /^_/u                 @typescript-eslint/no-unused-vars
+  15:54  warning  'Eye' is defined but never used. Allowed unused vars must match /^_/u                       @typescript-eslint/no-unused-vars
+  49:10  warning  'recentInquiries' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(dashboard)\owner\inquiries\[id]\page.tsx
+   8:23  warning  'MessageSquare' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  11:11  warning  'Inquiry' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(dashboard)\owner\listings\[id]\documents\page.tsx
+   7:37  warning  'Input' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+  41:9   warning  'router' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(dashboard)\owner\listings\[id]\media\page.tsx
+   7:37  warning  'Input' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+  11:3   warning  'X' is defined but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+  32:9   warning  'router' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(dashboard)\owner\listings\[id]\page.tsx
+  6:37  warning  'Input' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(dashboard)\owner\listings\new\documents\page.tsx
+  6:37  warning  'Input' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(dashboard)\owner\listings\new\media\page.tsx
+  6:37  warning  'Input' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(dashboard)\owner\listings\new\page.tsx
+  18:3   warning  'Clock' is defined but never used. Allowed unused vars must match /^_/u                    @typescript-eslint/no-unused-vars
+  34:23  warning  'setCurrentStep' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(dashboard)\owner\listings\new\review\page.tsx
+  14:10  warning  'isLoading' is assigned a value but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+  14:21  warning  'setIsLoading' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(dashboard)\owner\listings\new\type\page.tsx
+  402:3  warning  'categoryId' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(dashboard)\owner\listings\page.tsx
+  36:3   warning  'AlertCircle' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  40:29  warning  'PropertyStatusChip' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(dashboard)\profile\[id]\page.tsx
+  99:16  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(dashboard)\profile\change-password\page.tsx
+  46:14  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(dashboard)\profile\favorites\page.tsx
+  37:21  warning  'user' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(dashboard)\profile\page.tsx
+  20:3   warning  'Calendar' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  22:3   warning  'DollarSign' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+  24:3   warning  'Star' is defined but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+  26:3   warning  'Building' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  27:3   warning  'TrendingUp' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+  83:26  warning  'logout' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(demo)\api-testing\page.tsx
+    4:20  warning  'useEffect' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   25:10  warning  'Separator' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  273:16  warning  'error' is defined but never used                                            @typescript-eslint/no-unused-vars
+  304:16  warning  'error' is defined but never used                                            @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(demo)\layout.tsx
+  1:10  warning  'notFound' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(email-links)\layout.tsx
+  2:49  warning  'HeroLogo' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(legal)\cookies\page.tsx
+  12:3  warning  'Sparkles' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(legal)\privacy\page.tsx
+   3:24  warning  'Chip' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+  12:3   warning  'Sparkles' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(legal)\terms\page.tsx
+   3:24  warning  'Chip' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+  12:3   warning  'Sparkles' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(marketing)\about\page.tsx
+   3:24  warning  'Chip' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+  12:3   warning  'TrendingUp' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(marketing)\blog\[slug]\page.tsx
+  9:3  warning  'Input' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(marketing)\careers\page.tsx
+  4:8  warning  'Link' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(marketing)\contact\page.tsx
+  14:3  warning  'Sparkles' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(marketing)\help\page.tsx
+  15:3  warning  'ChevronDown' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(marketing)\how-it-works\page.tsx
+   3:24  warning  'Chip' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+  14:3   warning  'ArrowRight' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  17:3   warning  'Calendar' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(marketing)\list-with-us\page.tsx
+  14:3  warning  'ArrowRight' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  18:3  warning  'Clock' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+  19:3  warning  'DollarSign' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(marketing)\realest-status\page.tsx
+  258:9  warning  'getStatusIcon' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(marketing)\testimonials\page.tsx
+  3:24  warning  'Chip' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(marketing)\verification\page.tsx
+   3:24  warning  'Chip' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+  12:3   warning  'Clock' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(public)\buy\page.tsx
+  16:3  warning  'Sparkles' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(public)\events\page.tsx
+  15:3  warning  'Clock' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  16:3  warning  'Star' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(public)\listing\[id]\ListingDetailClient.tsx
+  34:3  warning  'Award' is defined but never used. Allowed unused vars must match /^_/u                 @typescript-eslint/no-unused-vars
+  40:3  warning  'StatusBadge' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+  41:3  warning  'VerifiedBadge' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  42:3  warning  'PendingBadge' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+  43:3  warning  'AvailableBadge' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+  47:3  warning  'AvailableChip' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  48:3  warning  'PendingChip' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+  49:3  warning  'FeaturedChip' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+  52:3  warning  'AmenityBadge' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+  53:3  warning  'PowerBadge' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+  54:3  warning  'WaterBadge' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+  55:3  warning  'SecurityBadge' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  56:3  warning  'InternetBadge' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  57:3  warning  'BoysQuartersBadge' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+  58:3  warning  'GeneratorBadge' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+  59:3  warning  'ParkingBadge' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+  60:3  warning  'PoolBadge' is defined but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+  61:3  warning  'GymBadge' is defined but never used. Allowed unused vars must match /^_/u              @typescript-eslint/no-unused-vars
+  67:3  warning  'HouseBadge' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+  68:3  warning  'ApartmentBadge' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+  69:3  warning  'LandBadge' is defined but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+  70:3  warning  'CommercialBadge' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+  71:3  warning  'HotelBadge' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+  72:3  warning  'OfficeBadge' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+  73:3  warning  'DuplexBadge' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+  74:3  warning  'BungalowBadge' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  75:3  warning  'SelfContainedBadge' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+  76:3  warning  'ResidentialLandBadge' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  77:3  warning  'CommercialLandBadge' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(public)\property\[id]\PropertyDetailClient.tsx
+  37:3  warning  'StatusBadge' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+  38:3  warning  'VerifiedBadge' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  39:3  warning  'PendingBadge' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+  40:3  warning  'AvailableBadge' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+  44:3  warning  'AvailableChip' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  45:3  warning  'PendingChip' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+  46:3  warning  'FeaturedChip' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+  49:3  warning  'AmenityBadge' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+  50:3  warning  'PowerBadge' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+  51:3  warning  'WaterBadge' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+  52:3  warning  'SecurityBadge' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  53:3  warning  'InternetBadge' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  54:3  warning  'BoysQuartersBadge' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+  55:3  warning  'GeneratorBadge' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+  56:3  warning  'ParkingBadge' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+  57:3  warning  'PoolBadge' is defined but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+  58:3  warning  'GymBadge' is defined but never used. Allowed unused vars must match /^_/u              @typescript-eslint/no-unused-vars
+  64:3  warning  'HouseBadge' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+  65:3  warning  'ApartmentBadge' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+  66:3  warning  'LandBadge' is defined but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+  67:3  warning  'CommercialBadge' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+  68:3  warning  'HotelBadge' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+  69:3  warning  'OfficeBadge' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+  70:3  warning  'DuplexBadge' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+  71:3  warning  'BungalowBadge' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  72:3  warning  'SelfContainedBadge' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+  73:3  warning  'ResidentialLandBadge' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  74:3  warning  'CommercialLandBadge' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(public)\rent\page.tsx
+  16:3  warning  'Sparkles' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(public)\safety\page.tsx
+  15:3  warning  'Sparkles' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(public)\search\SearchPageClient.tsx
+   12:3  warning  'Card' is defined but never used. Allowed unused vars must match /^_/u                     @typescript-eslint/no-unused-vars
+   23:3  warning  'Filter' is defined but never used. Allowed unused vars must match /^_/u                   @typescript-eslint/no-unused-vars
+   29:3  warning  'Star' is defined but never used. Allowed unused vars must match /^_/u                     @typescript-eslint/no-unused-vars
+   34:3  warning  'Home' is defined but never used. Allowed unused vars must match /^_/u                     @typescript-eslint/no-unused-vars
+   35:3  warning  'TrendingUp' is defined but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+   37:3  warning  'ArrowUpDown' is defined but never used. Allowed unused vars must match /^_/u              @typescript-eslint/no-unused-vars
+   40:3  warning  'Users' is defined but never used. Allowed unused vars must match /^_/u                    @typescript-eslint/no-unused-vars
+  141:9  warning  'nigerianStates' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\(public)\sell\page.tsx
+   3:24  warning  'Chip' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+   8:3   warning  'Sparkles' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+  11:3   warning  'CheckCircle' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\analytics\engagement\page.tsx
+  29:9  warning  'supabase' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\analytics\monetization\page.tsx
+  29:9  warning  'supabase' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\analytics\team\page.tsx
+  29:9  warning  'supabase' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\analytics\validation\page.tsx
+  29:9  warning  'supabase' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\api\admin\analytics\overview\route.ts
+   16:51  warning  'params' is defined but never used. Allowed unused args must match /^_/u                        @typescript-eslint/no-unused-vars
+  105:11  warning  'userError' is assigned a value but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+  105:29  warning  'propertyError' is assigned a value but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+  105:51  warning  'inquiryError' is assigned a value but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  105:72  warning  'adminError' is assigned a value but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+  230:9   warning  'previousPeriodStart' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\api\admin\duplicates\[id]\resolve\route.ts
+  14:6  warning  'ResolveDuplicateInput' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\api\admin\emails\campaigns\[id]\preview\route.ts
+  9:23  warning  'NextResponse' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\api\admin\properties\[id]\ml-update\route.ts
+  14:6  warning  'MLUpdateInput' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\api\admin\properties\[id]\vet\route.ts
+  14:6  warning  'VetPropertyInput' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\api\admin\properties\route.ts
+  13:7  warning  'vetPropertySchema' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\api\admin\users\[id]\route.ts
+  48:12  warning  'propCountResult' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\api\admin\validation\ml\route.ts
+  18:51  warning  'params' is defined but never used. Allowed unused args must match /^_/u           @typescript-eslint/no-unused-vars
+  56:35  warning  'status' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\api\admin\validation\vetting\route.ts
+  19:51  warning  'params' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\api\agents\[id]\properties\route.ts
+  11:11  warning  'supabase' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\api\agents\[id]\route.ts
+  11:11  warning  'supabase' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\api\dashboard\listings\[id]\media\route.ts
+  106:11  warning  'altText' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\api\inquiries\route.ts
+   14:7   warning  'updateInquirySchema' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   19:27  warning  'request' is defined but never used. Allowed unused args must match /^_/u                       @typescript-eslint/no-unused-vars
+  121:21  warning  'senderProfile' is assigned a value but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\api\notifications\route.ts
+  71:28  warning  'request' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\api\profile\route.ts
+  20:27  warning  'request' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\api\properties\[id]\reviews\route.ts
+  13:6  warning  'CreateReviewInput' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\api\properties\explore\route.ts
+  37:6  warning  'ExploreQuery' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\api\saved-properties\route.ts
+  14:27  warning  'request' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\api\system\geocode\route.ts
+  15:51  warning  'params' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\api\system\health\route.ts
+  5:27  warning  'request' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\api\system\status\route.ts
+  5:27  warning  'request' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\api\waitlist\route.ts
+  2:31  warning  'checkEmailInWaitlist' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\not-found.tsx
+  4:47  warning  'ArrowLeft' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\onboarding\layout.tsx
+  13:3  warning  'children' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\page.tsx
+   2:10  warning  'redirect' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+   9:9   warning  'appMode' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  20:5   warning  'user' is assigned a value but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\setting\data-lab\page.tsx
+   6:10  warning  'Progress' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+  19:3   warning  'TrendingDown' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  25:3   warning  'Zap' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\setting\financials\page.tsx
+   18:3   warning  'TrendingDown' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   24:3   warning  'Clock' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+   27:3   warning  'Zap' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+  565:66  warning  'index' is defined but never used. Allowed unused args must match /^_/u         @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\setting\page.tsx
+   15:3   warning  'Activity' is defined but never used. Allowed unused vars must match /^_/u                   @typescript-eslint/no-unused-vars
+   20:3   warning  'Users' is defined but never used. Allowed unused vars must match /^_/u                      @typescript-eslint/no-unused-vars
+   21:3   warning  'Building' is defined but never used. Allowed unused vars must match /^_/u                   @typescript-eslint/no-unused-vars
+   25:3   warning  'Clock' is defined but never used. Allowed unused vars must match /^_/u                      @typescript-eslint/no-unused-vars
+   26:3   warning  'CheckCircle' is defined but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+   32:3   warning  'Eye' is defined but never used. Allowed unused vars must match /^_/u                        @typescript-eslint/no-unused-vars
+  125:10  warning  'activeSection' is assigned a value but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+  125:25  warning  'setActiveSection' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  144:9   warning  'getStatusColor' is assigned a value but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\setting\security\page.tsx
+   23:3  warning  'Clock' is defined but never used. Allowed unused vars must match /^_/u                      @typescript-eslint/no-unused-vars
+   26:3  warning  'Activity' is defined but never used. Allowed unused vars must match /^_/u                   @typescript-eslint/no-unused-vars
+  187:9  warning  'getSeverityColor' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\app\setting\validation\page.tsx
+  17:3  warning  'TrendingDown' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  18:3  warning  'TrendingUp' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+  20:3  warning  'CheckCircle' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+  21:3  warning  'Clock' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\backup\api\validate\duplicate\route.ts
+  47:35  warning  'data' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\backup\api\validate\image\route.ts
+  51:64  warning  'propertyType' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\backup\app\(onboarding)\agent-onboarding\page.tsx
+   5:8   warning  'Link' is defined but never used. Allowed unused vars must match /^_/u                 @typescript-eslint/no-unused-vars
+   6:10  warning  'Avatar' is defined but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+   6:18  warning  'Chip' is defined but never used. Allowed unused vars must match /^_/u                 @typescript-eslint/no-unused-vars
+  16:10  warning  'createServiceClient' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\backup\app\(onboarding)\profile-setup\page.tsx
+   7:10  warning  'Avatar' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+  18:3   warning  'FileText' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\charts\PieChart.tsx
+  22:3  warning  'nameKey' is assigned a value but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\dashboard\AdminDashboardContent.tsx
+  48:3  warning  'user' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\dashboard\AdminDocumentVerification.tsx
+  49:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\dashboard\AdminPropertyVerification.tsx
+  49:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\dashboard\OwnerDashboardContent.tsx
+  40:3  warning  'user' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\heroui\RealEstCard.tsx
+  47:9  warning  'mappedVariant' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\heroui\RealEstTable.tsx
+  18:53  warning  'stickyHeader' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\layout\AdminHeader.tsx
+   6:26  warning  'Dropdown' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  17:9   warning  'router' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\layout\AdminLayout.tsx
+  18:3   warning  'AlertTriangle' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  19:3   warning  'CheckCircle' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+  20:3   warning  'Clock' is defined but never used. Allowed unused vars must match /^_/u                 @typescript-eslint/no-unused-vars
+  21:3   warning  'Users' is defined but never used. Allowed unused vars must match /^_/u                 @typescript-eslint/no-unused-vars
+  22:3   warning  'Building' is defined but never used. Allowed unused vars must match /^_/u              @typescript-eslint/no-unused-vars
+  23:3   warning  'BarChart3' is defined but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+  25:3   warning  'Settings' is defined but never used. Allowed unused vars must match /^_/u              @typescript-eslint/no-unused-vars
+  37:10  warning  'systemStats' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\layout\AdminSidebar.tsx
+  14:3  warning  'ChevronRight' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\layout\DashboardHeader.tsx
+  18:3  warning  'BarChart3' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\layout\DashboardLayout.tsx
+  3:10  warning  'useState' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\marketing\HeroSection.tsx
+  6:3  warning  'Search' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\marketing\Phase2DemoContent.tsx
+  22:3   warning  'StatusDot' is defined but never used. Allowed unused vars must match /^_/u                  @typescript-eslint/no-unused-vars
+  30:3   warning  'Toast' is defined but never used. Allowed unused vars must match /^_/u                      @typescript-eslint/no-unused-vars
+  31:3   warning  'PropertySavedToast' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  32:3   warning  'VerificationCompleteToast' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  33:3   warning  'ContactRequestToast' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+  35:10  warning  'StatusBadge' is defined but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+  35:23  warning  'VerifiedBadge' is defined but never used. Allowed unused vars must match /^_/u              @typescript-eslint/no-unused-vars
+  36:10  warning  'VerificationBadge' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+  38:7   warning  'RealEstLogo' is assigned a value but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+  41:34  warning  'systemTheme' is assigned a value but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+  42:10  warning  'toastVisible' is assigned a value but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+  43:10  warning  'toastType' is assigned a value but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\onboarding\OwnerOnboarding.tsx
+  26:18  warning  'CheckIcon' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\patterns\forms\PropertyListingForm.tsx
+  6:10  warning  'StatusBadge' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\patterns\forms\ReviewForm.tsx
+  17:3  warning  'propertyId' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  18:3  warning  'agentId' is defined but never used. Allowed unused args must match /^_/u     @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\patterns\navigation.tsx
+  443:3  warning  'onFilterChange' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\property\FeaturedProperties.tsx
+  14:3  warning  'TrendingUp' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\property\PropertyDocuments.tsx
+  18:9  warning  'getDocumentIcon' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\property\PropertyGallery.tsx
+  19:50  warning  'title' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\property\PropertyMap.tsx
+   10:3   warning  'Select' is defined but never used. Allowed unused vars must match /^_/u                        @typescript-eslint/no-unused-vars
+   11:3   warning  'SelectContent' is defined but never used. Allowed unused vars must match /^_/u                 @typescript-eslint/no-unused-vars
+   12:3   warning  'SelectItem' is defined but never used. Allowed unused vars must match /^_/u                    @typescript-eslint/no-unused-vars
+   13:3   warning  'SelectTrigger' is defined but never used. Allowed unused vars must match /^_/u                 @typescript-eslint/no-unused-vars
+   14:3   warning  'SelectValue' is defined but never used. Allowed unused vars must match /^_/u                   @typescript-eslint/no-unused-vars
+   23:3   warning  'Building2' is defined but never used. Allowed unused vars must match /^_/u                     @typescript-eslint/no-unused-vars
+   24:3   warning  'Hotel' is defined but never used. Allowed unused vars must match /^_/u                         @typescript-eslint/no-unused-vars
+   25:3   warning  'Calendar' is defined but never used. Allowed unused vars must match /^_/u                      @typescript-eslint/no-unused-vars
+   33:3   warning  'Filter' is defined but never used. Allowed unused vars must match /^_/u                        @typescript-eslint/no-unused-vars
+   47:3   warning  'EyeOff' is defined but never used. Allowed unused vars must match /^_/u                        @typescript-eslint/no-unused-vars
+   50:33  warning  'LatLngBounds' is defined but never used. Allowed unused vars must match /^_/u                  @typescript-eslint/no-unused-vars
+   68:3   warning  'createMarkerIconHTML' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+   73:3   warning  'LAGOS_LGAS' is defined but never used. Allowed unused vars must match /^_/u                    @typescript-eslint/no-unused-vars
+   76:3   warning  'getPropertyTypeIcon' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+   86:27  warning  'offlineTileCache' is defined but never used. Allowed unused vars must match /^_/u              @typescript-eslint/no-unused-vars
+   97:7   warning  'Marker' is assigned a value but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+  101:7   warning  'Popup' is assigned a value but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+  209:14  warning  'err' is defined but never used                                                                 @typescript-eslint/no-unused-vars
+  227:3   warning  'className' is defined but never used. Allowed unused args must match /^_/u                     @typescript-eslint/no-unused-vars
+  262:33  warning  'updateStats' is assigned a value but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+  558:5   warning  Unused eslint-disable directive (no problems were reported from 'no-console')
+  688:9   warning  'handleKeyNavigation' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\property\PropertyMapFilters.tsx
+   9:10  warning  'Input' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+  22:10  warning  'NIGERIAN_STATES' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  61:3   warning  'availableLGAs' is defined but never used. Allowed unused args must match /^_/u    @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\providers\RealEstThemeProvider.tsx
+  68:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\realest\ProfileUpload.tsx
+  105:39  warning  'token' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\realest\badges\AmenityBadge.tsx
+  21:3  warning  'Clock' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+  22:3  warning  'DollarSign' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\realest\badges\PropertyTypeBadge.tsx
+  22:3  warning  'Factory' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\realest\badges\VerificationBadge.tsx
+  9:3  warning  'MapPin' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\realest\location\LocationPin.tsx
+  13:3  warning  'Navigation' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\shared\CookieBanner.tsx
+  53:16  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\shared\WaitlistModal.tsx
+  28:3   warning  'BellRing' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+  34:3   warning  'Shield' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+  35:3   warning  'MailCheck' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  36:3   warning  'Rocket' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+  37:3   warning  'Gift' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+  40:10  warning  'HeroLogo' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\components\ui\select.tsx
+  35:16  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+  41:16  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\emails\layouts\EmailLayout.tsx
+   9:3   warning  'Row' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+  10:3   warning  'Column' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+  11:3   warning  'Text' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+  12:3   warning  'Link' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+  13:3   warning  'Hr' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+  16:25  warning  'fontSize' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\emails\templates\engagement\ViewingReminderEmail.tsx
+  82:9  warning  'roleContext' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\emails\templates\financial\InvoiceEmail.tsx
+  88:3  warning  'propertyId' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\emails\templates\listing\MLValidationActionEmail.tsx
+  6:24  warning  'EmailDetailRow' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\emails\templates\marketing\SystemUpdateEmail.tsx
+  2:25  warning  'Link' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\emails\templates\marketing\WeeklyDigestEmail.tsx
+  63:33  warning  'index' is defined but never used. Allowed unused args must match /^_/u            @typescript-eslint/no-unused-vars
+  65:9   warning  'isLast' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\lib\auth.ts
+    4:10  warning  'createServiceClient' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   71:12  warning  'err' is defined but never used                                                        @typescript-eslint/no-unused-vars
+  106:12  warning  'err' is defined but never used                                                        @typescript-eslint/no-unused-vars
+  130:12  warning  'err' is defined but never used                                                        @typescript-eslint/no-unused-vars
+  178:12  warning  'err' is defined but never used                                                        @typescript-eslint/no-unused-vars
+  204:12  warning  'err' is defined but never used                                                        @typescript-eslint/no-unused-vars
+  226:12  warning  'err' is defined but never used                                                        @typescript-eslint/no-unused-vars
+  255:12  warning  'err' is defined but never used                                                        @typescript-eslint/no-unused-vars
+  273:12  warning  'err' is defined but never used                                                        @typescript-eslint/no-unused-vars
+  299:12  warning  'err' is defined but never used                                                        @typescript-eslint/no-unused-vars
+  324:12  warning  'err' is defined but never used                                                        @typescript-eslint/no-unused-vars
+  350:12  warning  'err' is defined but never used                                                        @typescript-eslint/no-unused-vars
+  373:12  warning  'err' is defined but never used                                                        @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\lib\hooks\usePropertyListingForm.ts
+    1:10  warning  'useForm' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+    2:10  warning  'zodResolver' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+  234:9   warning  'metadata' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\lib\hooks\useToast.ts
+  18:7  warning  'actionTypes' is assigned a value but only used as a type. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\lib\prisma.ts
+  41:14  warning  '_' is defined but never used  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\lib\prisma\browser.ts
+  3:1  warning  Unused eslint-disable directive (no problems were reported)
+
+L:\home\projects\realest\lib\prisma\commonInputTypes.ts
+  3:1  warning  Unused eslint-disable directive (no problems were reported)
+
+L:\home\projects\realest\lib\prisma\enums.ts
+  3:1  warning  Unused eslint-disable directive (no problems were reported)
+
+L:\home\projects\realest\lib\prisma\internal\prismaNamespace.ts
+  3:1  warning  Unused eslint-disable directive (no problems were reported)
+
+L:\home\projects\realest\lib\prisma\internal\prismaNamespaceBrowser.ts
+  3:1  warning  Unused eslint-disable directive (no problems were reported)
+
+L:\home\projects\realest\lib\prisma\models.ts
+  3:1  warning  Unused eslint-disable directive (no problems were reported)
+
+L:\home\projects\realest\lib\utils\mapUtils.ts
+  2:15  warning  'PropertyFilters' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\lib\utils\offlineCache.ts
+  123:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\lib\validations\property.ts
+  4:7  warning  'phoneRegex' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+L:\home\projects\realest\scripts\seed-resend-audiences.ts
+  45:7  warning  'BATCH_SIZE' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+✖ 340 problems (0 errors, 340 warnings)
+  0 errors and 7 warnings potentially fixable with the `--fix` option.
+

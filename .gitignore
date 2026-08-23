@@ -2,7 +2,7 @@
 
 # dependencies
 /node_modules
-
+uploads
 # next.js
 /.next/
 /out/
@@ -27,7 +27,8 @@ yarn-error.log*
 next-env.d.ts
 
 # Backups
-/backups/*
+/backup*
+
 
 # Zed IDE - Include configuration files for team consistency
 # Include .zed/ directory for project configuration
@@ -39,3 +40,10 @@ next-env.d.ts
 # Obsidian vault files
 .vault/
 .obsidian/*
+/lib/generated/prisma
+
+# React Email build cache and temp artifacts
+.react-email/
+_build-log.txt
+_server-log.txt
+supabase/.temp/cli-latest

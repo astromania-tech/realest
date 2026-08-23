@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
-interface Location {
+export interface Location {
   id: string;
   name: string;
   state: string;
@@ -21,12 +21,21 @@ interface UseLocationSearchResult {
   query: string;
   setQuery: (query: string) => void;
   results: Location[];
+  defaultSuggestions: Location[];
   isLoading: boolean;
   popularLocations: Location[];
   clearQuery: () => void;
   selectLocation: (location: Location) => void;
   selectedLocation: Location | null;
 }
+
+const PRIORITY_LOCATION_IDS = [
+  'port-harcourt',
+  'lagos-state',
+  'abuja',
+  'bayelsa-state',
+  'enugu-state',
+];
 
 /* ------------------------------------------------------------------
    🇳🇬 NIGERIA COMPLETE STATES AND MAJOR CITIES LIST
@@ -287,6 +296,24 @@ export function useLocationSearch(options: UseLocationSearchOptions = {}): UseLo
       .slice(0, 8);
   }, [includePopularCities]);
 
+  const defaultSuggestions = useMemo(() => {
+    const allowed = NIGERIA_LOCATIONS.filter((loc) => (includeStates ? true : loc.type === 'city'));
+    const byId = new Map(allowed.map((loc) => [loc.id, loc]));
+
+    const prioritized = PRIORITY_LOCATION_IDS
+      .map((id) => byId.get(id))
+      .filter((loc): loc is Location => !!loc);
+
+    const remaining = allowed
+      .filter((loc) => !PRIORITY_LOCATION_IDS.includes(loc.id))
+      .sort((a, b) => {
+        if (a.type !== b.type) return a.type === 'city' ? -1 : 1;
+        return (b.population || 0) - (a.population || 0);
+      });
+
+    return [...prioritized, ...remaining].slice(0, maxResults);
+  }, [includeStates, maxResults]);
+
   const searchLocations = useCallback(
     (searchQuery: string): Location[] => {
       if (!searchQuery.trim()) return [];
@@ -339,6 +366,7 @@ export function useLocationSearch(options: UseLocationSearchOptions = {}): UseLo
     query,
     setQuery,
     results,
+    defaultSuggestions,
     isLoading,
     popularLocations,
     clearQuery,

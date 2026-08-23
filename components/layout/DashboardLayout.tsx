@@ -27,23 +27,28 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   // Check if this is an admin route
   const isAdminRoute = pathname.startsWith("/admin");
 
+  // For admin routes, let AdminLayout handle everything
+  if (isAdminRoute) {
+    return <>{children}</>;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <DashboardHeader userRole={userRole} />
 
       <div className="flex">
-        {/* Sidebar - hide on admin routes */}
-        {!isAdminRoute && (
-          <DashboardSidebar userRole={userRole} currentPath={pathname} />
-        )}
+        <DashboardSidebar 
+          userRole={userRole} 
+          currentPath={pathname} 
+        />
 
         {/* Main content */}
-        <main className={`flex-1 ${!isAdminRoute ? "ml-64" : ""}`}>
-          <div className="min-h-screen">{children}</div>
+        <main className="flex-1 ml-64">
+          <div className="min-h-screen px-4">{children}</div>
+          <DashboardFooter />
         </main>
       </div>
 
-      <DashboardFooter />
     </div>
   );
 }

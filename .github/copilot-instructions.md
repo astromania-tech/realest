@@ -2,9 +2,34 @@
 
 **MASTER INDEX** - AI coding agents guide for the RealEST property marketplace.
 
+
 ## 📚 Complete Instruction System
 
 This is a **multi-layered, context-aware AI instruction system** providing deep, domain-specific guidance. Start here, then explore specialized instruction files:
+
+### 🧠 Meta-Cognitive Reasoning System (NEW)
+
+| File | Purpose | When to Use |
+|------|---------|------------|
+| **[META-COGNITIVE-SYSTEM.md](copilot-instructions/META-COGNITIVE-SYSTEM.md)** | ⚠️ ACTIVATION RULES: Complex task classification, default entry point | ALL complex decisions (architecture, cross-domain, types, design) |
+| **[Meta-Cognitive Architect Skill](../.agents/skills/meta-cognitive-architect/README.md)** | Modular reasoning framework (CORE-SKILL + ANALYSIS-PROMPT + EXECUTION-PROMPT) | Invoked by: `@meta-cognitive-architect [task]` |
+
+### How the System Works
+
+1. **Receive Task** → Classify complexity
+2. **Auto-Invoke Analysis** → Deep 5-phase reasoning loop
+3. **Review Output** → Check Global Confidence Score (GCS ≥ 0.85)
+4. **Execute** → If approved, follow implementation prompt
+5. **Commit** → Enforce AI-COMMIT-RULES.md (type check + lint)
+
+**Philosophy:** Never provide first-guess responses. Always use deliberate, System 2 thinking.
+
+See [META-COGNITIVE-SYSTEM.md](copilot-instructions/META-COGNITIVE-SYSTEM.md) for:
+- Auto-invoke triggers (when to use)
+- Skip triggers (when to avoid)
+- 2-prompt operating system (Analysis + Execution)
+- RealEST-specific context layers
+- Confidence scoring reference
 
 ### Core Instruction Files
 
@@ -17,6 +42,8 @@ This is a **multi-layered, context-aware AI instruction system** providing deep,
 | **[03-typescript-types.md](copilot-instructions/03-typescript-types.md)** | Database schema, types, Zod schemas, Nigerian location data | Type safety, form validation, database queries, API responses |
 | **[04-authentication.md](copilot-instructions/04-authentication.md)** | Auth patterns, RLS policies, role-based access, middleware | User auth, protected routes, permission checks, security |
 | **[05-nigerian-market.md](copilot-instructions/05-nigerian-market.md)** | Cultural context, infrastructure realities, localization, BQ features | Nigerian-specific features, cultural sensitivity, local patterns |
+| **[07-api-documentation.md](copilot-instructions/07-api-documentation.md)** | ⚠️ MANDATORY: Auto-documentation workflow, OpenAPI spec, endpoint docs, Nigerian context | Creating/updating/deleting APIs - EVERY change must update docs |
+| **[08-documentation-and-summary-rules.md](copilot-instructions/08-documentation-and-summary-rules.md)** | ⚠️ ENFORCED: Prevents doc clutter, no duplicate files, consolidation rules | Commit reviews will reject violations - one topic = one file |
 | **[PROMPTS.md](copilot-instructions/PROMPTS.md)** | Battle-tested prompt templates for common tasks | Quick-start prompts, task templates, examples |
 
 ### How to Use This System
@@ -100,11 +127,10 @@ NEXT_PUBLIC_APP_MODE=development npm run dev  # Demo pages enabled
 ```
 
 ### Email Templates
-Email system uses Resend with pre-built templates in `lib/email-templates/`:
+Email system uses React Email templates in `emails/templates/` (see `copilot-instructions/06-email-system.md`):
 ```bash
-npm run email:generate  # Render templates to HTML
-npm run email:preview   # Generate and open preview at http://localhost:3000/email-previews/index.html
-npm run email:test      # Send test email
+npm run email:dev     # Visual preview server at http://localhost:3001
+npm run email:export  # Validate all 24 templates build cleanly (run before commits)
 ```
 
 ### Route Access Control
@@ -306,6 +332,7 @@ border: 1px solid var(--border);
 | Add authentication | [04-authentication.md](copilot-instructions/04-authentication.md) | Auth patterns, RLS policies |
 | Define database types | [03-typescript-types.md](copilot-instructions/03-typescript-types.md) | Schema, Zod validation |
 | Nigerian market feature | [05-nigerian-market.md](copilot-instructions/05-nigerian-market.md) | BQ, NEPA, localization |
+| Create/modify/delete API endpoint | [07-api-documentation.md](copilot-instructions/07-api-documentation.md) | Mandatory workflow, OpenAPI spec, Nigerian context |
 | Understand project structure | [00-architecture-overview.md](copilot-instructions/00-architecture-overview.md) | Routes, data flow, phases |
 | Start a new task | [PROMPTS.md](copilot-instructions/PROMPTS.md) | Template prompts |
 
@@ -324,6 +351,7 @@ border: 1px solid var(--border);
 - **Environment Setup**: `docs/environment-setup.md` (272 lines - configuration)
 - **Branch Management**: `docs/branch-management.md` (324 lines - Git workflow)
 - **Email Setup**: `docs/email-setup.md` (268 lines - Resend integration)
+- **API Documentation Schema Sync**: `docs/api/api-documentation-schema-sync.md` (complete guide - type deduplication strategy)
 
 ### Project Planning
 - **Roadmap**: `docs/ROADMAP.md` (251 lines - implementation phases)

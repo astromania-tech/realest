@@ -1,6 +1,39 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { logAdminAction } from "@/lib/audit"
+import { prisma } from "@/lib/prisma"
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata"
+
+export const openApiPOST: OpenApiMetadata = {
+  method: 'post',
+  summary: 'Verify or reject an agent',
+  description: 'Admin action that approves or rejects an agent account.',
+  tags: ['Admin'],
+  security: [{ bearerAuth: [] }],
+  requestBody: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          required: ['agentId', 'action'],
+          properties: {
+            agentId: { type: 'string' },
+            action: { type: 'string', enum: ['approve', 'reject'] },
+            notes: { type: 'string' },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    '200': { description: 'Agent verification updated successfully' },
+    '400': { description: 'Missing agentId or action' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Forbidden' },
+    '500': { description: 'Internal server error' },
+  },
+}
 
 export async function POST(request: Request) {
   try {
@@ -13,26 +46,22 @@ export async function POST(request: Request) {
     const supabase = await createClient()
 
     // Ensure requester is admin
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await getAuthUser()
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id, user_type")
-      .eq("id", user.id)
-      .single()
-    if (!profile || profile.user_type !== "admin") {
+    const adminRow = await prisma.users.findUnique({ where: { id: user.id }, select: { role: true } })
+    if (!adminRow || adminRow.role !== 'admin') {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    const newStatus = action === "approve" ? "approved" : "rejected"
-
-    const { error } = await supabase
-      .from("agents")
-      .update({ verification_status: newStatus, verification_notes: notes ?? null, verified_at: newStatus === "approved" ? new Date().toISOString() : null })
-      .eq("id", agentId)
-
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    // Update agent verification using schema-valid fields: verified (bool) + verification_date
+    await prisma.agents.update({
+      where: { id: agentId },
+      data: {
+        verified: action === 'approve',
+        verification_date: action === 'approve' ? new Date() : null,
+      },
+    })
 
     // Log the admin action
     await logAdminAction({

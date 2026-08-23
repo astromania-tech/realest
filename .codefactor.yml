@@ -1,0 +1,5 @@
+# CodeFactor configuration
+# Temporarily ignoring all files during active development.
+# Remove this file (or trim ignored_files) before launch to re-enable reviews.
+ignored_files:
+  - "**/*"

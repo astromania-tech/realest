@@ -148,7 +148,7 @@ export default function FormShowcasePage() {
       ? formPatterns
       : formPatterns.filter((form) => form.category === selectedCategory);
 
-  const handleFormSubmit = (formId: string, data: any) => {
+  const handleFormSubmit = async (formId: string, data: any) => {
     console.log(`${formId} submitted:`, data);
     alert(`${formId} form submitted successfully! Check console for data.`);
   };
@@ -166,7 +166,7 @@ export default function FormShowcasePage() {
         return (
           <PropertyListingForm
             {...commonProps}
-            onSaveDraft={(data) => console.log("Draft saved:", data)}
+            onSaveDraft={async (data) => console.log("Draft saved:", data)}
           />
         );
 

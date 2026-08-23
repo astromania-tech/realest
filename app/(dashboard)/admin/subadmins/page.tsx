@@ -1,24 +1,24 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { SubAdminForm } from "@/components/admin/SubAdminForm"
 
 export default async function SubAdminsPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect("/auth/login?redirect=/admin/subadmins")
+  const { data: { user } } = await getAuthUser()
+  if (!user) redirect("/login?redirect=/admin/subadmins")
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, user_type, full_name")
+  const { data: userRow } = await supabase
+    .from("users")
+    .select("role")
     .eq("id", user.id)
     .single()
-  if (!profile || profile.user_type !== "admin") redirect("/")
+  if (!userRow || userRow.role !== "admin") redirect("/")
 
   // Fetch existing admins
   const { data: admins } = await supabase
-    .from("profiles")
+    .from("users")
     .select("id, full_name, email, created_at")
-    .eq("user_type", "admin")
+    .eq("role", "admin")
     .order("created_at", { ascending: false })
 
   return (
@@ -36,7 +36,7 @@ export default async function SubAdminsPage() {
           {admins && admins.length > 0 ? (
             <div className="space-y-2">
               {admins.map((admin) => (
-                <div key={admin.id} className="border border-[var(--border)] rounded-md p-3">
+                <div key={admin.id} className="border border-border rounded-md p-3">
                   <p className="font-medium">{admin.full_name}</p>
                   <p className="text-sm text-muted-foreground">{admin.email}</p>
                   <p className="text-xs text-muted-foreground mt-1">

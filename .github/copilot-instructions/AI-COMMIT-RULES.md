@@ -150,6 +150,15 @@ import { Button } from "@heroui/react"        // Mixed
 
 ---
 
+## Database Access Rule (MANDATORY)
+
+- Supabase is ONLY to be used for authentication (auth flows, user session, JWT validation, etc).
+- All other database queries (API routes, server code, data fetching, mutations, etc.) MUST use Prisma.
+- Never use Supabase for DB reads/writes except in the authentication layer.
+- This rule applies to all new and existing code. Refactor any legacy code that violates this rule.
+
+---
+
 ## Testing Before Commit
 
 ### Minimal Test Suite

@@ -16,7 +16,7 @@ interface Property {
   price: number
   verification_status: string
   created_at: string
-  profiles: { full_name: string; email: string }
+  owners?: { profiles?: { full_name: string; email: string } | null } | null
 }
 
 interface AdminPropertyVerificationProps {
@@ -87,7 +87,7 @@ export default function AdminPropertyVerification({ properties }: AdminPropertyV
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Submitted by: {property.profiles ? property.profiles.full_name : "Unknown"}
+                    Submitted by: {property.owners?.profiles ? property.owners.profiles.full_name : "Unknown"}
                   </p>
                 </div>
                 <div className="text-right">

@@ -123,9 +123,13 @@ NEXT_PUBLIC_APP_MODE determines feature availability:
 Supabase Auth
 ├── Client-side: lib/supabase/client.ts
 ├── Server-side: lib/supabase/server.ts
-├── Profiles table: user_type (user|owner|agent|admin)
+├── users table: role enum (user|owner|agent|admin) — single source of truth
+├── profiles table: user metadata (full_name, phone, avatar_url) — NO role column
 └── RLS policies enforce row-level access
 ```
+
+> ⚠️ **Schema Note**: Role is stored on `public.users.role` (UserRole enum), NOT on `profiles.user_type`.
+> Always query `users.role` for role checks. `profiles` has no `user_type` column.
 
 ## Nigerian Market Context (Critical)
 
@@ -290,3 +294,10 @@ supabase gen types typescript         # Regenerate types
 - **Page Structure**: `docs/page-structure.md`
 - **Roadmap**: `docs/ROADMAP.md`
 - **Phase Summaries**: `docs/phase-{1,2}-completion-summary.md`
+
+### Database Access Architecture
+
+- Supabase is used SOLELY for authentication (user auth, JWT/session, RLS enforcement).
+- All application data access (API routes, server components, data fetching, mutations) MUST use Prisma.
+- Never use Supabase for DB reads/writes outside the authentication layer.
+- This is a hard architectural rule for all contributors and AI agents.

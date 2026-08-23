@@ -123,13 +123,13 @@ This list reflects the latest RealEST routing strategy, emphasizing:
     *   *View/Edit Specific Listing:* `/dashboard/owner/listings/[id]`
     *   *Manage Listing Documents:* `/dashboard/owner/listings/[id]/documents`
     *   *Manage Listing Media:* `/dashboard/owner/listings/[id]/media`
-*   **List New Property/Business (Multi-step Form):** `/dashboard/owner/new`
-    *   *Step 1 (Type):* `/dashboard/owner/new/type`
-    *   *Step 2 (Details):* `/dashboard/owner/new/details`
-    *   *Step 3 (Location):* `/dashboard/owner/new/location`
-    *   *Step 4 (Media):* `/dashboard/owner/new/media`
-    *   *Step 5 (Documents):* `/dashboard/owner/new/documents`
-    *   *Step 6 (Review):* `/dashboard/owner/new/review`
+*   **List New Property/Business (Multi-step Form):** `/dashboard/owner/listings/new`
+    *   *Step 1 (Type):* `/dashboard/owner/listings/new/type`
+    *   *Step 2 (Details):* `/dashboard/owner/listings/new/details`
+    *   *Step 3 (Location):* `/dashboard/owner/listings/new/location`
+    *   *Step 4 (Media):* `/dashboard/owner/listings/new/media`
+    *   *Step 5 (Documents):* `/dashboard/owner/listings/new/documents`
+    *   *Step 6 (Review):* `/dashboard/owner/listings/new/review`
 *   **Inquiries Received:** `/dashboard/owner/inquiries`
     *   *View Specific Inquiry:* `/dashboard/owner/inquiries/[id]`
 *   **Analytics (Premium Feature):** `/dashboard/owner/analytics`
@@ -363,7 +363,7 @@ realest-marketplace/
 
 *   **`page.tsx` as Orchestrators:**
     *   `app/(marketing)/explore/page.tsx` will `import PropertyGrid from '@/components/property/PropertyGrid'` and `PropertyFilters from '@/components/property/PropertyFilters'`, then simply pass props. It doesn't contain complex UI logic itself.
-    *   `app/(dashboard)/owner/new/page.tsx` will import and manage the state of `TypeStep.tsx`, `DetailsStep.tsx`, `DocumentsStep.tsx` from `components/forms/ListingFormSteps`, guiding the user through the process.
+    *   `app/(dashboard)/owner/listings/new/page.tsx` will import and manage the state of `TypeStep.tsx`, `DetailsStep.tsx`, `DocumentsStep.tsx` from `components/forms/ListingFormSteps`, guiding the user through the process.
 *   **`components/ui` for Primitives:** This is the most generic layer. `Button.tsx` (a HeroUI wrapper) doesn't know anything about "properties"; it just renders a button.
 *   **Domain-Specific Components:** `components/property/PropertyCard.tsx` combines `components/ui/hero/Card.tsx`, `components/shared/PropertyPill.tsx`, `components/shared/VerifiedBadge.tsx`, etc., to create a property-specific display. It's reusable across `/explore` and `/dashboard/owner/listings`.
 *   **Layout Encapsulation:** `app/(marketing)/layout.tsx` defines the header and footer for marketing pages, so each marketing `page.tsx` doesn't need to repeat this.

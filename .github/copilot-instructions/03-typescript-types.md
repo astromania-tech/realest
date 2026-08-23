@@ -4,19 +4,40 @@
 
 ### Core Tables
 
-#### `profiles` - User Information
+#### `users` - Role & Account Status ⚠️ Role Source of Truth
 ```typescript
-export interface Profile {
+export interface UserRecord {
   id: string;                          // UUID (FK to auth.users)
-  user_type: 'user' | 'owner' | 'admin';
-  full_name: string;
-  email: string;
+  role: 'user' | 'agent' | 'owner' | 'admin';  // UserRole enum — SINGLE SOURCE OF TRUTH
+  email: string | null;
   phone: string | null;
+  full_name: string | null;
   avatar_url: string | null;
-  created_at: string;                  // ISO timestamp
+  is_active: boolean;
+  metadata: Record<string, unknown>;
+  created_at: string;
   updated_at: string;
+  deleted_at: string | null;
 }
 ```
+
+#### `profiles` - User Metadata (NO role column)
+```typescript
+export interface Profile {
+  id: string;                          // UUID (FK to auth.users via users)
+  email: string;
+  full_name: string | null;
+  phone: string | null;
+  bio: string | null;
+  avatar_url: string | null;
+  created_at: string;
+  updated_at: string;
+  // ❌ NO user_type field — role lives on users.role
+}
+```
+
+> ⚠️ **Critical**: `profiles` has NO `user_type` column. Always query `users.role` for role checks.
+> `getUserProfile()` in `lib/auth.ts` maps `users.role` → `profile.user_type` for UI backward compat.
 
 **RLS Policies**:
 - Users can read/update own profile
@@ -325,7 +346,7 @@ export const userRegistrationSchema = z.object({
   phone: z.string()
     .regex(/^\+234[0-9]{10}$/, 'Invalid Nigerian phone number')
     .optional(),
-  user_type: z.enum(['user', 'owner', 'agent', 'admin']),
+  user_type: z.enum(['user', 'owner', 'agent', 'admin']), // form field; maps to users.role via DB trigger
   terms_accepted: z.boolean().refine(val => val === true, {
     message: 'You must accept terms and conditions'
   })

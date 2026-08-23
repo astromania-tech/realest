@@ -4,30 +4,21 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Avatar, Dropdown } from "@heroui/react";
-import {
-  Menu,
-  X,
-  Bell,
-  Settings,
-  LogOut,
-  User,
-  Shield,
-  BarChart3,
-  Users,
-  Building,
-} from "lucide-react";
+import { Menu, X, Bell, Settings, LogOut, User, Shield } from "lucide-react";
 import { HeaderLogo } from "@/components/ui/RealEstLogo";
 import { ThemeToggleCompact } from "@/components/ui/theme-toggle-wrapper";
 import { useUser } from "@/lib/hooks/useUser";
 import { ProfileDropdown } from "@/components/realest";
+import { useLogoutModal } from "@/components/providers/LogoutModalProvider";
 
 export function AdminHeader() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user, profile, logout } = useUser();
+  const { user, profile } = useUser();
   const router = useRouter();
+  const { openLogoutModal } = useLogoutModal();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 shadow-sm">
+    <header className="sticky top-0 z-50 w-full border-b border-accent/20 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 shadow-sm">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo and Admin Badge */}
@@ -35,16 +26,16 @@ export function AdminHeader() {
             <Link href="/admin" className="flex items-center group">
               <HeaderLogo />
             </Link>
-
-            {/* Admin Badge */}
-            <div className="flex items-center gap-2 px-3 py-1 bg-danger/10 text-danger rounded-full text-sm font-medium">
-              <Shield className="w-4 h-4" />
-              Administrator
-            </div>
           </div>
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
+            {/* Admin Badge */}
+            <div className="flex items-center gap-2 px-3 py-1 bg-error/10 text-error border border-error/20 shadow-sm rounded-full text-sm font-medium">
+              <Shield className="w-4 h-4" />
+              Administrator
+            </div>
+            
             <ThemeToggleCompact />
 
             {/* System Alerts */}
@@ -52,47 +43,6 @@ export function AdminHeader() {
               <Bell className="w-4 h-4" />
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-danger rounded-full"></span>
             </Button>
-
-            {/* Quick Admin Actions */}
-            <Dropdown>
-              <Dropdown.Trigger>
-                <Button variant="ghost" size="sm">
-                  <BarChart3 className="w-4 h-4" />
-                </Button>
-              </Dropdown.Trigger>
-              <Dropdown.Menu>
-                <Dropdown.Item
-                  id="properties"
-                  textValue="Property Verification"
-                  onPress={() => router.push("/admin/properties")}
-                >
-                  <div className="flex w-full items-center gap-2">
-                    <Building className="w-4 h-4" />
-                    <span>Property Verification</span>
-                  </div>
-                </Dropdown.Item>
-                <Dropdown.Item
-                  id="agents"
-                  textValue="Agent Verification"
-                  onPress={() => router.push("/admin/agents")}
-                >
-                  <div className="flex w-full items-center gap-2">
-                    <Users className="w-4 h-4" />
-                    <span>Agent Verification</span>
-                  </div>
-                </Dropdown.Item>
-                <Dropdown.Item
-                  id="analytics"
-                  textValue="System Analytics"
-                  onPress={() => router.push("/admin/analytics")}
-                >
-                  <div className="flex w-full items-center gap-2">
-                    <BarChart3 className="w-4 h-4" />
-                    <span>System Analytics</span>
-                  </div>
-                </Dropdown.Item>
-              </Dropdown.Menu>
-            </Dropdown>
 
             {/* User Menu */}
             <ProfileDropdown />
@@ -140,45 +90,6 @@ export function AdminHeader() {
                     {user?.email}
                   </div>
                 </div>
-              </div>
-
-              {/* Mobile Quick Actions */}
-              <div className="space-y-2">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start gap-3"
-                  onPress={() => {
-                    setIsMobileMenuOpen(false);
-                    router.push("/admin/properties");
-                  }}
-                >
-                  <Building className="w-4 h-4" />
-                  Property Verification
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start gap-3"
-                  onPress={() => {
-                    setIsMobileMenuOpen(false);
-                    router.push("/admin/agents");
-                  }}
-                >
-                  <Users className="w-4 h-4" />
-                  Agent Verification
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start gap-3"
-                  onPress={() => {
-                    setIsMobileMenuOpen(false);
-                    router.push("/admin/analytics");
-                  }}
-                >
-                  <BarChart3 className="w-4 h-4" />
-                  System Analytics
-                </Button>
               </div>
 
               {/* Mobile Actions */}
@@ -232,7 +143,7 @@ export function AdminHeader() {
                   className="w-full justify-start gap-3 text-danger hover:text-danger hover:bg-error/10"
                   onPress={() => {
                     setIsMobileMenuOpen(false);
-                    logout();
+                    openLogoutModal();
                   }}
                 >
                   <LogOut className="w-4 h-4" />

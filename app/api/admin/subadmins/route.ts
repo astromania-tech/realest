@@ -1,12 +1,41 @@
 import { NextResponse } from "next/server"
 import { randomBytes } from "crypto"
-import { Resend } from "resend"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { createServiceClient } from "@/lib/supabase/service"
 import { logAdminAction } from "@/lib/audit"
-import { generateSubAdminInvitationEmail } from "@/lib/email-templates/subadmin-invitation"
+import { sendSubAdminInvitationEmail } from "@/lib/emailService"
+import { prisma } from "@/lib/prisma"
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata"
 
-const resend = new Resend(process.env.RESEND_API_KEY!)
+export const openApiPOST: OpenApiMetadata = {
+  method: 'post',
+  summary: 'Create sub-admin account',
+  description: 'Invite a new sub-admin by creating a user, profile, and reset link.',
+  tags: ['Admin'],
+  security: [{ bearerAuth: [] }],
+  requestBody: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          required: ['email', 'full_name'],
+          properties: {
+            email: { type: 'string', format: 'email' },
+            full_name: { type: 'string' },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    '200': { description: 'Sub-admin created successfully' },
+    '400': { description: 'Missing email or full_name' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Forbidden' },
+    '500': { description: 'Failed to create sub-admin' },
+  },
+}
 
 export async function POST(request: Request) {
   try {
@@ -20,18 +49,15 @@ export async function POST(request: Request) {
     }
 
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await getAuthUser()
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id, user_type, full_name")
-      .eq("id", user.id)
-      .single()
-
-    if (!profile || profile.user_type !== "admin") {
+    const adminRow = await prisma.users.findUnique({ where: { id: user.id }, select: { role: true } })
+    if (!adminRow || adminRow.role !== 'admin') {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
+
+    const adminProfile = await prisma.profiles.findUnique({ where: { id: user.id }, select: { full_name: true } })
 
     const service = createServiceClient()
 
@@ -83,19 +109,12 @@ export async function POST(request: Request) {
 
     const resetLink = resetData.properties.action_link
 
-    // Send invitation email via Resend
-    const htmlContent = generateSubAdminInvitationEmail({
+    // Send invitation email via React Email + Resend
+    await sendSubAdminInvitationEmail({
       email,
       full_name,
-      inviter_name: profile.full_name ?? "RealEST Admin",
+      inviter_name: adminProfile?.full_name ?? "RealEST Admin",
       reset_link: resetLink,
-    })
-
-    await resend.emails.send({
-      from: "RealEST Admin <admin@realest.ng>",
-      to: email,
-      subject: "Welcome to the RealEST Admin Team",
-      html: htmlContent,
     })
 
     // Log the admin action

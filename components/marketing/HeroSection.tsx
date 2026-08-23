@@ -48,7 +48,7 @@ export default function HeroSection() {
             Find Your
             <br />
             <span className="bg-linear-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-              Next Move
+              Next Move Seemlessly
             </span>
           </h1>
 

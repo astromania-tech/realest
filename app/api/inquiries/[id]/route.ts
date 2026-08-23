@@ -1,7 +1,8 @@
 // realest/app/api/inquiries/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { z } from "zod";
+import { prisma } from "@/lib/prisma";
 
 const updateInquirySchema = z.object({
   status: z.enum(["pending", "responded", "closed"]).optional(),
@@ -22,61 +23,40 @@ export async function GET(
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Get inquiry with related data
-    const { data: inquiry, error } = await supabase
-      .from("inquiries")
-      .select(
-        `
-        *,
-        properties (
-          id,
-          title,
-          address,
-          price,
-          currency,
-          owner_id,
-          property_media (
-            file_url,
-            is_primary
-          )
-        ),
-        user:profiles!inquiries_user_id_fkey (
-          id,
-          full_name,
-          avatar_url,
-          phone,
-          email
-        ),
-        owner:properties (
-          profiles:owner_id (
-            id,
-            full_name,
-            avatar_url,
-            phone
-          )
-        )
-      `,
-      )
-      .eq("id", inquiryId)
-      .single();
+    const inquiry = await prisma.inquiries.findUnique({
+      where: { id: inquiryId },
+      include: {
+        properties: {
+          select: {
+            id: true,
+            title: true,
+            address: true,
+            price: true,
+            owner_id: true,
+            property_media: {
+              select: { media_url: true, is_featured: true },
+              take: 1,
+              orderBy: { display_order: 'asc' },
+            },
+          },
+        },
+        profiles_inquiries_sender_idToprofiles: {
+          select: { id: true, full_name: true, avatar_url: true, phone: true, email: true },
+        },
+        profiles_inquiries_owner_idToprofiles: {
+          select: { id: true, full_name: true, avatar_url: true, phone: true },
+        },
+      },
+    });
 
-    if (error) {
-      console.error("Inquiry fetch error:", error);
-      if (error.code === "PGRST116") {
-        return NextResponse.json(
-          { error: "Inquiry not found" },
-          { status: 404 },
-        );
-      }
-      return NextResponse.json(
-        { error: "Failed to fetch inquiry" },
-        { status: 500 },
-      );
+    if (!inquiry) {
+      return NextResponse.json({ error: "Inquiry not found" }, { status: 404 });
     }
 
     // Check if user has access (user who sent it or property owner)
@@ -111,7 +91,7 @@ export async function PUT(
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -120,20 +100,12 @@ export async function PUT(
     const validatedData = updateInquirySchema.parse(body);
 
     // Get inquiry to check ownership
-    const { data: inquiry, error: inquiryError } = await supabase
-      .from("inquiries")
-      .select(
-        `
-        *,
-        properties (
-          owner_id
-        )
-      `,
-      )
-      .eq("id", inquiryId)
-      .single();
+    const inquiry = await prisma.inquiries.findUnique({
+      where: { id: inquiryId },
+      select: { sender_id: true, owner_id: true, properties: { select: { owner_id: true } } },
+    });
 
-    if (inquiryError || !inquiry) {
+    if (!inquiry) {
       return NextResponse.json({ error: "Inquiry not found" }, { status: 404 });
     }
 
@@ -158,32 +130,13 @@ export async function PUT(
       // TODO: Send response notification to user
     }
 
-    // Update inquiry
-    const updateData: any = {
-      updated_at: new Date().toISOString(),
-    };
-
-    if (validatedData.status) {
-      updateData.status = validatedData.status;
-      if (validatedData.status === "responded") {
-        updateData.responded_at = new Date().toISOString();
-      }
-    }
-
-    const { data: updatedInquiry, error: updateError } = await supabase
-      .from("inquiries")
-      .update(updateData)
-      .eq("id", inquiryId)
-      .select()
-      .single();
-
-    if (updateError) {
-      console.error("Inquiry update error:", updateError);
-      return NextResponse.json(
-        { error: "Failed to update inquiry" },
-        { status: 500 },
-      );
-    }
+    const updatedInquiry = await prisma.inquiries.update({
+      where: { id: inquiryId },
+      data: {
+        ...(validatedData.status ? { status: validatedData.status } : {}),
+        updated_at: new Date(),
+      },
+    });
 
     return NextResponse.json({
       inquiry: updatedInquiry,

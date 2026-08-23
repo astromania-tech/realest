@@ -8,7 +8,7 @@ Nigeria's premier property marketplace that revolutionizes real estate through g
 - **Verified Listings**: Physical vetting and document validation ensure authenticity
 - **Live Location Mapping**: Accurate geolocation for all properties
 - **Comprehensive Search**: Advanced filters and map-based search
-- **Role-Based Access**: Separate dashboards for property owners, agents, usersers, and admins
+- **Role-Based Access**: Separate dashboards for property owners, agents, users, and admins
 - **Nigerian Market Focus**: Culturally-aware design with local property types and infrastructure
 - **Modern Design System**: Built with Next.js 16, Supabase, HeroUI v3, and RealEST design tokens
 
@@ -202,6 +202,18 @@ npm test
 4. Use Zed AI assistant for context-aware development
 
 5. Create a pull request with a clear description
+
+### OpenAPI Generation
+
+When API routes change, regenerate the canonical OpenAPI artifact with:
+
+```bash
+node scripts/generate-api-spec.mjs
+```
+
+Do not edit `lib/openapi/generated.json` by hand. Always regenerate it from the source routes so the Swagger output stays in sync.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the contribution workflow and API documentation rules.
 
 ### Design System Compliance
 

@@ -192,7 +192,7 @@ export function ContactForm({
           size="lg"
           className="w-full"
           isLoading={isLoading}
-          isDisabled={isLoading}
+          disabled={isLoading}
         >
           {isLoading ? "Sending Message..." : "Send Message"}
         </RealEstButton>

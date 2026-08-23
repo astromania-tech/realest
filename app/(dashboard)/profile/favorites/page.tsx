@@ -33,41 +33,47 @@ export default function FavoritesPage() {
 
   useEffect(() => {
     const fetchFavorites = async () => {
-      const supabase = createClient();
-      const { data: user } = await supabase.auth.getUser();
 
-      if (!user.user) return;
+      try {
+        const supabase = createClient();
+        const { data: user } = await supabase.auth.getUser();
 
-      const { data, error } = await supabase
-        .from("saved_properties")
-        .select(
-          `
-          id,
-          property_id,
-          saved_at,
-          properties (
+        if (!user || !user.user) {
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from("saved_properties")
+          .select(
+            `
             id,
-            title,
-            price,
-            address,
-            city,
-            bedrooms,
-            bathrooms,
-            square_feet,
-            listing_type,
-            property_type,
-            verification_status,
-            status
+            property_id,
+            saved_at,
+            properties (
+              id,
+              title,
+              price,
+              address,
+              city,
+              bedrooms,
+              bathrooms,
+              square_feet,
+              listing_type,
+              property_type,
+              verification_status,
+              status
+            )
+          `,
           )
-        `,
-        )
-        .eq("user_id", user.user.id)
-        .order("saved_at", { ascending: false });
+          .eq("user_id", user.user.id)
+          .order("saved_at", { ascending: false });
 
-      if (!error && data) {
-        setSavedProperties(data);
+        if (!error && data) {
+          setSavedProperties(data);
+        }
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     fetchFavorites();
@@ -132,7 +138,11 @@ export default function FavoritesPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {savedProperties.map((saved) => {
-              const property = saved.properties[0]; // Take the first (and only) property
+              const property = saved.properties?.[0]; // Take the first (and only) property, if present
+              if (!property) {
+                // If the related property is missing (e.g., deleted), skip rendering this favorite
+                return null;
+              }
               return (
                 <Link key={saved.id} href={`/property/${property.id}`}>
                   <Card.Root className="property-card group h-full bg-surface/90 backdrop-blur-lg border border-border/50 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 cursor-pointer overflow-hidden">

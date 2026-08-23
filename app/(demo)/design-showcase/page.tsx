@@ -9,7 +9,52 @@ import {
   FeaturedBadge,
   NewBadge,
 } from "@/components/ui/status-badge";
+import {
+  PropertyStatusChip,
+  AvailableChip,
+  PendingChip,
+  BookedChip,
+  FeaturedChip,
+  ExclusiveChip,
+  FreshListingChip,
+  UnderOfferChip,
+  PropertyStatusGroup,
+} from "@/components/realest/badges/PropertyStatusChip";
+import {
+  AmenityBadge,
+  PowerBadge,
+  WaterBadge,
+  SecurityBadge,
+  InternetBadge,
+  BoysQuartersBadge,
+  ParkingBadge,
+  PoolBadge,
+  GymBadge,
+  GeneratorBadge,
+  InverterBadge,
+  SolarBadge,
+  WaterTankBadge,
+  WaterTreatmentBadge,
+  AmenityBadgeGroup,
+  createAmenityBadges,
+} from "@/components/realest/badges";
+import {
+  PropertyTypeBadge,
+  HouseBadge,
+  ApartmentBadge,
+  LandBadge,
+  CommercialBadge,
+  HotelBadge,
+  OfficeBadge,
+  DuplexBadge,
+  BungalowBadge,
+  SelfContainedBadge,
+  ResidentialLandBadge,
+  CommercialLandBadge,
+} from "@/components/realest/badges/PropertyTypeBadge";
 import { ProfileDropdown } from "@/components/realest";
+import { ProfileUpload } from "@/components/realest/ProfileUpload";
+import { PropertyListingForm } from "@/components/patterns/forms";
 
 export default function DesignShowcasePage() {
   const [darkMode, setDarkMode] = useState(false);
@@ -377,6 +422,7 @@ export default function DesignShowcasePage() {
                   <StatusBadge variant="featured" className="animate-pulse">
                     Premium
                   </StatusBadge>
+                  <StatusBadge variant="popular">Popular</StatusBadge>
                 </div>
               </div>
 
@@ -403,6 +449,654 @@ export default function DesignShowcasePage() {
             </div>
           </div>
 
+          {/* Property Status Chips (RealEST Components) */}
+          <div className="space-y-6">
+            <h3 className="font-heading text-2xl font-semibold">
+              Property Status Chips (RealEST Components)
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Property Status Variants */}
+              <div className="card-enhanced p-6 space-y-4">
+                <h4 className="font-heading text-lg font-medium">
+                  Property Status Variants
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  <AvailableChip />
+                  <PendingChip />
+                  <BookedChip />
+                  <PropertyStatusChip status="unavailable" />
+                  <FeaturedChip />
+                  <FreshListingChip />
+                  <ExclusiveChip />
+                  <UnderOfferChip />
+                </div>
+              </div>
+
+              {/* Size Variations */}
+              <div className="card-enhanced p-6 space-y-4">
+                <h4 className="font-heading text-lg font-medium">
+                  Size Variations
+                </h4>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground w-12">
+                      SM:
+                    </span>
+                    <AvailableChip size="sm" />
+                    <PendingChip size="sm" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground w-12">
+                      MD:
+                    </span>
+                    <AvailableChip size="md" />
+                    <PendingChip size="md" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground w-12">
+                      LG:
+                    </span>
+                    <AvailableChip size="lg" />
+                    <PendingChip size="lg" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Advanced Features */}
+              <div className="card-enhanced p-6 space-y-4">
+                <h4 className="font-heading text-lg font-medium">
+                  Advanced Features
+                </h4>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                      Priority:
+                    </span>
+                    <FeaturedChip priority="high" />
+                    <ExclusiveChip priority="medium" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                      Animated:
+                    </span>
+                    <PendingChip animated={true} />
+                    <UnderOfferChip animated={true} />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                      Interactive:
+                    </span>
+                    <AvailableChip interactive={true} />
+                    <FeaturedChip interactive={true} />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                      No Icon:
+                    </span>
+                    <AvailableChip showIcon={false} />
+                    <PendingChip showIcon={false} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Property Status Group Example */}
+            <div className="card-enhanced p-6">
+              <h4 className="font-heading text-lg font-medium mb-4">
+                Property Status Group (Multiple Chips)
+              </h4>
+              <PropertyStatusGroup
+                statuses={[
+                  { status: "available", size: "sm" },
+                  { status: "featured", size: "sm", priority: "high" },
+                  { status: "fresh-listing", size: "sm" },
+                  { status: "exclusive", size: "sm", priority: "high" },
+                ]}
+              />
+              <p className="text-xs text-muted-foreground mt-2">
+                Hover over chips to see tooltips with descriptions
+              </p>
+            </div>
+          </div>
+
+          {/* Amenity Badges (RealEST Components) */}
+          <div className="space-y-6">
+            <h3 className="font-heading text-2xl font-semibold">
+              Amenity Badges (RealEST Components)
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Power & Electricity */}
+              <div className="card-enhanced p-6 space-y-4">
+                <h4 className="font-heading text-lg font-medium">
+                  Power & Electricity
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  <PowerBadge status="stable" />
+                  <PowerBadge status="intermittent" />
+                  <PowerBadge status="poor" />
+                  <GeneratorBadge />
+                  <InverterBadge />
+                  <SolarBadge />
+                </div>
+              </div>
+
+              {/* Water & Plumbing */}
+              <div className="card-enhanced p-6 space-y-4">
+                <h4 className="font-heading text-lg font-medium">
+                  Water & Plumbing
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  <WaterBadge status="borehole" />
+                  <WaterBadge status="public_water" />
+                  <WaterBadge status="well" />
+                  <WaterTankBadge value={2000} />
+                  <WaterTreatmentBadge />
+                </div>
+              </div>
+
+              {/* Security & Safety */}
+              <div className="card-enhanced p-6 space-y-4">
+                <h4 className="font-heading text-lg font-medium">
+                  Security & Safety
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  <SecurityBadge status="gated_community" />
+                  <SecurityBadge status="security_post" />
+                  <SecurityBadge status="cctv" />
+                  <SecurityBadge status="24/7" />
+                </div>
+              </div>
+
+              {/* Internet & Connectivity */}
+              <div className="card-enhanced p-6 space-y-4">
+                <h4 className="font-heading text-lg font-medium">
+                  Internet & Connectivity
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  <InternetBadge status="fiber" />
+                  <InternetBadge status="starlink" />
+                  <InternetBadge status="4g" />
+                  <InternetBadge status="3g" />
+                </div>
+              </div>
+
+              {/* Boys Quarters */}
+              <div className="card-enhanced p-6 space-y-4">
+                <h4 className="font-heading text-lg font-medium">
+                  Boys Quarters
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  <BoysQuartersBadge status="self_contained" />
+                  <BoysQuartersBadge status="room_and_parlor" />
+                  <BoysQuartersBadge status="excellent" />
+                  <BoysQuartersBadge status="good" />
+                </div>
+              </div>
+
+              {/* Indoor Amenities */}
+              <div className="card-enhanced p-6 space-y-4">
+                <h4 className="font-heading text-lg font-medium">
+                  Indoor Amenities
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  <ParkingBadge value={2} />
+                  <PoolBadge />
+                  <GymBadge />
+                  <AmenityBadge type="kitchen" status="built_in" />
+                </div>
+              </div>
+            </div>
+
+            {/* Amenity Badge Group Example */}
+            <div className="card-enhanced p-6">
+              <h4 className="font-heading text-lg font-medium mb-4">
+                Amenity Badge Group (Multiple Amenities)
+              </h4>
+              <AmenityBadgeGroup
+                amenities={createAmenityBadges({
+                  nepa_status: "stable",
+                  has_generator: true,
+                  water_source: "borehole",
+                  internet_type: "fiber",
+                  security_type: ["gated_community", "cctv"],
+                  has_bq: true,
+                  parking_spaces: 2,
+                  has_pool: true,
+                  has_gym: true,
+                })}
+                maxDisplay={6}
+              />
+              <p className="text-xs text-muted-foreground mt-2">
+                Hover over badges to see detailed tooltips with amenity
+                information
+              </p>
+            </div>
+
+            {/* Size Variations */}
+            <div className="card-enhanced p-6">
+              <h4 className="font-heading text-lg font-medium mb-4">
+                Size Variations & Variants
+              </h4>
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-medium w-16">Small:</span>
+                  <PowerBadge status="stable" size="sm" />
+                  <WaterBadge status="borehole" size="sm" />
+                  <SecurityBadge status="gated_community" size="sm" />
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-medium w-16">Medium:</span>
+                  <PowerBadge status="stable" size="md" />
+                  <WaterBadge status="borehole" size="md" />
+                  <SecurityBadge status="gated_community" size="md" />
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-medium w-16">Large:</span>
+                  <PowerBadge status="stable" size="lg" />
+                  <WaterBadge status="borehole" size="lg" />
+                  <SecurityBadge status="gated_community" size="lg" />
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-medium w-16">Outline:</span>
+                  <PowerBadge status="stable" variant="outline" />
+                  <WaterBadge status="borehole" variant="outline" />
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-medium w-16">No Icon:</span>
+                  <PowerBadge status="stable" showIcon={false} />
+                  <WaterBadge status="borehole" showIcon={false} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Property Type Badges (RealEST Components) */}
+          <div className="space-y-6">
+            <h3 className="font-heading text-2xl font-semibold">
+              Property Type Badges (RealEST Components)
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Broad Property Categories */}
+              <div className="card-enhanced p-6 space-y-4">
+                <h4 className="font-heading text-lg font-medium">
+                  Broad Categories
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  <HouseBadge />
+                  <ApartmentBadge />
+                  <LandBadge />
+                  <CommercialBadge />
+                  <HotelBadge />
+                  <OfficeBadge />
+                </div>
+              </div>
+
+              {/* Nigerian Residential Types */}
+              <div className="card-enhanced p-6 space-y-4">
+                <h4 className="font-heading text-lg font-medium">
+                  Nigerian Residential
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  <DuplexBadge />
+                  <BungalowBadge />
+                  <SelfContainedBadge />
+                  <PropertyTypeBadge type="mini_flat" />
+                  <PropertyTypeBadge type="room_and_parlor" />
+                  <PropertyTypeBadge type="penthouse" />
+                  <PropertyTypeBadge type="terrace" />
+                  <PropertyTypeBadge type="detached_house" />
+                </div>
+              </div>
+
+              {/* Commercial & Land Types */}
+              <div className="card-enhanced p-6 space-y-4">
+                <h4 className="font-heading text-lg font-medium">
+                  Commercial & Land
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  <PropertyTypeBadge type="warehouse" />
+                  <PropertyTypeBadge type="showroom" />
+                  <PropertyTypeBadge type="restaurant" />
+                  <ResidentialLandBadge />
+                  <CommercialLandBadge />
+                  <PropertyTypeBadge type="mixed_use_land" />
+                  <PropertyTypeBadge type="farmland" />
+                </div>
+              </div>
+            </div>
+
+            {/* Size Variations */}
+            <div className="card-enhanced p-6">
+              <h4 className="font-heading text-lg font-medium mb-4">
+                Size Variations & Variants
+              </h4>
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-medium w-16">Small:</span>
+                  <HouseBadge size="sm" />
+                  <ApartmentBadge size="sm" />
+                  <LandBadge size="sm" />
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-medium w-16">Medium:</span>
+                  <HouseBadge size="md" />
+                  <ApartmentBadge size="md" />
+                  <LandBadge size="md" />
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-medium w-16">Large:</span>
+                  <HouseBadge size="lg" />
+                  <ApartmentBadge size="lg" />
+                  <LandBadge size="lg" />
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-medium w-16">Outline:</span>
+                  <HouseBadge variant="outline" />
+                  <ApartmentBadge variant="outline" />
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-medium w-16">No Icon:</span>
+                  <HouseBadge showIcon={false} />
+                  <ApartmentBadge showIcon={false} />
+                </div>
+              </div>
+            </div>
+
+            {/* Property Type Badge Group Example */}
+            <div className="card-enhanced p-6">
+              <h4 className="font-heading text-lg font-medium mb-4">
+                Property Type Badge Integration
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Property Card Example */}
+                <div className="card-enhanced group cursor-pointer">
+                  <div className="relative">
+                    <div className="bg-linear-to-br from-blue-200 to-blue-300 h-32 rounded-t-xl"></div>
+                    <div className="absolute top-3 left-3">
+                      <DuplexBadge />
+                    </div>
+                    <div className="absolute top-3 right-3">
+                      <PropertyStatusChip
+                        status="available"
+                        size="sm"
+                        showTooltip={false}
+                      />
+                    </div>
+                  </div>
+                  <div className="p-4 space-y-2">
+                    <h4 className="font-heading text-lg font-semibold">
+                      Modern 3BR Duplex
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      Lekki Phase 1, Lagos
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xl font-bold text-brand-violet">
+                        ₦3,500,000/year
+                      </span>
+                      <Button variant="violet" size="sm">
+                        View
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Land Property Example */}
+                <div className="card-enhanced group cursor-pointer">
+                  <div className="relative">
+                    <div className="bg-linear-to-br from-green-200 to-green-300 h-32 rounded-t-xl"></div>
+                    <div className="absolute top-3 left-3">
+                      <ResidentialLandBadge />
+                    </div>
+                    <div className="absolute top-3 right-3">
+                      <PropertyStatusChip
+                        status="featured"
+                        size="sm"
+                        showTooltip={false}
+                      />
+                    </div>
+                  </div>
+                  <div className="p-4 space-y-2">
+                    <h4 className="font-heading text-lg font-semibold">
+                      Residential Plot
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      Banana Island, Lagos
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xl font-bold text-brand-violet">
+                        ₦15,000,000
+                      </span>
+                      <Button variant="neon" size="sm">
+                        View
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-4">
+                Property type badges integrate seamlessly with property cards,
+                providing clear visual categorization. Hover over badges to see
+                detailed tooltips with property type information.
+              </p>
+            </div>
+          </div>
+
+          {/* Property Cards with Amenity Badges */}
+          <div className="space-y-6">
+            <h3 className="font-heading text-2xl font-semibold">
+              Property Cards with Amenity Badges
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Property Card 1 - Full Amenities */}
+              <div className="card-enhanced group cursor-pointer">
+                <div className="relative">
+                  <div className="bg-linear-to-br from-blue-200 to-blue-300 h-48 rounded-t-xl"></div>
+                  <div className="absolute top-3 left-3">
+                    <ApartmentBadge size="sm" showTooltip={false} />
+                  </div>
+                  <div className="absolute top-12 left-3">
+                    <VerifiedBadge size="sm">Verified</VerifiedBadge>
+                  </div>
+                  <div className="absolute top-3 right-3">
+                    <PropertyStatusChip
+                      status="available"
+                      size="sm"
+                      showTooltip={false}
+                    />
+                  </div>
+                  <div className="absolute bottom-3 left-3 right-3">
+                    <AmenityBadgeGroup
+                      amenities={createAmenityBadges({
+                        nepa_status: "stable",
+                        has_generator: true,
+                        water_source: "borehole",
+                        internet_type: "fiber",
+                        security_type: ["gated_community"],
+                        parking_spaces: 2,
+                      })}
+                      maxDisplay={3}
+                      showTooltip={false}
+                    />
+                  </div>
+                </div>
+                <div className="p-6 space-y-4">
+                  <div>
+                    <h4 className="font-heading text-lg font-semibold">
+                      Luxury 3BR Apartment
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      Lekki Phase 1, Lagos
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span>🛏 3 Beds</span>
+                    <span>🚿 2 Baths</span>
+                    <span>📐 120 m²</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-2xl font-bold text-brand-violet">
+                        ₦3,200,000
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Per year
+                      </div>
+                    </div>
+                    <Button variant="violet" size="sm">
+                      View Details
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Property Card 2 - Basic Amenities */}
+              <div className="card-enhanced group cursor-pointer">
+                <div className="relative">
+                  <div className="bg-linear-to-br from-green-200 to-green-300 h-48 rounded-t-xl"></div>
+                  <div className="absolute top-3 left-3">
+                    <DuplexBadge size="sm" showTooltip={false} />
+                  </div>
+                  <div className="absolute top-12 left-3">
+                    <PendingBadge size="sm">Pending</PendingBadge>
+                  </div>
+                  <div className="absolute top-3 right-3">
+                    <PropertyStatusChip
+                      status="featured"
+                      size="sm"
+                      showTooltip={false}
+                    />
+                  </div>
+                  <div className="absolute bottom-3 left-3 right-3">
+                    <AmenityBadgeGroup
+                      amenities={createAmenityBadges({
+                        nepa_status: "intermittent",
+                        water_source: "public_water",
+                        security_type: ["security_post"],
+                        has_bq: true,
+                        parking_spaces: 1,
+                      })}
+                      maxDisplay={3}
+                      showTooltip={false}
+                    />
+                  </div>
+                </div>
+                <div className="p-6 space-y-4">
+                  <div>
+                    <h4 className="font-heading text-lg font-semibold">
+                      2BR + BQ Duplex
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      Ikeja GRA, Lagos
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span>🛏 2+BQ</span>
+                    <span>🚿 2 Baths</span>
+                    <span>📐 180 m²</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-2xl font-bold text-brand-violet">
+                        ₦2,800,000
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Per year
+                      </div>
+                    </div>
+                    <Button variant="neon" size="sm">
+                      Contact Owner
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Property Card 3 - Premium Amenities */}
+              <div className="card-enhanced group cursor-pointer bg-gradient-brand text-white">
+                <div className="relative">
+                  <div className="bg-white/20 h-48 rounded-t-xl"></div>
+                  <div className="absolute top-3 left-3">
+                    <PropertyTypeBadge
+                      type="penthouse"
+                      size="sm"
+                      showTooltip={false}
+                    />
+                  </div>
+                  <div className="absolute top-12 left-3">
+                    <FeaturedBadge size="sm">Featured</FeaturedBadge>
+                  </div>
+                  <div className="absolute top-3 right-3">
+                    <PropertyStatusChip
+                      status="exclusive"
+                      size="sm"
+                      showTooltip={false}
+                    />
+                  </div>
+                  <div className="absolute bottom-3 left-3 right-3">
+                    <AmenityBadgeGroup
+                      amenities={createAmenityBadges({
+                        nepa_status: "stable",
+                        has_generator: true,
+                        has_inverter: true,
+                        has_solar_panels: true,
+                        water_source: "borehole",
+                        water_tank_capacity: 5000,
+                        has_water_treatment: true,
+                        internet_type: "fiber",
+                        security_type: ["gated_community", "cctv", "24/7"],
+                        parking_spaces: 3,
+                        has_pool: true,
+                        has_gym: true,
+                      })}
+                      maxDisplay={4}
+                      showTooltip={false}
+                    />
+                  </div>
+                </div>
+                <div className="p-6 space-y-4">
+                  <div>
+                    <h4 className="font-heading text-lg font-semibold">
+                      Premium 4BR Penthouse
+                    </h4>
+                    <p className="text-sm text-white/80">
+                      Victoria Island, Lagos
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-white/80">
+                    <span>🛏 4 Beds</span>
+                    <span>🚿 4 Baths</span>
+                    <span>🏊‍♂️ Pool</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-2xl font-bold">₦12,500,000</div>
+                      <div className="text-xs text-white/70">Per year</div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                    >
+                      View Details
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-muted/50 p-4 rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                <strong>Integration Example:</strong> These property cards
+                demonstrate how PropertyTypeBadges and AmenityBadges integrate
+                seamlessly with existing property cards. PropertyTypeBadges
+                provide clear categorization at the top-left, while
+                AmenityBadges are positioned at the bottom of the image overlay
+                and automatically display the most relevant amenities for each
+                property. Hover over badges to see detailed tooltips.
+              </p>
+            </div>
+          </div>
+
           {/* Profile Dropdown (HeroUI) */}
           <div className="space-y-6">
             <h3 className="font-heading text-2xl font-semibold">
@@ -418,6 +1112,54 @@ export default function DesignShowcasePage() {
                 inquiries), agents (dashboard, properties), and regular users
                 (profile only), plus logout for all.
               </p>
+            </div>
+          </div>
+
+          {/* Profile Upload Component */}
+          <div className="space-y-6">
+            <h3 className="font-heading text-2xl font-semibold">
+              Profile Upload (Signed-URL Integration)
+            </h3>
+            <div className="card-enhanced p-8">
+              <div className="flex flex-col items-center gap-8">
+                {/* Different sizes showcase */}
+                <div className="flex items-center gap-8">
+                  <div className="text-center">
+                    <ProfileUpload size="sm" />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Small (32px)
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <ProfileUpload size="md" />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Medium (48px)
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <ProfileUpload size="lg" />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Large (64px)
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <ProfileUpload size="xl" />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Extra Large (96px)
+                    </p>
+                  </div>
+                </div>
+
+                {/* Upload button example */}
+                <div className="text-center">
+                  <ProfileUpload size="lg" />
+                  <p className="text-sm text-muted-foreground mt-4 max-w-md">
+                    Click the avatar or use the upload button to change your
+                    profile picture. Supports secure signed-URL uploads with
+                    file validation and real-time preview.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -611,6 +1353,9 @@ export default function DesignShowcasePage() {
                 <div className="relative">
                   <div className="bg-linear-to-br from-gray-200 to-gray-300 h-48 rounded-t-xl"></div>
                   <div className="absolute top-4 left-4">
+                    <ApartmentBadge size="sm" showTooltip={false} />
+                  </div>
+                  <div className="absolute top-12 left-4">
                     <VerifiedBadge size="sm">Verified</VerifiedBadge>
                   </div>
                   <div className="absolute top-4 right-4">
@@ -663,6 +1408,9 @@ export default function DesignShowcasePage() {
                 <div className="relative">
                   <div className="bg-white/20 h-48 rounded-t-xl"></div>
                   <div className="absolute top-4 left-4">
+                    <DuplexBadge size="sm" showTooltip={false} />
+                  </div>
+                  <div className="absolute top-12 left-4">
                     <FeaturedBadge size="sm">Featured</FeaturedBadge>
                   </div>
                   <div className="absolute top-4 right-4">
@@ -715,6 +1463,9 @@ export default function DesignShowcasePage() {
                 <div className="relative">
                   <div className="bg-linear-to-br from-green-200 to-green-300 h-48 rounded-t-xl"></div>
                   <div className="absolute top-4 left-4">
+                    <ApartmentBadge size="sm" showTooltip={false} />
+                  </div>
+                  <div className="absolute top-12 left-4">
                     <PendingBadge size="sm">Pending</PendingBadge>
                   </div>
                   <div className="absolute top-4 right-4">
@@ -1385,6 +2136,178 @@ export default function DesignShowcasePage() {
                   </Button>
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Property Listing Form Showcase */}
+        <section className="space-y-8">
+          <div className="text-center">
+            <h2 className="font-heading text-4xl font-bold mb-4">
+              Property Listing Form
+            </h2>
+            <p className="text-muted-foreground">
+              Complete property creation form with all Nigerian market amenities
+              and features
+            </p>
+          </div>
+
+          <div className="card-enhanced p-8">
+            <h3 className="font-heading text-xl font-semibold mb-6">
+              Full Property Listing Form with All Amenities
+            </h3>
+            <p className="text-sm text-muted-foreground mb-6">
+              This form includes all the newly implemented amenities and
+              features: Power (NEPA, Inverter, Solar), Water (Source, Tank,
+              Treatment), Security (Hours, Levy), Boys Quarters details,
+              Building specs, Road accessibility, Parking count, and Kitchen
+              types.
+            </p>
+
+            <div className="bg-muted/50 p-4 rounded-lg mb-6">
+              <p className="text-sm text-muted-foreground">
+                <strong>Note:</strong> This is a demonstration form. Navigate
+                through the steps to see all amenities fields. The form includes
+                conditional rendering (e.g., BQ details only show when "Has BQ"
+                is checked).
+              </p>
+            </div>
+
+            <PropertyListingForm
+              initialData={{
+                propertyType: "apartment",
+                purpose: "rent",
+                hasBQ: true,
+                hasNEPA: true,
+                hasWater: true,
+                isGated: true,
+                hasGoodRoads: true,
+                hasInverter: true,
+                hasSolarPanels: false,
+                hasWaterTreatment: true,
+                waterTankCapacity: "2000",
+                parkingSpaces: "2",
+                kitchenType: "built_in",
+                securityHours: "24/7",
+                hasSecurityLevy: true,
+                securityLevyAmount: "50000",
+                bqType: "self_contained",
+                bqBathrooms: "1",
+                bqKitchen: true,
+                bqSeparateEntrance: true,
+                bqCondition: "excellent",
+                floors: "3",
+                buildingMaterial: "concrete",
+                yearRenovated: "2022",
+                roadAccessibility: "all_year",
+              }}
+              onSubmit={async (data) => console.log("Form submitted:", data)}
+              onSaveDraft={async (data) => console.log("Draft saved:", data)}
+            />
+          </div>
+        </section>
+
+        {/* Property Listing Form with Amenities */}
+        <section className="space-y-8">
+          <div className="text-center">
+            <h2 className="font-heading text-4xl font-bold mb-4">
+              Property Listing Form with Amenities
+            </h2>
+            <p className="text-muted-foreground">
+              Complete property creation form showcasing all Nigerian market
+              amenities and features
+            </p>
+          </div>
+
+          <div className="card-enhanced p-8">
+            <h3 className="font-heading text-xl font-semibold mb-6">
+              Full Property Listing Form
+            </h3>
+            <p className="text-sm text-muted-foreground mb-6">
+              This form demonstrates all the newly added amenities and features
+              including: Power (NEPA, Inverter, Solar), Water (Tank Capacity,
+              Treatment), Security (Hours, Levy), Boys Quarters details,
+              Building construction, Road accessibility, Parking spaces, and
+              Kitchen types.
+            </p>
+
+            {/* Demo Form with Sample Data */}
+            <div className="bg-muted/30 p-6 rounded-lg">
+              <PropertyListingForm
+                initialData={{
+                  title: "Modern 3BR Apartment with Full Amenities",
+                  description:
+                    "Beautiful apartment in Lekki Phase 1 with complete infrastructure",
+                  propertyType: "Apartment",
+                  purpose: "rent",
+                  state: "Lagos",
+                  lga: "Eti Osa",
+                  area: "Lekki Phase 1",
+                  address: "12 Admiralty Way",
+                  coordinates: { lat: "6.4474", lng: "3.4715" },
+                  bedrooms: "3",
+                  bathrooms: "2",
+                  toilets: "3",
+                  size: "120",
+                  yearBuilt: "2020",
+                  floors: "5",
+                  buildingMaterial: "concrete",
+                  yearRenovated: "2023",
+                  price: "2500000",
+                  serviceCharge: "300000",
+                  cautionFee: "500000",
+                  legalFee: "200000",
+                  agentFee: "300000",
+                  hasBQ: true,
+                  bqType: "self_contained",
+                  bqBathrooms: "1",
+                  bqKitchen: true,
+                  bqSeparateEntrance: true,
+                  bqCondition: "excellent",
+                  hasNEPA: true,
+                  hasInverter: true,
+                  hasSolarPanels: false,
+                  hasWater: true,
+                  waterTankCapacity: "2000",
+                  hasWaterTreatment: true,
+                  roadAccessibility: "all_year",
+                  parkingSpaces: "2",
+                  kitchenType: "built_in",
+                  securityHours: "24/7",
+                  hasSecurityLevy: true,
+                  securityLevyAmount: "50000",
+                  infrastructure: [
+                    "NEPA/Power Supply",
+                    "Inverter",
+                    "Borehole/Water Supply",
+                    "Water Tank",
+                    "Water Treatment System",
+                    "Internet Connectivity",
+                    "Good Road Network",
+                    "Road Accessibility",
+                  ],
+                  amenities: [
+                    "Swimming Pool",
+                    "Gym",
+                    "Parking Spaces",
+                    "Air Conditioning",
+                    "Furnished",
+                    "Balcony",
+                    "Elevator",
+                    "Built-in Kitchen",
+                  ],
+                  security: [
+                    "Gated Community",
+                    "Security Post",
+                    "CCTV Surveillance",
+                    "Perimeter Fencing",
+                    "Security Guards",
+                    "Access Control",
+                  ],
+                }}
+                onSubmit={async (data) => console.log("Form submitted:", data)}
+                onSaveDraft={async (data) => console.log("Draft saved:", data)}
+              />
             </div>
           </div>
         </section>

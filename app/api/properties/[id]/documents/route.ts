@@ -1,23 +1,121 @@
 // realest/app/api/properties/[id]/documents/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { propertyDocumentSchema } from "@/lib/validations/property";
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
 
-const uploadDocumentSchema = z.object({
-  file_name: z.string().min(1),
-  file_url: z.string().url(),
-  document_type: z.enum([
-    "certificate_of_occupancy",
-    "deed_of_assignment",
-    "survey_plan",
-    "tax_receipt",
-    "building_approval",
-    "owner_id",
-    "utility_bill",
-    "property_photos",
-    "other",
-  ]),
-});
+const propertyIdSchema = z.string().uuid("Invalid property ID");
+
+/**
+ * OpenAPI metadata for GET /api/properties/{id}/documents
+ * Retrieves property verification documents
+ */
+export const openApiGET: OpenApiMetadata = {
+  method: "get",
+  summary: "Get property documents",
+  description: "Retrieve all property documents (title deeds, permits, etc). Only accessible to property owner or admin.",
+  tags: ["Properties"],
+  security: [{ bearerAuth: [] }],
+  parameters: [
+    {
+      name: "id",
+      in: "path",
+      required: true,
+      schema: { type: "string", format: "uuid" },
+      description: "Property ID",
+    },
+  ],
+  responses: {
+    "200": {
+      description: "Documents list retrieved successfully",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+            properties: {
+              documents: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    id: { type: "string" },
+                    property_id: { type: "string", format: "uuid" },
+                    document_type: { type: "string" },
+                    document_url: { type: "string", format: "url" },
+                    file_name: { type: "string" },
+                    verification_status: { type: "string", enum: ["pending", "approved", "rejected"] },
+                    created_at: { type: "string", format: "date-time" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    "401": { description: "Unauthorized" },
+    "403": { description: "Access denied" },
+    "404": { description: "Property not found" },
+  },
+};
+
+/**
+ * OpenAPI metadata for POST /api/properties/{id}/documents
+ * Upload verification documents for a property
+ */
+export const openApiPOST: OpenApiMetadata = {
+  method: "post",
+  summary: "Upload property document",
+  description: "Upload property verification documents (title deeds, permits, etc). Only owner can upload. Triggers ML validation service.",
+  tags: ["Properties"],
+  security: [{ bearerAuth: [] }],
+  parameters: [
+    {
+      name: "id",
+      in: "path",
+      required: true,
+      schema: { type: "string", format: "uuid" },
+      description: "Property ID",
+    },
+  ],
+  requestBody: {
+    required: true,
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          required: ["document_type", "document_url", "file_name"],
+          properties: {
+            document_type: { type: "string", description: "Type of document (title_deed, permit, etc)" },
+            document_url: { type: "string", format: "url", description: "URL to document file" },
+            file_name: { type: "string", description: "Original file name" },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    "201": {
+      description: "Document uploaded and submitted for verification",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+            properties: {
+              document: { type: "object" },
+              message: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    "400": { description: "Invalid request or property is published" },
+    "401": { description: "Unauthorized" },
+    "404": { description: "Property not found or access denied" },
+  },
+};
 
 // GET /api/properties/[id]/documents - Get property documents
 export async function GET(
@@ -27,63 +125,46 @@ export async function GET(
   try {
     const supabase = await createClient();
     const { id } = await params;
-    const propertyId = id;
+    const propertyIdResult = propertyIdSchema.safeParse(id);
+    if (!propertyIdResult.success) {
+      return NextResponse.json({ error: "Property not found" }, { status: 404 });
+    }
+    const propertyId = propertyIdResult.data;
 
-    // Check if property exists and user has access
-    const { data: property, error: propertyError } = await supabase
-      .from("properties")
-      .select(
-        `
-        owner_id,
-        status,
-        owner:profiles!properties_owner_id_fkey (
-          user_type
-        )
-      `,
-      )
-      .eq("id", propertyId)
-      .single();
-
-    if (propertyError) {
-      return NextResponse.json(
-        { error: "Property not found" },
-        { status: 404 },
-      );
+    // Auth
+    const { data: { user } } = await getAuthUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get authenticated user
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    const isOwner = user && property.owner_id === user.id;
-    const isAdmin = user && property.owner?.[0]?.user_type === "admin";
+    // Check property exists and access
+    const property = await prisma.properties.findUnique({
+      where: { id: propertyId },
+      select: { owner_id: true, status: true },
+    });
 
-    // Only owners and admins can see documents
+    if (!property) {
+      return NextResponse.json({ error: "Property not found" }, { status: 404 });
+    }
+
+    const ownerRecord = await prisma.owners.findUnique({ where: { profile_id: user.id }, select: { id: true } });
+    const isOwner = ownerRecord !== null && property.owner_id === ownerRecord.id;
+    const userRow = await prisma.users.findUnique({ where: { id: user.id }, select: { role: true } });
+    const isAdmin = userRow?.role === "admin";
+
     if (!isOwner && !isAdmin) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    const { data: documents, error } = await supabase
-      .from("property_documents")
-      .select("*")
-      .eq("property_id", propertyId)
-      .order("uploaded_at", { ascending: false });
-
-    if (error) {
-      console.error("Documents fetch error:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch documents" },
-        { status: 500 },
-      );
-    }
+    const documents = await prisma.property_documents.findMany({
+      where: { property_id: propertyId },
+      orderBy: { created_at: "desc" },
+    });
 
     return NextResponse.json({ documents });
   } catch (error) {
     console.error("Documents API error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -95,85 +176,55 @@ export async function POST(
   try {
     const supabase = await createClient();
     const { id } = await params;
-    const propertyId = id;
+    const propertyIdResult = propertyIdSchema.safeParse(id);
+    if (!propertyIdResult.success) {
+      return NextResponse.json({ error: "Property not found or access denied" }, { status: 404 });
+    }
+    const propertyId = propertyIdResult.data;
 
-    // Get authenticated user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check ownership
-    const { data: property, error: propertyError } = await supabase
-      .from("properties")
-      .select("owner_id, status")
-      .eq("id", propertyId)
-      .single();
+    const property = await prisma.properties.findUnique({
+      where: { id: propertyId },
+      select: { owner_id: true, status: true },
+    });
 
-    if (propertyError || property?.owner_id !== user.id) {
-      return NextResponse.json(
-        { error: "Property not found or access denied" },
-        { status: 404 },
-      );
+    const ownerRecordPost = await prisma.owners.findUnique({ where: { profile_id: user.id }, select: { id: true } });
+    if (!property || !ownerRecordPost || property.owner_id !== ownerRecordPost.id) {
+      return NextResponse.json({ error: "Property not found or access denied" }, { status: 404 });
     }
 
-    // Only allow document uploads for draft/rejected properties
     if (property.status === "live") {
-      return NextResponse.json(
-        { error: "Cannot upload documents to live properties" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Cannot upload documents to live properties" }, { status: 400 });
     }
 
     const body = await request.json();
-    const validatedData = uploadDocumentSchema.parse(body);
+    const validatedData = propertyDocumentSchema.parse(body);
 
-    // Insert document record
-    const { data: document, error: insertError } = await supabase
-      .from("property_documents")
-      .insert({
+    const document = await prisma.property_documents.create({
+      data: {
         property_id: propertyId,
         document_type: validatedData.document_type,
-        file_url: validatedData.file_url,
+        document_url: validatedData.document_url,
         file_name: validatedData.file_name,
-        ml_validation_status: "pending", // Trigger ML validation
-        admin_vetting_status: "pending",
-      })
-      .select()
-      .single();
-
-    if (insertError) {
-      console.error("Document upload error:", insertError);
-      return NextResponse.json(
-        { error: "Failed to upload document" },
-        { status: 500 },
-      );
-    }
+        verification_status: "pending",
+      },
+    });
 
     // TODO: Trigger ML validation service here
-    // This would call an Edge Function or external service
 
     return NextResponse.json(
-      {
-        document,
-        message: "Document uploaded successfully. Validation in progress.",
-      },
+      { document, message: "Document uploaded successfully. Validation in progress." },
       { status: 201 },
     );
   } catch (error) {
     console.error("Document upload API error:", error);
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid document data", details: error.errors },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Invalid document data", details: error.errors }, { status: 400 });
     }
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

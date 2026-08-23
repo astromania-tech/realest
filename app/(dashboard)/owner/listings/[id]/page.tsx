@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Card, Button, Spinner } from "@heroui/react";
+import { Card, CardContent, Button, Input, Spinner } from "@/components/ui";
 import { ArrowLeft, Save, Eye } from "lucide-react";
 import { PropertyListingForm } from "@/components/patterns/forms";
 
@@ -113,7 +113,7 @@ export default function EditListingPage() {
             The property you're trying to edit doesn't exist.
           </p>
           <Link href="/owner/listings">
-            <Button variant="primary">
+            <Button variant="default">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Listings
             </Button>
@@ -129,8 +129,8 @@ export default function EditListingPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <Link href={`/owner/listings/${propertyId}`}>
-              <Button variant="ghost" size="sm" isIconOnly>
+            <Link href="/owner/listings">
+              <Button variant="ghost" size="icon-sm">
                 <ArrowLeft className="w-4 h-4" />
               </Button>
             </Link>
@@ -152,13 +152,13 @@ export default function EditListingPage() {
               </Button>
             </Link>
             <Button
-              variant="primary"
+              variant="default"
               onClick={() => document.querySelector("form")?.requestSubmit()}
-              isDisabled={isSaving}
+              disabled={isSaving}
             >
               {isSaving ? (
                 <>
-                  <Spinner size="sm" className="mr-2" />
+                  <Spinner className="mr-2" />
                   Saving...
                 </>
               ) : (
@@ -172,14 +172,14 @@ export default function EditListingPage() {
         </div>
 
         {/* Property Form */}
-        <Card.Root className="bg-surface/90 backdrop-blur-lg border border-border/50 rounded-2xl shadow-lg">
-          <Card.Content className="p-8">
+        <Card className="bg-surface/90 backdrop-blur-lg border border-border/50 rounded-2xl shadow-lg">
+          <CardContent className="p-8">
             <PropertyListingForm
               initialData={property}
               onSubmit={handleFormSubmit}
             />
-          </Card.Content>
-        </Card.Root>
+          </CardContent>
+        </Card>
 
         {/* Additional Actions */}
         <div className="mt-8 flex flex-wrap gap-4">

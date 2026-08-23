@@ -1,7 +1,9 @@
 // realest/app/api/inquiries/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
 
 const createInquirySchema = z.object({
   property_id: z.string().uuid(),
@@ -14,6 +16,68 @@ const updateInquirySchema = z.object({
   status: z.enum(["pending", "responded", "closed"]).optional(),
 });
 
+/**
+ * OpenAPI metadata for GET /api/inquiries
+ * Documented endpoint: Get user's inquiries
+ */
+export const openApiGET: OpenApiMetadata = {
+  method: 'get',
+  summary: 'Get user inquiries',
+  description: 'Get inquiries relevant to authenticated user. Users see inquiries they sent; owners see inquiries on their properties.',
+  tags: ['Inquiries', 'User'],
+  security: [{ bearerAuth: [] }],
+  responses: {
+    '200': {
+      description: 'List of inquiries',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              inquiries: {
+                type: 'array',
+                items: { $ref: '#/components/schemas/Inquiry' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '401': {
+      description: 'Unauthorized',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '403': {
+      description: 'Forbidden - invalid user type',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '404': {
+      description: 'User not found',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '500': {
+      description: 'Server error',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+  },
+}
+
 // GET /api/inquiries - Get user's inquiries (user or owner)
 export async function GET(request: NextRequest) {
   try {
@@ -23,89 +87,73 @@ export async function GET(request: NextRequest) {
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get user's profile to determine role
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("user_type")
-      .eq("id", user.id)
-      .single();
-
-    if (profileError) {
-      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
-    }
-
-    let query;
-
-    if (profile.user_type === "user") {
-      // Users see inquiries they sent
-      query = supabase
-        .from("inquiries")
-        .select(
-          `
-          *,
-          properties (
-            id,
-            title,
-            address,
-            price,
-            currency,
-            property_media (
-              file_url,
-              is_primary
-            )
-          ),
-          profiles:id (
-            full_name,
-            avatar_url
-          )
-        `,
-        )
-        .eq("user_id", user.id);
-    } else if (profile.user_type === "owner") {
-      // Owners see inquiries on their properties
-      query = supabase
-        .from("inquiries")
-        .select(
-          `
-          *,
-          properties (
-            id,
-            title,
-            address,
-            price,
-            currency,
-            property_media (
-              file_url,
-              is_primary
-            )
-          ),
-          profiles:user_id (
-            full_name,
-            avatar_url,
-            phone
-          )
-        `,
-        )
-        .eq("properties.owner_id", user.id);
-    } else {
-      return NextResponse.json({ error: "Invalid user type" }, { status: 403 });
-    }
-
-    const { data: inquiries, error } = await query.order("created_at", {
-      ascending: false,
+    // Get user's role to determine query type
+    const userRow = await prisma.users.findUnique({
+      where: { id: user.id },
+      select: { role: true },
     });
 
-    if (error) {
-      console.error("Inquiries fetch error:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch inquiries" },
-        { status: 500 },
-      );
+    if (!userRow) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    let inquiries;
+
+    if (userRow.role === "user") {
+      // Users see inquiries they sent
+      inquiries = await prisma.inquiries.findMany({
+        where: { sender_id: user.id },
+        include: {
+          properties: {
+            select: {
+              id: true,
+              title: true,
+              address: true,
+              price: true,
+              property_media: {
+                where: { is_featured: true },
+                select: { media_url: true, is_featured: true },
+                take: 1,
+              },
+            },
+          },
+          profiles_inquiries_sender_idToprofiles: {
+            select: { full_name: true, avatar_url: true },
+          },
+        },
+        orderBy: { created_at: "desc" },
+      });
+    } else if (userRow.role === "owner") {
+      // Owners see inquiries on their properties
+      inquiries = await prisma.inquiries.findMany({
+        where: { owner_id: user.id },
+        include: {
+          properties: {
+            select: {
+              id: true,
+              title: true,
+              address: true,
+              price: true,
+              property_media: {
+                where: { is_featured: true },
+                select: { media_url: true, is_featured: true },
+                take: 1,
+              },
+            },
+          },
+          profiles_inquiries_sender_idToprofiles: {
+            select: { full_name: true, avatar_url: true, phone: true },
+          },
+        },
+        orderBy: { created_at: "desc" },
+      });
+    } else {
+      return NextResponse.json({ error: "Invalid user type" }, { status: 403 });
     }
 
     return NextResponse.json({ inquiries });
@@ -118,6 +166,99 @@ export async function GET(request: NextRequest) {
   }
 }
 
+/**
+ * OpenAPI metadata for POST /api/inquiries
+ * Documented endpoint: Create new inquiry
+ */
+export const openApiPOST: OpenApiMetadata = {
+  method: 'post',
+  summary: 'Create property inquiry',
+  description: 'Send an inquiry about a property. Only users can send inquiries. Owner is automatically identified from property.',
+  tags: ['Inquiries', 'User'],
+  security: [{ bearerAuth: [] }],
+  requestBody: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          required: ['property_id', 'message'],
+          properties: {
+            property_id: {
+              type: 'string',
+              format: 'uuid',
+              description: 'Property to inquire about',
+            },
+            message: {
+              type: 'string',
+              minLength: 10,
+              description: 'Inquiry message',
+            },
+            contact_phone: {
+              type: 'string',
+              description: 'Contact phone (optional)',
+            },
+            contact_email: {
+              type: 'string',
+              format: 'email',
+              description: 'Contact email (optional)',
+            },
+          },
+          'x-source': '@/lib/validations/inquiry.ts → createInquirySchema',
+        },
+      },
+    },
+  },
+  responses: {
+    '201': {
+      description: 'Inquiry created successfully',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              inquiry: { $ref: '#/components/schemas/Inquiry' },
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    '400': {
+      description: 'Invalid inquiry data',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '401': {
+      description: 'Unauthorized',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '403': {
+      description: 'Forbidden - only users can send inquiries',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '404': {
+      description: 'Property not found or not available',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+  },
+}
+
 // POST /api/inquiries - Create new inquiry
 export async function POST(request: NextRequest) {
   try {
@@ -127,19 +268,21 @@ export async function POST(request: NextRequest) {
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if user is a user
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("user_type, full_name, phone, email")
-      .eq("id", user.id)
-      .single();
+    // Check if user has the 'user' role (buyers send inquiries)
+    const [userRow, senderProfile] = await Promise.all([
+      prisma.users.findUnique({ where: { id: user.id }, select: { role: true } }),
+      prisma.profiles.findUnique({
+        where: { id: user.id },
+        select: { phone: true, email: true },
+      }),
+    ]);
 
-    if (profileError || profile?.user_type !== "user") {
+    if (!userRow || userRow.role !== "user") {
       return NextResponse.json(
         { error: "Only users can send inquiries" },
         { status: 403 },
@@ -150,14 +293,12 @@ export async function POST(request: NextRequest) {
     const validatedData = createInquirySchema.parse(body);
 
     // Check if property exists and is live
-    const { data: property, error: propertyError } = await supabase
-      .from("properties")
-      .select("id, owner_id, status, title")
-      .eq("id", validatedData.property_id)
-      .eq("status", "live")
-      .single();
+    const property = await prisma.properties.findFirst({
+      where: { id: validatedData.property_id, status: "live" },
+      select: { id: true, owner_id: true, status: true, title: true },
+    });
 
-    if (propertyError || !property) {
+    if (!property) {
       return NextResponse.json(
         { error: "Property not found or not available" },
         { status: 404 },
@@ -165,13 +306,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already has a pending inquiry for this property
-    const { data: existingInquiry, error: existingError } = await supabase
-      .from("inquiries")
-      .select("id")
-      .eq("property_id", validatedData.property_id)
-      .eq("user_id", user.id)
-      .eq("status", "pending")
-      .single();
+    const existingInquiry = await prisma.inquiries.findFirst({
+      where: {
+        property_id: validatedData.property_id,
+        sender_id: user.id,
+        status: "pending",
+      },
+      select: { id: true },
+    });
 
     if (existingInquiry) {
       return NextResponse.json(
@@ -180,38 +322,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create inquiry
-    const { data: inquiry, error: inquiryError } = await supabase
-      .from("inquiries")
-      .insert({
+    // Create inquiry — owner_id comes from the property record
+    const inquiry = await prisma.inquiries.create({
+      data: {
         property_id: validatedData.property_id,
-        user_id: user.id,
+        sender_id: user.id,
+        owner_id: property.owner_id!,
         message: validatedData.message,
-        contact_phone: validatedData.contact_phone || profile.phone,
-        contact_email: validatedData.contact_email || profile.email,
         status: "pending",
-      })
-      .select(
-        `
-        *,
-        properties (
-          title,
-          owner_id
-        )
-      `,
-      )
-      .single();
-
-    if (inquiryError) {
-      console.error("Inquiry creation error:", inquiryError);
-      return NextResponse.json(
-        { error: "Failed to send inquiry" },
-        { status: 500 },
-      );
-    }
+      },
+      include: {
+        properties: { select: { title: true, owner_id: true } },
+      },
+    });
 
     // TODO: Send notification to property owner
-    // This could trigger an email or in-app notification
 
     return NextResponse.json(
       {

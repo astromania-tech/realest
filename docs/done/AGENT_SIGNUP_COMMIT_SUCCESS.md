@@ -116,7 +116,7 @@ Verification:
 
 ### Immediate (This Week)
 1. **Agent Dashboard**
-   - `app/(dashboard)/agent/dashboard/page.tsx`
+   - `app/(dashboard)/agent/page.tsx`
    - Properties list, analytics, inquiries
 
 2. **Agent Profile Editor**

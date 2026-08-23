@@ -28,6 +28,6 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
-  ],
+, "app/setting/_layout.tsx_"  ],
   "exclude": ["node_modules", "backups"]
 }

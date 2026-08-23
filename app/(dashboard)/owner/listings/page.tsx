@@ -3,14 +3,23 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  Card,
   Chip,
-  Button,
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
+  // Dropdown,
+  // DropdownTrigger,
+  // DropdownMenu,
+  // DropdownItem,
 } from "@heroui/react";
+
+import {
+  Card,
+  CardContent,
+  Button, 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui";
+
 import {
   Plus,
   Edit,
@@ -179,8 +188,8 @@ export default function OwnerListingsPage() {
               Manage your property listings and track their performance.
             </p>
           </div>
-          <Link href="/owner/new">
-            <Button variant="primary">
+          <Link href="/owner/listings/new">
+            <Button variant="default">
               <Plus className="w-4 h-4 mr-2" />
               Add New Property
             </Button>
@@ -189,8 +198,8 @@ export default function OwnerListingsPage() {
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card.Root className="bg-surface/90 backdrop-blur-lg border border-border/50 rounded-2xl shadow-lg">
-            <Card.Content className="p-6">
+          <Card className="bg-surface/90 backdrop-blur-lg border border-border/50 rounded-2xl shadow-lg">
+            <CardContent className="p-6">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                   <Home className="w-6 h-6 text-primary" />
@@ -202,11 +211,11 @@ export default function OwnerListingsPage() {
                   </p>
                 </div>
               </div>
-            </Card.Content>
-          </Card.Root>
+            </CardContent>
+          </Card>
 
-          <Card.Root className="bg-surface/90 backdrop-blur-lg border border-border/50 rounded-2xl shadow-lg">
-            <Card.Content className="p-6">
+          <Card className="bg-surface/90 backdrop-blur-lg border border-border/50 rounded-2xl shadow-lg">
+            <CardContent className="p-6">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center">
                   <CheckCircle className="w-6 h-6 text-success" />
@@ -218,11 +227,11 @@ export default function OwnerListingsPage() {
                   <p className="text-sm text-muted-foreground">Active</p>
                 </div>
               </div>
-            </Card.Content>
-          </Card.Root>
+            </CardContent>
+          </Card>
 
-          <Card.Root className="bg-surface/90 backdrop-blur-lg border border-border/50 rounded-2xl shadow-lg">
-            <Card.Content className="p-6">
+          <Card className="bg-surface/90 backdrop-blur-lg border border-border/50 rounded-2xl shadow-lg">
+            <CardContent className="p-6">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center">
                   <Clock className="w-6 h-6 text-warning" />
@@ -234,11 +243,11 @@ export default function OwnerListingsPage() {
                   <p className="text-sm text-muted-foreground">Pending</p>
                 </div>
               </div>
-            </Card.Content>
-          </Card.Root>
+            </CardContent>
+          </Card>
 
-          <Card.Root className="bg-surface/90 backdrop-blur-lg border border-border/50 rounded-2xl shadow-lg">
-            <Card.Content className="p-6">
+          <Card className="bg-surface/90 backdrop-blur-lg border border-border/50 rounded-2xl shadow-lg">
+            <CardContent className="p-6">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
                   <TrendingUp className="w-6 h-6 text-accent" />
@@ -250,8 +259,8 @@ export default function OwnerListingsPage() {
                   <p className="text-sm text-muted-foreground">Total Views</p>
                 </div>
               </div>
-            </Card.Content>
-          </Card.Root>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Filters */}
@@ -301,8 +310,8 @@ export default function OwnerListingsPage() {
                   ? "Start by adding your first property listing."
                   : `You don't have any ${filter} listings.`}
               </p>
-              <Link href="/owner/new">
-                <Button variant="primary">
+              <Link href="/owner/listings/new">
+                <Button variant="default">
                   <Plus className="w-4 h-4 mr-2" />
                   Add New Property
                 </Button>
@@ -312,7 +321,7 @@ export default function OwnerListingsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredProperties.map((property) => (
-              <Card.Root
+              <Card
                 key={property.id}
                 className="bg-surface/90 backdrop-blur-lg border border-border/50 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
               >
@@ -351,7 +360,7 @@ export default function OwnerListingsPage() {
                   </div>
                 </div>
 
-                <Card.Content className="p-6">
+                <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1 min-w-0">
                       <h3 className="text-lg font-semibold mb-1 line-clamp-2">
@@ -366,39 +375,39 @@ export default function OwnerListingsPage() {
                     </div>
 
                     {/* Actions Dropdown */}
-                    <Dropdown>
-                      <DropdownTrigger>
-                        <Button variant="ghost" size="sm" isIconOnly>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger>
+                        <Button variant="ghost" size="icon-sm">
                           <MoreVertical className="w-4 h-4" />
                         </Button>
-                      </DropdownTrigger>
-                      <DropdownMenu>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
                         <Link href={`/listing/${property.id}`}>
-                          <DropdownItem>
+                          <DropdownMenuItem>
                             <Eye className="w-4 h-4 mr-2" />
                             View Listing
-                          </DropdownItem>
+                          </DropdownMenuItem>
                         </Link>
                         <Link href={`/owner/listings/${property.id}`}>
-                          <DropdownItem>
+                          <DropdownMenuItem>
                             <Edit className="w-4 h-4 mr-2" />
                             Edit Listing
-                          </DropdownItem>
+                          </DropdownMenuItem>
                         </Link>
                         <Link href={`/owner/listings/${property.id}/media`}>
-                          <DropdownItem>
+                          <DropdownMenuItem>
                             <Image className="w-4 h-4 mr-2" />
                             Manage Media
-                          </DropdownItem>
+                          </DropdownMenuItem>
                         </Link>
                         <Link href={`/owner/listings/${property.id}/documents`}>
-                          <DropdownItem>
+                          <DropdownMenuItem>
                             <FileText className="w-4 h-4 mr-2" />
                             Manage Documents
-                          </DropdownItem>
+                          </DropdownMenuItem>
                         </Link>
-                      </DropdownMenu>
-                    </Dropdown>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
 
                   {/* Price */}
@@ -447,8 +456,8 @@ export default function OwnerListingsPage() {
                       </Button>
                     </Link>
                   </div>
-                </Card.Content>
-              </Card.Root>
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}

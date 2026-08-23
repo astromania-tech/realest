@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { AdminDashboardContent } from "@/components/dashboard"
 
@@ -6,30 +6,30 @@ export default async function AdminDashboardPage() {
   const supabase = await createClient()
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await getAuthUser()
 
   if (!user) {
     redirect("/login")
   }
 
   // Check if user is an admin
-  const { data: profile } = await supabase.from("profiles").select("user_type").eq("id", user.id).single()
+  const { data: userRow } = await supabase.from("users").select("role").eq("id", user.id).single()
 
-  if (profile?.user_type !== "admin") {
+  if (userRow?.role !== "admin") {
     redirect("/")
   }
 
   // Fetch pending properties for verification
   const { data: pendingProperties } = await supabase
     .from("properties")
-    .select("*, profiles(full_name, email)")
+    .select("*, owners(profiles(full_name, email))")
     .eq("verification_status", "pending")
     .order("created_at", { ascending: true })
 
   // Fetch pending documents
   const { data: pendingDocuments } = await supabase
     .from("property_documents")
-    .select("*, properties(title, owner_id), profiles(full_name)")
+    .select("*, properties(title, owner_id)")
     .eq("verification_status", "pending")
     .order("created_at", { ascending: true })
 
@@ -46,7 +46,7 @@ export default async function AdminDashboardPage() {
     .eq("verification_status", "rejected")
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
       <AdminDashboardContent
         user={user}
         pendingProperties={pendingProperties || []}
@@ -54,6 +54,6 @@ export default async function AdminDashboardPage() {
         verifiedCount={verifiedCount || 0}
         rejectedCount={rejectedCount || 0}
       />
-    </div>
+    </>
   )
 }

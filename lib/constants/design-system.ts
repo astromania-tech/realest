@@ -8,7 +8,7 @@
 // ================================================================
 
 export const BRAND = {
-  name: 'RealEST',
+  name: 'RealEST Connect',
   tagline: 'Find Your Next Move',
   domain: 'realest.ng',
   description: 'Nigeria\'s premier geo-verified property marketplace',
@@ -21,31 +21,53 @@ export const BRAND = {
 export const COLORS = {
   // Primary Brand Colors (Hex)
   brand: {
-    dark: '#242834',
-    violet: '#7D53FF',
-    neon: '#B6FF00',
+    dark: '#07402F',      // Dark Green — 60% foundation
+    neutral: '#2E322E',   // Deep Neutral — 30% secondary
+    accent: '#ADF434',    // Acid Green — 10% accent
+    light: '#F8F9F7',     // Off-White — light backgrounds
+
+    // Legacy aliases (kept for backward compatibility)
+    violet: '#2E322E',
+    neon: '#ADF434',
   },
 
-  // OKLCH Color Values
+  // OKLCH Color Values — synced with lib/styles/tokens/colors.css
   oklch: {
-    primaryDark: 'oklch(0.26 0.08 258)',
-    primaryViolet: 'oklch(0.67 0.25 286)',
-    primaryNeon: 'oklch(0.91 0.20 127)',
+    // Primary palette
+    primaryLight:   'oklch(0.98 0.005 155)', // Off-White
+    primaryAccent:  'oklch(0.89 0.24 128)',  // Acid Green
+    primaryDark:    'oklch(0.30 0.06 165)',  // Dark Green
+    primaryNeutral: 'oklch(0.26 0.01 155)',  // Deep Neutral
+
+    // Legacy aliases
+    primaryNeon:    'oklch(0.89 0.24 128)',
+    primaryViolet:  'oklch(0.26 0.01 155)',
   },
 
-  // Semantic Colors
+  // Semantic Colors — synced with lib/styles/tokens/colors.css
   semantic: {
-    success: 'oklch(0.75 0.15 142)',
-    warning: 'oklch(0.82 0.18 95)',
-    error: 'oklch(0.62 0.2 20)',
-    info: 'oklch(0.78 0.12 270)',
+    success:      'oklch(0.72 0.18 145)',
+    successLight: 'oklch(0.85 0.12 145)',
+    successDark:  'oklch(0.55 0.15 145)',
+
+    warning:      'oklch(0.82 0.18 85)',
+    warningLight: 'oklch(0.92 0.12 85)',
+    warningDark:  'oklch(0.72 0.22 85)',
+
+    error:        'oklch(0.62 0.22 25)',
+    errorLight:   'oklch(0.75 0.15 25)',
+    errorDark:    'oklch(0.52 0.25 25)',
+
+    info:         'oklch(0.70 0.12 220)',
+    infoLight:    'oklch(0.85 0.08 220)',
+    infoDark:     'oklch(0.55 0.14 220)',
   },
 
   // Usage Guidelines (60-30-10 Rule)
   usage: {
-    foundation: 'var(--primary-dark)', // 60% usage
-    secondary: 'var(--primary-violet)', // 30% usage
-    accent: 'var(--primary-neon)', // 10% usage
+    foundation: 'var(--primary-dark)',    // 60% — Dark Green
+    secondary:  'var(--primary-neutral)', // 30% — Deep Neutral
+    accent:     'var(--primary-accent)',  // 10% — Acid Green
   },
 } as const;
 
@@ -161,27 +183,31 @@ export const RADIUS = {
 // ================================================================
 
 export const SHADOWS = {
-  // Shadow scale
+  // Shadow scale — uses Deep Neutral hue (155) matching colors.css --shadow-color
   scale: {
-    xs: '0 1px 2px oklch(0.26 0.08 258 / 0.05)',
-    sm: '0 1px 3px oklch(0.26 0.08 258 / 0.1), 0 1px 2px oklch(0.26 0.08 258 / 0.06)',
-    md: '0 4px 6px oklch(0.26 0.08 258 / 0.07), 0 2px 4px oklch(0.26 0.08 258 / 0.06)',
-    lg: '0 10px 15px oklch(0.26 0.08 258 / 0.1), 0 4px 6px oklch(0.26 0.08 258 / 0.05)',
-    xl: '0 20px 25px oklch(0.26 0.08 258 / 0.1), 0 10px 10px oklch(0.26 0.08 258 / 0.04)',
-    '2xl': '0 25px 50px oklch(0.26 0.08 258 / 0.15), 0 15px 20px oklch(0.26 0.08 258 / 0.05)',
+    xs:   '0 1px 2px oklch(0.26 0.01 155 / 0.05)',
+    sm:   '0 1px 3px oklch(0.26 0.01 155 / 0.1), 0 1px 2px oklch(0.26 0.01 155 / 0.06)',
+    md:   '0 4px 6px oklch(0.26 0.01 155 / 0.07), 0 2px 4px oklch(0.26 0.01 155 / 0.06)',
+    lg:   '0 10px 15px oklch(0.26 0.01 155 / 0.1), 0 4px 6px oklch(0.26 0.01 155 / 0.05)',
+    xl:   '0 20px 25px oklch(0.26 0.01 155 / 0.1), 0 10px 10px oklch(0.26 0.01 155 / 0.04)',
+    '2xl': '0 25px 50px oklch(0.26 0.01 155 / 0.15), 0 15px 20px oklch(0.26 0.01 155 / 0.05)',
   },
 
-  // Colored shadows for interactive elements
+  // Colored shadows — synced with colors.css --shadow-accent / --shadow-dark
   colored: {
-    neon: '0 4px 14px oklch(0.91 0.20 127 / 0.25)',
-    violet: '0 4px 14px oklch(0.67 0.25 286 / 0.25)',
+    accent: '0 4px 14px oklch(0.89 0.24 128 / 0.25)',  // Acid Green glow
+    dark:   '0 4px 14px oklch(0.30 0.06 165 / 0.30)',  // Dark Green glow
+
+    // Legacy aliases
+    neon:   '0 4px 14px oklch(0.89 0.24 128 / 0.25)',
+    violet: '0 4px 14px oklch(0.30 0.06 165 / 0.30)',
   },
 
   // Component-specific shadows
   component: {
-    card: 'var(--shadow-md)',
-    cardHover: 'var(--shadow-lg)',
-    button: 'var(--shadow-sm)',
+    card:        'var(--shadow-md)',
+    cardHover:   'var(--shadow-lg)',
+    button:      'var(--shadow-sm)',
     buttonHover: 'var(--shadow-md)',
   },
 } as const;
@@ -476,7 +502,9 @@ export const DESIGN_SYSTEM = {
 
 // Type exports for TypeScript support
 export type BrandColors = typeof COLORS.brand;
+export type OklchColors = typeof COLORS.oklch;
 export type SemanticColors = typeof COLORS.semantic;
+export type ColorUsage = typeof COLORS.usage;
 export type FontFamilies = typeof TYPOGRAPHY.fonts;
 export type SpacingScale = typeof SPACING.scale;
 export type RadiusScale = typeof RADIUS.scale;

@@ -161,9 +161,9 @@ export default function Phase2DemoContent() {
                 <h4 className="font-heading text-lg font-medium">Sizes & States</h4>
                 <div className="space-y-3">
                   <RealEstButton variant="violet" size="sm" className="w-full">Small</RealEstButton>
-                  <RealEstButton variant="violet" size="md" className="w-full">Medium</RealEstButton>
+                  <RealEstButton variant="violet" size="default" className="w-full">Medium</RealEstButton>
                   <RealEstButton variant="violet" size="lg" className="w-full">Large</RealEstButton>
-                  <RealEstButton variant="violet" isDisabled className="w-full">Disabled</RealEstButton>
+                  <RealEstButton variant="violet" disabled className="w-full">Disabled</RealEstButton>
                 </div>
               </div>
             </div>

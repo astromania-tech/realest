@@ -3,10 +3,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
-import type { Database } from "@/lib/supabase/types";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 // Base user types
-export type UserRole = "user" | "owner" | "agent" | "admin";
+export type UserRole = "user" | "owner" | "agent" | "admin" | "system_owner";
 
 export interface BaseUserProfile {
   id: string;
@@ -15,6 +15,10 @@ export interface BaseUserProfile {
   phone: string | null;
   bio: string | null;
   avatar_url: string | null;
+  /**
+   * Role from public.users.role — single source of truth.
+   * Named user_type for backward compatibility with existing UI code.
+   */
   user_type: UserRole;
   created_at: string;
   updated_at: string;
@@ -65,6 +69,15 @@ export interface AdminProfile extends BaseUserProfile {
   };
 }
 
+export interface SystemOwnerProfile extends BaseUserProfile {
+  user_type: "system_owner";
+  system_owner_details: {
+    // System owner has ultimate control
+    global_permissions: string[];
+    system_access_level: "ultimate";
+  };
+}
+
 export interface RegularUserProfile extends BaseUserProfile {
   user_type: "user";
 }
@@ -74,7 +87,8 @@ export type UserProfile =
   | RegularUserProfile
   | OwnerProfile
   | AgentProfile
-  | AdminProfile;
+  | AdminProfile
+  | SystemOwnerProfile;
 
 // Hook return type
 export interface UseUserReturn {
@@ -94,6 +108,7 @@ const userCache = new Map<string, { data: UserProfile; timestamp: number }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export function useUser(): UseUserReturn {
+  const { user: authUser, isLoading: authLoading } = useAuth();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [role, setRole] = useState<UserRole | null>(null);
@@ -102,14 +117,14 @@ export function useUser(): UseUserReturn {
   const supabase = createClient();
   const isInitialized = useRef(false);
 
-  // Fetch user role from user_roles table
+  // Fetch user role from public.users table (single source of truth)
   const fetchUserRole = useCallback(
     async (userId: string): Promise<UserRole | null> => {
       try {
-        const { data: userRole, error } = await supabase
-          .from("user_roles")
+        const { data: userData, error } = await supabase
+          .from("users")
           .select("role")
-          .eq("user_id", userId)
+          .eq("id", userId)
           .single();
 
         if (error) {
@@ -117,7 +132,7 @@ export function useUser(): UseUserReturn {
           return null;
         }
 
-        return (userRole?.role as UserRole) || null;
+        return (userData?.role as UserRole) || null;
       } catch (err) {
         console.error("Error in fetchUserRole:", err);
         return null;
@@ -168,7 +183,7 @@ export function useUser(): UseUserReturn {
           .eq("user_type", "owner")
           .order("submitted_at", { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
         return {
           owner_details: ownerData
@@ -214,7 +229,7 @@ export function useUser(): UseUserReturn {
           .eq("user_type", "agent")
           .order("submitted_at", { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
         return {
           agent_details: agentData
@@ -315,6 +330,15 @@ export function useUser(): UseUserReturn {
               system_permissions: ["all"], // Default admin permissions
             },
           } as AdminProfile;
+        } else if (userRole === "system_owner") {
+          completeProfile = {
+            ...basicProfile,
+            user_type: "system_owner",
+            system_owner_details: {
+              global_permissions: ["ultimate_control"],
+              system_access_level: "ultimate",
+            },
+          } as SystemOwnerProfile;
         } else {
           completeProfile = {
             ...basicProfile,
@@ -334,34 +358,15 @@ export function useUser(): UseUserReturn {
     [fetchUserRole, fetchBasicProfile, fetchOwnerDetails, fetchAgentDetails],
   );
 
-  // Initialize user data
-  const initializeUser = useCallback(async () => {
+  // Initialize user data — driven by AuthProvider's authUser
+  const initializeUser = useCallback(async (currentUser: User) => {
     try {
       setIsLoading(true);
       setError(null);
 
-      const {
-        data: { user: authUser },
-        error: authError,
-      } = await supabase.auth.getUser();
+      setUser(currentUser);
 
-      if (authError) {
-        setError(authError.message);
-        setIsLoading(false);
-        return;
-      }
-
-      if (!authUser) {
-        setUser(null);
-        setProfile(null);
-        setRole(null);
-        setIsLoading(false);
-        return;
-      }
-
-      setUser(authUser);
-
-      const userProfile = await fetchCompleteProfile(authUser.id);
+      const userProfile = await fetchCompleteProfile(currentUser.id);
 
       if (userProfile) {
         setProfile(userProfile);
@@ -375,16 +380,16 @@ export function useUser(): UseUserReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [supabase, fetchCompleteProfile]);
+  }, [fetchCompleteProfile]);
 
   // Refresh user data
   const refresh = useCallback(async () => {
-    if (user?.id) {
+    if (user) {
       // Clear cache for this user
       userCache.delete(user.id);
-      await initializeUser();
+      await initializeUser(user);
     }
-  }, [user?.id, initializeUser]);
+  }, [user, initializeUser]);
 
   // Update profile
   const updateProfile = useCallback(
@@ -466,37 +471,22 @@ export function useUser(): UseUserReturn {
     }
   }, [supabase]);
 
-  // Initialize on mount
+  // React to AuthProvider's user changes
   useEffect(() => {
-    if (!isInitialized.current) {
-      isInitialized.current = true;
-      initializeUser();
+    if (authLoading) return; // wait for AuthProvider to resolve
+
+    if (authUser) {
+      initializeUser(authUser);
+    } else {
+      // signed out
+      setUser(null);
+      setProfile(null);
+      setRole(null);
+      setError(null);
+      setIsLoading(false);
+      userCache.clear();
     }
-  }, [initializeUser]);
-
-  // Listen for auth state changes
-  useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "SIGNED_IN" && session?.user) {
-        setUser(session.user);
-        const userProfile = await fetchCompleteProfile(session.user.id);
-        if (userProfile) {
-          setProfile(userProfile);
-          setRole(userProfile.user_type);
-        }
-      } else if (event === "SIGNED_OUT") {
-        setUser(null);
-        setProfile(null);
-        setRole(null);
-        setError(null);
-        userCache.clear();
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [supabase, fetchCompleteProfile]);
+  }, [authUser, authLoading, initializeUser]);
 
   return {
     user,
@@ -530,6 +520,11 @@ export function useAdminProfile(): AdminProfile | null {
 export function useRegularUserProfile(): RegularUserProfile | null {
   const { profile } = useUser();
   return profile?.user_type === "user" ? profile : null;
+}
+
+export function useSystemOwnerProfile(): SystemOwnerProfile | null {
+  const { profile } = useUser();
+  return profile?.user_type === "system_owner" ? profile : null;
 }
 
 // Hook for checking specific roles

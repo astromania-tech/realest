@@ -4,6 +4,9 @@
 export { default as Header } from "./Header";
 export { default as Footer } from "./Footer";
 
+// Auth Layout Components
+export { AuthHeader, AuthFooter } from "./AuthHeader";
+
 // Dashboard Layout Components
 export { DashboardLayout } from "./DashboardLayout";
 export { DashboardHeader } from "./DashboardHeader";

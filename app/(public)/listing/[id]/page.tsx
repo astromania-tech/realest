@@ -1,687 +1,122 @@
-"use client";
+/**
+ * Listing Detail Page — Server Component wrapper
+ *
+ * Exports `generateMetadata` for dynamic per-listing SEO/OG metadata,
+ * then delegates all interactive rendering to the Client Component.
+ *
+ * Data source: Prisma (same client used by /api/properties/[id]/public)
+ * Mirrors the agent-side public route — listing_source: "agent"
+ */
+import type { Metadata } from "next";
+import { prisma } from "@/lib/prisma";
+import ListingDetailsPage from "./ListingDetailClient";
 
-import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
-import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
-import {
-  Card,
-  Button,
-  Chip,
-  Input,
-  TextArea,
-  Avatar,
-  Separator,
-} from "@heroui/react";
-import {
-  MapPin,
-  Bed,
-  Bath,
-  Ruler,
-  Car,
-  Calendar,
-  Phone,
-  Mail,
-  Share,
-  Heart,
-  CheckCircle,
-  Star,
-  Award,
-} from "lucide-react";
-import { Header, Footer } from "@/components/layout";
+type PageProps = { params: Promise<{ id: string }> };
 
-interface AgentListing {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  currency: string;
-  address: string;
-  city: string;
-  state: string | null;
-  zip_code: string | null;
-  country: string;
-  latitude: number | null;
-  longitude: number | null;
-  property_type: string;
-  listing_type: "sale" | "rent" | "lease";
-  status: string;
-  verification_status: "pending" | "verified" | "rejected";
-  created_at: string;
-  property_details: {
-    bedrooms: number | null;
-    bathrooms: number | null;
-    square_feet: number | null;
-    lot_size: number | null;
-    year_built: number | null;
-    parking_spaces: number | null;
-    furnished: boolean | null;
-    pets_allowed: boolean | null;
-    amenities: string[] | null;
-    utilities_included: string[] | null;
-  } | null;
-  property_media: {
-    id: string;
-    media_type: "image" | "video" | "virtual_tour";
-    file_url: string;
-    file_name: string;
-    is_primary: boolean;
-  }[];
-  agent: {
-    id: string;
-    license_number: string;
-    agency_name: string;
-    specialization: string[];
-    verified: boolean;
-    rating: number | null;
-    agent_profile: {
-      id: string;
-      full_name: string;
-      email: string;
-      phone: string | null;
-      avatar_url: string | null;
+const LISTING_TYPE_LABEL: Record<string, string> = {
+  for_sale: "For Sale",
+  sale: "For Sale",
+  for_rent: "For Rent",
+  rent: "For Rent",
+  for_lease: "For Lease",
+  lease: "For Lease",
+  short_let: "Short Let",
+};
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params;
+
+  const listing = await prisma.properties
+    .findFirst({
+      where: { id, status: "live", listing_source: "agent" },
+      select: {
+        title: true,
+        description: true,
+        city: true,
+        state: true,
+        property_type: true,
+        listing_type: true,
+        bedrooms: true,
+        bathrooms: true,
+        agents: {
+          select: {
+            agency_name: true,
+            profiles: { select: { full_name: true } },
+          },
+        },
+        property_media: {
+          where: { is_featured: true },
+          orderBy: { display_order: "asc" },
+          take: 1,
+          select: { media_url: true },
+        },
+      },
+    })
+    .catch(() => null);
+
+  if (!listing) {
+    return {
+      title: "Listing Not Found | RealEST",
+      description: "This agent listing is no longer available on RealEST.",
+      robots: { index: false },
     };
+  }
+
+  const location = [listing.city, listing.state].filter(Boolean).join(", ");
+
+  const typeLabel = (listing.property_type ?? "Property")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+
+  const beds = listing.bedrooms;
+  const baths = listing.bathrooms ? Number(listing.bathrooms) : null;
+  const specParts = [
+    beds ? `${beds}-Bed` : null,
+    baths ? `${baths}-Bath` : null,
+    typeLabel,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const listingLabel = LISTING_TYPE_LABEL[listing.listing_type ?? ""] ?? "";
+  const agentName =
+    listing.agents?.agency_name ||
+    listing.agents?.profiles?.full_name ||
+    null;
+
+  const baseTitle =
+    listing.title ?? `${specParts}${location ? " in " + location : ""}`;
+  const title = `${baseTitle}${listingLabel ? " · " + listingLabel : ""} | RealEST`;
+
+  const description = listing.description
+    ? listing.description.slice(0, 155)
+    : `Verified ${specParts.toLowerCase()}${location ? " in " + location : ""} listed by ${agentName ?? "a verified agent"} on RealEST.`;
+
+  const ogImageUrl = listing.property_media?.[0]?.media_url ?? undefined;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `https://realest.ng/listing/${id}`,
+      siteName: "RealEST Connect",
+      type: "website",
+      locale: "en_NG",
+      ...(ogImageUrl && {
+        images: [{ url: ogImageUrl, width: 1200, height: 630, alt: baseTitle }],
+      }),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      ...(ogImageUrl && { images: [ogImageUrl] }),
+    },
   };
 }
 
-export default function ListingDetailsPage() {
-  const params = useParams();
-  const propertyId = params.id as string;
-  const [property, setProperty] = useState<AgentListing | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedImage, setSelectedImage] = useState(0);
-  const [inquiryForm, setInquiryForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    message: "",
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [inquirySent, setInquirySent] = useState(false);
-
-  useEffect(() => {
-    const fetchProperty = async () => {
-      setIsLoading(true);
-      const supabase = createClient();
-
-      const { data } = await supabase
-        .from("properties")
-        .select(
-          `
-          *,
-          property_details (*),
-          property_media (*),
-          agent:agents!properties_agent_id_fkey (
-            id,
-            license_number,
-            agency_name,
-            specialization,
-            verified,
-            rating,
-            agent_profile:profiles!agents_profile_id_fkey (
-              id,
-              full_name,
-              email,
-              phone,
-              avatar_url
-            )
-          )
-        `,
-        )
-        .eq("id", propertyId)
-        .eq("listing_source", "agent")
-        .eq("status", "active")
-        .single();
-
-      if (data) {
-        setProperty(data as AgentListing);
-      }
-      setIsLoading(false);
-    };
-
-    if (propertyId) {
-      fetchProperty();
-    }
-  }, [propertyId]);
-
-  const handleInquirySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    try {
-      const supabase = createClient();
-      const { error } = await supabase.from("inquiries").insert({
-        property_id: propertyId,
-        user_email: inquiryForm.email,
-        user_name: inquiryForm.name,
-        user_phone: inquiryForm.phone,
-        message: inquiryForm.message,
-      });
-
-      if (!error) {
-        setInquirySent(true);
-        setInquiryForm({ name: "", email: "", phone: "", message: "" });
-      }
-      setIsSubmitting(false);
-    } catch (error) {
-      console.error("Failed to send inquiry:", error);
-      setIsSubmitting(false);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <>
-        <Header />
-        <div className="min-h-screen bg-background">
-          <div className="container mx-auto px-4 py-8">
-            <div className="animate-pulse space-y-8">
-              <div className="h-96 bg-muted rounded-lg" />
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 space-y-6">
-                  <div className="h-8 bg-muted rounded" />
-                  <div className="h-4 bg-muted rounded w-3/4" />
-                  <div className="h-32 bg-muted rounded" />
-                </div>
-                <div className="h-96 bg-muted rounded" />
-              </div>
-            </div>
-          </div>
-        </div>
-        <Footer />
-      </>
-    );
-  }
-
-  if (!property) {
-    return (
-      <>
-        <Header />
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <Card.Root className="max-w-md">
-            <Card.Content className="text-center py-8">
-              <h2 className="text-xl font-semibold mb-2">Listing Not Found</h2>
-              <p className="text-muted-foreground mb-4">
-                The listing you're looking for doesn't exist or has been removed.
-              </p>
-              <Button asChild variant="primary">
-                <Link href="/">Back to Homepage</Link>
-              </Button>
-            </Card.Content>
-          </Card.Root>
-        </div>
-        <Footer />
-      </>
-    );
-  }
-
-  const primaryImage = property.property_media.find(
-    (media) => media.is_primary,
-  );
-  const galleryImages = property.property_media.filter(
-    (media) => media.media_type === "image",
-  );
-
-  return (
-    <>
-      <Header />
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8">
-          {/* Image Gallery */}
-          <div className="mb-8">
-            <div className="relative h-96 lg:h-[500px] rounded-lg overflow-hidden mb-4">
-              <img
-                src={
-                  galleryImages[selectedImage]?.file_url ||
-                  primaryImage?.file_url ||
-                  "/placeholder.jpg"
-                }
-                alt={property.title}
-                className="w-full h-full object-cover"
-              />
-              {property.verification_status === "verified" && (
-                <div className="absolute top-4 left-4">
-                  <Chip
-                    color="success"
-                    variant="primary"
-                    className="flex items-center gap-1"
-                  >
-                    <CheckCircle className="w-4 h-4" />
-                    Vetted Property
-                  </Chip>
-                </div>
-              )}
-              <div className="absolute top-4 right-4 flex gap-2">
-                <Button variant="secondary" size="sm">
-                  <Share className="w-4 h-4" />
-                </Button>
-                <Button variant="secondary" size="sm">
-                  <Heart className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Thumbnail Gallery */}
-            {galleryImages.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto">
-                {galleryImages.map((image, index) => (
-                  <button
-                    key={image.id}
-                    onClick={() => setSelectedImage(index)}
-                    className={`shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
-                      selectedImage === index
-                        ? "border-primary"
-                        : "border-transparent"
-                    }`}
-                  >
-                    <img
-                      src={image.file_url}
-                      alt={`Property view ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Property Header */}
-              <div>
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h1 className="text-3xl font-bold mb-2">{property.title}</h1>
-                    <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                      <MapPin className="w-4 h-4" />
-                      <span>
-                        {property.address}, {property.city}
-                        {property.state && `, ${property.state}`}
-                      </span>
-                    </div>
-                    <div className="flex gap-4 text-sm text-muted-foreground">
-                      <Chip variant="secondary">
-                        {property.property_type.replace("_", " ")}
-                      </Chip>
-                      <Chip variant="secondary">
-                        For {property.listing_type}
-                      </Chip>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-3xl font-bold text-primary mb-1">
-                      £{property.price.toLocaleString()}
-                    </div>
-                    {property.listing_type === "rent" && (
-                      <div className="text-sm text-muted-foreground">
-                        per month
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Property Details */}
-              <Card.Root>
-                <Card.Header>
-                  <Card.Title>Property Details</Card.Title>
-                </Card.Header>
-                <Card.Content>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {property.property_details?.bedrooms && (
-                      <div className="flex items-center gap-2">
-                        <Bed className="w-5 h-5 text-muted-foreground" />
-                        <div>
-                          <div className="font-medium">
-                            {property.property_details.bedrooms}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            Bedrooms
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    {property.property_details?.bathrooms && (
-                      <div className="flex items-center gap-2">
-                        <Bath className="w-5 h-5 text-muted-foreground" />
-                        <div>
-                          <div className="font-medium">
-                            {property.property_details.bathrooms}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            Bathrooms
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    {property.property_details?.square_feet && (
-                      <div className="flex items-center gap-2">
-                        <Ruler className="w-5 h-5 text-muted-foreground" />
-                        <div>
-                          <div className="font-medium">
-                            {property.property_details.square_feet.toLocaleString()}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            Sq Ft
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    {property.property_details?.parking_spaces && (
-                      <div className="flex items-center gap-2">
-                        <Car className="w-5 h-5 text-muted-foreground" />
-                        <div>
-                          <div className="font-medium">
-                            {property.property_details.parking_spaces}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            Parking
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {property.property_details?.year_built && (
-                    <div className="mt-4 pt-4 border-t">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm">
-                          Built in {property.property_details.year_built}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </Card.Content>
-              </Card.Root>
-
-              {/* Description */}
-              {property.description && (
-                <Card.Root>
-                  <Card.Header>
-                    <Card.Title>Description</Card.Title>
-                  </Card.Header>
-                  <Card.Content>
-                    <p className="text-muted-foreground whitespace-pre-wrap">
-                      {property.description}
-                    </p>
-                  </Card.Content>
-                </Card.Root>
-              )}
-
-              {/* Amenities */}
-              {property.property_details?.amenities &&
-                property.property_details.amenities.length > 0 && (
-                  <Card.Root>
-                    <Card.Header>
-                      <Card.Title>Amenities</Card.Title>
-                    </Card.Header>
-                    <Card.Content>
-                      <div className="flex flex-wrap gap-2">
-                        {property.property_details.amenities.map(
-                          (amenity, index) => (
-                            <Chip key={index} variant="secondary">
-                              {amenity}
-                            </Chip>
-                          ),
-                        )}
-                      </div>
-                    </Card.Content>
-                  </Card.Root>
-                )}
-
-              {/* Map Placeholder */}
-              <Card.Root>
-                <Card.Header>
-                  <Card.Title>Location</Card.Title>
-                </Card.Header>
-                <Card.Content>
-                  <div className="h-64 bg-muted rounded-lg flex items-center justify-center">
-                    <div className="text-center">
-                      <MapPin className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-muted-foreground">
-                        Interactive map would be displayed here
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {property.latitude && property.longitude
-                          ? `Coordinates: ${property.latitude}, ${property.longitude}`
-                          : "Location coordinates not available"}
-                      </p>
-                    </div>
-                  </div>
-                </Card.Content>
-              </Card.Root>
-            </div>
-
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Contact Form */}
-              <Card.Root>
-                <Card.Header>
-                  <Card.Title>Contact Agent</Card.Title>
-                  <Card.Description>
-                    Inquire about this property listing
-                  </Card.Description>
-                </Card.Header>
-                <Card.Content>
-                  {inquirySent ? (
-                    <div className="text-center py-8">
-                      <CheckCircle className="w-12 h-12 text-success mx-auto mb-4" />
-                      <h3 className="font-medium mb-2">Inquiry Sent!</h3>
-                      <p className="text-sm text-muted-foreground">
-                        The agent will get back to you soon.
-                      </p>
-                    </div>
-                  ) : (
-                    <form onSubmit={handleInquirySubmit} className="space-y-4">
-                      <div className="space-y-2">
-                        <label htmlFor="name" className="text-sm font-medium">
-                          Your Name
-                        </label>
-                        <Input
-                          id="name"
-                          placeholder="Enter your full name"
-                          value={inquiryForm.name}
-                          onChange={(e) =>
-                            setInquiryForm((prev) => ({
-                              ...prev,
-                              name: e.target.value,
-                            }))
-                          }
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label htmlFor="email" className="text-sm font-medium">
-                          Email
-                        </label>
-                        <Input
-                          id="email"
-                          type="email"
-                          placeholder="Enter your email"
-                          value={inquiryForm.email}
-                          onChange={(e) =>
-                            setInquiryForm((prev) => ({
-                              ...prev,
-                              email: e.target.value,
-                            }))
-                          }
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label htmlFor="phone" className="text-sm font-medium">
-                          Phone (Optional)
-                        </label>
-                        <Input
-                          id="phone"
-                          type="tel"
-                          placeholder="Enter your phone number"
-                          value={inquiryForm.phone}
-                          onChange={(e) =>
-                            setInquiryForm((prev) => ({
-                              ...prev,
-                              phone: e.target.value,
-                            }))
-                          }
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label htmlFor="message" className="text-sm font-medium">
-                          Message
-                        </label>
-                        <TextArea
-                          id="message"
-                          placeholder="Tell the agent about your interest in this property..."
-                          value={inquiryForm.message}
-                          onChange={(e) =>
-                            setInquiryForm((prev) => ({
-                              ...prev,
-                              message: e.target.value,
-                            }))
-                          }
-                          required
-                          rows={4}
-                        />
-                      </div>
-                      <Button
-                        type="submit"
-                        variant="primary"
-                        className="w-full"
-                        isDisabled={isSubmitting}
-                      >
-                        {isSubmitting ? "Sending..." : "Send Inquiry"}
-                      </Button>
-                    </form>
-                  )}
-                </Card.Content>
-              </Card.Root>
-
-              {/* Agent Info */}
-              <Card.Root>
-                <Card.Header>
-                  <Card.Title>Listed by</Card.Title>
-                </Card.Header>
-                <Card.Content>
-                  <div className="space-y-4">
-                    {/* Agent Profile */}
-                    <div className="flex items-center gap-3">
-                      <Avatar.Root size="lg">
-                        <Avatar.Image
-                          src={
-                            property.agent.agent_profile.avatar_url ||
-                            undefined
-                          }
-                          alt={property.agent.agent_profile.full_name}
-                        />
-                        <Avatar.Fallback>
-                          {property.agent.agent_profile.full_name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
-                        </Avatar.Fallback>
-                      </Avatar.Root>
-                      <div className="flex-1">
-                        <div className="font-medium">
-                          {property.agent.agent_profile.full_name}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          Licensed Agent
-                        </div>
-                      </div>
-                      {property.agent.verified && (
-                        <CheckCircle className="w-5 h-5 text-success" />
-                      )}
-                    </div>
-
-                    <Separator />
-
-                    {/* Agency Info */}
-                    <div>
-                      <div className="text-sm font-medium mb-1">
-                        {property.agent.agency_name}
-                      </div>
-                      <div className="text-xs text-muted-foreground mb-2">
-                        License: {property.agent.license_number}
-                      </div>
-
-                      {/* Specialization */}
-                      {property.agent.specialization &&
-                        property.agent.specialization.length > 0 && (
-                          <div className="mb-3">
-                            <div className="text-xs font-medium text-muted-foreground mb-2">
-                              Specializations
-                            </div>
-                            <div className="flex flex-wrap gap-1">
-                              {property.agent.specialization.map(
-                                (spec, index) => (
-                                  <Chip key={index} size="sm" variant="secondary">
-                                    {spec}
-                                  </Chip>
-                                ),
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                      {/* Rating */}
-                      {property.agent.rating !== null && (
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="flex items-center">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`w-3 h-3 ${
-                                  i < Math.floor(property.agent.rating!)
-                                    ? "fill-yellow-400 text-yellow-400"
-                                    : "text-muted-foreground"
-                                }`}
-                              />
-                            ))}
-                          </div>
-                          <span className="text-xs text-muted-foreground">
-                            {property.agent.rating.toFixed(1)}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    <Separator />
-
-                    {/* Contact Details */}
-                    <div className="space-y-2">
-                      {property.agent.agent_profile.phone && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <Phone className="w-4 h-4 text-muted-foreground" />
-                          <a
-                            href={`tel:${property.agent.agent_profile.phone}`}
-                            className="text-primary hover:underline"
-                          >
-                            {property.agent.agent_profile.phone}
-                          </a>
-                        </div>
-                      )}
-                      {property.agent.agent_profile.email && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <Mail className="w-4 h-4 text-muted-foreground" />
-                          <a
-                            href={`mailto:${property.agent.agent_profile.email}`}
-                            className="text-primary hover:underline"
-                          >
-                            {property.agent.agent_profile.email}
-                          </a>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </Card.Content>
-              </Card.Root>
-            </div>
-          </div>
-        </div>
-      </div>
-      <Footer />
-    </>
-  );
+export default function ListingPage() {
+  return <ListingDetailsPage />;
 }

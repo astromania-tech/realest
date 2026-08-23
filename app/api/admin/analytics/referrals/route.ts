@@ -1,0 +1,100 @@
+/**
+ * GET /api/admin/analytics/referrals
+ *
+ * Returns referral summary data from the waitlist table:
+ *   - Top referrers (sorted by referral_count desc)
+ *   - All referred entries with their referrer info
+ *
+ * Admin-only.
+ */
+import { NextResponse } from 'next/server';
+import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { createServiceClient } from '@/lib/supabase/service';
+
+async function requireAdminUser() {
+  const supabase = await createClient();
+  const { data: { user } } = await getAuthUser();
+  if (!user) return { error: 'Unauthorized', status: 401 };
+  const { data: row } = await supabase.from('users').select('role').eq('id', user.id).single();
+  if (row?.role !== 'admin') return { error: 'Forbidden', status: 403 };
+  return { error: null, status: 200 };
+}
+
+export const openApiGET = {
+  method: 'get',
+  summary: 'Referral analytics',
+  description: 'Referral program summary: top referrers and referred entries (admin-only).',
+  tags: ['admin','analytics'],
+  responses: {
+    200: { description: 'Referral analytics payload' },
+    401: { description: 'Unauthorized' },
+    403: { description: 'Forbidden' },
+  },
+} as const;
+
+export async function GET() {
+  const { error, status } = await requireAdminUser();
+  if (error) return NextResponse.json({ error }, { status });
+
+  const svc = createServiceClient();
+
+  // All waitlist entries with referral data
+  const { data: rows, error: dbErr } = await svc
+    .from('waitlist')
+    .select('id, email, first_name, last_name, referral_code, referred_by, referral_count, status, subscribed_at')
+    .order('referral_count', { ascending: false });
+
+  if (dbErr) return NextResponse.json({ error: dbErr.message }, { status: 500 });
+
+  const all = rows ?? [];
+
+  // Build a lookup map: id → entry
+  const byId: Record<string, typeof all[0]> = {};
+  for (const r of all) byId[r.id] = r;
+
+  const totalReferrals   = all.reduce((s, r) => s + (r.referral_count ?? 0), 0);
+  const totalReferrers   = all.filter((r) => (r.referral_count ?? 0) > 0).length;
+  const totalReferred    = all.filter((r) => r.referred_by !== null).length;
+
+  // Top referrers (cap at 50 for payload size)
+  const topReferrers = all
+    .filter((r) => (r.referral_count ?? 0) > 0)
+    .slice(0, 50)
+    .map((r) => ({
+      id: r.id,
+      email: r.email,
+      name: [r.first_name, r.last_name].filter(Boolean).join(' '),
+      referralCode: r.referral_code,
+      referralCount: r.referral_count ?? 0,
+      status: r.status,
+      joinedAt: r.subscribed_at,
+    }));
+
+  // All referred entries with their referrer's name/email
+  const referred = all
+    .filter((r) => r.referred_by !== null)
+    .map((r) => {
+      const referrer = r.referred_by ? byId[r.referred_by] : null;
+      return {
+        id: r.id,
+        email: r.email,
+        name: [r.first_name, r.last_name].filter(Boolean).join(' '),
+        referralCode: r.referral_code,
+        joinedAt: r.subscribed_at,
+        referredBy: referrer
+          ? {
+              id: referrer.id,
+              email: referrer.email,
+              name: [referrer.first_name, referrer.last_name].filter(Boolean).join(' '),
+              referralCode: referrer.referral_code,
+            }
+          : null,
+      };
+    });
+
+  return NextResponse.json({
+    stats: { totalReferrals, totalReferrers, totalReferred, totalWaitlist: all.length },
+    topReferrers,
+    referred,
+  });
+}

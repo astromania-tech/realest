@@ -8,12 +8,16 @@ import {
   LoadingSpinner,
   ProgressRing,
 } from "@/components/untitledui/StatusComponents";
+import { usePropertyListingForm } from "@/lib/hooks/usePropertyListingForm";
+import { useFileUpload } from "@/lib/hooks/useFileUpload";
+import type { PropertyListingValues } from "@/lib/validations/property";
 
 interface PropertyListingFormProps {
-  onSubmit?: (data: any) => void;
-  onSaveDraft?: (data: any) => void;
+  onSubmit?: (data: PropertyListingValues) => Promise<void>;
+  onSaveDraft?: (data: any) => Promise<void>;
   initialData?: any;
   className?: string;
+  propertyId?: string;
 }
 
 export function PropertyListingForm({
@@ -21,56 +25,160 @@ export function PropertyListingForm({
   onSaveDraft,
   initialData,
   className,
+  propertyId,
 }: PropertyListingFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState({
-    // Basic Details
-    title: "",
-    description: "",
-    propertyType: "",
-    purpose: "rent", // rent, sale
+  const totalSteps = 6;
+  const [draftPropertyId, setDraftPropertyId] = useState<string | undefined>(propertyId);
+  const [isDraftCreating, setIsDraftCreating] = useState(false);
 
-    // Location
-    state: "",
-    lga: "",
-    area: "",
-    address: "",
-    coordinates: { lat: "", lng: "" },
+  // Use custom form hook with validation
+  const {
+    formData,
+    handleInputChange,
+    handleArrayToggle,
+    submitForm,
+    isSubmitting,
+    errors,
+    isValid,
+  } = usePropertyListingForm(onSubmit, onSaveDraft, initialData);
 
-    // Property Details
-    bedrooms: "",
-    bathrooms: "",
-    toilets: "",
-    size: "",
-    yearBuilt: "",
-
-    // Pricing
-    price: "",
-    serviceCharge: "",
-    cautionFee: "",
-    legalFee: "",
-    agentFee: "",
-
-    // Features & Amenities
-    infrastructure: [],
-    amenities: [],
-    security: [],
-
-    // Images & Documents
-    images: [],
-    documents: [],
-
-    // Nigerian Specific
-    hasBQ: false,
-    hasNEPA: false,
-    hasWater: false,
-    isGated: false,
-    hasGoodRoads: false,
-    ...initialData,
+  // Use file upload hook for images
+  const imageUpload = useFileUpload({
+    bucket: 'property-media',
+    propertyId: draftPropertyId,
+    maxFiles: 20,
+    maxFileSize: 10 * 1024 * 1024, // 10MB
+    allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
   });
 
-  const [isLoading, setIsLoading] = useState(false);
-  const totalSteps = 6;
+  // Use file upload hook for documents
+  const documentUpload = useFileUpload({
+    bucket: 'property-documents',
+    propertyId: draftPropertyId,
+    maxFiles: 10,
+    maxFileSize: 5 * 1024 * 1024, // 5MB
+    allowedTypes: [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ],
+  });
+
+  // Sync uploaded image URLs to form data
+  React.useEffect(() => {
+    const imageUrls = imageUpload.files
+      .filter(f => !f.isUploading && !f.error && f.publicUrl)
+      .map(f => f.publicUrl);
+    if (imageUrls.length > 0) {
+      handleInputChange('images', imageUrls);
+    }
+  }, [imageUpload.files, handleInputChange]);
+
+  // Sync uploaded document URLs to form data
+  React.useEffect(() => {
+    const docUrls = documentUpload.files
+      .filter(f => !f.isUploading && !f.error && f.publicUrl)
+      .map(f => ({ url: f.publicUrl, name: f.file.name }));
+    if (docUrls.length > 0) {
+      handleInputChange('documents', docUrls);
+    }
+  }, [documentUpload.files, handleInputChange]);
+
+  // Create draft property when user reaches Step 5 (images) or Step 6 (documents)
+  React.useEffect(() => {
+    async function createDraftProperty() {
+      if (draftPropertyId || isDraftCreating || propertyId) return; // Already have draft or editing existing
+      if (currentStep < 5) return; // Only create when reaching file upload steps
+
+      setIsDraftCreating(true);
+      try {
+        // Use transform function to map property type correctly
+        const mapPropertyType = (type: string) => {
+          const mapping: Record<string, string> = {
+            'Apartment': 'apartment',
+            'Duplex': 'duplex',
+            'Bungalow': 'bungalow',
+            'Boys Quarters (BQ)': 'flat',
+            'Self-contained': 'self_contained',
+            'Mini Flat': 'mini_flat',
+            'Face-me-I-face-you': 'room_and_parlor',
+            'Mansion': 'house',
+            'Terrace': 'terrace',
+            'Semi-detached': 'detached_house',
+            'Detached': 'detached_house',
+            'Penthouse': 'penthouse',
+          };
+          return mapping[type] || type.toLowerCase().replace(/\s+/g, '_');
+        };
+
+        const response = await fetch('/api/properties', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            // Minimal required fields for draft (propertyDraftSchema)
+            title: formData.title || 'Draft Property',
+            property_type: mapPropertyType(formData.propertyType) || 'house',
+            listing_type: formData.purpose === 'rent' ? 'for_rent' : 'for_sale',
+            price: Number(formData.price) || 0,
+            address: formData.address || 'Draft Address',
+            city: formData.lga || formData.area || 'Lagos',
+            
+            // Optional fields (can be empty for draft)
+            description: formData.description || '',
+            state: formData.state || '',
+            latitude: parseFloat(formData.coordinates?.lat) || undefined,
+            longitude: parseFloat(formData.coordinates?.lng) || undefined,
+            country: 'NG',
+            
+            status: 'draft',
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to create draft property');
+        }
+
+        const { property } = await response.json();
+        console.log('✅ Draft property created successfully:', property.id);
+        console.log('📄 Draft property data:', property);
+        setDraftPropertyId(property.id);
+        
+        // Persist to localStorage for recovery
+        localStorage.setItem('draftPropertyId', property.id);
+      } catch (error) {
+        console.error('Failed to create draft property:', error);
+        alert('Unable to save property draft. Please check your internet connection and try again.');
+      } finally {
+        setIsDraftCreating(false);
+      }
+    }
+
+    createDraftProperty();
+    }, [currentStep, draftPropertyId, isDraftCreating, propertyId]);
+  // Recover draft property ID from localStorage on mount
+  React.useEffect(() => {
+    if (!propertyId && !draftPropertyId) {
+      const savedDraftId = localStorage.getItem('draftPropertyId');
+      if (savedDraftId) {
+        // Validate that the draft property still exists
+        fetch(`/api/properties/${savedDraftId}`)
+          .then(res => {
+            if (res.ok) {
+              setDraftPropertyId(savedDraftId);
+              console.log('✅ Recovered draft property from localStorage:', savedDraftId);
+            } else {
+              console.warn('⚠️ Stale draft property ID in localStorage, clearing:', savedDraftId);
+              localStorage.removeItem('draftPropertyId');
+            }
+          })
+          .catch(err => {
+            console.error('❌ Error validating draft property:', err);
+            localStorage.removeItem('draftPropertyId');
+          });
+      }
+    }
+  }, [propertyId, draftPropertyId]);
 
   const nigerianStates = [
     "Abia",
@@ -129,9 +237,14 @@ export function PropertyListingForm({
 
   const infrastructureOptions = [
     "NEPA/Power Supply",
+    "Inverter",
+    "Solar Panels",
     "Borehole/Water Supply",
+    "Water Tank",
+    "Water Treatment System",
     "Internet Connectivity",
     "Good Road Network",
+    "Road Accessibility",
     "Drainage System",
     "Street Lighting",
   ];
@@ -141,12 +254,14 @@ export function PropertyListingForm({
     "Gym",
     "Playground",
     "Garden",
-    "Parking Space",
+    "Parking Spaces",
     "Generator",
     "Air Conditioning",
     "Furnished",
     "Balcony",
     "Elevator",
+    "Built-in Kitchen",
+    "Separate Kitchen",
   ];
 
   const securityOptions = [
@@ -158,21 +273,27 @@ export function PropertyListingForm({
     "Access Control",
   ];
 
-  const handleInputChange = (field: string, value: any) => {
-    setFormData((prev: any) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
+  const bqTypes = [
+    "self_contained",
+    "room_and_parlor",
+    "single_room",
+    "multiple_rooms",
+  ];
 
-  const handleArrayToggle = (field: string, value: string) => {
-    setFormData((prev: any) => ({
-      ...prev,
-      [field]: (prev as any)[field].includes(value)
-        ? (prev as any)[field].filter((item: string) => item !== value)
-        : [...(prev as any)[field], value],
-    }));
-  };
+  const bqConditions = ["excellent", "good", "fair", "needs_renovation"];
+
+  const buildingMaterials = [
+    "concrete",
+    "brick",
+    "wood",
+    "steel",
+    "glass",
+    "other",
+  ];
+
+  const roadAccessibilityOptions = ["all_year", "dry_season_only", "limited"];
+
+  const kitchenTypes = ["built_in", "separate", "none"];
 
   const nextStep = () => {
     if (currentStep < totalSteps) {
@@ -186,16 +307,115 @@ export function PropertyListingForm({
     }
   };
 
-  const handleSubmit = async (isDraft = false) => {
-    setIsLoading(true);
+  const handleFormSubmit = async (isDraft = false) => {
     try {
-      if (isDraft) {
-        await onSaveDraft?.(formData);
-      } else {
-        await onSubmit?.(formData);
+      // Step 1: Validate and prepare property data
+      const validatedData = await submitForm(isDraft);
+      if (!validatedData) return; // Validation failed
+
+      // Step 2: Update draft property or create new one
+      const propertyResponse = await fetch(
+        draftPropertyId ? `/api/properties/${draftPropertyId}` : '/api/properties',
+        {
+          method: draftPropertyId ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...validatedData,
+            status: 'pending_ml_validation', // Update status from draft to pending
+          }),
+        }
+      );
+
+      if (!propertyResponse.ok) {
+        const errorData = await propertyResponse.json();
+        throw new Error(errorData.error || 'Failed to publish property');
       }
-    } finally {
-      setIsLoading(false);
+
+      const { data: createdProperty } = await propertyResponse.json();
+      const newPropertyId = draftPropertyId || createdProperty.id;
+
+      // Step 3: Record uploaded images in property_media table
+      const mediaInsertErrors: string[] = [];
+      for (const uploadedFile of imageUpload.files) {
+        if (uploadedFile.publicUrl && !uploadedFile.error) {
+          try {
+            const mediaResponse = await fetch(`/api/properties/${newPropertyId}/media`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                media_url: uploadedFile.publicUrl,
+                file_name: uploadedFile.file.name,
+                media_type: 'image',
+                is_featured: imageUpload.files.indexOf(uploadedFile) === 0, // First image is featured
+              }),
+            });
+            
+            if (!mediaResponse.ok) {
+              const errorData = await mediaResponse.json();
+              console.error('Media metadata insertion failed:', errorData);
+              mediaInsertErrors.push(`${uploadedFile.file.name}: ${errorData.error || 'Failed to record'}`);
+            } else {
+              console.log('Media metadata recorded:', uploadedFile.file.name);
+            }
+          } catch (error) {
+            console.error('Media metadata insertion error:', error);
+            mediaInsertErrors.push(`${uploadedFile.file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          }
+        }
+      }
+      
+      if (mediaInsertErrors.length > 0) {
+        console.warn('Some media metadata failed to record:', mediaInsertErrors);
+      }
+
+      // Step 4: Record uploaded documents in property_documents table
+      const docInsertErrors: string[] = [];
+      for (const uploadedDoc of documentUpload.files) {
+        if (uploadedDoc.publicUrl && !uploadedDoc.error) {
+          try {
+            const docResponse = await fetch(`/api/properties/${newPropertyId}/documents`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                document_url: uploadedDoc.publicUrl,
+                file_name: uploadedDoc.file.name,
+                document_type: 'other', // You may want to add document type selection in the form
+              }),
+            });
+            
+            if (!docResponse.ok) {
+              const errorData = await docResponse.json();
+              console.error('Document metadata insertion failed:', errorData);
+              docInsertErrors.push(`${uploadedDoc.file.name}: ${errorData.error || 'Failed to record'}`);
+            } else {
+              console.log('Document metadata recorded:', uploadedDoc.file.name);
+            }
+          } catch (error) {
+            console.error('Document metadata insertion error:', error);
+            docInsertErrors.push(`${uploadedDoc.file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          }
+        }
+      }
+      
+      if (docInsertErrors.length > 0) {
+        console.warn('Some document metadata failed to record:', docInsertErrors);
+      }
+
+      // Step 5: Call the onSubmit callback if provided (for parent component handling)
+      if (onSubmit) {
+        await onSubmit(validatedData);
+      }
+
+      // Success - clear draft from localStorage
+      localStorage.removeItem('draftPropertyId');
+      console.log('Property published successfully:', newPropertyId);
+    } catch (error) {
+      console.error('Property submission error:', error);
+      // Error is already handled by submitForm for validation errors
+      // This catches API errors
+      if (error instanceof Error) {
+        alert(`Failed to publish property: ${error.message}`);
+      }
     }
   };
 
@@ -224,6 +444,9 @@ export function PropertyListingForm({
                 <p className="text-xs text-muted-foreground mt-1">
                   Make it descriptive and appealing
                 </p>
+                {errors.title && (
+                  <p className="text-xs text-destructive mt-1">{errors.title}</p>
+                )}
               </div>
 
               <div>
@@ -259,6 +482,9 @@ export function PropertyListingForm({
                 >
                   <option value="rent">For Rent</option>
                   <option value="sale">For Sale</option>
+                  <option value="lease">For Lease</option>
+                  <option value="shortlet">Short Let</option>
+                  <option value="location">Location Only</option>
                 </select>
               </div>
 
@@ -276,8 +502,17 @@ export function PropertyListingForm({
                   className="w-full p-3 border border-input rounded-lg bg-background focus:ring-2 focus:ring-ring resize-none"
                   required
                 />
+                {errors.description && (
+                  <p className="text-xs text-destructive mt-1">{errors.description}</p>
+                )}
               </div>
             </div>
+
+            {errors._form && (
+              <div className="p-4 bg-destructive/10 border border-destructive rounded-lg">
+                <p className="text-sm text-destructive">{errors._form}</p>
+              </div>
+            )}
           </div>
         );
 
@@ -479,6 +714,57 @@ export function PropertyListingForm({
                   className="w-full p-3 border border-input rounded-lg bg-background focus:ring-2 focus:ring-ring"
                 />
               </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Number of Floors
+                </label>
+                <input
+                  type="number"
+                  value={formData.floors}
+                  onChange={(e) => handleInputChange("floors", e.target.value)}
+                  placeholder="e.g. 2"
+                  min="1"
+                  className="w-full p-3 border border-input rounded-lg bg-background focus:ring-2 focus:ring-ring"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Building Material
+                </label>
+                <select
+                  value={formData.buildingMaterial}
+                  onChange={(e) =>
+                    handleInputChange("buildingMaterial", e.target.value)
+                  }
+                  className="w-full p-3 border border-input rounded-lg bg-background"
+                >
+                  <option value="">Select material</option>
+                  {buildingMaterials.map((material) => (
+                    <option key={material} value={material}>
+                      {material.charAt(0).toUpperCase() + material.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Year Renovated
+                </label>
+                <input
+                  type="number"
+                  value={formData.yearRenovated}
+                  onChange={(e) =>
+                    handleInputChange("yearRenovated", e.target.value)
+                  }
+                  placeholder="e.g. 2022"
+                  min="1950"
+                  max={new Date().getFullYear()}
+                  className="w-full p-3 border border-input rounded-lg bg-background focus:ring-2 focus:ring-ring"
+                />
+              </div>
             </div>
 
             {/* Nigerian-Specific Features */}
@@ -514,6 +800,30 @@ export function PropertyListingForm({
                 <label className="flex items-center gap-2">
                   <input
                     type="checkbox"
+                    checked={formData.hasInverter}
+                    onChange={(e) =>
+                      handleInputChange("hasInverter", e.target.checked)
+                    }
+                    className="rounded border-input"
+                  />
+                  <span className="text-sm">Inverter</span>
+                </label>
+
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.hasSolarPanels}
+                    onChange={(e) =>
+                      handleInputChange("hasSolarPanels", e.target.checked)
+                    }
+                    className="rounded border-input"
+                  />
+                  <span className="text-sm">Solar Panels</span>
+                </label>
+
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
                     checked={formData.hasWater}
                     onChange={(e) =>
                       handleInputChange("hasWater", e.target.checked)
@@ -521,6 +831,18 @@ export function PropertyListingForm({
                     className="rounded border-input"
                   />
                   <span className="text-sm">Water Supply</span>
+                </label>
+
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.hasWaterTreatment}
+                    onChange={(e) =>
+                      handleInputChange("hasWaterTreatment", e.target.checked)
+                    }
+                    className="rounded border-input"
+                  />
+                  <span className="text-sm">Water Treatment</span>
                 </label>
 
                 <label className="flex items-center gap-2">
@@ -534,6 +856,171 @@ export function PropertyListingForm({
                   />
                   <span className="text-sm">Gated Community</span>
                 </label>
+
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.hasGoodRoads}
+                    onChange={(e) =>
+                      handleInputChange("hasGoodRoads", e.target.checked)
+                    }
+                    className="rounded border-input"
+                  />
+                  <span className="text-sm">Good Road Network</span>
+                </label>
+              </div>
+
+              {/* Boys Quarters Details */}
+              {formData.hasBQ && (
+                <div className="space-y-4 border-t pt-4">
+                  <h5 className="text-md font-heading font-medium">
+                    Boys Quarters Details
+                  </h5>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        BQ Type
+                      </label>
+                      <select
+                        value={formData.bqType}
+                        onChange={(e) =>
+                          handleInputChange("bqType", e.target.value)
+                        }
+                        className="w-full p-3 border border-input rounded-lg bg-background"
+                      >
+                        <option value="">Select type</option>
+                        {bqTypes.map((type) => (
+                          <option key={type} value={type}>
+                            {type
+                              .replace("_", " ")
+                              .replace(/\b\w/g, (l) => l.toUpperCase())}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        BQ Bathrooms
+                      </label>
+                      <input
+                        type="number"
+                        value={formData.bqBathrooms}
+                        onChange={(e) =>
+                          handleInputChange("bqBathrooms", e.target.value)
+                        }
+                        placeholder="e.g. 1"
+                        min="0"
+                        className="w-full p-3 border border-input rounded-lg bg-background focus:ring-2 focus:ring-ring"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        BQ Condition
+                      </label>
+                      <select
+                        value={formData.bqCondition}
+                        onChange={(e) =>
+                          handleInputChange("bqCondition", e.target.value)
+                        }
+                        className="w-full p-3 border border-input rounded-lg bg-background"
+                      >
+                        <option value="">Select condition</option>
+                        {bqConditions.map((condition) => (
+                          <option key={condition} value={condition}>
+                            {condition.charAt(0).toUpperCase() +
+                              condition.slice(1).replace("_", " ")}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={formData.bqKitchen}
+                        onChange={(e) =>
+                          handleInputChange("bqKitchen", e.target.checked)
+                        }
+                        className="rounded border-input"
+                      />
+                      <span className="text-sm">BQ Kitchen</span>
+                    </label>
+
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={formData.bqSeparateEntrance}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "bqSeparateEntrance",
+                            e.target.checked,
+                          )
+                        }
+                        className="rounded border-input"
+                      />
+                      <span className="text-sm">Separate Entrance</span>
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Additional Details */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Water Tank Capacity (Liters)
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.waterTankCapacity}
+                    onChange={(e) =>
+                      handleInputChange("waterTankCapacity", e.target.value)
+                    }
+                    placeholder="e.g. 2000"
+                    min="0"
+                    className="w-full p-3 border border-input rounded-lg bg-background focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Parking Spaces
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.parkingSpaces}
+                    onChange={(e) =>
+                      handleInputChange("parkingSpaces", e.target.value)
+                    }
+                    placeholder="e.g. 2"
+                    min="0"
+                    className="w-full p-3 border border-input rounded-lg bg-background focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Kitchen Type
+                  </label>
+                  <select
+                    value={formData.kitchenType}
+                    onChange={(e) =>
+                      handleInputChange("kitchenType", e.target.value)
+                    }
+                    className="w-full p-3 border border-input rounded-lg bg-background"
+                  >
+                    <option value="">Select type</option>
+                    {kitchenTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type
+                          .replace("_", " ")
+                          .replace(/\b\w/g, (l) => l.toUpperCase())}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
           </div>
@@ -674,6 +1161,29 @@ export function PropertyListingForm({
                     </label>
                   ))}
                 </div>
+
+                {/* Road Accessibility */}
+                <div className="mt-4">
+                  <label className="block text-sm font-medium mb-2">
+                    Road Accessibility
+                  </label>
+                  <select
+                    value={formData.roadAccessibility}
+                    onChange={(e) =>
+                      handleInputChange("roadAccessibility", e.target.value)
+                    }
+                    className="w-full p-3 border border-input rounded-lg bg-background"
+                  >
+                    <option value="">Select accessibility</option>
+                    {roadAccessibilityOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option
+                          .replace("_", " ")
+                          .replace(/\b\w/g, (l) => l.toUpperCase())}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div>
@@ -712,6 +1222,60 @@ export function PropertyListingForm({
                     </label>
                   ))}
                 </div>
+
+                {/* Security Details */}
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Security Hours
+                    </label>
+                    <select
+                      value={formData.securityHours}
+                      onChange={(e) =>
+                        handleInputChange("securityHours", e.target.value)
+                      }
+                      className="w-full p-3 border border-input rounded-lg bg-background"
+                    >
+                      <option value="">Select hours</option>
+                      <option value="24/7">24/7</option>
+                      <option value="day_only">Day Only</option>
+                      <option value="night_only">Night Only</option>
+                      <option value="none">None</option>
+                    </select>
+                  </div>
+
+                  <label className="flex items-center gap-2 md:col-span-1">
+                    <input
+                      type="checkbox"
+                      checked={formData.hasSecurityLevy}
+                      onChange={(e) =>
+                        handleInputChange("hasSecurityLevy", e.target.checked)
+                      }
+                      className="rounded border-input"
+                    />
+                    <span className="text-sm">Security Levy</span>
+                  </label>
+
+                  {formData.hasSecurityLevy && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Levy Amount (₦)
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.securityLevyAmount}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "securityLevyAmount",
+                            e.target.value,
+                          )
+                        }
+                        placeholder="e.g. 50000"
+                        className="w-full p-3 border border-input rounded-lg bg-background focus:ring-2 focus:ring-ring"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -727,7 +1291,7 @@ export function PropertyListingForm({
             <div className="space-y-6">
               <div>
                 <h4 className="text-lg font-heading font-medium mb-4">
-                  Property Images
+                  Property Images *
                 </h4>
                 <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
                   <div className="text-4xl mb-4">📸</div>
@@ -738,11 +1302,86 @@ export function PropertyListingForm({
                     Upload high-quality images of your property. First image
                     will be the cover photo.
                   </p>
-                  <RealEstButton variant="tertiary">Choose Files</RealEstButton>
+                  <input
+                    type="file"
+                    id="image-upload"
+                    multiple
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={(e) => {
+                      if (e.target.files) {
+                        imageUpload.uploadFiles(e.target.files);
+                      }
+                    }}
+                    className="hidden"
+                  />
+                  <RealEstButton
+                    variant="tertiary"
+                    onClick={() => document.getElementById('image-upload')?.click()}
+                    isLoading={imageUpload.isUploading}
+                  >
+                    {imageUpload.isUploading ? 'Uploading...' : 'Choose Files'}
+                  </RealEstButton>
                   <p className="text-xs text-muted-foreground mt-2">
                     Accepted formats: JPG, PNG, WebP. Max 10MB per image.
                   </p>
                 </div>
+
+                {/* Display uploaded images */}
+                {imageUpload.files.length > 0 && (
+                  <div className="mt-4 grid grid-cols-3 gap-4">
+                    {imageUpload.files.map((file, index) => (
+                      <div key={index} className="relative group">
+                        {file.publicUrl && !file.error && (
+                          <img
+                            src={file.publicUrl}
+                            alt={file.file.name}
+                            className="w-full h-32 object-cover rounded-lg"
+                          />
+                        )}
+                        {file.isUploading && (
+                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
+                            <div className="text-center">
+                              <LoadingSpinner size="sm" />
+                              {file.progress !== undefined && (
+                                <p className="text-white text-xs mt-2">{Math.round(file.progress)}%</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        {file.error && (
+                          <div className="w-full h-32 bg-destructive/10 border border-destructive rounded-lg flex items-center justify-center">
+                            <p className="text-xs text-destructive text-center px-2">
+                              {file.error}
+                            </p>
+                          </div>
+                        )}
+                        {!file.isUploading && !file.error && (
+                          <button
+                            onClick={() => imageUpload.removeFile(index)}
+                            className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Display image upload errors */}
+                {imageUpload.errors.length > 0 && (
+                  <div className="mt-4 p-3 bg-destructive/10 border border-destructive rounded-lg">
+                    {imageUpload.errors.map((error, index) => (
+                      <p key={index} className="text-sm text-destructive">
+                        {error}
+                      </p>
+                    ))}
+                  </div>
+                )}
+
+                {errors.images && (
+                  <p className="text-xs text-destructive mt-2">{errors.images}</p>
+                )}
               </div>
 
               <div>
@@ -757,13 +1396,76 @@ export function PropertyListingForm({
                   <p className="text-sm text-muted-foreground mb-4">
                     Certificate of Occupancy, Survey Plan, Building Plan, etc.
                   </p>
-                  <RealEstButton variant="tertiary">
-                    Choose Documents
+                  <input
+                    type="file"
+                    id="document-upload"
+                    multiple
+                    accept=".pdf,.doc,.docx"
+                    onChange={(e) => {
+                      if (e.target.files) {
+                        documentUpload.uploadFiles(e.target.files);
+                      }
+                    }}
+                    className="hidden"
+                  />
+                  <RealEstButton
+                    variant="tertiary"
+                    onClick={() => document.getElementById('document-upload')?.click()}
+                    isLoading={documentUpload.isUploading}
+                  >
+                    {documentUpload.isUploading ? 'Uploading...' : 'Choose Documents'}
                   </RealEstButton>
                   <p className="text-xs text-muted-foreground mt-2">
                     Accepted formats: PDF, DOC, DOCX. Max 5MB per document.
                   </p>
                 </div>
+
+                {/* Display uploaded documents */}
+                {documentUpload.files.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    {documentUpload.files.map((file, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl">📄</span>
+                          <span className="text-sm font-medium">{file.file.name}</span>
+                        </div>
+                        {file.isUploading && (
+                          <div className="flex items-center gap-2">
+                            <LoadingSpinner size="sm" />
+                            {file.progress !== undefined && (
+                              <span className="text-xs text-muted-foreground">{Math.round(file.progress)}%</span>
+                            )}
+                          </div>
+                        )}
+                        {file.error && (
+                          <span className="text-xs text-destructive">{file.error}</span>
+                        )}
+                        {!file.isUploading && !file.error && (
+                          <button
+                            onClick={() => documentUpload.removeFile(index)}
+                            className="text-destructive hover:text-destructive/80"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Display document upload errors */}
+                {documentUpload.errors.length > 0 && (
+                  <div className="mt-4 p-3 bg-destructive/10 border border-destructive rounded-lg">
+                    {documentUpload.errors.map((error, index) => (
+                      <p key={index} className="text-sm text-destructive">
+                        {error}
+                      </p>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -840,8 +1542,8 @@ export function PropertyListingForm({
         <div className="flex items-center gap-4">
           <RealEstButton
             variant="ghost"
-            onClick={() => handleSubmit(true)}
-            isLoading={isLoading}
+            onClick={() => handleFormSubmit(true)}
+            isLoading={isSubmitting}
           >
             Save Draft
           </RealEstButton>
@@ -853,10 +1555,11 @@ export function PropertyListingForm({
           ) : (
             <RealEstButton
               variant="neon"
-              onClick={() => handleSubmit(false)}
-              isLoading={isLoading}
+              onClick={() => handleFormSubmit(false)}
+              isLoading={isSubmitting}
+              disabled={!isValid && !isSubmitting}
             >
-              {isLoading ? "Publishing..." : "Publish Listing"}
+              {isSubmitting ? "Publishing..." : "Publish Listing"}
             </RealEstButton>
           )}
         </div>

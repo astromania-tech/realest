@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@heroui/react";
-import type { User } from "@supabase/supabase-js";
+import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -15,61 +14,33 @@ import {
   Calendar,
   User as UserIcon,
   LogOut,
+  MapPinHouse,
 } from "lucide-react";
 import { HeaderLogo } from "@/components/ui/RealEstLogo";
 import { ThemeToggleCompact } from "@/components/ui/theme-toggle-wrapper";
+import { ProfileDropdown } from "@/components/realest/ProfileDropdown";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 export default function Header() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const { user } = useAuth();
   const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchUserSession = async () => {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
-
-      if (user) {
-        const { data: userRole } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", user.id)
-          .single();
-        setRole(userRole?.role || null);
-      } else {
-        setRole(null);
-      }
-    };
-
-    fetchUserSession();
-
-    // Listen for auth state changes
+    if (!user) {
+      setRole(null);
+      return;
+    }
     const supabase = createClient();
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", session.user.id)
-          .single()
-          .then(({ data: userRole }) => {
-            setRole(userRole?.role || null);
-          });
-      } else {
-        setRole(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => setRole(data?.role || null));
+  }, [user]);
 
   const handleLogout = async () => {
     setIsLoading(true);
@@ -84,7 +55,7 @@ export default function Header() {
       case "owner":
         return "/owner";
       case "agent":
-        return "/agent/dashboard";
+        return "/agent";
       case "admin":
         return "/admin";
       case "user":
@@ -94,6 +65,7 @@ export default function Header() {
   };
 
   const navigationItems = [
+    { href: "/explore", label: "Explore", icon: MapPinHouse },
     { href: "/buy", label: "Buy", icon: Home },
     { href: "/rent", label: "Rent", icon: TrendingUp },
     { href: "/sell", label: "Sell", icon: Building },
@@ -127,35 +99,16 @@ export default function Header() {
           <div className="hidden md:flex items-center gap-3">
             <ThemeToggleCompact />
             {user ? (
-              <>
-                <Link href={getDashboardUrl()}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="flex flex-wrap justify-center items-center hover:bg-primary/50 p-1 rounded-sm font-semibold gap-2 hover:shadow-sm transition-all duration-200"
-                  >
-                    <UserIcon className="w-4 h-4" />
-                    Dashboard
-                  </Button>
-                </Link>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onPress={handleLogout}
-                  isDisabled={isLoading}
-                  className="flex flex-wrap justify-center items-center hover:text-error/90 hover:bg-error/40 p-1 rounded-sm font-semibold gap-2 hover:shadow-sm transition-all duration-200 text-error"
-                >
-                  <LogOut className="w-4 h-4" />
-                  {isLoading ? "Logging out..." : "Logout"}
-                </Button>
-              </>
+              <div className="flex items-center h-8 w-8 m-auto justify-center border rounded-full">
+                <ProfileDropdown />
+              </div>
             ) : (
               <>
                 <Link href="/login">
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    className="hover:bg-primary/10"
+                    className="border-accent/40 border-2 border-solid"
                   >
                     Log In
                   </Button>
@@ -163,7 +116,7 @@ export default function Header() {
                 <Link href="/register">
                   <Button
                     size="sm"
-                    className="bg-linear-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg"
+                    variant="default"
                   >
                     Sign Up
                   </Button>
@@ -173,18 +126,24 @@ export default function Header() {
           </div>
 
           {/* Mobile Menu Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="md:hidden"
-            onPress={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            {isMobileMenuOpen ? (
-              <X className="w-5 h-5" />
-            ) : (
-              <Menu className="w-5 h-5" />
-            )}
-          </Button>
+          {user ? (
+            <div className="md:hidden flex h-8 w-8 border rounded-full">
+              <ProfileDropdown />
+            </div>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="md:hidden"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
+            </Button>
+          )}
         </div>
 
         {/* Mobile Menu */}
@@ -231,11 +190,11 @@ export default function Header() {
                     <Button
                       variant="ghost"
                       className="w-full justify-start gap-3 text-error hover:text-error hover:bg-error/10"
-                      onPress={() => {
+                      onClick={() => {
                         setIsMobileMenuOpen(false);
                         handleLogout();
                       }}
-                      isDisabled={isLoading}
+                      disabled={isLoading}
                     >
                       <LogOut className="w-4 h-4" />
                       {isLoading ? "Logging out..." : "Logout"}

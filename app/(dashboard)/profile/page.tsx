@@ -1,24 +1,32 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { Card, Button, Chip, Avatar, Separator } from "@heroui/react";
+import { Chip, Avatar } from "@heroui/react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardTitle,
+  CardHeader,
+  Button,
+} from "@/components/ui";
 import {
   Heart,
   Search,
   MessageSquare,
-  Calendar,
   MapPin,
-  DollarSign,
   Eye,
-  Star,
   Home,
-  Building,
-  TrendingUp,
   AlertCircle,
+  Copy,
+  Gift,
+  Share2,
+  Users,
 } from "lucide-react";
+import { useUser } from "@/lib/hooks/useUser";
 
 interface UserDashboardStats {
   savedProperties: number;
@@ -69,8 +77,45 @@ interface UserProfile {
   user_type: string;
 }
 
+interface ReferralMilestone {
+  key: string;
+  count: number;
+  label: string;
+  description: string;
+}
+
+interface RewardEntitlement {
+  id: string;
+  reward_key: string;
+  status: string;
+  granted_at: string;
+  expires_at: string | null;
+  metadata: {
+    reward_label?: string;
+    reward_description?: string;
+    reward_copy?: string;
+  } | null;
+}
+
+interface ReferralSummary {
+  email: string;
+  firstName: string;
+  referralCode: string | null;
+  referralCount: number;
+  currentMilestone: ReferralMilestone | null;
+  nextMilestone: ReferralMilestone | null;
+  queueRank: number | null;
+  queueScore: number | null;
+  persona: string | null;
+  candidateRole: string;
+  entitlements: RewardEntitlement[];
+  launchRewardWindowEndsAt: string | null;
+  shareUrl: string | null;
+}
+
 export default function UserDashboardPage() {
   const router = useRouter();
+  const { user, profile, role } = useUser();
   const [stats, setStats] = useState<UserDashboardStats | null>(null);
   const [savedProperties, setSavedProperties] = useState<SavedProperty[]>([]);
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
@@ -81,22 +126,39 @@ export default function UserDashboardPage() {
   >("saved");
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [referralSummary, setReferralSummary] =
+    useState<ReferralSummary | null>(null);
+  const [referralError, setReferralError] = useState<string | null>(null);
+  const [isReferralLoading, setIsReferralLoading] = useState(true);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteMessage, setInviteMessage] = useState("");
+  const [isSendingInvite, setIsSendingInvite] = useState(false);
+  const [inviteResult, setInviteResult] = useState<string | null>(null);
+
+  const avatarUrl = profile?.avatar_url;
+  const getAvatarFallback = () =>
+    profile?.full_name?.charAt(0) ||
+    user?.email?.charAt(0)?.toUpperCase() ||
+    "U";
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       setIsLoading(true);
       setAuthError(null);
+      setReferralError(null);
 
       try {
         const supabase = createClient();
 
-        // Get current user
+        // Get current user using client-side auth
         const {
           data: { user },
-          error: authError,
+          error: authError
         } = await supabase.auth.getUser();
+        const userRole =
+          user?.app_metadata?.role || user?.user_metadata?.user_type || role;
 
-        if (authError) {
+        if (authError || !user) {
           console.error("Auth error:", authError);
           setAuthError("Authentication failed. Please try logging in again.");
           router.push("/login?redirect=/profile");
@@ -117,9 +179,12 @@ export default function UserDashboardPage() {
 
         if (profileError) {
           console.error("Profile fetch error:", profileError);
-          setAuthError(
-            "Failed to load your profile. Please try refreshing the page.",
-          );
+          if (userRole === "owner" || userRole === "agent") {
+            router.push("/onboarding");
+            return;
+          }
+
+          setAuthError("Failed to load your profile. Please try refreshing the page.");
           setIsLoading(false);
           return;
         }
@@ -131,14 +196,42 @@ export default function UserDashboardPage() {
             phone: profile.phone,
             bio: profile.bio,
             email: user.email || "",
-            user_type: profile.user_type,
+            user_type: role || "user",
           });
         } else {
+          if (userRole === "owner" || userRole === "agent") {
+            router.push("/onboarding");
+            return;
+          }
+
           setAuthError("Profile not found. Please contact support.");
+        }
+
+        setIsReferralLoading(true);
+        try {
+          const referralResponse = await fetch("/api/referral/me", {
+            method: "GET",
+            credentials: "include",
+          });
+          const referralPayload = await referralResponse.json();
+
+          if (!referralResponse.ok || !referralPayload?.ok) {
+            throw new Error(
+              referralPayload?.error || "Could not load referral summary.",
+            );
+          }
+
+          setReferralSummary(referralPayload.summary as ReferralSummary);
+        } catch (referralLoadError) {
+          console.error("Referral summary fetch error:", referralLoadError);
+          setReferralError("Referral data is temporarily unavailable.");
+        } finally {
+          setIsReferralLoading(false);
         }
       } catch (err) {
         console.error("Unexpected error:", err);
         setAuthError("An unexpected error occurred. Please try again.");
+        setIsReferralLoading(false);
       }
 
       // Mock data for now - in real app, these would come from database
@@ -226,6 +319,70 @@ export default function UserDashboardPage() {
     fetchDashboardData();
   }, [router]);
 
+  const copyReferralLink = async () => {
+    if (!referralSummary?.shareUrl) {
+      setInviteResult("Your referral link is not available yet.");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(referralSummary.shareUrl);
+      setInviteResult("Referral link copied to clipboard.");
+    } catch (error) {
+      console.error("Failed to copy referral link:", error);
+      setInviteResult("Unable to copy link. Please copy it manually.");
+    }
+  };
+
+  const handleInviteSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setInviteResult(null);
+
+    if (!inviteEmail.trim()) {
+      setInviteResult("Enter an email address to send an invite.");
+      return;
+    }
+
+    if (!referralSummary?.referralCode) {
+      setInviteResult("Your referral code is not ready yet. Try again shortly.");
+      return;
+    }
+
+    setIsSendingInvite(true);
+
+    try {
+      const response = await fetch("/api/referral/invite", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          inviteeEmail: inviteEmail.trim(),
+          referralCode: referralSummary.referralCode,
+          message: inviteMessage.trim() || undefined,
+        }),
+      });
+
+      const payload = await response.json();
+
+      if (!response.ok || !payload?.ok) {
+        throw new Error(payload?.error || "Could not send referral invite.");
+      }
+
+      setInviteResult("Referral invite sent successfully.");
+      setInviteEmail("");
+      setInviteMessage("");
+    } catch (error) {
+      console.error("Referral invite error:", error);
+      setInviteResult(
+        error instanceof Error ? error.message : "Could not send invite.",
+      );
+    } finally {
+      setIsSendingInvite(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -251,27 +408,27 @@ export default function UserDashboardPage() {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
-          <Card.Root className="max-w-2xl mx-auto">
-            <Card.Content className="py-12 text-center">
+          <Card className="max-w-2xl mx-auto">
+            <CardContent className="py-12 text-center">
               <AlertCircle className="w-16 h-16 text-danger mx-auto mb-6" />
               <h1 className="text-2xl font-bold mb-4">Authentication Error</h1>
               <p className="text-muted-foreground mb-8">{authError}</p>
               <div className="flex gap-4 justify-center">
                 <Button
-                  variant="primary"
-                  onPress={() => router.push("/login?redirect=/profile")}
+                  variant="default"
+                  onClick={() => router.push("/login?redirect=/profile")}
                 >
                   Sign In
                 </Button>
                 <Button
                   variant="secondary"
-                  onPress={() => window.location.reload()}
+                  onClick={() => window.location.reload()}
                 >
                   Try Again
                 </Button>
               </div>
-            </Card.Content>
-          </Card.Root>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -288,7 +445,7 @@ export default function UserDashboardPage() {
               Track your property searches and saved listings.
             </p>
           </div>
-          <Button asChild variant="primary">
+          <Button asChild variant="default">
             <Link href="/search">
               <Search className="w-4 h-4 mr-2" />
               Search Properties
@@ -298,17 +455,27 @@ export default function UserDashboardPage() {
 
         {/* Profile Card */}
         {userProfile && (
-          <Card.Root className="mb-8">
-            <Card.Content className="p-6">
+          <Card className="mb-8">
+            <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-4">
-                  <Avatar.Root size="lg">
-                    <Avatar.Fallback>
-                      {userProfile.full_name?.charAt(0) ||
-                        userProfile.email?.charAt(0) ||
-                        "U"}
-                    </Avatar.Fallback>
-                  </Avatar.Root>
+                  <div className="w-auto h-auto border border-accent rounded-full p-0.5 flex items-center justify-center">
+                    <Avatar className="size-15">
+                      {avatarUrl ? (
+                        <Avatar.Image
+                          alt={profile?.full_name || "User"}
+                          className="rounded-full"
+                          src={avatarUrl}
+                        />
+                      ) : (
+                        <Avatar.Fallback delayMs={600}>
+                          <div className="rounded-full border w-full h-full justify-center items-center flex bg-muted-foreground/10">
+                            {getAvatarFallback()}
+                          </div>
+                        </Avatar.Fallback>
+                      )}
+                    </Avatar>
+                  </div>
                   <div>
                     <h3 className="text-lg font-semibold">
                       {userProfile.full_name || "Anonymous User"}
@@ -330,14 +497,14 @@ export default function UserDashboardPage() {
                   <Link href={`/profile/${userProfile.id}`}>Edit Profile</Link>
                 </Button>
               </div>
-            </Card.Content>
-          </Card.Root>
+            </CardContent>
+          </Card>
         )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card.Root>
-            <Card.Content className="p-6">
+          <Card>
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">
@@ -349,11 +516,11 @@ export default function UserDashboardPage() {
                 </div>
                 <Heart className="w-8 h-8 text-danger" />
               </div>
-            </Card.Content>
-          </Card.Root>
+            </CardContent>
+          </Card>
 
-          <Card.Root>
-            <Card.Content className="p-6">
+          <Card>
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">
@@ -365,11 +532,11 @@ export default function UserDashboardPage() {
                 </div>
                 <Search className="w-8 h-8 text-primary" />
               </div>
-            </Card.Content>
-          </Card.Root>
+            </CardContent>
+          </Card>
 
-          <Card.Root>
-            <Card.Content className="p-6">
+          <Card>
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">
@@ -381,11 +548,11 @@ export default function UserDashboardPage() {
                 </div>
                 <MessageSquare className="w-8 h-8 text-warning" />
               </div>
-            </Card.Content>
-          </Card.Root>
+            </CardContent>
+          </Card>
 
-          <Card.Root>
-            <Card.Content className="p-6">
+          <Card>
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">
@@ -397,17 +564,185 @@ export default function UserDashboardPage() {
                 </div>
                 <Eye className="w-8 h-8 text-info" />
               </div>
-            </Card.Content>
-          </Card.Root>
+            </CardContent>
+          </Card>
         </div>
+
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Gift className="w-5 h-5" />
+              Referral And Rewards
+            </CardTitle>
+            <CardDescription>
+              Track your referral progress and active launch rewards.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isReferralLoading ? (
+              <div className="animate-pulse grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="h-40 bg-muted rounded-lg" />
+                <div className="h-40 bg-muted rounded-lg" />
+              </div>
+            ) : referralError ? (
+              <div className="border border-warning/30 bg-warning/10 rounded-lg p-4 text-sm text-muted-foreground">
+                {referralError}
+              </div>
+            ) : referralSummary ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="rounded-lg border p-3">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Referral Count
+                      </p>
+                      <p className="text-2xl font-semibold">
+                        {referralSummary.referralCount}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border p-3">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Queue Rank
+                      </p>
+                      <p className="text-2xl font-semibold">
+                        {referralSummary.queueRank ?? "-"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border p-4 space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm text-muted-foreground">
+                          Your referral code
+                        </p>
+                        <p className="text-lg font-semibold">
+                          {referralSummary.referralCode ?? "Unavailable"}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={copyReferralLink}
+                        disabled={!referralSummary.shareUrl}
+                      >
+                        <Copy className="w-4 h-4 mr-1" />
+                        Copy Link
+                      </Button>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button asChild size="sm" variant="default">
+                        <Link href="/refer">
+                          <Share2 className="w-4 h-4 mr-1" />
+                          Open Referral Hub
+                        </Link>
+                      </Button>
+                      {referralSummary.currentMilestone && (
+                        <Chip color="success" variant="soft">
+                          Reached {referralSummary.currentMilestone.count}
+                        </Chip>
+                      )}
+                    </div>
+                  </div>
+
+                  {referralSummary.nextMilestone && (
+                    <div className="rounded-lg border p-4">
+                      <p className="text-sm font-medium mb-1">
+                        Next milestone: {referralSummary.nextMilestone.count} referrals
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {referralSummary.nextMilestone.label}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Need {Math.max(referralSummary.nextMilestone.count - referralSummary.referralCount, 0)}
+                        {" "}
+                        more referral(s).
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  <div className="rounded-lg border p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Users className="w-4 h-4" />
+                      <p className="font-medium">Invite Someone Directly</p>
+                    </div>
+                    <form className="space-y-3" onSubmit={handleInviteSubmit}>
+                      <input
+                        type="email"
+                        value={inviteEmail}
+                        onChange={(event) => setInviteEmail(event.target.value)}
+                        className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                        placeholder="friend@example.com"
+                        required
+                      />
+                      <textarea
+                        value={inviteMessage}
+                        onChange={(event) => setInviteMessage(event.target.value)}
+                        className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                        placeholder="Optional personal message"
+                        rows={3}
+                      />
+                      <Button
+                        type="submit"
+                        size="sm"
+                        disabled={isSendingInvite}
+                        className="w-full"
+                      >
+                        {isSendingInvite ? "Sending..." : "Send Invite"}
+                      </Button>
+                    </form>
+                    {inviteResult && (
+                      <p className="text-xs text-muted-foreground mt-3">{inviteResult}</p>
+                    )}
+                  </div>
+
+                  <div className="rounded-lg border p-4">
+                    <p className="font-medium mb-2">Active Entitlements</p>
+                    {referralSummary.entitlements.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        No active rewards yet. Keep inviting to unlock milestones.
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {referralSummary.entitlements.slice(0, 4).map((entitlement) => (
+                          <div
+                            key={entitlement.id}
+                            className="rounded-md border p-2 text-sm"
+                          >
+                            <p className="font-medium">
+                              {entitlement.metadata?.reward_label || entitlement.reward_key}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Granted {new Date(entitlement.granted_at).toLocaleDateString()}
+                              {entitlement.expires_at
+                                ? ` • Expires ${new Date(entitlement.expires_at).toLocaleDateString()}`
+                                : ""}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Join the waitlist and start sharing to unlock rewards.
+              </p>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Main Content */}
         <div className="space-y-6">
           {/* Tab Navigation */}
           <div className="flex gap-2 border-b border-border">
             <Button
-              variant={activeTab === "saved" ? "primary" : "ghost"}
-              onPress={() => setActiveTab("saved")}
+              variant={activeTab === "saved" ? "default" : "ghost"}
+              onClick={() => setActiveTab("saved")}
               className={
                 activeTab === "saved"
                   ? "border-b-2 border-primary rounded-b-none"
@@ -418,8 +753,8 @@ export default function UserDashboardPage() {
               Saved Properties
             </Button>
             <Button
-              variant={activeTab === "searches" ? "primary" : "ghost"}
-              onPress={() => setActiveTab("searches")}
+              variant={activeTab === "searches" ? "default" : "ghost"}
+              onClick={() => setActiveTab("searches")}
               className={
                 activeTab === "searches"
                   ? "border-b-2 border-primary rounded-b-none"
@@ -430,8 +765,8 @@ export default function UserDashboardPage() {
               Recent Searches
             </Button>
             <Button
-              variant={activeTab === "inquiries" ? "primary" : "ghost"}
-              onPress={() => setActiveTab("inquiries")}
+              variant={activeTab === "inquiries" ? "default" : "ghost"}
+              onClick={() => setActiveTab("inquiries")}
               className={
                 activeTab === "inquiries"
                   ? "border-b-2 border-primary rounded-b-none"
@@ -446,24 +781,24 @@ export default function UserDashboardPage() {
           {/* Saved Properties Tab */}
           {activeTab === "saved" && (
             <div className="space-y-6">
-              <Card.Root>
-                <Card.Header>
-                  <Card.Title className="flex items-center gap-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
                     <Heart className="w-5 h-5" />
                     Saved Properties
-                  </Card.Title>
-                  <Card.Description>
+                  </CardTitle>
+                  <CardDescription>
                     Properties you've saved for later
-                  </Card.Description>
-                </Card.Header>
-                <Card.Content>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
                   {savedProperties.length === 0 ? (
                     <div className="text-center py-8">
                       <Heart className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                       <p className="text-muted-foreground mb-4">
                         No saved properties yet
                       </p>
-                      <Button asChild variant="primary" size="sm">
+                      <Button asChild variant="default" size="sm">
                         <Link href="/search">Start Searching</Link>
                       </Button>
                     </div>
@@ -519,32 +854,32 @@ export default function UserDashboardPage() {
                       </div>
                     </div>
                   )}
-                </Card.Content>
-              </Card.Root>
+                </CardContent>
+              </Card>
             </div>
           )}
 
           {/* Recent Searches Tab */}
           {activeTab === "searches" && (
             <div className="space-y-6">
-              <Card.Root>
-                <Card.Header>
-                  <Card.Title className="flex items-center gap-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
                     <Search className="w-5 h-5" />
                     Recent Searches
-                  </Card.Title>
-                  <Card.Description>
+                  </CardTitle>
+                  <CardDescription>
                     Your recent property searches
-                  </Card.Description>
-                </Card.Header>
-                <Card.Content>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
                   {recentSearches.length === 0 ? (
                     <div className="text-center py-8">
                       <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                       <p className="text-muted-foreground mb-4">
                         No recent searches
                       </p>
-                      <Button asChild variant="primary" size="sm">
+                      <Button asChild variant="default" size="sm">
                         <Link href="/search">Start Searching</Link>
                       </Button>
                     </div>
@@ -575,25 +910,25 @@ export default function UserDashboardPage() {
                       ))}
                     </div>
                   )}
-                </Card.Content>
-              </Card.Root>
+                </CardContent>
+              </Card>
             </div>
           )}
 
           {/* Inquiries Tab */}
           {activeTab === "inquiries" && (
             <div className="space-y-6">
-              <Card.Root>
-                <Card.Header>
-                  <Card.Title className="flex items-center gap-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
                     <MessageSquare className="w-5 h-5" />
                     My Inquiries
-                  </Card.Title>
-                  <Card.Description>
+                  </CardTitle>
+                  <CardDescription>
                     Messages you've sent to property owners
-                  </Card.Description>
-                </Card.Header>
-                <Card.Content>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
                   {sentInquiries.length === 0 ? (
                     <div className="text-center py-8">
                       <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
@@ -652,7 +987,7 @@ export default function UserDashboardPage() {
                               </Link>
                             </Button>
                             {inquiry.status === "responded" && (
-                              <Button variant="primary" size="sm">
+                              <Button variant="default" size="sm">
                                 Reply
                               </Button>
                             )}
@@ -661,25 +996,25 @@ export default function UserDashboardPage() {
                       ))}
                     </div>
                   )}
-                </Card.Content>
-              </Card.Root>
+                </CardContent>
+              </Card>
             </div>
           )}
         </div>
 
         {/* Favorite Locations */}
         {stats?.favoriteLocations && stats.favoriteLocations.length > 0 && (
-          <Card.Root className="mt-8">
-            <Card.Header>
-              <Card.Title className="flex items-center gap-2">
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
                 <MapPin className="w-5 h-5" />
                 Favorite Locations
-              </Card.Title>
-              <Card.Description>
+              </CardTitle>
+              <CardDescription>
                 Locations you search most frequently
-              </Card.Description>
-            </Card.Header>
-            <Card.Content>
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
               <div className="flex flex-wrap gap-2">
                 {stats.favoriteLocations.map((location, index) => (
                   <Button key={index} asChild variant="secondary" size="sm">
@@ -692,8 +1027,8 @@ export default function UserDashboardPage() {
                   </Button>
                 ))}
               </div>
-            </Card.Content>
-          </Card.Root>
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>

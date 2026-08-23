@@ -149,7 +149,7 @@ Features:
 ## Next Steps (For Admin/Team)
 
 1. **Create agent dashboard**:
-   - `app/(dashboard)/agent/dashboard/page.tsx`
+   - `app/(dashboard)/agent/page.tsx`
    - Agent analytics, listing management, inquiries
 
 2. **Implement agent profile page**:

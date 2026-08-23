@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { createServiceClient } from "@/lib/supabase/service";
 import type { User } from "@supabase/supabase-js";
 
 // Auth utility types
@@ -9,6 +10,8 @@ export interface AuthResponse {
   user?: User;
   error?: string;
 }
+
+// const createClient = createServiceClient;
 
 export interface PasswordValidation {
   minLength: boolean;
@@ -20,6 +23,7 @@ export interface PasswordValidation {
 
 export interface UserProfile {
   id: string;
+  /** Role of the user — sourced from public.users.role (user_role enum) */
   user_type: "user" | "owner" | "agent" | "admin";
   full_name: string;
   email: string;
@@ -77,31 +81,25 @@ export async function getUserProfile(
 ): Promise<{ success: boolean; profile?: UserProfile; error?: string }> {
   try {
     const supabase = createClient();
-    // Get role from user_roles
-    const { data: userRole, error: roleError } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .single();
 
-    if (roleError) {
-      return { success: false, error: roleError.message };
-    }
-
-    // Get profile data if exists
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("*")
+    // Single query to public.users — role is the single source of truth
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("id, email, phone, full_name, avatar_url, role")
       .eq("id", userId)
       .single();
 
+    if (userError || !userData) {
+      return { success: false, error: userError?.message ?? "User not found" };
+    }
+
     const profileData: UserProfile = {
       id: userId,
-      user_type: userRole.role,
-      full_name: profile?.full_name || "",
-      email: profile?.email || "",
-      phone: profile?.phone,
-      avatar_url: profile?.avatar_url,
+      user_type: userData.role as UserProfile["user_type"],
+      full_name: userData.full_name || "",
+      email: userData.email || "",
+      phone: userData.phone ?? undefined,
+      avatar_url: userData.avatar_url ?? undefined,
     };
 
     return { success: true, profile: profileData };
@@ -152,43 +150,52 @@ export async function signUpWithPassword(
       };
     }
 
-    const supabase = createClient();
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName || "",
-          user_type: userType || "user",
-        },
-      },
+    const response = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, fullName, userType }),
     });
 
-    if (error) {
-      return { success: false, error: error.message };
+    const result = await response.json();
+
+    if (!response.ok) {
+      return { success: false, error: result.error || "Signup failed" };
     }
 
-    // Insert into user_roles table
-    if (data.user) {
-      const { error: roleError } = await supabase.from("user_roles").insert({
-        user_id: data.user.id,
-        role: userType || "user",
-      });
-
-      if (roleError) {
-        console.error("Failed to create user role:", roleError);
-        // Don't fail signup, but log error
-      }
-    }
-
-    return { success: true, user: data.user || undefined };
+    return { success: true, user: result.user };
   } catch (err) {
     return { success: false, error: "An unexpected error occurred" };
   }
 }
 
 /**
- * Send password reset email
+ * Send hybrid password reset (OTP + Link) email
+ * Provides users with both OTP code entry and direct reset link options
+ */
+export async function sendHybridPasswordReset(
+  email: string,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await fetch("/api/auth/forgot-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      return { success: false, error: data.error || "Failed to send reset email" };
+    }
+
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: "Failed to send hybrid password reset" };
+  }
+}
+
+/**
+ * Send password reset email (legacy function)
  */
 export async function sendPasswordResetEmail(
   email: string,
@@ -257,7 +264,8 @@ export async function signOut(): Promise<{ success: boolean; error?: string }> {
 }
 
 /**
- * Send OTP for email verification
+ * Send OTP for magic-link login (passwordless sign-in for existing, confirmed users).
+ * NOT for signup verification — use resendEmailVerification() for that.
  */
 export async function sendOTP(
   email: string,
@@ -307,25 +315,47 @@ export async function verifyOTP(
 }
 
 /**
- * Resend email verification
+ * Verify email using token hash from a Supabase-generated email link.
+ * type: "signup" — for confirming a new account's email address (default)
+ * type: "email"  — for magic-link login tokens
  */
-export async function resendEmailVerification(
-  email: string,
-): Promise<{ success: boolean; error?: string }> {
+export async function verifyEmail(
+  tokenHash: string,
+  type: "signup" | "email" = "signup",
+): Promise<AuthResponse> {
   try {
     const supabase = createClient();
-    const { error } = await supabase.auth.resend({
-      type: "signup",
-      email,
+    const { data, error } = await supabase.auth.verifyOtp({
+      token: tokenHash,
+      email: "", // Supabase requires email for verifyOtp, but it's not actually used for token verification in this context
+      type,
     });
 
     if (error) {
       return { success: false, error: error.message };
     }
 
-    return { success: true };
+    return { success: true, user: data.user || undefined };
   } catch (err) {
-    return { success: false, error: "Failed to resend verification email" };
+    return { success: false, error: "Failed to verify email" };
+  }
+}
+
+/**
+ * Resend email verification
+ */
+export async function resendEmailVerification(
+  email: string,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const response = await fetch(
+      `/api/auth/signup?email=${encodeURIComponent(email.trim().toLowerCase())}`,
+    );
+    const data = await response.json();
+    if (!response.ok) return { success: false, error: data.error || 'Failed to resend' };
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Failed to resend verification email' };
   }
 }
 
@@ -335,9 +365,8 @@ export async function resendEmailVerification(
 export function getRedirectUrl(userType?: string): string {
   switch (userType) {
     case "owner":
-      return "/profile-setup";
     case "agent":
-      return "/agent-onboarding";
+      return "/onboarding";
     case "admin":
       return "/admin";
     case "user":
@@ -378,20 +407,14 @@ export async function hasRole(
  */
 export function formatAuthError(error: string): string {
   const errorMappings: Record<string, string> = {
-    "Invalid login credentials":
-      "The email or password you entered is incorrect. Please try again.",
-    "Email not confirmed":
-      "Please check your email and click the verification link before signing in.",
-    "Too many requests":
-      "Too many login attempts. Please wait a few minutes before trying again.",
-    "User not found":
-      "No account found with this email address. Please check your email or sign up.",
-    "Invalid email": "Please enter a valid email address.",
-    "Password is too short": "Password must be at least 8 characters long.",
-    "Signup is disabled":
-      "New user registration is currently disabled. Please contact support.",
-    "Email already registered":
-      "An account with this email already exists. Please sign in instead.",
+    "Invalid login credentials": "Invalid email or password",
+    "Email not confirmed": "Email not verified. Check your inbox",
+    "Too many requests": "Too many attempts. Wait a few minutes",
+    "User not found": "No account found for this email",
+    "Invalid email": "Enter valid email",
+    "Password is too short": "Password needs 8+ characters",
+    "Signup is disabled": "Signups temporarily disabled",
+    "Email already registered": "Email already in use. Sign in instead"
   };
 
   return errorMappings[error] || error;
@@ -403,6 +426,141 @@ export function formatAuthError(error: string): string {
 export function isValidEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
+}
+
+/**
+ * Handle password reset session initialization from URL parameters
+ */
+export async function handlePasswordResetSession(
+  searchParams: URLSearchParams,
+): Promise<{
+  success: boolean;
+  error?: string;
+  redirectTo?: string;
+  redirectDelay?: number;
+}> {
+  try {
+    const accessToken = searchParams.get("access_token");
+    const refreshToken = searchParams.get("refresh_token");
+    const code = searchParams.get("code");
+    const error = searchParams.get("error");
+    const errorDescription = searchParams.get("error_description");
+
+    console.log("Reset password params:", {
+      accessToken,
+      refreshToken,
+      code,
+      error,
+    });
+
+    // Handle error responses from Supabase
+    if (error) {
+      console.error("Auth error:", error, errorDescription);
+      return {
+        success: false,
+        error:
+          errorDescription ||
+          "Invalid reset link. Please request a new password reset.",
+        redirectTo: "/forgot-password",
+        redirectDelay: 5000,
+      };
+    }
+
+    // Check for PKCE code parameter (modern Supabase flow)
+    if (code) {
+      try {
+        const supabase = createClient();
+        const { data, error: exchangeError } =
+          await supabase.auth.exchangeCodeForSession(code);
+
+        if (exchangeError) {
+          console.error("Code exchange error:", exchangeError);
+          return {
+            success: false,
+            error:
+              "Invalid or expired reset link. Please request a new password reset.",
+            redirectTo: "/forgot-password",
+            redirectDelay: 5000,
+          };
+        } else if (data.session) {
+          console.log("Successfully exchanged code for session");
+          return { success: true };
+        }
+      } catch (err) {
+        console.error("Error exchanging code:", err);
+        return {
+          success: false,
+          error: "Failed to initialize password reset. Please try again.",
+          redirectTo: "/forgot-password",
+          redirectDelay: 3000,
+        };
+      }
+      return { success: false };
+    }
+
+    // Legacy flow: If we have access token and refresh token, set the session
+    if (accessToken && refreshToken) {
+      try {
+        const supabase = createClient();
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          return {
+            success: false,
+            error:
+              "Invalid or expired reset link. Please request a new password reset.",
+            redirectTo: "/forgot-password",
+            redirectDelay: 5000,
+          };
+        } else {
+          // Successfully set session
+          return { success: true };
+        }
+      } catch (err) {
+        console.error("Error setting session:", err);
+        return {
+          success: false,
+          error: "Failed to initialize password reset. Please try again.",
+          redirectTo: "/forgot-password",
+          redirectDelay: 3000,
+        };
+      }
+    }
+
+    // No URL tokens — check if there is already an active session (e.g. the
+    // user arrived here after entering their OTP code, which sets session
+    // cookies server-side without adding tokens to the URL).
+    try {
+      const supabase = createClient();
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData?.session) {
+        console.log("handlePasswordResetSession: existing session found, allowing reset");
+        return { success: true };
+      }
+    } catch {
+      // fall through to the error below
+    }
+
+    return {
+      success: false,
+      error:
+        "No reset token found. Please check your email link or request a new password reset.",
+      redirectTo: "/forgot-password",
+      redirectDelay: 3000,
+    };
+  } catch (err) {
+    console.error("Unexpected error in handlePasswordResetSession:", err);
+    return {
+      success: false,
+      error: "An unexpected error occurred. Please try again.",
+      redirectTo: "/forgot-password",
+      redirectDelay: 3000,
+    };
+  }
 }
 
 /**

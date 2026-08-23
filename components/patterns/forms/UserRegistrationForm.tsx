@@ -386,7 +386,7 @@ export function UserRegistrationForm({
           size="lg"
           className="w-full"
           isLoading={isLoading}
-          isDisabled={
+          disabled={
             !formData.agreeToTerms ||
             formData.password !== formData.confirmPassword
           }

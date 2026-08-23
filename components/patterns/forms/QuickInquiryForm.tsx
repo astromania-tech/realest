@@ -142,7 +142,7 @@ export function QuickInquiryForm({
             type="submit"
             className="w-full"
             isLoading={isLoading}
-            isDisabled={isLoading}
+            disabled={isLoading}
             size="lg"
           >
             Send Inquiry

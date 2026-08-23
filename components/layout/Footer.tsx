@@ -1,13 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Button, Input, Separator } from "@heroui/react";
+import { Button, Input, Separator } from "../ui";
 import {
-  Twitter,
-  Facebook,
-  Instagram,
-  Linkedin,
-  Youtube,
   Mail,
   Phone,
   MapPin,
@@ -15,14 +11,56 @@ import {
   Building,
   TrendingUp,
   Calendar,
-  Shield,
   Award,
   Users,
 } from "lucide-react";
+import { XIcon, FacebookIcon, InstagramIcon, LinkedInIcon, YouTubeIcon } from "@/lib/utils/icon";
 import { FooterLogo } from "@/components/ui/RealEstLogo";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [subscribeError, setSubscribeError] = useState<string | null>(null);
+
+  const handleSubscribe = async () => {
+    if (!email || !email.includes("@")) {
+      setSubscribeError("Please enter a valid email address.");
+      return;
+    }
+    // Derive a first name from the email local part so the API is satisfied
+    const rawLocal = email.split("@")[0];
+    const firstName =
+      rawLocal.split(/[._+\-]/)[0].replace(/\d+$/, "") || "Subscriber";
+    const capitalized = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+
+    setLoading(true);
+    setSubscribeError(null);
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          firstName: capitalized,
+          source: "footer_newsletter",
+        }),
+      });
+      const json = await res.json();
+      if (res.ok || json.isExistingUser) {
+        setSuccess(true);
+        setEmail("");
+      } else {
+        setSubscribeError(json.error ?? "Subscription failed. Please try again.");
+      }
+    } catch {
+      setSubscribeError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const footerLinks = {
     company: [
@@ -52,11 +90,11 @@ export default function Footer() {
   };
 
   const socialLinks = [
-    { href: "#", icon: Twitter, label: "Twitter" },
-    { href: "#", icon: Facebook, label: "Facebook" },
-    { href: "#", icon: Instagram, label: "Instagram" },
-    { href: "#", icon: Linkedin, label: "LinkedIn" },
-    { href: "#", icon: Youtube, label: "YouTube" },
+    { href: "https://x.com/realestconnect", icon: XIcon, label: "X" },
+    { href: "#", icon: FacebookIcon, label: "Facebook" },
+    { href: "https://www.instagram.com/realest.connect", icon: InstagramIcon, label: "Instagram" },
+    { href: "#", icon: LinkedInIcon, label: "LinkedIn" },
+    { href: "#", icon: YouTubeIcon, label: "YouTube" },
   ];
 
   return (
@@ -70,16 +108,36 @@ export default function Footer() {
               Get the latest property listings and market insights delivered to
               your inbox.
             </p>
-            <div className="flex gap-2 max-w-md mx-auto border border-primary/30 rounded-xs focus-within:outline-2 outline-primary/50 focus-within:border-0 focus-within:shadow-lg transition-all duration-200 bg-surface/90 backdrop-blur-lg">
-              <Input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 outline-none bg-transparent border-none focus:ring-0 ml-2"
-              />
-              <Button className="cursor-pointer bg-primary hover:bg-primary/90 p-1 m-0 text-secondary">
-                Subscribe
-              </Button>
-            </div>
+            {success ? (
+              <p className="text-sm text-green-600 font-medium">
+                You&apos;re on the list! We&apos;ll be in touch soon.
+              </p>
+            ) : (
+              <>
+                <div className="flex gap-2 max-w-md mx-auto items-center">
+                  <Input
+                    type="email"
+                    placeholder="Enter your email"
+                    className="flex-1 ml-2"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSubscribe()}
+                    disabled={loading}
+                  />
+                  <Button
+                    variant="default"
+                    className="cursor-pointer rounded-md"
+                    onClick={handleSubscribe}
+                    disabled={loading}
+                  >
+                    {loading ? "Subscribing…" : "Subscribe"}
+                  </Button>
+                </div>
+                {subscribeError && (
+                  <p className="text-sm text-destructive mt-2">{subscribeError}</p>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -170,14 +228,14 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-2 text-muted-foreground text-sm">
                 <Phone className="w-4 h-4" />
-                <span>+1 (555) 123-4567</span>
+                <span>+234 (815) 443-6595</span>
               </div>
               <div className="flex items-start gap-2 text-muted-foreground text-sm">
                 <MapPin className="w-4 h-4 mt-0.5" />
                 <span>
-                  123 Property St
+                  RealEST Marketplace
                   <br />
-                  Real Estate City, RC 12345
+                  Nigeria, 569101
                 </span>
               </div>
             </div>

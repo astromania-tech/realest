@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { RealEstButton } from "@/components/heroui/RealEstButton";
+import { ProfileUpload } from "@/components/realest/ProfileUpload";
 
 interface ProfileSettingsFormProps {
   onSubmit?: (data: any) => void;
@@ -155,6 +156,23 @@ export function ProfileSettingsForm({
       case "personal":
         return (
           <div className="space-y-6">
+            {/* Profile Image Upload */}
+            <div className="flex flex-col items-center space-y-4">
+              <ProfileUpload
+                size="xl"
+                onUploadSuccess={(avatarUrl) => {
+                  handleInputChange("profileImage", avatarUrl);
+                }}
+                onUploadError={(error) => {
+                  console.error("Profile upload error:", error);
+                  // You could add toast notification here
+                }}
+              />
+              <p className="text-sm text-muted-foreground text-center">
+                Click to upload a new profile picture. Maximum file size: 10MB.
+              </p>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-2">
@@ -575,7 +593,7 @@ export function ProfileSettingsForm({
             <RealEstButton
               type="submit"
               isLoading={isLoading}
-              isDisabled={isLoading}
+              disabled={isLoading}
             >
               Save Changes
             </RealEstButton>

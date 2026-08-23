@@ -424,7 +424,7 @@ export function ReviewForm({
           <RealEstButton
             type="submit"
             isLoading={isLoading}
-            isDisabled={
+            disabled={
               isLoading ||
               formData.overallRating === 0 ||
               !formData.reviewText.trim()

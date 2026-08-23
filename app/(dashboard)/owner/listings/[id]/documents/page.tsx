@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Card, Button, Spinner, Chip } from "@heroui/react";
+import { Chip } from "@heroui/react";
+import { Card, CardContent, Button, Input, Spinner } from "@/components/ui";
 import {
   ArrowLeft,
   Upload,
@@ -162,7 +163,7 @@ export default function ListingDocumentsPage() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
             <Link href={`/owner/listings/${propertyId}`}>
-              <Button variant="ghost" size="sm" isIconOnly>
+              <Button variant="ghost" size="icon-sm" >
                 <ArrowLeft className="w-4 h-4" />
               </Button>
             </Link>
@@ -190,8 +191,8 @@ export default function ListingDocumentsPage() {
         </div>
 
         {/* Upload Section */}
-        <Card.Root className="mb-8 bg-surface/90 backdrop-blur-lg border border-border/50 rounded-2xl shadow-lg">
-          <Card.Content className="p-6">
+        <Card className="mb-8 bg-surface/90 backdrop-blur-lg border border-border/50 rounded-2xl shadow-lg">
+          <CardContent className="p-6">
             <div className="text-center">
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Upload className="w-8 h-8 text-primary" />
@@ -204,10 +205,10 @@ export default function ListingDocumentsPage() {
 
               <div className="flex justify-center">
                 <label htmlFor="document-upload">
-                  <Button variant="primary" isDisabled={isUploading}>
+                  <Button variant="default" disabled={isUploading}>
                     {isUploading ? (
                       <>
-                        <Spinner size="sm" className="mr-2" />
+                        <Spinner className="mr-2" />
                         Uploading...
                       </>
                     ) : (
@@ -233,8 +234,8 @@ export default function ListingDocumentsPage() {
                 each.
               </p>
             </div>
-          </Card.Content>
-        </Card.Root>
+          </CardContent>
+        </Card>
 
         {/* Documents List */}
         {documents.length === 0 ? (
@@ -249,7 +250,7 @@ export default function ListingDocumentsPage() {
                 verification.
               </p>
               <label htmlFor="document-upload">
-                <Button variant="primary">
+                <Button variant="default">
                   <Upload className="w-4 h-4 mr-2" />
                   Upload First Document
                 </Button>
@@ -259,11 +260,11 @@ export default function ListingDocumentsPage() {
         ) : (
           <div className="space-y-4">
             {documents.map((document) => (
-              <Card.Root
+              <Card
                 key={document.id}
                 className="bg-surface/90 backdrop-blur-lg border border-border/50 rounded-2xl shadow-lg"
               >
-                <Card.Content className="p-6">
+                <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4 flex-1">
                       <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -326,15 +327,15 @@ export default function ListingDocumentsPage() {
                       </div>
                     </div>
                   </div>
-                </Card.Content>
-              </Card.Root>
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}
 
         {/* Document Requirements */}
-        <Card.Root className="mt-8 bg-primary/5 border border-primary/20 rounded-2xl shadow-lg">
-          <Card.Content className="p-6">
+        <Card className="mt-8 bg-primary/5 border border-primary/20 rounded-2xl shadow-lg">
+          <CardContent className="p-6">
             <h3 className="text-lg font-semibold mb-4">Required Documents</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {documentTypes.slice(0, 4).map((type) => {
@@ -363,8 +364,8 @@ export default function ListingDocumentsPage() {
               Upload required documents to improve your listing's verification
               status and attract more serious buyers.
             </p>
-          </Card.Content>
-        </Card.Root>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

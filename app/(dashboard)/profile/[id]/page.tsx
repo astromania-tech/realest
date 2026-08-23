@@ -4,18 +4,24 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Card, Avatar, Button, Chip } from "@heroui/react";
-import { Header, Footer } from "@/components/layout";
+import { Avatar, Chip } from "@heroui/react";
 import {
-  User,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Button,
+} from "@/components/ui";
+import {
+  Mail,
   Phone,
-  MapPin,
   FileText,
   Calendar,
   Home,
   MessageSquare,
   Star,
 } from "lucide-react";
+import { ProfileUpload } from "@/components/realest/ProfileUpload";
 
 interface UserProfile {
   id: string;
@@ -82,7 +88,7 @@ export default function PublicProfilePage() {
         const { count: totalInquiries } = await supabase
           .from("inquiries")
           .select("*", { count: "exact", head: true })
-          .eq("property_owner_id", userId);
+          .eq("owner_id", userId);
 
         setStats({
           totalListings: totalListings || 0,
@@ -103,13 +109,11 @@ export default function PublicProfilePage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="flex justify-center items-center py-12">
             <div className="text-muted-foreground">Loading profile...</div>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -117,17 +121,15 @@ export default function PublicProfilePage() {
   if (error || !profile) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
         <div className="container mx-auto px-4 py-8">
-          <Card.Root className="max-w-2xl mx-auto">
-            <Card.Content className="py-12 text-center">
+          <Card className="max-w-2xl mx-auto">
+            <CardContent className="py-12 text-center">
               <div className="text-muted-foreground">
                 {error || "Profile not found"}
               </div>
-            </Card.Content>
-          </Card.Root>
+            </CardContent>
+          </Card>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -160,20 +162,20 @@ export default function PublicProfilePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           {/* Profile Header */}
-          <Card.Root className="mb-8">
-            <Card.Content className="p-8">
+          <Card className="mb-8">
+            <CardContent className="p-8">
               <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-                <Avatar.Root size="lg">
+                <ProfileUpload />
+                {/* <Avatar.Root size="lg">
                   <Avatar.Fallback className="text-2xl">
                     {profile.full_name?.charAt(0) ||
                       profile.email?.charAt(0) ||
                       "U"}
                   </Avatar.Fallback>
-                </Avatar.Root>
+                </Avatar.Root> */}
 
                 <div className="flex-1 text-center md:text-left">
                   <h1 className="text-3xl font-bold mb-2">
@@ -212,18 +214,18 @@ export default function PublicProfilePage() {
                   </div>
                 </div>
               </div>
-            </Card.Content>
-          </Card.Root>
+            </CardContent>
+          </Card>
 
           {/* Contact Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card.Root>
-              <Card.Header>
-                <Card.Title>Contact Information</Card.Title>
-              </Card.Header>
-              <Card.Content className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Contact Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <User className="w-5 h-5 text-muted-foreground" />
+                  <Mail className="w-5 h-5 text-muted-foreground" />
                   <div>
                     <p className="text-sm text-muted-foreground">Email</p>
                     <p className="font-medium">{profile.email}</p>
@@ -239,16 +241,16 @@ export default function PublicProfilePage() {
                     </div>
                   </div>
                 )}
-              </Card.Content>
-            </Card.Root>
+              </CardContent>
+            </Card>
 
             {/* Quick Actions */}
-            <Card.Root>
-              <Card.Header>
-                <Card.Title>Actions</Card.Title>
-              </Card.Header>
-              <Card.Content className="space-y-3">
-                <Button variant="primary" className="w-full">
+            <Card>
+              <CardHeader>
+                <CardTitle>Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button variant="default" className="w-full">
                   <MessageSquare className="w-4 h-4 mr-2" />
                   Send Message
                 </Button>
@@ -256,27 +258,26 @@ export default function PublicProfilePage() {
                   <Home className="w-4 h-4 mr-2" />
                   View Listings
                 </Button>
-              </Card.Content>
-            </Card.Root>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Additional Information */}
           {profile.bio && (
-            <Card.Root className="mt-6">
-              <Card.Header>
-                <Card.Title>About</Card.Title>
-              </Card.Header>
-              <Card.Content>
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>About</CardTitle>
+              </CardHeader>
+              <CardContent>
                 <div className="flex gap-3">
                   <FileText className="w-5 h-5 text-muted-foreground mt-0.5" />
                   <p className="text-muted-foreground">{profile.bio}</p>
                 </div>
-              </Card.Content>
-            </Card.Root>
+              </CardContent>
+            </Card>
           )}
         </div>
       </div>
-      <Footer />
     </div>
   );
 }

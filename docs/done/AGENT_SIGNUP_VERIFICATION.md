@@ -149,7 +149,7 @@ Database migration: add_agent_user_type_support
 ## Next Steps After Commit
 
 ### Immediate (Next Session):
-1. Create agent dashboard (`app/(dashboard)/agent/dashboard/page.tsx`)
+1. Create agent dashboard (`app/(dashboard)/agent/page.tsx`)
 2. Create agent profile edit page (`app/(dashboard)/agent/profile/page.tsx`)
 3. Implement agent discovery page for userss
 

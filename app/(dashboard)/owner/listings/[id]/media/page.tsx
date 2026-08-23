@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Card, Button, Spinner, Chip } from "@heroui/react";
+import { Chip } from "@heroui/react";
+import { Card, CardContent, Button, Input, Spinner } from "@/components/ui";
 import {
   ArrowLeft,
   Upload,
@@ -175,7 +176,7 @@ export default function ListingMediaPage() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
             <Link href={`/owner/listings/${propertyId}`}>
-              <Button variant="ghost" size="sm" isIconOnly>
+              <Button variant="ghost" size="icon-sm" >
                 <ArrowLeft className="w-4 h-4" />
               </Button>
             </Link>
@@ -203,8 +204,8 @@ export default function ListingMediaPage() {
         </div>
 
         {/* Upload Section */}
-        <Card.Root className="mb-8 bg-surface/90 backdrop-blur-lg border border-border/50 rounded-2xl shadow-lg">
-          <Card.Content className="p-6">
+        <Card className="mb-8 bg-surface/90 backdrop-blur-lg border border-border/50 rounded-2xl shadow-lg">
+          <CardContent className="p-6">
             <div className="text-center">
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Upload className="w-8 h-8 text-primary" />
@@ -217,10 +218,10 @@ export default function ListingMediaPage() {
 
               <div className="flex justify-center">
                 <label htmlFor="media-upload">
-                  <Button variant="primary" isDisabled={isUploading}>
+                  <Button variant="default" disabled={isUploading}>
                     {isUploading ? (
                       <>
-                        <Spinner size="sm" className="mr-2" />
+                        <Spinner className="mr-2" />
                         Uploading...
                       </>
                     ) : (
@@ -246,8 +247,8 @@ export default function ListingMediaPage() {
                 each.
               </p>
             </div>
-          </Card.Content>
-        </Card.Root>
+          </CardContent>
+        </Card>
 
         {/* Media Grid */}
         {media.length === 0 ? (
@@ -262,7 +263,7 @@ export default function ListingMediaPage() {
                 buyers.
               </p>
               <label htmlFor="media-upload">
-                <Button variant="primary">
+                <Button variant="default">
                   <Upload className="w-4 h-4 mr-2" />
                   Upload First Photo
                 </Button>
@@ -272,7 +273,7 @@ export default function ListingMediaPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {media.map((item) => (
-              <Card.Root
+              <Card
                 key={item.id}
                 className="bg-surface/90 backdrop-blur-lg border border-border/50 rounded-2xl shadow-lg overflow-hidden"
               >
@@ -309,8 +310,7 @@ export default function ListingMediaPage() {
                   <div className="absolute top-3 right-3 flex gap-2">
                     <Button
                       variant="secondary"
-                      size="sm"
-                      isIconOnly
+                      size="icon-sm"
                       onClick={() => handleSetFeatured(item.id)}
                       className={
                         item.is_featured ? "bg-accent/20 text-accent" : ""
@@ -324,8 +324,7 @@ export default function ListingMediaPage() {
                     </Button>
                     <Button
                       variant="secondary"
-                      size="sm"
-                      isIconOnly
+                      size="icon-sm"
                       onClick={() => handleDeleteMedia(item.id)}
                       className="bg-destructive/20 text-destructive hover:bg-destructive/30"
                     >
@@ -335,7 +334,7 @@ export default function ListingMediaPage() {
                 </div>
 
                 {/* Media Info */}
-                <Card.Content className="p-4">
+                <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate mb-1">
@@ -357,15 +356,15 @@ export default function ListingMediaPage() {
                       {item.type}
                     </Chip>
                   </div>
-                </Card.Content>
-              </Card.Root>
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}
 
         {/* Tips */}
-        <Card.Root className="mt-8 bg-primary/5 border border-primary/20 rounded-2xl shadow-lg">
-          <Card.Content className="p-6">
+        <Card className="mt-8 bg-primary/5 border border-primary/20 rounded-2xl shadow-lg">
+          <CardContent className="p-6">
             <h3 className="text-lg font-semibold mb-4">
               Photo Tips for Better Listings
             </h3>
@@ -397,8 +396,8 @@ export default function ListingMediaPage() {
                 </p>
               </div>
             </div>
-          </Card.Content>
-        </Card.Root>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

@@ -241,7 +241,7 @@ export function SidebarNavigation({
       { id: 'profile', label: 'Profile', icon: '👤', href: '/profile' },
     ],
     agent: [
-      { id: 'dashboard', label: 'Dashboard', icon: '🏠', href: '/agent/dashboard' },
+      { id: 'dashboard', label: 'Dashboard', icon: '🏠', href: '/agent' },
       { id: 'properties', label: 'Manage Properties', icon: '🏘️', href: '/agent/properties' },
       { id: 'clients', label: 'Clients', icon: '👥', href: '/agent/clients' },
       { id: 'leads', label: 'Leads', icon: '🎯', href: '/agent/leads' },
@@ -252,7 +252,7 @@ export function SidebarNavigation({
     ],
     admin: [
       { id: 'dashboard', label: 'Admin Dashboard', icon: '⚙️', href: '/admin' },
-      { id: 'properties', label: 'All Properties', icon: '🏘️', href: '/admin/properties' },
+      { id: 'properties', label: 'All Properties', icon: '🏘️', href: '/admin/validation' },
       { id: 'users', label: 'Users', icon: '👥', href: '/admin/users' },
       { id: 'agents', label: 'Agents', icon: '🤵', href: '/admin/agents' },
       { id: 'verification', label: 'Verification Queue', icon: '✅', href: '/admin/verification' },

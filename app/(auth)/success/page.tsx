@@ -1,103 +1,12 @@
-"use client";
+import type { Metadata } from "next";
+import SuccessPage from "./SuccessClient";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Button, Card } from "@heroui/react";
-import { CheckCircle, Mail } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+export const metadata: Metadata = {
+  title: "Check Your Email",
+  description: "We've sent a verification link to your email. Open it to activate your RealEST account.",
+  robots: { index: false },
+};
 
-export default function SignUpSuccessPage() {
-  const router = useRouter();
-  const [isRedirecting, setIsRedirecting] = useState(false);
-
-  useEffect(() => {
-    const checkUserAndRedirect = async () => {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (user) {
-        const { data: userRole } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", user.id)
-          .single();
-
-        if (userRole?.role) {
-          setIsRedirecting(true);
-          setTimeout(() => {
-            switch (userRole.role) {
-              case "agent":
-                router.push("/agent-onboarding");
-                break;
-              case "owner":
-                router.push("/profile-setup");
-                break;
-              case "user":
-              default:
-                router.push("/profile");
-                break;
-            }
-          }, 3000); // Redirect after 3 seconds
-        }
-      }
-    };
-
-    checkUserAndRedirect();
-  }, [router]);
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <Card.Root className="w-full max-w-md">
-        <Card.Header className="text-center">
-          <div className="flex justify-center mb-4">
-            <CheckCircle className="w-16 h-16 text-success" />
-          </div>
-          <Card.Title className="text-2xl font-bold">
-            Account Created!
-          </Card.Title>
-          <Card.Description>
-            Welcome to RealEST - where every property is verified
-          </Card.Description>
-        </Card.Header>
-
-        <Card.Content className="space-y-6">
-          <div className="text-center space-y-4">
-            <div className="flex items-center justify-center gap-2 text-muted-foreground">
-              <Mail className="w-4 h-4" />
-              <span className="text-sm">
-                Check your email to verify your account
-              </span>
-            </div>
-
-            <div className="bg-muted p-4 rounded-lg">
-              <p className="text-sm">
-                We've sent you a verification link. Please check your email and
-                click the link to activate your account.
-              </p>
-              {isRedirecting && (
-                <p className="text-sm mt-2 text-primary">
-                  Redirecting you to complete your profile setup...
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <Button asChild variant="primary" className="w-full">
-              <Link href="/login">Go to Sign In</Link>
-            </Button>
-
-            <div className="text-center">
-              <Link href="/" className="text-sm">
-                Back to Homepage
-              </Link>
-            </div>
-          </div>
-        </Card.Content>
-      </Card.Root>
-    </div>
-  );
+export default function EmailSentPage() {
+  return <SuccessPage />;
 }

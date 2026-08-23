@@ -1,5 +1,5 @@
 {
-  "name": "RealEST - Find Your Next Move",
+  "name": "RealEST Connect - Find Your Next Move",
   "short_name": "RealEST",
   "description": "Nigeria's premier geo-verified property marketplace. Find verified properties with no duplicates.",
   "start_url": "/",
@@ -9,24 +9,50 @@
   "orientation": "portrait",
   "scope": "/",
   "lang": "en-NG",
+  "dir": "ltr",
   "categories": ["business", "productivity", "lifestyle"],
   "icons": [
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any"
     },
     {
-      "src": "/apple-touch-icon.png",
-      "sizes": "180x180",
-      "type": "image/png"
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "shortcuts": [
@@ -38,7 +64,8 @@
       "icons": [
         {
           "src": "/icon-search.png",
-          "sizes": "96x96"
+          "sizes": "96x96",
+          "type": "image/png"
         }
       ]
     },
@@ -46,13 +73,23 @@
       "name": "List Property",
       "short_name": "List",
       "description": "List your property for verification",
-      "url": "/dashboard/owner/new",
+      "url": "/dashboard/owner/listings/new",
       "icons": [
         {
           "src": "/icon-add.png",
-          "sizes": "96x96"
+          "sizes": "96x96",
+          "type": "image/png"
         }
       ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "RealEST Connect - Property Marketplace"
     }
   ],
   "related_applications": [

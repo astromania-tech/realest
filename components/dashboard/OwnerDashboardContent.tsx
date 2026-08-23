@@ -58,7 +58,7 @@ export default function OwnerDashboardContent({
             Manage your properties and inquiries
           </p>
         </div>
-        <Link href="/owner/list-property">
+        <Link href="/owner/listings/new">
           <Button className="gap-2">
             <Plus className="w-4 h-4" />
             List New Property

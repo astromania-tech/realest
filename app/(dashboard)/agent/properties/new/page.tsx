@@ -1,19 +1,18 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { getAuthUser } from "@/lib/supabase/server"
+import { prisma } from "@/lib/prisma"
 import { PropertyForm } from "@/components/agent/PropertyForm"
 
 export default async function NewPropertyPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect("/auth/login?redirect=/agent/properties/new")
+  const { data: { user } } = await getAuthUser()
+  if (!user) redirect("/login?redirect=/agent/properties/new")
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, user_type")
-    .eq("id", user.id)
-    .single()
+  const userData = await prisma.users.findUnique({
+    where: { id: user.id },
+    select: { role: true },
+  })
 
-  if (!profile || profile.user_type !== "agent") redirect("/")
+  if (!userData || userData.role !== "agent") redirect("/")
 
   return (
     <div className="space-y-6">

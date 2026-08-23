@@ -283,7 +283,7 @@ app/
 └── my-inquiries/            # Inquiry tracking
 ```
 
-**Role-Based Rendering**: Single `/profile` page renders different UI based on `profiles.user_type`:
+**Role-Based Rendering**: Single `/profile` page renders different UI based on `users.role` (accessed via `useUser()` hook's `role` field — ⚠️ `profiles` has no `user_type` column):
 - **user**: Saved properties, inquiries sent, favorites
 - **agent**: Client management, listings from `/listing`, analytics
 - **owner**: Properties from `/property`, owner analytics
@@ -332,7 +332,7 @@ app/
 
 **Database Support**:
 - New `agents` table with profile_id FK, license_number, specialization, verification status
-- Updated `profiles.user_type` to include 'agent'
+- Role stored as `users.role = 'agent'` (UserRole enum) — `profiles` has no `user_type` column
 - New `properties.agent_id` FK to agents table
 - New `properties.listing_source` ('owner' | 'agent') to distinguish
 
@@ -613,7 +613,7 @@ app/(dashboard)/
 
 **Implementation**:
 - `agents` table: Stores agent-specific metadata (license, agency, specialization, rating, stats)
-- `profiles.user_type` updated to include 'agent'
+- Role stored as `users.role = 'agent'` (UserRole enum) — role lives on `users`, not `profiles`
 - `agents.profile_id` (FK) - one-to-one with profiles
 - `properties.agent_id` (FK) - many-to-one relationship
 

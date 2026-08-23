@@ -1,0 +1,28 @@
+name: Generated Artifacts Check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  openapi-spec:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Regenerate OpenAPI spec
+        run: node scripts/generate-api-spec.mjs
+
+      - name: Verify generated spec is committed
+        run: git diff --exit-code -- lib/openapi/generated.json

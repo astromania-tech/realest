@@ -8,11 +8,11 @@ import { MessageSquare, Calendar, MapPin, Eye } from "lucide-react";
 
 interface SentInquiry {
   id: string;
-  property_title: string;
+  // property_title: string; //
   property_id: string;
   message: string;
   status: string;
-  sent_at: string;
+  created_at: string;
   owner_response?: string;
   properties: {
     address: string;
@@ -29,18 +29,21 @@ export default function MyInquiriesPage() {
       const supabase = createClient();
       const { data: user } = await supabase.auth.getUser();
 
-      if (!user.user) return;
+      if (!user.user) {
+        setInquiries([]);
+        setIsLoading(false);
+        return;
+      }
 
       const { data, error } = await supabase
         .from("inquiries")
         .select(
           `
           id,
-          property_title,
           property_id,
           message,
           status,
-          sent_at,
+          created_at,
           owner_response,
           properties (
             address,
@@ -49,7 +52,7 @@ export default function MyInquiriesPage() {
         `,
         )
         .eq("user_id", user.user.id)
-        .order("sent_at", { ascending: false });
+        .order("created_at", { ascending: false });
 
       if (!error && data) {
         setInquiries(data);
@@ -146,7 +149,7 @@ export default function MyInquiriesPage() {
                           href={`/property/${inquiry.property_id}`}
                           className="text-h3 font-semibold hover:text-primary transition-colors line-clamp-1"
                         >
-                          {inquiry.property_title}
+                          {/* {inquiry.property_title} */}
                         </Link>
                         <Chip
                           variant="secondary"
@@ -186,7 +189,7 @@ export default function MyInquiriesPage() {
                           <Calendar className="w-4 h-4" />
                           <span>
                             Sent{" "}
-                            {new Date(inquiry.sent_at).toLocaleDateString()}
+                            {new Date(inquiry.created_at).toLocaleDateString()}
                           </span>
                         </div>
                         {inquiry.status === "viewed" && (

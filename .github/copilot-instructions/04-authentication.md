@@ -138,7 +138,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       options: {
         data: {
           full_name: data.full_name,
-          user_type: data.user_type
+          user_type: data.user_type  // passed via raw_user_meta_data; DB trigger reads this
+                                     // and casts it to users.role (UserRole enum)
         }
       }
     })
@@ -187,6 +188,8 @@ export function OwnerDashboard() {
     if (!isLoading && !user) {
       router.push('/auth/login?redirect=/owner')
     }
+    // ⚠️ profile.user_type is sourced from users.role via getUserProfile() in lib/auth.ts
+    // Never query profiles.user_type directly — that column does not exist
     if (profile && profile.user_type !== 'owner' && profile.user_type !== 'admin') {
       router.push('/') // Unauthorized
     }
@@ -222,14 +225,14 @@ export default async function OwnerDashboardPage() {
     redirect('/auth/login?redirect=/owner')
   }
 
-  // Fetch user profile with role check
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
+  // ⚠️ Role check: query users table — profiles has NO user_type column
+  const { data: userData } = await supabase
+    .from('users')
+    .select('role')
     .eq('id', user.id)
     .single()
 
-  if (!profile || (profile.user_type !== 'owner' && profile.user_type !== 'admin')) {
+  if (!userData || (userData.role !== 'owner' && userData.role !== 'admin')) {
     redirect('/')
   }
 
@@ -268,14 +271,14 @@ export async function POST(request: Request) {
     )
   }
 
-  // Verify user is property owner or admin
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('user_type')
+  // ⚠️ Role check: query users table — profiles has NO user_type column
+  const { data: userData } = await supabase
+    .from('users')
+    .select('role')
     .eq('id', user.id)
     .single()
 
-  if (!profile || !['owner', 'admin'].includes(profile.user_type)) {
+  if (!userData || !['owner', 'admin'].includes(userData.role)) {
     return NextResponse.json(
       { error: 'Forbidden - Property owners only' },
       { status: 403 }
@@ -373,15 +376,15 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url)
     }
 
-    // Role-based access control
+    // Role-based access control — query users table (profiles has NO user_type column)
     if (pathname.startsWith('/admin')) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('user_type')
+      const { data: userData } = await supabase
+        .from('users')
+        .select('role')
         .eq('id', user.id)
         .single()
 
-      if (profile?.user_type !== 'admin') {
+      if (userData?.role !== 'admin') {
         return NextResponse.redirect(new URL('/', request.url))
       }
     }
@@ -412,12 +415,13 @@ CREATE POLICY "users_update_own_profile" ON profiles
   USING (auth.uid() = id);
 
 -- Admins can read all profiles
+-- ⚠️ Role check uses users.role, NOT profiles.user_type
 CREATE POLICY "admins_read_all_profiles" ON profiles
   FOR SELECT
   USING (
     EXISTS (
-      SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND user_type = 'admin'
+      SELECT 1 FROM users
+      WHERE id = auth.uid() AND role = 'admin'
     )
   );
 ```
@@ -445,12 +449,13 @@ CREATE POLICY "owners_update_own_properties" ON properties
   USING (owner_id = auth.uid());
 
 -- Admins can read all properties
+-- ⚠️ Role check uses users.role, NOT profiles.user_type
 CREATE POLICY "admins_read_all_properties" ON properties
   FOR SELECT
   USING (
     EXISTS (
-      SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND user_type = 'admin'
+      SELECT 1 FROM users
+      WHERE id = auth.uid() AND role = 'admin'
     )
   );
 
@@ -459,8 +464,8 @@ CREATE POLICY "admins_update_verification" ON properties
   FOR UPDATE
   USING (
     EXISTS (
-      SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND user_type = 'admin'
+      SELECT 1 FROM users
+      WHERE id = auth.uid() AND role = 'admin'
     )
   );
 ```

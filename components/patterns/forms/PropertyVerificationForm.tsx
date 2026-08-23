@@ -640,7 +640,7 @@ export function PropertyVerificationForm({
                   variant="danger"
                   onClick={handleReject}
                   isLoading={isLoading}
-                  isDisabled={isLoading || !formData.rejectionReason.trim()}
+                  disabled={isLoading || !formData.rejectionReason.trim()}
                 >
                   Reject Property
                 </RealEstButton>
@@ -649,7 +649,7 @@ export function PropertyVerificationForm({
                 <RealEstButton
                   type="submit"
                   isLoading={isLoading}
-                  isDisabled={isLoading || formData.recommendation === 'pending'}
+                  disabled={isLoading || formData.recommendation === 'pending'}
                 >
                   {formData.recommendation === 'approve' ? 'Approve Property' : 'Conditional Approval'}
                 </RealEstButton>

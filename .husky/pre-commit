@@ -17,7 +17,7 @@ echo ""
 
 # Run linting on staged files
 echo "🔧 Running ESLint on staged files..."
-npx --no lint-staged
+npx lint-staged
 if [ $? -ne 0 ]; then
   echo "❌ Linting errors found. Commit aborted."
   echo "Fix linting errors and try again."

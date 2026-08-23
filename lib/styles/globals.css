@@ -1,6 +1,6 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
-@import './tokens/colors.css';
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "./tokens/colors.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -10,64 +10,64 @@
    ================================================================ */
 
 @font-face {
-  font-family: 'Lufga';
-  src: url('/fonts/lufga/LufgaRegular.ttf') format('truetype');
+  font-family: "Lufga";
+  src: url("/fonts/lufga/LufgaRegular.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Lufga';
-  src: url('/fonts/lufga/LufgaBold.ttf') format('truetype');
+  font-family: "Lufga";
+  src: url("/fonts/lufga/LufgaBold.ttf") format("truetype");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Neulis Neue';
-  src: url('/fonts/neulis/Neulis_Neue_Regular.otf') format('opentype');
+  font-family: "Neulis Neue";
+  src: url("/fonts/neulis/Neulis_Neue_Regular.otf") format("opentype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Neulis Neue';
-  src: url('/fonts/neulis/Neulis_Neue_Bold.otf') format('opentype');
+  font-family: "Neulis Neue";
+  src: url("/fonts/neulis/Neulis_Neue_Bold.otf") format("opentype");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Space Grotesk';
-  src: url('/fonts/space-grotesk/SpaceGrotesk-Regular.ttf') format('truetype');
+  font-family: "Space Grotesk";
+  src: url("/fonts/space-grotesk/SpaceGrotesk-Regular.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Space Grotesk';
-  src: url('/fonts/space-grotesk/SpaceGrotesk-Medium.ttf') format('truetype');
+  font-family: "Space Grotesk";
+  src: url("/fonts/space-grotesk/SpaceGrotesk-Medium.ttf") format("truetype");
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Space Grotesk';
-  src: url('/fonts/space-grotesk/SpaceGrotesk-Bold.ttf') format('truetype');
+  font-family: "Space Grotesk";
+  src: url("/fonts/space-grotesk/SpaceGrotesk-Bold.ttf") format("truetype");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'JetBrains Mono';
-  src: url('/fonts/jetbrains-mono/JetBrainsMono-Regular.ttf') format('truetype');
+  font-family: "JetBrains Mono";
+  src: url("/fonts/jetbrains-mono/JetBrainsMono-Regular.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -80,10 +80,10 @@
 
 @theme inline {
   /* Font Families */
-  --font-display: 'Lufga', 'Playfair Display', serif;
-  --font-heading: 'Neulis Neue', 'Space Grotesk', sans-serif;
-  --font-body: 'Space Grotesk', 'Open Sauce Sans', 'Inter', sans-serif;
-  --font-mono: 'JetBrains Mono', 'SF Mono', 'Monaco', monospace;
+  --font-display: "Lufga", "Playfair Display", serif;
+  --font-heading: "Neulis Neue", "Space Grotesk", sans-serif;
+  --font-body: "Space Grotesk", "Open Sauce Sans", "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", "Monaco", monospace;
 
   /* Core Color System (Using RealEST tokens) */
   --color-background: var(--background);
@@ -129,42 +129,50 @@
   --color-chart-8: var(--chart-8);
 
   /* Border Radius (RealEST Design System) */
-  --radius-xs: 0.25rem;    /* 4px */
-  --radius-sm: 0.375rem;   /* 6px */
-  --radius-md: 0.625rem;   /* 10px */
-  --radius-lg: 1rem;       /* 16px */
-  --radius-xl: 1.5rem;     /* 24px */
-  --radius-2xl: 2rem;      /* 32px */
+  --radius-xs: 0.25rem; /* 4px */
+  --radius-sm: 0.375rem; /* 6px */
+  --radius-md: 0.625rem; /* 10px */
+  --radius-lg: 1rem; /* 16px */
+  --radius-xl: 1.5rem; /* 24px */
+  --radius-2xl: 2rem; /* 32px */
   --radius-full: 9999px;
 
   /* Component Specific Radii */
-  --radius: var(--radius-md);  /* Default radius */
+  --radius: var(--radius-md); /* Default radius */
 
   /* Spacing System (4px base) */
-  --space-1: 0.25rem;   /* 4px */
-  --space-2: 0.5rem;    /* 8px */
-  --space-3: 0.75rem;   /* 12px */
-  --space-4: 1rem;      /* 16px */
-  --space-5: 1.25rem;   /* 20px */
-  --space-6: 1.5rem;    /* 24px */
-  --space-7: 1.75rem;   /* 28px */
-  --space-8: 2rem;      /* 32px */
-  --space-10: 2.5rem;   /* 40px */
-  --space-12: 3rem;     /* 48px */
-  --space-16: 4rem;     /* 64px */
-  --space-20: 5rem;     /* 80px */
-  --space-24: 6rem;     /* 96px */
-  --space-28: 7rem;     /* 112px */
-  --space-32: 8rem;     /* 128px */
+  --space-1: 0.25rem; /* 4px */
+  --space-2: 0.5rem; /* 8px */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem; /* 16px */
+  --space-5: 1.25rem; /* 20px */
+  --space-6: 1.5rem; /* 24px */
+  --space-7: 1.75rem; /* 28px */
+  --space-8: 2rem; /* 32px */
+  --space-10: 2.5rem; /* 40px */
+  --space-12: 3rem; /* 48px */
+  --space-16: 4rem; /* 64px */
+  --space-20: 5rem; /* 80px */
+  --space-24: 6rem; /* 96px */
+  --space-28: 7rem; /* 112px */
+  --space-32: 8rem; /* 128px */
 
   /* Shadow System */
   --shadow-xs: 0 1px 2px oklch(0.26 0.08 258 / 0.05);
-  --shadow-sm: 0 1px 3px oklch(0.26 0.08 258 / 0.1), 0 1px 2px oklch(0.26 0.08 258 / 0.06);
-  --shadow-md: 0 4px 6px oklch(0.26 0.08 258 / 0.07), 0 2px 4px oklch(0.26 0.08 258 / 0.06);
-  --shadow-lg: 0 10px 15px oklch(0.26 0.08 258 / 0.1), 0 4px 6px oklch(0.26 0.08 258 / 0.05);
-  --shadow-xl: 0 20px 25px oklch(0.26 0.08 258 / 0.1), 0 10px 10px oklch(0.26 0.08 258 / 0.04);
-  --shadow-2xl: 0 25px 50px oklch(0.26 0.08 258 / 0.15), 0 15px 20px oklch(0.26 0.08 258 / 0.05);
-  --shadow-neon: 0 4px 14px oklch(0.91 0.20 127 / 0.25);
+  --shadow-sm:
+    0 1px 3px oklch(0.26 0.08 258 / 0.1), 0 1px 2px oklch(0.26 0.08 258 / 0.06);
+  --shadow-md:
+    0 4px 6px oklch(0.26 0.08 258 / 0.07), 0 2px 4px oklch(0.26 0.08 258 / 0.06);
+  --shadow-lg:
+    0 10px 15px oklch(0.26 0.08 258 / 0.1),
+    0 4px 6px oklch(0.26 0.08 258 / 0.05);
+  --shadow-xl:
+    0 20px 25px oklch(0.26 0.08 258 / 0.1),
+    0 10px 10px oklch(0.26 0.08 258 / 0.04);
+  --shadow-2xl:
+    0 25px 50px oklch(0.26 0.08 258 / 0.15),
+    0 15px 20px oklch(0.26 0.08 258 / 0.05);
+  --shadow-neon: 0 4px 14px oklch(0.91 0.2 127 / 0.25);
   --shadow-violet: 0 4px 14px oklch(0.67 0.25 286 / 0.25);
 
   /* Animation Tokens */
@@ -225,11 +233,19 @@
     @apply bg-background text-foreground;
     font-family: var(--font-body);
     line-height: 1.5;
-    font-feature-settings: 'rlig' 1, 'calt' 1, 'ss01' 1;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1,
+      "ss01" 1;
   }
 
   /* Typography Hierarchy */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-heading);
     font-weight: 600;
     line-height: 1.1;
@@ -270,9 +286,13 @@
   }
 
   /* Monospace Typography */
-  code, pre, .font-mono {
+  code,
+  pre,
+  .font-mono {
     font-family: var(--font-mono);
-    font-feature-settings: 'zero' 1, 'ss01' 1;
+    font-feature-settings:
+      "zero" 1,
+      "ss01" 1;
   }
 
   /* Focus States */
@@ -346,11 +366,20 @@
 
   /* Gradient Backgrounds */
   .bg-gradient-brand {
-    background: linear-gradient(135deg, var(--primary-dark), var(--primary-accent));
+    background: linear-gradient(
+      135deg,
+      var(--primary-dark),
+      var(--primary-accent)
+    );
   }
 
   .bg-gradient-hero {
-    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--green-500) 50%, var(--primary-accent) 100%);
+    background: linear-gradient(
+      135deg,
+      var(--primary-dark) 0%,
+      var(--green-500) 50%,
+      var(--primary-accent) 100%
+    );
   }
 
   /* Button Glow Effects */
@@ -429,21 +458,22 @@
   }
 
   .transition-colors {
-    transition: color var(--duration-normal) var(--ease-out),
-                background-color var(--duration-normal) var(--ease-out);
+    transition:
+      color var(--duration-normal) var(--ease-out),
+      background-color var(--duration-normal) var(--ease-out);
   }
 
   .transition-transform {
     transition: transform var(--duration-normal) var(--ease-out);
   }
-  
+
   /* Hide scrollbar for modal-like elements */
   .hide-scrollbar {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;     /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
   }
   .hide-scrollbar::-webkit-scrollbar {
-    display: none;  /* Chrome, Safari, and Opera */
+    display: none; /* Chrome, Safari, and Opera */
   }
 }
 
@@ -473,7 +503,11 @@
 }
 
 @keyframes bounceGentle {
-  0%, 20%, 50%, 80%, 100% {
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
     transform: translateY(0);
   }
   40% {
@@ -575,14 +609,23 @@
 @layer utilities {
   /* Text Gradient Utilities */
   .text-gradient-brand {
-    background: linear-gradient(135deg, var(--primary-violet), var(--primary-neon));
+    background: linear-gradient(
+      135deg,
+      var(--primary-violet),
+      var(--primary-neon)
+    );
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 
   .text-gradient-hero {
-    background: linear-gradient(135deg, var(--gray-900) 0%, var(--primary-violet) 50%, var(--primary-neon) 100%);
+    background: linear-gradient(
+      135deg,
+      var(--gray-900) 0%,
+      var(--primary-violet) 50%,
+      var(--primary-neon) 100%
+    );
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -648,11 +691,19 @@
 
   /* Brand Color Background Utilities */
   .bg-brand-gradient {
-    background: linear-gradient(135deg, var(--primary-violet), var(--primary-neon));
+    background: linear-gradient(
+      135deg,
+      var(--primary-violet),
+      var(--primary-neon)
+    );
   }
 
   .bg-brand-gradient-subtle {
-    background: linear-gradient(135deg, var(--primary-violet)/10, var(--primary-neon)/10);
+    background: linear-gradient(
+      135deg,
+      var(--primary-violet) / 10,
+      var(--primary-neon) / 10
+    );
   }
 
   /* Animation Utilities */
@@ -660,12 +711,102 @@
     animation: glow 2s ease-in-out infinite alternate;
   }
 
-  @keyframes glow {
+  /* Sidebar Animations */
+  .animate-sidebar-expand {
+    animation: sidebarExpand 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .animate-sidebar-collapse {
+    animation: sidebarCollapse 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .animate-content-fade-in {
+    animation: contentFadeIn 0.5s ease-out forwards;
+  }
+
+  .animate-content-stagger-1 {
+    animation: contentFadeIn 0.5s ease-out 0.1s forwards;
+    opacity: 0;
+  }
+
+  .animate-content-stagger-2 {
+    animation: contentFadeIn 0.5s ease-out 0.2s forwards;
+    opacity: 0;
+  }
+
+  .animate-content-stagger-3 {
+    animation: contentFadeIn 0.5s ease-out 0.3s forwards;
+    opacity: 0;
+  }
+
+  .animate-text-slide-in {
+    animation: textSlideIn 0.4s ease-out 0.15s forwards;
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+
+  .animate-icon-scale {
+    animation: iconScale 0.3s ease-out 0.1s forwards;
+    transform: scale(0.8);
+  }
+
+  @keyframes sidebarExpand {
     from {
-      box-shadow: 0 0 5px var(--primary-neon)/50;
+      width: 3.75rem; /* w-15 */
     }
     to {
-      box-shadow: 0 0 20px var(--primary-neon)/80, 0 0 30px var(--primary-neon)/40;
+      width: 16.25rem; /* w-65 */
+    }
+  }
+
+  @keyframes sidebarCollapse {
+    from {
+      width: 16.25rem; /* w-65 */
+    }
+    to {
+      width: 3.75rem; /* w-15 */
+    }
+  }
+
+  @keyframes contentFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes textSlideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes iconScale {
+    from {
+      transform: scale(0.8);
+    }
+    to {
+      transform: scale(1);
+    }
+  }
+
+  @keyframes glow {
+    from {
+      box-shadow: 0 0 5px var(--primary-neon) / 50;
+    }
+    to {
+      box-shadow:
+        0 0 20px var(--primary-neon) / 80,
+        0 0 30px var(--primary-neon) / 40;
     }
   }
 
@@ -685,4 +826,75 @@
   .text-responsive-xl {
     font-size: clamp(1.25rem, 1.1rem + 0.75vw, 1.5rem);
   }
+}
+
+/* ================================================================
+   MARKER CLUSTER STYLES
+   Custom styles for Leaflet marker clustering
+   ================================================================ */
+
+.marker-cluster-small {
+  background-color: rgba(16, 185, 129, 0.6);
+  border: 2px solid rgba(16, 185, 129, 0.8);
+}
+
+.marker-cluster-small div {
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #065f46;
+  font-size: 12px;
+}
+
+.marker-cluster-medium {
+  background-color: rgba(245, 158, 11, 0.6);
+  border: 2px solid rgba(245, 158, 11, 0.8);
+}
+
+.marker-cluster-medium div {
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #92400e;
+  font-size: 14px;
+}
+
+.marker-cluster-large {
+  background-color: rgba(239, 68, 68, 0.6);
+  border: 2px solid rgba(239, 68, 68, 0.8);
+}
+
+.marker-cluster-large div {
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #991b1b;
+  font-size: 16px;
+}
+
+.marker-cluster {
+  border-radius: 50%;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.marker-cluster:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }

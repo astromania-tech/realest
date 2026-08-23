@@ -10,7 +10,7 @@ export function AdminFooter() {
   const lastUpdated = new Date().toLocaleString();
 
   return (
-    <footer className="border-t border-border/50 bg-muted/30 mt-auto">
+    <footer className="border-t border-accent/20 bg-muted/30 mt-auto">
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           {/* Logo and Admin Info */}
@@ -57,7 +57,7 @@ export function AdminFooter() {
         </div>
 
         {/* Copyright */}
-        <div className="border-t border-border/50 mt-4 pt-4 text-center">
+        <div className="border-t border-accent/20 mt-4 pt-4 text-center">
           <p className="text-sm text-muted-foreground">
             © {currentYear} RealEST Admin Panel. All rights reserved.
           </p>

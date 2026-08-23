@@ -1,14 +1,120 @@
 // realest/app/api/properties/[id]/media/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { propertyMediaSchema } from "@/lib/validations/property";
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
 
-const uploadMediaSchema = z.object({
-  file_name: z.string().min(1),
-  file_url: z.string().url(),
-  media_type: z.enum(["image", "video", "virtual_tour"]),
-  is_primary: z.boolean().default(false),
-});
+const propertyIdSchema = z.string().uuid("Invalid property ID");
+
+/**
+ * OpenAPI metadata for GET /api/properties/{id}/media
+ * Retrieves all media files (images, videos) associated with a property
+ */
+export const openApiGET: OpenApiMetadata = {
+  method: "get",
+  summary: "Get property media files",
+  description: "Retrieve all media (images, videos) associated with a property. Published properties are visible to all users; draft properties only to the owner.",
+  tags: ["Properties"],
+  parameters: [
+    {
+      name: "id",
+      in: "path",
+      required: true,
+      schema: { type: "string", format: "uuid" },
+      description: "Property ID",
+    },
+  ],
+  responses: {
+    "200": {
+      description: "Media list retrieved successfully",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+            properties: {
+              media: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    id: { type: "string" },
+                    property_id: { type: "string", format: "uuid" },
+                    media_type: { type: "string", enum: ["image", "video"] },
+                    media_url: { type: "string", format: "url" },
+                    is_featured: { type: "boolean" },
+                    display_order: { type: "integer" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    "404": {
+      description: "Property not found or not accessible",
+      content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } },
+    },
+  },
+};
+
+/**
+ * OpenAPI metadata for POST /api/properties/{id}/media
+ * Upload media (images, videos) for a property
+ */
+export const openApiPOST: OpenApiMetadata = {
+  method: "post",
+  summary: "Upload media for property",
+  description: "Upload a new media file (image or video) to a property. Only property owner can upload. Media can only be added to draft properties.",
+  tags: ["Properties"],
+  security: [{ bearerAuth: [] }],
+  parameters: [
+    {
+      name: "id",
+      in: "path",
+      required: true,
+      schema: { type: "string", format: "uuid" },
+      description: "Property ID",
+    },
+  ],
+  requestBody: {
+    required: true,
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          required: ["media_type", "media_url"],
+          properties: {
+            media_type: { type: "string", enum: ["image", "video"], description: "Type of media" },
+            media_url: { type: "string", format: "url", description: "URL to media file" },
+            is_featured: { type: "boolean", description: "Mark as primary/featured image" },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    "201": {
+      description: "Media uploaded successfully",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+            properties: {
+              media: { type: "object" },
+              message: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    "400": { description: "Invalid request or property is published" },
+    "401": { description: "Unauthorized" },
+    "404": { description: "Property not found or access denied" },
+  },
+};
 
 // GET /api/properties/[id]/media - Get property media
 export async function GET(
@@ -18,57 +124,41 @@ export async function GET(
   try {
     const supabase = await createClient();
     const { id } = await params;
-    const propertyId = id;
+    const propertyIdResult = propertyIdSchema.safeParse(id);
+    if (!propertyIdResult.success) {
+      return NextResponse.json({ error: "Property not found" }, { status: 404 });
+    }
+    const propertyId = propertyIdResult.data;
 
-    // Check if property exists and user has access
-    const { data: property, error: propertyError } = await supabase
-      .from("properties")
-      .select("owner_id, status")
-      .eq("id", propertyId)
-      .single();
+    const property = await prisma.properties.findUnique({
+      where: { id: propertyId },
+      select: { owner_id: true, status: true },
+    });
 
-    if (propertyError) {
-      return NextResponse.json(
-        { error: "Property not found" },
-        { status: 404 },
-      );
+    if (!property) {
+      return NextResponse.json({ error: "Property not found" }, { status: 404 });
     }
 
-    // Get authenticated user
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    const isOwner = user && property.owner_id === user.id;
+    const { data: { user } } = await getAuthUser();
+    let ownerRecord: { id: string } | null = null;
+    if (user) {
+      ownerRecord = await prisma.owners.findUnique({ where: { profile_id: user.id }, select: { id: true } });
+    }
+    const isOwner = ownerRecord !== null && property.owner_id === ownerRecord.id;
 
-    // Only owners can see all media, others see only for live properties
     if (!isOwner && property.status !== "live") {
-      return NextResponse.json(
-        { error: "Property not available" },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: "Property not available" }, { status: 404 });
     }
 
-    const { data: media, error } = await supabase
-      .from("property_media")
-      .select("*")
-      .eq("property_id", propertyId)
-      .order("sort_order", { ascending: true });
-
-    if (error) {
-      console.error("Media fetch error:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch media" },
-        { status: 500 },
-      );
-    }
+    const media = await prisma.property_media.findMany({
+      where: { property_id: propertyId },
+      orderBy: { display_order: "asc" },
+    });
 
     return NextResponse.json({ media });
   } catch (error) {
     console.error("Media API error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -80,100 +170,67 @@ export async function POST(
   try {
     const supabase = await createClient();
     const { id } = await params;
-    const propertyId = id;
+    const propertyIdResult = propertyIdSchema.safeParse(id);
+    if (!propertyIdResult.success) {
+      return NextResponse.json({ error: "Property not found or access denied" }, { status: 404 });
+    }
+    const propertyId = propertyIdResult.data;
 
-    // Get authenticated user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check ownership
-    const { data: property, error: propertyError } = await supabase
-      .from("properties")
-      .select("owner_id, status")
-      .eq("id", propertyId)
-      .single();
+    const property = await prisma.properties.findUnique({
+      where: { id: propertyId },
+      select: { owner_id: true, status: true },
+    });
 
-    if (propertyError || property?.owner_id !== user.id) {
-      return NextResponse.json(
-        { error: "Property not found or access denied" },
-        { status: 404 },
-      );
+    const ownerRecordPost = await prisma.owners.findUnique({ where: { profile_id: user.id }, select: { id: true } });
+    if (!property || !ownerRecordPost || property.owner_id !== ownerRecordPost.id) {
+      return NextResponse.json({ error: "Property not found or access denied" }, { status: 404 });
     }
 
-    // Only allow media uploads for draft/rejected properties
     if (property.status === "live") {
-      return NextResponse.json(
-        { error: "Cannot upload media to live properties" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Cannot upload media to live properties" }, { status: 400 });
     }
 
     const body = await request.json();
-    const validatedData = uploadMediaSchema.parse(body);
+    const validatedData = propertyMediaSchema.parse(body);
 
-    // Get current max sort order
-    const { data: existingMedia, error: sortError } = await supabase
-      .from("property_media")
-      .select("sort_order")
-      .eq("property_id", propertyId)
-      .order("sort_order", { ascending: false })
-      .limit(1);
+    // Get next display order
+    const lastMedia = await prisma.property_media.findFirst({
+      where: { property_id: propertyId },
+      orderBy: { display_order: "desc" },
+      select: { display_order: true },
+    });
+    const nextDisplayOrder = (lastMedia?.display_order ?? 0) + 1;
 
-    const nextSortOrder =
-      existingMedia && existingMedia.length > 0
-        ? existingMedia[0].sort_order + 1
-        : 1;
-
-    // If this is marked as primary, unset other primary images
-    if (validatedData.is_primary) {
-      await supabase
-        .from("property_media")
-        .update({ is_primary: false })
-        .eq("property_id", propertyId);
+    // Unset other featured images if this is featured
+    if (validatedData.is_featured) {
+      await prisma.property_media.updateMany({
+        where: { property_id: propertyId },
+        data: { is_featured: false },
+      });
     }
 
-    // Insert media record
-    const { data: media, error: insertError } = await supabase
-      .from("property_media")
-      .insert({
+    const media = await prisma.property_media.create({
+      data: {
         property_id: propertyId,
         media_type: validatedData.media_type,
-        file_url: validatedData.file_url,
+        media_url: validatedData.media_url,
         file_name: validatedData.file_name,
-        is_primary: validatedData.is_primary,
-        sort_order: nextSortOrder,
-      })
-      .select()
-      .single();
+        is_featured: validatedData.is_featured ?? false,
+        display_order: nextDisplayOrder,
+      },
+    });
 
-    if (insertError) {
-      console.error("Media upload error:", insertError);
-      return NextResponse.json(
-        { error: "Failed to upload media" },
-        { status: 500 },
-      );
-    }
-
-    return NextResponse.json(
-      { media, message: "Media uploaded successfully" },
-      { status: 201 },
-    );
+    return NextResponse.json({ media, message: "Media uploaded successfully" }, { status: 201 });
   } catch (error) {
     console.error("Media upload API error:", error);
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid media data", details: error.errors },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Invalid media data", details: error.errors }, { status: 400 });
     }
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

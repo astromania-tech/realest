@@ -1,9 +1,14 @@
-"use client"
+"use client";
 
-import React from "react"
-import clsx from "clsx"
+import React from "react";
+import clsx from "clsx";
 
-export type InfrastructureType = "power" | "water" | "security" | "internet" | "bq"
+export type InfrastructureType =
+  | "power"
+  | "water"
+  | "security"
+  | "internet"
+  | "bq";
 
 export type InfrastructureStatus =
   | "stable"
@@ -11,10 +16,14 @@ export type InfrastructureStatus =
   | "poor"
   | "none"
   | "generator_only"
+  | "inverter"
+  | "solar_panels"
   | "borehole"
   | "public_water"
   | "well"
   | "water_vendor"
+  | "water_tank"
+  | "water_treatment"
   | "fiber"
   | "starlink"
   | "4g"
@@ -27,11 +36,15 @@ export type InfrastructureStatus =
   | "not_available"
   | "separate_entrance"
   | "shared"
+  | "24/7"
+  | "day_only"
+  | "night_only"
+  | "security_levy";
 
 interface IndicatorProps extends React.HTMLAttributes<HTMLDivElement> {
-  type: InfrastructureType
-  status: InfrastructureStatus
-  label?: string
+  type: InfrastructureType;
+  status: InfrastructureStatus;
+  label?: string;
 }
 
 const typeIcons: Record<InfrastructureType, string> = {
@@ -40,37 +53,63 @@ const typeIcons: Record<InfrastructureType, string> = {
   security: "🛡️",
   internet: "📡",
   bq: "🏠",
-}
+};
+
+const typeLabels: Record<InfrastructureType, string> = {
+  power: "Power",
+  water: "Water",
+  security: "Security",
+  internet: "Internet",
+  bq: "BQ",
+};
 
 function colorFor(type: InfrastructureType, status: InfrastructureStatus) {
   switch (type) {
     case "power":
-      if (status === "stable") return "text-success"
-      if (status === "intermittent" || status === "generator_only") return "text-warning"
-      return "text-destructive"
+      if (
+        status === "stable" ||
+        status === "inverter" ||
+        status === "solar_panels"
+      )
+        return "text-success";
+      if (status === "intermittent" || status === "generator_only")
+        return "text-warning";
+      return "text-destructive";
     case "water":
-      return status === "none" ? "text-destructive" : "text-success"
+      if (status === "water_tank" || status === "water_treatment")
+        return "text-success";
+      return status === "none" ? "text-destructive" : "text-success";
     case "security":
-      return status === "none" ? "text-destructive" : "text-success"
+      if (status === "24/7" || status === "security_levy")
+        return "text-success";
+      return status === "none" ? "text-destructive" : "text-success";
     case "internet":
-      return status === "none" ? "text-destructive" : "text-success"
+      return status === "none" ? "text-destructive" : "text-success";
     case "bq":
-      return status === "not_available" ? "text-muted-foreground" : "text-success"
+      return status === "not_available"
+        ? "text-muted-foreground"
+        : "text-success";
     default:
-      return "text-foreground"
+      return "text-foreground";
   }
 }
 
-export function InfrastructureIndicator({ type, status, label, className, ...rest }: IndicatorProps) {
-  const icon = typeIcons[type]
-  const color = colorFor(type, status)
-  const resolvedLabel = label ?? `${typeLabel(type)}: ${statusLabel(status)}`
+export function InfrastructureIndicator({
+  type,
+  status,
+  label,
+  className,
+  ...rest
+}: IndicatorProps) {
+  const icon = typeIcons[type];
+  const color = colorFor(type, status);
+  const resolvedLabel = label ?? `${typeLabels[type]}: ${statusLabel(status)}`;
 
   return (
     <div
       className={clsx(
         "inline-flex items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-1 text-xs font-medium",
-        className
+        className,
       )}
       {...rest}
     >
@@ -79,77 +118,82 @@ export function InfrastructureIndicator({ type, status, label, className, ...res
       </span>
       <span className={clsx("text-foreground", color)}>{resolvedLabel}</span>
     </div>
-  )
-}
-
-function typeLabel(type: InfrastructureType) {
-  switch (type) {
-    case "power":
-      return "Power"
-    case "water":
-      return "Water"
-    case "security":
-      return "Security"
-    case "internet":
-      return "Internet"
-    case "bq":
-      return "BQ"
-  }
+  );
 }
 
 function statusLabel(status: InfrastructureStatus) {
   switch (status) {
     case "stable":
-      return "Stable"
+      return "Stable";
     case "intermittent":
-      return "Intermittent"
+      return "Intermittent";
     case "generator_only":
-      return "Generator"
+      return "Generator";
     case "poor":
-      return "Poor"
+      return "Poor";
     case "none":
-      return "None"
+      return "None";
+    case "inverter":
+      return "Inverter";
+    case "solar_panels":
+      return "Solar Panels";
     case "borehole":
-      return "Borehole"
+      return "Borehole";
     case "public_water":
-      return "Public"
+      return "Public";
     case "well":
-      return "Well"
+      return "Well";
     case "water_vendor":
-      return "Vendor"
+      return "Vendor";
+    case "water_tank":
+      return "Water Tank";
+    case "water_treatment":
+      return "Water Treatment";
     case "fiber":
-      return "Fiber"
+      return "Fiber";
     case "starlink":
-      return "Starlink"
+      return "Starlink";
     case "4g":
-      return "4G"
+      return "4G";
     case "3g":
-      return "3G"
+      return "3G";
     case "gated":
-      return "Gated"
+      return "Gated";
     case "security_post":
-      return "Security Post"
+      return "Security Post";
     case "cctv":
-      return "CCTV"
+      return "CCTV";
     case "perimeter":
-      return "Perimeter"
+      return "Perimeter";
     case "available":
-      return "Available"
+      return "Available";
     case "not_available":
-      return "Not Available"
+      return "Not Available";
     case "separate_entrance":
-      return "Separate Entrance"
+      return "Separate Entrance";
     case "shared":
-      return "Shared"
+      return "Shared";
+    case "24/7":
+      return "24/7";
+    case "day_only":
+      return "Day Only";
+    case "night_only":
+      return "Night Only";
+    case "security_levy":
+      return "Security Levy";
     default:
-      return String(status)
+      return String(status);
   }
 }
 
-export function InfrastructureIndicatorGroup({ children, className, ...rest }: React.HTMLAttributes<HTMLDivElement>) {
+export function InfrastructureIndicatorGroup({
+  children,
+  className,
+  ...rest
+}: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div className={clsx("flex flex-wrap gap-2", className)} {...rest}>
       {children}
     </div>
-  )
+  );
 }

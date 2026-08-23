@@ -15,7 +15,6 @@ interface Document {
   verification_status: string
   created_at: string
   properties: { title: string; owner_id: string }
-  profiles: { full_name: string }
 }
 
 interface AdminDocumentVerificationProps {
@@ -85,7 +84,6 @@ export default function AdminDocumentVerification({ documents }: AdminDocumentVe
                     <h3 className="font-semibold mb-1">{document.document_type.replace("_", " ").toUpperCase()}</h3>
                     <p className="text-sm text-muted-foreground mb-1">{document.file_name}</p>
                     <p className="text-sm text-muted-foreground">Property: {document.properties.title}</p>
-                    <p className="text-sm text-muted-foreground">Submitted by: {document.profiles.full_name}</p>
                   </div>
                 </div>
                 <Badge className="bg-yellow-600 flex-shrink-0">PENDING</Badge>

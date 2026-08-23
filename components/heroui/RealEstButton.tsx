@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Button } from '@heroui/react'
+import { Button } from '@/components/ui/button'
 import type { ComponentProps } from 'react'
 import { cn } from '@/lib/utils'
 
@@ -20,6 +20,7 @@ interface RealEstButtonProps extends Omit<ComponentProps<typeof Button>, 'varian
   variant?: RealEstButtonVariant
   isLoading?: boolean
   loadingText?: string
+  isIconOnly?: boolean
 }
 
 const variantMap: Record<RealEstButtonVariant, string> = {
@@ -39,18 +40,19 @@ export function RealEstButton({
   children,
   isLoading = false,
   loadingText = 'Loading...',
-  isPending,
+  isIconOnly = false,
+  // isPending,
   ...props
 }: RealEstButtonProps) {
   const mappedVariant = variantMap[variant] as any
-  const isLoadingState = isLoading || isPending
+  const isLoadingState = isLoading // || isPending
 
   return (
     <Button
       variant={mappedVariant}
       className={cn(
         // Base RealEST styling
-        'font-body font-semibold transition-all duration-200 ease-out',
+        'font-body font-semibold transition-all duration-200 ease-out rounded-xl',
         'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
 
         // RealEST-specific variants
@@ -94,7 +96,7 @@ export function RealEstButton({
 
         className
       )}
-      isPending={isLoadingState}
+      // isPending={isLoadingState}
       {...props}
     >
       {isLoadingState ? (
@@ -121,7 +123,7 @@ export function RealEstButton({
           </svg>
           {loadingText}
         </>
-      ) : (
+      ) : isIconOnly ? null : (
         children
       )}
     </Button>

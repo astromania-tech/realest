@@ -1,7 +1,9 @@
 // realest/app/api/profile/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
 
 const updateProfileSchema = z.object({
   full_name: z
@@ -15,6 +17,57 @@ const updateProfileSchema = z.object({
   bio: z.string().max(500, "Bio must be less than 500 characters").optional(),
 });
 
+/**
+ * OpenAPI metadata for GET /api/profile
+ * Documented endpoint: Get current user profile
+ */
+export const openApiGET: OpenApiMetadata = {
+  method: 'get',
+  summary: 'Get user profile',
+  description: 'Retrieve the authenticated user\'s profile information.',
+  tags: ['Profile', 'User'],
+  security: [{ bearerAuth: [] }],
+  responses: {
+    '200': {
+      description: 'User profile',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              profile: { $ref: '#/components/schemas/Profile' },
+            },
+          },
+        },
+      },
+    },
+    '401': {
+      description: 'Unauthorized',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '404': {
+      description: 'Profile not found',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '500': {
+      description: 'Server error',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+  },
+}
+
 // GET /api/profile - Get current user profile
 export async function GET(request: NextRequest) {
   try {
@@ -24,20 +77,17 @@ export async function GET(request: NextRequest) {
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Get user profile
-    const { data: profile, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
+    const profile = await prisma.profiles.findUnique({
+      where: { id: user.id },
+    });
 
-    if (error) {
-      console.error("Profile fetch error:", error);
+    if (!profile) {
       return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
 
@@ -51,6 +101,86 @@ export async function GET(request: NextRequest) {
   }
 }
 
+/**
+ * OpenAPI metadata for PUT /api/profile
+ * Documented endpoint: Update user profile
+ */
+export const openApiPUT: OpenApiMetadata = {
+  method: 'put',
+  summary: 'Update user profile',
+  description: 'Update the authenticated user\'s profile information.',
+  tags: ['Profile', 'User'],
+  security: [{ bearerAuth: [] }],
+  requestBody: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            full_name: {
+              type: 'string',
+              minLength: 2,
+              description: 'User full name',
+            },
+            phone: {
+              type: 'string',
+              pattern: '^\\+234[0-9]{10}$',
+              description: 'Nigerian phone number in +234... format',
+            },
+            bio: {
+              type: 'string',
+              maxLength: 500,
+              description: 'User bio/description',
+            },
+          },
+          'x-source': '@/lib/validations/profile.ts → updateProfileSchema',
+        },
+      },
+    },
+  },
+  responses: {
+    '200': {
+      description: 'Profile updated successfully',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              profile: { $ref: '#/components/schemas/Profile' },
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    '400': {
+      description: 'Invalid profile data',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '401': {
+      description: 'Unauthorized',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+    '500': {
+      description: 'Server error',
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/Error' },
+        },
+      },
+    },
+  },
+}
+
 // PUT /api/profile - Update current user profile
 export async function PUT(request: NextRequest) {
   try {
@@ -60,7 +190,7 @@ export async function PUT(request: NextRequest) {
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await getAuthUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -68,24 +198,13 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const validatedData = updateProfileSchema.parse(body);
 
-    // Update profile
-    const { data: updatedProfile, error } = await supabase
-      .from("profiles")
-      .update({
+    const updatedProfile = await prisma.profiles.update({
+      where: { id: user.id },
+      data: {
         ...validatedData,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", user.id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Profile update error:", error);
-      return NextResponse.json(
-        { error: "Failed to update profile" },
-        { status: 500 },
-      );
-    }
+        updated_at: new Date(),
+      },
+    });
 
     return NextResponse.json({
       profile: updatedProfile,

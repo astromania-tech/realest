@@ -156,7 +156,7 @@ Context:
 - Admins verify properties through 3 stages: ML validation → Physical vetting → Live
 - Must display documents, ML scores, property details
 - Admin can approve, reject, flag for duplicate review
-- Role-based access: only admin user_type
+- Role-based access: only `users.role = 'admin'` (query `users` table, NOT `profiles`)
 
 Dashboard Requirements:
 1. Server Component with auth check (admin role only)
@@ -350,7 +350,7 @@ Layout Structure:
   <div className="space-y-4">
     {/* Property cards */}
   </div>
-  <div className="sticky top-4 h-[600px]">
+  <div className="sticky top-4 h-150">
     <PropertyMap properties={properties} />
   </div>
 </div>
@@ -365,10 +365,11 @@ Layout Structure:
 Implement user profile management with avatar upload.
 
 Context:
-- Profiles table stores user metadata (user_type, full_name, phone, avatar_url)
+- `users` table stores role (`users.role` enum: user|owner|agent|admin) — single source of truth
+- `profiles` table stores user metadata (full_name, phone, bio, avatar_url) — NO role column
 - Avatar stored in Supabase Storage
 - Users can update their own profile (RLS enforced)
-- Support role switching (user ↔ owner)
+- Role changes require updating `users.role` (admin only)
 
 Features:
 1. Profile view page (app/profile/page.tsx)

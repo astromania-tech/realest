@@ -8,12 +8,14 @@ import {
   DollarSign,
   CheckCircle,
 } from "lucide-react";
+import { formatPrice, formatListingType, formatPropertyType } from "@/lib/utils/propertyUtils";
 
 interface Property {
   id: string;
   title: string;
   description: string;
   price: number;
+  price_frequency: string | null;
   address: string;
   city: string;
   state: string;
@@ -37,12 +39,8 @@ export default function PropertyDetails({
   property,
   details,
 }: PropertyDetailsProps) {
-  const listingTypeLabel = property.listing_type
-    .replace("_", " ")
-    .toUpperCase();
-  const propertyTypeLabel = property.property_type
-    .replace("_", " ")
-    .toUpperCase();
+  const listingTypeLabel = formatListingType(property.listing_type);
+  const propertyTypeLabel = formatPropertyType(property.property_type);
 
   return (
     <div className="space-y-6">
@@ -61,7 +59,7 @@ export default function PropertyDetails({
           </div>
           <div className="text-right">
             <div className="text-4xl font-bold text-primary mb-2">
-              £{property.price.toLocaleString()}
+              {formatPrice(property.price, property.price_frequency)}
             </div>
             <Chip variant="primary" className="bg-green-600 text-white">
               {listingTypeLabel}

@@ -1866,9 +1866,9 @@ export function HeroSection() {
   return (
     <section className="relative overflow-hidden bg-gray-950 py-20 md:py-32">
       {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-950 to-gray-900" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--brand-violet-muted),transparent_50%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,_var(--brand-neon-muted),transparent_50%)]" />
+      <div className="absolute inset-0 bg-linear-to-br from-gray-900 via-gray-950 to-gray-900" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,var(--brand-violet-muted),transparent_50%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,var(--brand-neon-muted),transparent_50%)]" />
       
       <div className="container relative z-10">
         <div className="mx-auto max-w-4xl text-center">
@@ -1881,7 +1881,7 @@ export function HeroSection() {
           </div>
           
           {/* Main heading with gradient */}
-          <h1 className="heading-display mb-6 bg-gradient-to-r from-white via-gray-100 to-brand-neon bg-clip-text text-transparent">
+          <h1 className="heading-display mb-6 bg-linear-to-r from-white via-gray-100 to-brand-neon bg-clip-text text-transparent">
             Find Your Perfect Property,
             <br />
             <span className="text-brand-neon">Verified & Trusted</span>
@@ -2013,7 +2013,7 @@ export function PropertyCard({
         {/* Gradient overlay */}
         <div className="
           absolute inset-0
-          bg-gradient-to-t from-gray-900/60 via-transparent to-transparent
+          bg-linear-to-t from-gray-900/60 via-transparent to-transparent
           opacity-0 group-hover:opacity-100
           transition-opacity duration-300
         " />
@@ -2086,7 +2086,7 @@ export function PropertyCard({
         
         {/* Location */}
         <div className="flex items-center gap-2 text-gray-600">
-          <MapPin className="w-4 h-4 flex-shrink-0" />
+          <MapPin className="w-4 h-4 shrink-0" />
           <span className="text-sm font-body truncate">{location}</span>
         </div>
         
@@ -2538,7 +2538,7 @@ export function AccessibleMenu() {
     <Menu>
       <MenuButton
         aria-label="Property options"
-        className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-neon"
+        className="focus-visible:outline-2 focus-visible:outline-brand-neon"
       >
         Options
       </MenuButton>
