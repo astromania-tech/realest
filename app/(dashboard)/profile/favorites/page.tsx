@@ -6,7 +6,6 @@ import { Card, Chip } from "@heroui/react";
 import Link from "next/link";
 import { MapPin, Bed, Bath, Ruler, Heart, MapPinned } from "lucide-react";
 import { VerificationBadge, PropertyStatusChip } from "@/components/realest";
-import { getAuthUser } from "@/lib/supabase/server";
 
 interface SavedProperty {
   id: string;
@@ -34,12 +33,10 @@ export default function FavoritesPage() {
 
   useEffect(() => {
     const fetchFavorites = async () => {
-      const supabase = createClient();
-      const { data: user } = await getAuthUser();
 
       try {
         const supabase = createClient();
-        const { data: user } = await getAuthUser();
+        const { data: user } = await supabase.auth.getUser();
 
         if (!user || !user.user) {
           return;

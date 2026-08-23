@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState, ChangeEvent } from "react"
-import { Button, Card, Input, Select, SelectItem, Textarea, Checkbox } from "@heroui/react"
+import { Button, Card, Select } from "@heroui/react"
+import { Textarea, Input, Checkbox } from "../ui"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 
@@ -226,8 +227,8 @@ export function PropertyForm({ initial, mode, role = "agent" }: { initial?: Part
         </div>
 
         <div className="flex gap-3 justify-end">
-          <Button variant="light" onPress={() => setStage(1)} isDisabled={loading}>Back</Button>
-          <Button color="primary" onPress={handleStage2} isLoading={loading}>
+          <Button variant="secondary" onPress={() => setStage(1)} isDisabled={loading}>Back</Button>
+          <Button variant="primary" onPress={handleStage2} isDisabled={loading !== null}>
             {mediaFiles.length > 0 ? "Upload & Continue" : "Skip"}
           </Button>
         </div>
@@ -271,8 +272,8 @@ export function PropertyForm({ initial, mode, role = "agent" }: { initial?: Part
         </div>
 
         <div className="flex gap-3 justify-end">
-          <Button variant="light" onPress={() => setStage(2)} isDisabled={loading}>Back</Button>
-          <Button color="primary" onPress={handleStage3} isLoading={loading}>
+          <Button variant="secondary" onPress={() => setStage(2)} isDisabled={loading}>Back</Button>
+          <Button variant="primary" onPress={handleStage3} isDisabled={loading !== null}>
             Submit for Review
           </Button>
         </div>
@@ -285,27 +286,27 @@ export function PropertyForm({ initial, mode, role = "agent" }: { initial?: Part
       <h2 className="text-xl font-bold">Stage 1: Property Details</h2>
 
       <Input
-        label="Title"
+        // label="Title"
         placeholder="e.g., 3 Bedroom Flat in Lekki"
         value={values.title}
         onChange={handleTextChange("title")}
-        isRequired
+        required
       />
 
       <Textarea
-        label="Description"
+        // label="Description"
         placeholder="Describe your property..."
         value={values.description}
         onChange={handleTextChange("description")}
-        isRequired
+        required
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Input
-          label="Address"
+          placeholder="Address"
           value={values.address}
           onChange={handleTextChange("address")}
-          isRequired
+          required
         />
         <div>
           <label className="block text-sm font-medium mb-1">State</label>
@@ -320,10 +321,10 @@ export function PropertyForm({ initial, mode, role = "agent" }: { initial?: Part
           </select>
         </div>
         <Input
-          label="City"
+          placeholder="City"
           value={values.city}
           onChange={handleTextChange("city")}
-          isRequired
+          required
         />
         <div>
           <label className="block text-sm font-medium mb-1">Property Type</label>
@@ -351,10 +352,10 @@ export function PropertyForm({ initial, mode, role = "agent" }: { initial?: Part
         </div>
         <Input
           type="number"
-          label="Price (₦)"
+          placeholder="Price (₦)"
           value={String(values.price)}
           onChange={handleNumberChange("price")}
-          isRequired
+          required
         />
         <div>
           <label className="block text-sm font-medium mb-1">Price Frequency</label>
@@ -374,13 +375,13 @@ export function PropertyForm({ initial, mode, role = "agent" }: { initial?: Part
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4 border-default-100">
           <Input
             type="number"
-            label="Bedrooms"
+            placeholder="Bedrooms"
             value={values.bedrooms ? String(values.bedrooms) : ""}
             onChange={handleNumberChange("bedrooms")}
           />
           <Input
             type="number"
-            label="Bathrooms"
+            placeholder="Bathrooms"
             value={values.bathrooms ? String(values.bathrooms) : ""}
             onChange={handleNumberChange("bathrooms")}
           />
@@ -390,35 +391,34 @@ export function PropertyForm({ initial, mode, role = "agent" }: { initial?: Part
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4 border-default-100">
         <Input
           type="number"
-          label="Square Feet"
+          placeholder="Square Feet"
           value={values.square_feet ? String(values.square_feet) : ""}
           onChange={handleNumberChange("square_feet")}
         />
         <Input
           type="number"
-          label="Year Built"
+          placeholder="Year Built"
           value={values.year_built ? String(values.year_built) : ""}
           onChange={handleNumberChange("year_built")}
         />
         <Input
           type="number"
-          label="Parking Spaces"
+          placeholder="Parking Spaces"
           value={values.parking_spaces ? String(values.parking_spaces) : ""}
           onChange={handleNumberChange("parking_spaces")}
         />
       </div>
 
       <div className="flex gap-4 border-t pt-4 border-default-100">
-        <Checkbox isSelected={values.has_pool} onValueChange={(val) => setValues({ ...values, has_pool: val })}>Has Pool</Checkbox>
-        <Checkbox isSelected={values.has_garage} onValueChange={(val) => setValues({ ...values, has_garage: val })}>Has Garage</Checkbox>
-        <Checkbox isSelected={values.has_garden} onValueChange={(val) => setValues({ ...values, has_garden: val })}>Has Garden</Checkbox>
+        <Checkbox checked={values.has_pool} onCheckedChange={(val) => setValues({ ...values, has_pool: val })}>Has Pool</Checkbox>
+        <Checkbox checked={values.has_garage} onCheckedChange={(val) => setValues({ ...values, has_garage: val })}>Has Garage</Checkbox>
+        <Checkbox checked={values.has_garden} onCheckedChange={(val) => setValues({ ...values, has_garden: val })}>Has Garden</Checkbox>
       </div>
 
       <div className="flex justify-end gap-3 pt-4">
         {mode === "edit" && propertyId && (
           <Button
-            color="danger"
-            variant="flat"
+            variant="outline"
             onPress={async () => {
               if (!confirm("Delete this property?")) return
               setLoading(true)
@@ -436,7 +436,7 @@ export function PropertyForm({ initial, mode, role = "agent" }: { initial?: Part
             Delete
           </Button>
         )}
-        <Button color="primary" onPress={handleStage1} isLoading={loading}>
+        <Button variant="primary" onPress={handleStage1} isLoading={loading}>
           Save & Continue
         </Button>
       </div>
