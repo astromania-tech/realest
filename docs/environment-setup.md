@@ -119,22 +119,21 @@ NEXT_PUBLIC_APP_ENV=development
 1. **Clone Repository**
    ```bash
    git clone <repository_url>
-   cd realproof-marketplace
+   cd realest
    ```
 
-2. **Install Dependencies**
+2. **Start the app**
    ```bash
-   npm install
+   ./start.sh
    ```
 
-3. **Configure Environment**
+   `./start.sh` installs dependencies, validates `.env.local`, and starts Next.js. If required Supabase keys are missing and Docker is available, it starts a local Supabase stack and writes `.env.local` for you.
+
+   Manual equivalent:
    ```bash
+   npm ci
    cp .env.example .env.local
    # Edit .env.local with your actual values
-   ```
-
-4. **Start Development**
-   ```bash
    npm run dev
    ```
 

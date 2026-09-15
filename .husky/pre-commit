@@ -4,6 +4,15 @@
 echo "🔍 Running pre-commit checks..."
 echo ""
 
+echo "🧪 Gate tests..."
+node --test scripts/start-app.test.mjs
+if [ $? -ne 0 ]; then
+  echo "❌ Gate tests failed. Commit aborted."
+  exit 1
+fi
+echo "✅ Gate tests: Passed"
+echo ""
+
 # Run type checking
 echo "📘 TypeScript type checking..."
 npx tsc --noEmit

@@ -1,0 +1,42 @@
+{
+  "name": "start-app clone-and-run",
+  "threshold": 1.0,
+  "cases": [
+    {
+      "id": "start_sh_exists",
+      "intent": "A cloner can find a root launcher without reading the README first."
+    },
+    {
+      "id": "start_sh_executable",
+      "intent": "./start.sh runs without chmod after a unix clone."
+    },
+    {
+      "id": "env_example_exists",
+      "intent": "Required keys are listed in a committed template."
+    },
+    {
+      "id": "env_example_not_ignored",
+      "intent": ".env.example is not swallowed by the .env* gitignore rule."
+    },
+    {
+      "id": "env_example_lists_required_keys",
+      "intent": "The template names the two keys the homepage actually reads."
+    },
+    {
+      "id": "package_json_has_start_app",
+      "intent": "npm run start:app is a documented alias for the same launcher."
+    },
+    {
+      "id": "gitignore_allows_env_example",
+      "intent": "The ignore exception stays in .gitignore so a future clone still has the template."
+    },
+    {
+      "id": "gate_tests_pass",
+      "intent": "Env parsing, placeholders, and HTTP wait still behave as specified."
+    },
+    {
+      "id": "readme_documents_start_sh",
+      "intent": "Getting Started tells a new cloner the one command to run."
+    }
+  ]
+}

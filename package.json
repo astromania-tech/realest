@@ -2,16 +2,21 @@
   "name": "realest-marketplace",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "next build",
     "dev": "next dev",
+    "start:app": "node scripts/start-app.mjs",
     "lint": "npm run ci:filenames && eslint .",
     "ci:filenames": "node scripts/check-filenames.js",
     "lint:staged": "lint-staged",
     "typecheck": "tsc --noEmit",
     "precommit": "npm run typecheck && npm run lint",
     "start": "next start",
-    "test": "echo 'no tests'",
+    "test": "node --test scripts/start-app.test.mjs",
+    "eval:start-app": "node evals/start-app/run.mjs",
     "setup:branches": "bash scripts/setup-branch-management.sh",
     "check:deployment": "bash scripts/check-deployment.sh",
     "switch:develop": "bash scripts/switch-branch.sh develop",
