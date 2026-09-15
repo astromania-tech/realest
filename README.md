@@ -31,27 +31,40 @@ Nigeria's premier property marketplace that revolutionizes real estate through g
 
 ### Installation
 
-1. Clone the repository:
+From the repo root, one command installs dependencies, checks env, and boots Next.js:
+
 ```bash
-git clone <repository-url>
-cd realest
+./start.sh
 ```
 
-2. Install dependencies:
-```bash
-npm install
-```
+That script:
+1. Finds Node 20+ (fnm or nvm if your shell has no `node` yet)
+2. Runs `npm ci` when `node_modules` is missing
+3. Uses `.env.local` if the required Supabase keys are set
+4. If those keys are missing and Docker is installed, starts local Supabase and writes `.env.local`
+5. Starts the app at [http://localhost:3000](http://localhost:3000), or the next free port if 3000 is already taken by another process
 
-3. Copy environment variables:
-```bash
-cp .env.example .env.local
-```
+Required keys (homepage will not load without them):
 
-4. Fill in your Supabase credentials in `.env.local`:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
+
+To skip Docker and use a hosted project:
+
+```bash
+cp .env.example .env.local
+# paste keys from Supabase > Project Settings > API
+./start.sh --no-local-supabase
+```
+
+Manual equivalent:
+
+```bash
+npm ci
+cp .env.example .env.local
+npm run dev
 ```
 
 ### Database Setup
