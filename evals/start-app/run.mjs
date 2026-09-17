@@ -52,7 +52,7 @@ const checks = {
   gate_tests_pass: () => {
     const result = spawnSync(
       process.execPath,
-      ["--test", join(ROOT, "scripts", "start-app.test.mjs")],
+      ["--test", join(ROOT, "scripts", "start-app.test.mjs"), join(ROOT, "scripts", "migration-ledger.test.mjs")],
       { cwd: ROOT, encoding: "utf8" },
     );
     return result.status === 0;

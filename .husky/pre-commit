@@ -5,7 +5,7 @@ echo "🔍 Running pre-commit checks..."
 echo ""
 
 echo "🧪 Gate tests..."
-node --test scripts/start-app.test.mjs
+node --test scripts/start-app.test.mjs scripts/migration-ledger.test.mjs
 if [ $? -ne 0 ]; then
   echo "❌ Gate tests failed. Commit aborted."
   exit 1
