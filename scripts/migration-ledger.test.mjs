@@ -6,6 +6,7 @@ import test from "node:test";
 
 import {
   GIT_ONLY_VERSIONS_REMOVED,
+  isMigrationFilename,
   parseMigrationVersion,
   PRODUCTION_ONLY_VERSIONS,
   SHARED_MIGRATION_VERSIONS,
@@ -39,5 +40,28 @@ test("unapplied git-only timestamps are gone so db push will not send them to pr
   const local = new Set(localVersions());
   for (const version of GIT_ONLY_VERSIONS_REMOVED) {
     assert.equal(local.has(version), false, `must not keep ${version}`);
+  }
+});
+
+test("isMigrationFilename accepts YYYYMMDDHHMMSS_snake_case.sql only", () => {
+  assert.equal(isMigrationFilename("20260917143000_add_listing_expiry.sql"), true);
+  assert.equal(
+    isMigrationFilename("20260502000002_waitlist_persona_rewards.sql"),
+    true,
+  );
+  assert.equal(isMigrationFilename("001_create_profiles.sql"), false);
+  assert.equal(isMigrationFilename("add_listing_expiry.sql"), false);
+  assert.equal(
+    isMigrationFilename("20260917143000-Add-Listing-Expiry.sql"),
+    false,
+  );
+  assert.equal(isMigrationFilename("2026091714300_too_short.sql"), false);
+});
+
+test("every file in supabase/migrations matches the naming convention", () => {
+  const files = readdirSync(MIGRATIONS_DIR).filter((name) => name.endsWith(".sql"));
+  assert.equal(files.length > 0, true);
+  for (const name of files) {
+    assert.equal(isMigrationFilename(name), true, name);
   }
 });

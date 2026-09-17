@@ -85,6 +85,15 @@ const checks = {
       /never share rows/i.test(text)
     );
   },
+  readme_documents_migration_naming: () => {
+    const text = readFileSync(join(ROOT, "README.md"), "utf8");
+    return (
+      text.includes("Adding a schema migration") &&
+      text.includes("YYYYMMDDHHMMSS_snake_case_what_changed.sql") &&
+      text.includes("npx supabase migration new") &&
+      text.includes("npx supabase db reset")
+    );
+  },
 };
 
 function main() {
