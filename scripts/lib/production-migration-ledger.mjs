@@ -39,7 +39,15 @@ export const PRODUCTION_ONLY_VERSIONS = [
 /** Git-only timestamps that were never recorded on production. Must not db push. */
 export const GIT_ONLY_VERSIONS_REMOVED = ["20260729000000", "20260729000001"];
 
+/** `YYYYMMDDHHMMSS_snake_case_what_changed.sql` */
+export const MIGRATION_FILENAME_PATTERN =
+  /^(\d{14})_([a-z0-9]+(?:_[a-z0-9]+)*)\.sql$/;
+
+export function isMigrationFilename(filename) {
+  return MIGRATION_FILENAME_PATTERN.test(String(filename));
+}
+
 export function parseMigrationVersion(filename) {
-  const match = String(filename).match(/^(\d{14})_/);
+  const match = String(filename).match(MIGRATION_FILENAME_PATTERN);
   return match ? match[1] : null;
 }

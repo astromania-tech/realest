@@ -88,15 +88,65 @@ Local Docker and production are **two databases**. They share schema only when g
 | Data | Empty or whatever you inserted locally | Waitlist and live data. Never `db reset` |
 | Schema | Files in `supabase/migrations/` applied on start/reset | Same version IDs already recorded in `schema_migrations` |
 
-A developer change does **not** appear on production because the app is running locally. Production captures a schema change only through git:
+A developer change does **not** appear on production because the app is running locally. Production captures a schema change only through git. Follow **Adding a schema migration** below.
 
-1. Add a new file `supabase/migrations/YYYYMMDDHHMMSS_what_changed.sql`
-2. Apply it on Docker (`npx supabase start`, or `npx supabase db reset` on the **local** stack only) and confirm the app
-3. Commit on a feature branch, PR into `develop`, then `staging`, then `main`
-4. GitHub's Supabase check compares those files to production `schema_migrations` and applies **only versions production does not already have**
-5. Vercel deploys the app code. The hosted API URL already points at production Postgres
+Do not run `npx supabase db push` against production from a laptop unless that pending file is already reviewed and you intend to change the live schema.
 
-Do not run `npx supabase db push` against production from a laptop unless that pending file is already reviewed and you intend to change the live schema. Do not edit production in the SQL Editor unless you immediately commit a matching migration file with the **same version prefix**. Editor-only SQL is what made the last `main` deploy fail (`Remote migration versions not found in local migrations directory`).
+### Adding a schema migration
+
+Put new SQL in `supabase/migrations/` only. Local Docker and production both apply those files. The filename **is** the version id.
+
+#### Naming
+
+```
+supabase/migrations/YYYYMMDDHHMMSS_snake_case_what_changed.sql
+```
+
+| Part | Rule |
+|---|---|
+| `YYYYMMDDHHMMSS` | Exactly 14 digits (UTC date + time). This prefix is the version stored in `schema_migrations`. It must be unique in the folder. |
+| `_` | One underscore after the digits |
+| `snake_case_what_changed` | Lowercase letters, digits, and underscores. Name the change. No spaces, hyphens, or capitals. |
+| `.sql` | Required |
+
+Good names in this repo:
+
+- `20260601000000_property_validation_jobs_queue.sql`
+- `20260502000002_waitlist_persona_rewards.sql`
+
+Bad names (do not add these):
+
+- `001_create_profiles.sql` (old numbered scripts; not how this project ships schema)
+- `add_listing_expiry.sql` (missing the 14-digit prefix)
+- `20260917143000-Add-Listing-Expiry.sql` (hyphens and capitals)
+
+Do not put new SQL under `scripts/`. Do not run `supabase init`. Do not edit a migration file that already exists on `main` or on production. Add a new file instead.
+
+#### Procedure
+
+1. From the repo root, let the CLI stamp a unique time:
+
+```bash
+npx supabase migration new add_listing_expiry
+```
+
+That creates an empty file such as `supabase/migrations/20260917143000_add_listing_expiry.sql`. Keep the 14-digit prefix. You may tighten the snake_case tail before you commit.
+
+2. Write the SQL in that file only. One concern per file.
+
+3. Apply it on **local Docker only**, then confirm the app:
+
+```bash
+npx supabase db reset
+```
+
+`./start.sh` also applies pending files when it boots local Supabase. Open [http://localhost:3000](http://localhost:3000). Never `db reset` production.
+
+4. Commit on a feature branch. PR into `develop`, then `staging`, then `main`.
+
+5. GitHub's **Supabase Preview** check (required on `main`) compares those files to production `schema_migrations` and applies **only versions production does not already have**. Vercel deploys the app code. The hosted API URL already points at production Postgres.
+
+If you already ran SQL in the production SQL Editor, add a git file whose name starts with the **same 14-digit version** production recorded. A new timestamp for SQL that already ran will try to apply it a second time. Editor-only SQL with no matching file is what made the last `main` deploy fail (`Remote migration versions not found in local migrations directory`).
 
 ### Development
 

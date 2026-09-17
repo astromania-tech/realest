@@ -49,6 +49,10 @@
     {
       "id": "readme_documents_schema_sync",
       "intent": "README states that local Docker and production share schema through git migrations, not shared rows."
+    },
+    {
+      "id": "readme_documents_migration_naming",
+      "intent": "README tells a developer how to add a supabase/migrations SQL file and the YYYYMMDDHHMMSS_snake_case.sql name."
     }
   ]
 }
