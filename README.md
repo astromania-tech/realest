@@ -25,9 +25,17 @@ Nigeria's premier property marketplace that revolutionizes real estate through g
 
 ### Prerequisites
 
-- Node.js 20.x or later
-- npm or yarn
-- Supabase account
+- Git
+- Node.js 20.x or later (fnm or nvm is enough if `node` is not on PATH)
+- npm (comes with Node)
+- Docker, for the local database on a first clone
+
+### Clone
+
+```bash
+git clone https://github.com/astromania-tech/realest.git
+cd realest
+```
 
 ### Installation
 
@@ -38,6 +46,7 @@ From the repo root, one command installs dependencies, checks env, and boots Nex
 ```
 
 That script:
+
 1. Finds Node 20+ (fnm or nvm if your shell has no `node` yet)
 2. Runs `npm ci` when `node_modules` is missing
 3. Uses `.env.local` if the required Supabase keys are set
@@ -51,7 +60,7 @@ NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
-To skip Docker and use a hosted project:
+To skip Docker and point the app at a hosted project (read/write that project's data):
 
 ```bash
 cp .env.example .env.local
@@ -59,7 +68,7 @@ cp .env.example .env.local
 ./start.sh --no-local-supabase
 ```
 
-Manual equivalent:
+Manual equivalent after clone:
 
 ```bash
 npm ci
@@ -67,44 +76,27 @@ cp .env.example .env.local
 npm run dev
 ```
 
-### Database Setup
+`supabase/` is already in the repo. Do not run `supabase init`. Do not paste numbered files from `scripts/001_*.sql` into the dashboard; those files are not in this project. Schema lives in `supabase/migrations/`.
 
-#### Option 1: Using Supabase CLI (Recommended)
+### Local database vs production
 
-1. Install Supabase CLI:
-```bash
-npm install -g supabase
-```
+Local Docker and production are **two databases**. They share schema only when git says so. They never share rows.
 
-2. Initialize Supabase in your project:
-```bash
-supabase init
-```
+| | Your laptop | Production (`realest.ng`) |
+|---|---|---|
+| Database | Docker via `./start.sh` / `npx supabase start` | Hosted project |
+| Data | Empty or whatever you inserted locally | Waitlist and live data. Never `db reset` |
+| Schema | Files in `supabase/migrations/` applied on start/reset | Same version IDs already recorded in `schema_migrations` |
 
-3. Start local Supabase:
-```bash
-supabase start
-```
+A developer change does **not** appear on production because the app is running locally. Production captures a schema change only through git:
 
-4. Run migrations:
-```bash
-supabase db push
-```
+1. Add a new file `supabase/migrations/YYYYMMDDHHMMSS_what_changed.sql`
+2. Apply it on Docker (`npx supabase start`, or `npx supabase db reset` on the **local** stack only) and confirm the app
+3. Commit on a feature branch, PR into `develop`, then `staging`, then `main`
+4. GitHub's Supabase check compares those files to production `schema_migrations` and applies **only versions production does not already have**
+5. Vercel deploys the app code. The hosted API URL already points at production Postgres
 
-#### Option 2: Manual Setup
-
-If you prefer not to use the CLI, you can run the SQL scripts directly in your Supabase dashboard:
-
-1. Go to your Supabase project dashboard
-2. Navigate to SQL Editor
-3. Run the scripts in order:
-   - `scripts/001_create_profiles.sql`
-   - `scripts/002_create_properties.sql`
-   - `scripts/003_create_property_details.sql`
-   - `scripts/004_create_property_documents.sql`
-   - `scripts/005_create_property_media.sql`
-   - `scripts/006_create_inquiries.sql`
-   - `scripts/007_create_profile_trigger.sql`
+Do not run `npx supabase db push` against production from a laptop unless that pending file is already reviewed and you intend to change the live schema. Do not edit production in the SQL Editor unless you immediately commit a matching migration file with the **same version prefix**. Editor-only SQL is what made the last `main` deploy fail (`Remote migration versions not found in local migrations directory`).
 
 ### Development
 
@@ -165,7 +157,8 @@ realest/
 │   └── ...               # Feature components
 ├── lib/                  # Utility libraries
 │   └── supabase/         # Supabase client and types
-├── scripts/              # Database setup scripts
+├── scripts/              # Launchers, tests, and tooling
+├── supabase/migrations/  # Schema. Local Docker and production both use these files
 ├── docs/                 # Documentation and mockups
 └── public/               # Static assets
 ```
