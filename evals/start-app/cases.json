@@ -37,6 +37,18 @@
     {
       "id": "readme_documents_start_sh",
       "intent": "Getting Started tells a new cloner the one command to run."
+    },
+    {
+      "id": "readme_has_clone_url",
+      "intent": "Getting Started names the real GitHub clone URL, not a placeholder."
+    },
+    {
+      "id": "readme_omits_false_sql_install",
+      "intent": "README does not tell people to run scripts/001_*.sql files that are not in the repo."
+    },
+    {
+      "id": "readme_documents_schema_sync",
+      "intent": "README states that local Docker and production share schema through git migrations, not shared rows."
     }
   ]
 }

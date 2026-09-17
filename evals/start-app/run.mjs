@@ -52,7 +52,12 @@ const checks = {
   gate_tests_pass: () => {
     const result = spawnSync(
       process.execPath,
-      ["--test", join(ROOT, "scripts", "start-app.test.mjs"), join(ROOT, "scripts", "migration-ledger.test.mjs")],
+      [
+        "--test",
+        join(ROOT, "scripts", "start-app.test.mjs"),
+        join(ROOT, "scripts", "migration-ledger.test.mjs"),
+        join(ROOT, "scripts", "readme-install.test.mjs"),
+      ],
       { cwd: ROOT, encoding: "utf8" },
     );
     return result.status === 0;
@@ -60,6 +65,25 @@ const checks = {
   readme_documents_start_sh: () => {
     const text = readFileSync(join(ROOT, "README.md"), "utf8");
     return text.includes("./start.sh");
+  },
+  readme_has_clone_url: () => {
+    const text = readFileSync(join(ROOT, "README.md"), "utf8");
+    return text.includes("git clone https://github.com/astromania-tech/realest.git");
+  },
+  readme_omits_false_sql_install: () => {
+    const text = readFileSync(join(ROOT, "README.md"), "utf8");
+    return (
+      !text.includes("scripts/001_create_profiles.sql") &&
+      !text.includes("Option 2: Manual Setup")
+    );
+  },
+  readme_documents_schema_sync: () => {
+    const text = readFileSync(join(ROOT, "README.md"), "utf8");
+    return (
+      text.includes("supabase/migrations/") &&
+      text.includes("schema_migrations") &&
+      /never share rows/i.test(text)
+    );
   },
 };
 
