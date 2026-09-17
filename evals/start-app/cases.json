@@ -32,7 +32,7 @@
     },
     {
       "id": "gate_tests_pass",
-      "intent": "Env parsing, placeholders, and HTTP wait still behave as specified."
+      "intent": "Env parsing, placeholders, HTTP wait, and production migration ledger files stay in git."
     },
     {
       "id": "readme_documents_start_sh",

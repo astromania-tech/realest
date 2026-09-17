@@ -1,4 +1,5 @@
--- Add minimal self-service policies for authenticated onboarding/profile flows.
+-- Ledger sync for production rzclzcermmfrbvvjegwg version 20260729104022.
+-- Hosted DB already applied this version. Local Docker applies the SQL below.
 
 BEGIN;
 
