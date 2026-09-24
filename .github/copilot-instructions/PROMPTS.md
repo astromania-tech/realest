@@ -33,7 +33,7 @@ Requirements:
 
 Reference files:
 - Design tokens: lib/constants/design-system.ts
-- Form patterns: docs/form-patterns.md
+- Form patterns: Confluence Design / Form patterns
 - Nigerian locations: lib/constants/nigerian-locations.ts
 - Button component: components/heroui/realest-button.tsx
 - HeroUI forms: Use Input, Select, TextArea from @heroui/react
@@ -599,5 +599,5 @@ Always mention these files when relevant:
 - Types: `.github/copilot-instructions/03-typescript-types.md`
 - Auth: `.github/copilot-instructions/04-authentication.md`
 - Nigerian Market: `.github/copilot-instructions/05-nigerian-market.md`
-- Form Patterns: `docs/form-patterns.md`
-- Theme System: `docs/theme-system.md`
+- Form Patterns: Confluence **Design / Form patterns**
+- Theme System: Confluence **Design / Theme system**
