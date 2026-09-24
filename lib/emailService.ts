@@ -98,8 +98,11 @@ import {
   type PollResultsSummaryEmailData,
   VerificationEmailData,
 } from '@/emails';
-import { adminNotificationSkipReason, resendApiKey, resendSkipReason, resolveResendAction } from '../scripts/lib/resend-key.mjs';
 
+if (!process.env.RESEND_API_KEY) {
+  throw new Error('Missing required environment variable: RESEND_API_KEY');
+}
+const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM_EMAIL           = process.env.FROM_EMAIL            || 'RealEST Connect <info@connect.realest.ng>';
 const FROM_EMAIL_AUTH      = process.env.FROM_EMAIL_AUTH       || FROM_EMAIL;
 const FROM_EMAIL_INQUIRIES = process.env.FROM_EMAIL_INQUIRIES  || FROM_EMAIL;
@@ -126,18 +129,10 @@ async function sendReactEmail({
   component: React.ReactElement;
   replyTo?: string;
 }): Promise<EmailResult> {
-  const action = resolveResendAction();
-  const apiKey = resendApiKey();
-  if (action !== "send" || !apiKey) {
-    const skip = resendSkipReason();
-    if (action === "missing-on-production") {
-      console.error(skip ?? "RESEND_API_KEY not configured");
-    } else {
-      console.warn(skip ?? "RESEND_API_KEY not configured — email sending disabled.");
-    }
-    return { success: false, error: skip ?? "Email service not configured" };
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('⚠️  RESEND_API_KEY not configured — email sending disabled.');
+    return { success: false, error: 'Email service not configured' };
   }
-  const resend = new Resend(apiKey);
   try {
     const { html, text } = await renderEmailFull(component);
     const { data, error } = await resend.emails.send({
@@ -170,14 +165,13 @@ export async function sendWaitlistConfirmationEmail(data: WaitlistEmailData): Pr
 }
 
 export async function sendWaitlistAdminNotification(data: AdminNotificationData): Promise<EmailResult> {
-  const skip = adminNotificationSkipReason();
-  if (skip) {
-    return { success: false, error: skip };
+  if (!process.env.RESEND_API_KEY || !process.env.ADMIN_EMAIL) {
+    return { success: false, error: 'Admin notifications not configured' };
   }
   console.log(`📧 Sending admin notification for ${data.email}`);
   return sendReactEmail({
     from: FROM_EMAIL,
-    to: process.env.ADMIN_EMAIL as string,
+    to: process.env.ADMIN_EMAIL,
     subject: AdminNotificationEmail.subject(data),
     component: React.createElement(AdminNotificationEmail, data),
   });
@@ -560,14 +554,12 @@ export async function sendPollResultsSummaryEmail(email: string, data: PollResul
 }
 
 export async function testEmailConfiguration(): Promise<{ success: boolean; error?: string }> {
-  const apiKey = resendApiKey();
-  const skip = resendSkipReason();
-  if (!apiKey || skip) {
-    return { success: false, error: skip ?? "RESEND_API_KEY not configured" };
+  if (!process.env.RESEND_API_KEY) {
+    return { success: false, error: 'RESEND_API_KEY not configured' };
   }
   try {
     const response = await fetch('https://api.resend.com/domains', {
-      headers: { Authorization: `Bearer ${apiKey}` },
+      headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
     });
     return response.ok
       ? { success: true }
