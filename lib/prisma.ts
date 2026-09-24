@@ -9,7 +9,6 @@
 import "dotenv/config"
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from './prisma/client'
-import { pgAdapterConfig } from '../scripts/lib/pg-ssl.mjs'
 
 // Singleton pattern for Next.js (prevents multiple instances in dev mode)
 const globalForPrisma = globalThis as unknown as {
@@ -18,7 +17,10 @@ const globalForPrisma = globalThis as unknown as {
 
 // Initialize driver adapter (required in Prisma v7)
 // const connectionString = process.env.DATABASE_URL
-const adapter = new PrismaPg(pgAdapterConfig(process.env.DATABASE_URL))
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+})
 
 // Instantiate PrismaClient with adapter and logging
 export const prisma =
