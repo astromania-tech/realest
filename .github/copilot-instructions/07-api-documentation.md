@@ -312,11 +312,10 @@ npm run scaffold:endpoint -- \
 
 | When You Need | Read This |
 |---------------|-----------|
-| Complete guide | `docs/auto-document-apis.md` |
-| Step-by-step workflow | `docs/api-workflow-add-new-endpoint.md` |
-| Code templates | `docs/openapi-endpoint-template.md` |
-| System overview | `docs/auto-documentation-system-overview.md` |
-| Quick start | `docs/api-documentation-setup.md` |
+| Auto-documentation | Confluence **API / Auto-documentation** |
+| Step-by-step workflow | Confluence **API / Add-endpoint workflow** |
+| Code templates | Confluence **API / OpenAPI endpoint template** |
+| Endpoint list | Confluence **API / Endpoint inventory** |
 
 ---
 
@@ -519,9 +518,9 @@ npm run lint           # Check code style
 
 | Question | Answer |
 |----------|--------|
-| How do I add an endpoint? | See `docs/api-workflow-add-new-endpoint.md` |
-| What's the template format? | See `docs/openapi-endpoint-template.md` |
-| How does auto-documentation work? | See `docs/auto-documentation-system-overview.md` |
+| How do I add an endpoint? | Confluence **API / Add-endpoint workflow** |
+| What's the template format? | Confluence **API / OpenAPI endpoint template** |
+| How does auto-documentation work? | Confluence **API / Auto-documentation** |
 | What's wrong with my endpoint docs? | Check: 1) Field names match code, 2) Required fields marked, 3) All response codes documented |
 | How do I test in Swagger? | Run `npm run dev`, visit `/docs`, click "Try it out" |
 
