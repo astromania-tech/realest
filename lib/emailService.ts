@@ -98,11 +98,11 @@ import {
   type PollResultsSummaryEmailData,
   VerificationEmailData,
 } from '@/emails';
+import { isResendConfigured, resendSkipReason } from '../scripts/lib/resend-key.mjs';
 
-if (!process.env.RESEND_API_KEY) {
-  throw new Error('Missing required environment variable: RESEND_API_KEY');
-}
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = isResendConfigured()
+  ? new Resend(process.env.RESEND_API_KEY)
+  : null;
 const FROM_EMAIL           = process.env.FROM_EMAIL            || 'RealEST Connect <info@connect.realest.ng>';
 const FROM_EMAIL_AUTH      = process.env.FROM_EMAIL_AUTH       || FROM_EMAIL;
 const FROM_EMAIL_INQUIRIES = process.env.FROM_EMAIL_INQUIRIES  || FROM_EMAIL;
@@ -129,9 +129,10 @@ async function sendReactEmail({
   component: React.ReactElement;
   replyTo?: string;
 }): Promise<EmailResult> {
-  if (!process.env.RESEND_API_KEY) {
-    console.warn('⚠️  RESEND_API_KEY not configured — email sending disabled.');
-    return { success: false, error: 'Email service not configured' };
+  const skip = resendSkipReason();
+  if (!resend || skip) {
+    console.warn(skip ?? 'RESEND_API_KEY not configured — email sending disabled.');
+    return { success: false, error: skip ?? 'Email service not configured' };
   }
   try {
     const { html, text } = await renderEmailFull(component);
