@@ -157,9 +157,6 @@ export default function RootLayout({
         <script type="text/javascript" id="hs-script-loader" async defer src="//js-eu1.hs-scripts.com/147628032.js"></script>
         {/*<!-- End of HubSpot Embed Code -->*/}
         
-        {/* React DevTools */}
-        <script src="http://localhost:8097"></script>
-
         {/* <!-- Meta Pixel Code --> */}
         <script
           dangerouslySetInnerHTML={{
