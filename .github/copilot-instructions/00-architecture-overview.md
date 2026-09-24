@@ -285,15 +285,9 @@ supabase gen types typescript         # Regenerate types
 ❌ **Never commit `.env.local`** - Use `.env.example` as template
 ❌ **Don't ignore app mode checks** - Use `getAppMode()` for conditional features
 
-## Reference Documentation
+## Reference documentation
 
-- **Design System**: `docs/realest-ng-design-architecture.md`
-- **Brand Decisions**: `docs/realest-ng-branding.md`
-- **Form Patterns**: `docs/form-patterns.md`
-- **Theme System**: `docs/theme-system.md`
-- **Page Structure**: `docs/page-structure.md`
-- **Roadmap**: `docs/product/roadmap.md`
-- **Phase Summaries**: `docs/phase-{1,2}-completion-summary.md`
+Product docs are in Confluence (Design, Engineering, Launch, Product, API). They are not in a git clone. Use root `README.md` and this folder for onboarding.
 
 ### Database Access Architecture
 
