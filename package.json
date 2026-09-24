@@ -15,7 +15,7 @@
     "typecheck": "tsc --noEmit",
     "precommit": "npm run typecheck && npm run lint",
     "start": "next start",
-    "test": "node --test scripts/start-app.test.mjs scripts/migration-ledger.test.mjs scripts/readme-install.test.mjs",
+    "test": "node --test scripts/start-app.test.mjs scripts/migration-ledger.test.mjs scripts/readme-install.test.mjs scripts/prisma-ssl.test.mjs",
     "eval:start-app": "node evals/start-app/run.mjs",
     "setup:branches": "bash scripts/setup-branch-management.sh",
     "check:deployment": "bash scripts/check-deployment.sh",
