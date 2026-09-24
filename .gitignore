@@ -23,6 +23,28 @@ yarn-error.log*
 # vercel
 .vercel
 
+# Generated Confluence export. Do not commit.
+/confluence-export/
+
+# Migrated to Confluence. Local copies only. Git does not track these.
+/docs/product/
+/docs/engineering/
+/docs/design/
+/docs/launch/
+/docs/_obsolete/
+/docs/done/
+/docs/Untitled
+/docs/api/*.md
+/docs/CONFLUENCE-MIGRATION.md
+
+# Local Confluence move scripts. Git does not track these.
+/scripts/docs-classify.test.mjs
+/scripts/docs-export-confluence.mjs
+/scripts/docs-publish-confluence.mjs
+/scripts/lib/docs-classify.mjs
+/scripts/lib/docs-walk.mjs
+/scripts/lib/md-to-storage.mjs
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

@@ -349,12 +349,12 @@ border: 1px solid var(--border);
 - **Form Patterns**: `docs/form-patterns.md` (546 lines - Nigerian forms)
 - **Page Structure**: `docs/page-structure.md` (259 lines - page architecture)
 - **Environment Setup**: `docs/environment-setup.md` (272 lines - configuration)
-- **Branch Management**: `docs/branch-management.md` (324 lines - Git workflow)
-- **Email Setup**: `docs/email-setup.md` (268 lines - Resend integration)
+- **Branch Management**: `docs/engineering/branch-management.md` (324 lines - Git workflow)
+- **Email Setup**: `docs/launch/email-setup.md` (268 lines - Resend integration)
 - **API Documentation Schema Sync**: `docs/api/api-documentation-schema-sync.md` (complete guide - type deduplication strategy)
 
 ### Project Planning
-- **Roadmap**: `docs/ROADMAP.md` (251 lines - implementation phases)
+- **Roadmap**: `docs/product/roadmap.md` (251 lines - implementation phases)
 - **Phase 1 Summary**: `docs/phase-1-completion-summary.md` (223 lines - foundation)
 - **Phase 2 Summary**: `docs/phase-2-completion-summary.md` (261 lines - components)
-- **Waitlist Features**: `docs/waitlist-features.md` (290 lines - pre-launch)
+- **Waitlist Features**: `docs/launch/waitlist-features.md` (290 lines - pre-launch)

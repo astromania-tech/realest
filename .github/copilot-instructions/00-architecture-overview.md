@@ -292,7 +292,7 @@ supabase gen types typescript         # Regenerate types
 - **Form Patterns**: `docs/form-patterns.md`
 - **Theme System**: `docs/theme-system.md`
 - **Page Structure**: `docs/page-structure.md`
-- **Roadmap**: `docs/ROADMAP.md`
+- **Roadmap**: `docs/product/roadmap.md`
 - **Phase Summaries**: `docs/phase-{1,2}-completion-summary.md`
 
 ### Database Access Architecture
