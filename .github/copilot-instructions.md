@@ -172,7 +172,7 @@ Dashboard routes in `app/` (gated by role):
 
 ## Form Patterns
 
-All forms follow RealEST conventions (see `docs/form-patterns.md` for complete reference):
+All forms follow RealEST conventions (see Confluence **Design / Form patterns**):
 
 ### Standard Form Structure
 1. Use React Hook Form + Zod for validation
@@ -279,8 +279,8 @@ border: 1px solid var(--border);
 | `lib/app-mode.ts` | App mode configuration logic - READ FIRST for conditional features |
 | `lib/supabase/middleware.ts` | Route access control per app mode - critical for feature gating |
 | `components/providers/realest-theme-provider.tsx` | Global theme system and HeroUI overrides |
-| `docs/theme-system.md` | Complete theme usage guide with examples |
-| `docs/form-patterns.md` | Form architecture and component patterns |
+| Confluence **Design / Theme system** | Theme usage guide |
+| Confluence **Design / Form patterns** | Form architecture and component patterns |
 | `styles/tokens/colors.css` | Color token definitions - source of truth |
 | `commitlint.config.js` | Commit message conventions (enforced) |
 
@@ -336,25 +336,23 @@ border: 1px solid var(--border);
 | Understand project structure | [00-architecture-overview.md](copilot-instructions/00-architecture-overview.md) | Routes, data flow, phases |
 | Start a new task | [PROMPTS.md](copilot-instructions/PROMPTS.md) | Template prompts |
 
-## 📖 Essential Documentation Reference
+## Essential documentation (Confluence)
 
-### Design & Brand
-- **Design System Architecture**: `docs/realest-ng-design-architecture.md` (2,747 lines - comprehensive)
-- **Brand Decisions**: `docs/realest-ng-branding.md` (354 lines - philosophy)
-- **Conservative Palette**: `docs/realest-ng-conservative-professional-palette.md`
-- **Theme System Guide**: `docs/theme-system.md` (318 lines - practical usage)
-- **Logo Component**: `docs/logo-component-guide.md` (388 lines - logo usage)
+Product docs are in Confluence, not this repo. A clone will not have `docs/product/`, `docs/engineering/`, `docs/design/`, `docs/launch/`, or `docs/api/*.md`.
 
-### Development Patterns
-- **Form Patterns**: `docs/form-patterns.md` (546 lines - Nigerian forms)
-- **Page Structure**: `docs/page-structure.md` (259 lines - page architecture)
-- **Environment Setup**: `docs/environment-setup.md` (272 lines - configuration)
-- **Branch Management**: `docs/branch-management.md` (324 lines - Git workflow)
-- **Email Setup**: `docs/email-setup.md` (268 lines - Resend integration)
-- **API Documentation Schema Sync**: `docs/api/api-documentation-schema-sync.md` (complete guide - type deduplication strategy)
+### Design
+- Design architecture, Branding, Theme system, Form patterns, Logo, Amenity badge
 
-### Project Planning
-- **Roadmap**: `docs/ROADMAP.md` (251 lines - implementation phases)
-- **Phase 1 Summary**: `docs/phase-1-completion-summary.md` (223 lines - foundation)
-- **Phase 2 Summary**: `docs/phase-2-completion-summary.md` (261 lines - components)
-- **Waitlist Features**: `docs/waitlist-features.md` (290 lines - pre-launch)
+### Engineering
+- Environment setup, Branch management, Import migration
+
+### Launch
+- Waitlist features, Email setup, Poll and referral, Referral rewards spec
+
+### Product
+- Product overview, Roadmap, Launch strategy, Page structure, Component organization, ML validation
+
+### API
+- Auto-documentation, Endpoint inventory, Add-endpoint workflow, OpenAPI endpoint template
+
+Onboarding in git: root `README.md`, `CONTRIBUTING.md`, `AGENTS.md`, and this folder.

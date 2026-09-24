@@ -401,8 +401,5 @@ const buttonStyles = {
 ## Reference Files
 
 - **Color Tokens**: `styles/tokens/colors.css`
-- **Complete Architecture**: `docs/realest-ng-design-architecture.md`
-- **Branding Decisions**: `docs/realest-ng-branding.md`
-- **Conservative Palette**: `docs/realest-ng-conservative-professional-palette.md`
-- **Theme System**: `docs/theme-system.md`
 - **Design Showcase**: `app/(demo)/design-showcase/page.tsx`
+- Confluence **Design**: architecture, branding, theme system, form patterns
