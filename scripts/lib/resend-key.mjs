@@ -32,3 +32,13 @@ export function resendApiKey(env = process.env) {
   if (!isResendConfigured(env)) return null;
   return String(env.RESEND_API_KEY).trim();
 }
+
+/** Admin notify: same key gate as other mail, then ADMIN_EMAIL. */
+export function adminNotificationSkipReason(env = process.env) {
+  const skip = resendSkipReason(env);
+  if (skip) return skip;
+  if (!String(env.ADMIN_EMAIL ?? "").trim()) {
+    return "Admin notifications not configured";
+  }
+  return null;
+}

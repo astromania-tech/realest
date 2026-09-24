@@ -98,7 +98,7 @@ import {
   type PollResultsSummaryEmailData,
   VerificationEmailData,
 } from '@/emails';
-import { resendApiKey, resendSkipReason, resolveResendAction } from '../scripts/lib/resend-key.mjs';
+import { adminNotificationSkipReason, resendApiKey, resendSkipReason, resolveResendAction } from '../scripts/lib/resend-key.mjs';
 
 const FROM_EMAIL           = process.env.FROM_EMAIL            || 'RealEST Connect <info@connect.realest.ng>';
 const FROM_EMAIL_AUTH      = process.env.FROM_EMAIL_AUTH       || FROM_EMAIL;
@@ -170,13 +170,14 @@ export async function sendWaitlistConfirmationEmail(data: WaitlistEmailData): Pr
 }
 
 export async function sendWaitlistAdminNotification(data: AdminNotificationData): Promise<EmailResult> {
-  if (!process.env.RESEND_API_KEY || !process.env.ADMIN_EMAIL) {
-    return { success: false, error: 'Admin notifications not configured' };
+  const skip = adminNotificationSkipReason();
+  if (skip) {
+    return { success: false, error: skip };
   }
   console.log(`📧 Sending admin notification for ${data.email}`);
   return sendReactEmail({
     from: FROM_EMAIL,
-    to: process.env.ADMIN_EMAIL,
+    to: process.env.ADMIN_EMAIL as string,
     subject: AdminNotificationEmail.subject(data),
     component: React.createElement(AdminNotificationEmail, data),
   });
@@ -559,12 +560,14 @@ export async function sendPollResultsSummaryEmail(email: string, data: PollResul
 }
 
 export async function testEmailConfiguration(): Promise<{ success: boolean; error?: string }> {
-  if (!process.env.RESEND_API_KEY) {
-    return { success: false, error: 'RESEND_API_KEY not configured' };
+  const apiKey = resendApiKey();
+  const skip = resendSkipReason();
+  if (!apiKey || skip) {
+    return { success: false, error: skip ?? "RESEND_API_KEY not configured" };
   }
   try {
     const response = await fetch('https://api.resend.com/domains', {
-      headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+      headers: { Authorization: `Bearer ${apiKey}` },
     });
     return response.ok
       ? { success: true }

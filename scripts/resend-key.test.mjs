@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  adminNotificationSkipReason,
   isResendConfigured,
   resendApiKey,
   resendSkipReason,
@@ -51,4 +52,28 @@ test("production without key is not the local skip", () => {
 
 test("key present wins over missing VERCEL_ENV", () => {
   assert.equal(resolveResendAction({ RESEND_API_KEY: "re_x" }), "send");
+});
+
+test("admin notify uses the same local skip as other mail", () => {
+  const env = { NODE_ENV: "development" };
+  assert.equal(adminNotificationSkipReason(env), resendSkipReason(env));
+  assert.match(adminNotificationSkipReason(env), /local/);
+});
+
+test("admin notify with key still needs ADMIN_EMAIL", () => {
+  assert.equal(
+    adminNotificationSkipReason({ RESEND_API_KEY: "re_x" }),
+    "Admin notifications not configured",
+  );
+});
+
+test("admin notify sends when key and ADMIN_EMAIL are set", () => {
+  assert.equal(
+    adminNotificationSkipReason({
+      RESEND_API_KEY: "re_prod",
+      ADMIN_EMAIL: "ops@realest.ng",
+      VERCEL_ENV: "production",
+    }),
+    null,
+  );
 });
