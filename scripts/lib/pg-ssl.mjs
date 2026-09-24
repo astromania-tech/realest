@@ -2,9 +2,14 @@
  * Prisma/pg SSL: local Docker Postgres has no TLS. Hosted Supabase does.
  * Same-input-same-output. Do not decide this in a model reply.
  *
- * node-pg Object.assign(config, parse(url)) can drop ssl:false. Put sslmode
- * on the URL so local Docker never starts a TLS handshake.
+ * node-pg Object.assign(config, parse(url)) can drop the ssl object. Pin
+ * sslmode on the URL so the handshake cannot silently change.
+ *
+ * Hosted must verify the certificate (sslmode=verify-full). sslmode=require
+ * encrypts but skips CA/hostname checks, which is a MITM hole.
  */
+
+const HOSTED_TLS = { rejectUnauthorized: true };
 
 function isLocalDockerUrl(lower) {
   return (
@@ -12,6 +17,15 @@ function isLocalDockerUrl(lower) {
     lower.includes("@localhost:") ||
     lower.includes("@127.0.0.1:") ||
     /:54322(\/|\?|$)/.test(lower)
+  );
+}
+
+function isHostedPostgresUrl(lower) {
+  return (
+    lower.includes("supabase.co") ||
+    lower.includes("pooler.supabase.com") ||
+    lower.includes("sslmode=require") ||
+    lower.includes("sslmode=verify")
   );
 }
 
@@ -28,13 +42,7 @@ export function pgAdapterSsl(connectionString) {
   if (!connectionString) return false;
   const lower = String(connectionString).toLowerCase();
   if (lower.includes("sslmode=disable") || isLocalDockerUrl(lower)) return false;
-  if (
-    lower.includes("supabase.co") ||
-    lower.includes("sslmode=require") ||
-    lower.includes("sslmode=verify")
-  ) {
-    return { rejectUnauthorized: false };
-  }
+  if (isHostedPostgresUrl(lower)) return HOSTED_TLS;
   return false;
 }
 
@@ -45,5 +53,5 @@ export function pgAdapterConfig(connectionString) {
   if (ssl === false) {
     return { connectionString: withSslMode(connectionString, "disable"), ssl: false };
   }
-  return { connectionString: withSslMode(connectionString, "require"), ssl };
+  return { connectionString: withSslMode(connectionString, "verify-full"), ssl };
 }
