@@ -20,16 +20,16 @@ const checks = {
       !/await ensureWaitlistCohortReward\(\{/.test(text)
     );
   },
-  route_try_catch_around_helper: () => {
+  route_does_not_wrap_helper: () => {
     const text = readFileSync(join(ROOT, "app/api/waitlist/route.ts"), "utf8");
     const start = text.indexOf("if (result.data)");
     const end = text.indexOf("const positionData");
     if (start < 0 || end < 0 || end <= start) return false;
     const window = text.slice(start, end);
     return (
-      window.includes("try {") &&
       window.includes("applyWaitlistJoinRewards") &&
-      window.includes("catch (error)")
+      !window.includes("try {") &&
+      !window.includes("catch (error)")
     );
   },
   helper_never_throws_on_missing_deps: () => {
