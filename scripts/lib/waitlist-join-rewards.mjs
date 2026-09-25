@@ -1,0 +1,26 @@
+/**
+ * Waitlist join must not fail because rewards/ranking failed.
+ * Subscribe + email stay on the success path.
+ * This function is the only error boundary. It must not throw.
+ * The route awaits it and does not wrap it in try/catch.
+ */
+export async function applyWaitlistJoinRewards(record, deps) {
+  if (!record) return { rewardsOk: true };
+  if (!deps?.ensureWaitlistCohortReward || !deps?.recomputeWaitlistRankings) {
+    console.error(
+      "❌ Waitlist reward/rank skipped: missing deps. Email will still send.",
+    );
+    return { rewardsOk: false };
+  }
+  try {
+    await deps.ensureWaitlistCohortReward(record);
+    await deps.recomputeWaitlistRankings();
+    return { rewardsOk: true };
+  } catch (error) {
+    console.error(
+      "❌ Waitlist reward/rank failed after subscribe. Email will still send.",
+      error,
+    );
+    return { rewardsOk: false };
+  }
+}
