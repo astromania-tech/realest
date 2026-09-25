@@ -5,11 +5,16 @@
  * node-pg Object.assign(config, parse(url)) can drop the ssl object. Pin
  * sslmode on the URL so the handshake cannot silently change.
  *
- * Hosted must verify the certificate (sslmode=verify-full). sslmode=require
- * encrypts but skips CA/hostname checks, which is a MITM hole.
+ * Production last worked (pre-24e6451 / 4d9cc35) with
+ * ssl: { rejectUnauthorized: false }. Forcing sslmode=verify-full on Vercel
+ * failed with P1011 "self-signed certificate in certificate chain"
+ * (realest.ng waitlist POST 2026-09-25). Do not require a Vercel env change.
+ *
+ * Hosted: encrypt (sslmode=require), do not verify the CA/hostname.
+ * Local: sslmode=disable.
  */
 
-const HOSTED_TLS = { rejectUnauthorized: true };
+const HOSTED_TLS = { rejectUnauthorized: false };
 
 function isLocalDockerUrl(lower) {
   return (
@@ -53,5 +58,5 @@ export function pgAdapterConfig(connectionString) {
   if (ssl === false) {
     return { connectionString: withSslMode(connectionString, "disable"), ssl: false };
   }
-  return { connectionString: withSslMode(connectionString, "verify-full"), ssl };
+  return { connectionString: withSslMode(connectionString, "require"), ssl };
 }
