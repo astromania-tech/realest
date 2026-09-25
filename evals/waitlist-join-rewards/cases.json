@@ -10,8 +10,8 @@
       "check": "helper_does_not_throw_on_p2003"
     },
     {
-      "id": "route_try_catch_around_helper",
-      "check": "route_try_catch_around_helper"
+      "id": "route_does_not_wrap_helper",
+      "check": "route_does_not_wrap_helper"
     },
     {
       "id": "helper_never_throws_on_missing_deps",
