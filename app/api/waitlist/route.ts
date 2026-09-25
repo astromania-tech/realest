@@ -18,6 +18,7 @@ import {
   recomputeWaitlistRankings,
   recordReferralEvent,
 } from '@/lib/reward-engine';
+import { applyWaitlistJoinRewards } from '../../../scripts/lib/waitlist-join-rewards.mjs';
 import {
   buildReferralShareUrl,
   getCurrentMilestone,
@@ -143,17 +144,19 @@ export async function POST(request: NextRequest) {
     console.log(`New waitlist subscriber: ${subscriptionData.email} (${subscriptionData.firstName} ${subscriptionData.lastName || ''})`);
 
     if (result.data) {
-      await ensureWaitlistCohortReward({
-        id: result.data.id,
-        email: result.data.email,
-        first_name: result.data.first_name,
-        referral_code: result.data.referral_code,
-        referral_count: result.data.referral_count,
-        persona: result.data.persona,
-        poll_completion_count: result.data.poll_completion_count,
-        subscribed_at: result.data.subscribed_at,
-      });
-      await recomputeWaitlistRankings();
+      await applyWaitlistJoinRewards(
+        {
+          id: result.data.id,
+          email: result.data.email,
+          first_name: result.data.first_name,
+          referral_code: result.data.referral_code,
+          referral_count: result.data.referral_count,
+          persona: result.data.persona,
+          poll_completion_count: result.data.poll_completion_count,
+          subscribed_at: result.data.subscribed_at,
+        },
+        { ensureWaitlistCohortReward, recomputeWaitlistRankings },
+      );
     }
 
     const positionData = await getWaitlistPosition(subscriptionData.email);
