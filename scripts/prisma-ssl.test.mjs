@@ -74,7 +74,10 @@ test("raw sslmode=require in URL would override rejectUnauthorized false", () =>
     { connectionString: url, ssl: { rejectUnauthorized: false } },
     parsePgUrl(url),
   );
-  assert.notEqual(merged.ssl?.rejectUnauthorized, false);
+  // pg parse replaces the ssl object with {}. Missing ssl would be a different bug.
+  assert.ok(merged.ssl && typeof merged.ssl === "object");
+  assert.deepEqual(merged.ssl, {});
+  assert.equal(merged.ssl.rejectUnauthorized, undefined);
 });
 
 test("hosted TLS matches last-known working Vercel handshake (PR #43)", () => {
