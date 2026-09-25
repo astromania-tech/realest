@@ -93,6 +93,32 @@ test("hosted TLS matches last-known working Vercel handshake (PR #43)", () => {
     assert.equal(ssl.rejectUnauthorized, false, url);
     const cfg = pgAdapterConfig(url);
     assert.doesNotMatch(cfg.connectionString, /sslmode=/, url);
+    assert.doesNotMatch(cfg.connectionString, /no-verify/, url);
     assert.deepEqual(cfg.ssl, { rejectUnauthorized: false }, url);
   }
+});
+
+test("config never emits sslmode=no-verify", () => {
+  const urls = [
+    HOSTED,
+    `${HOSTED}?sslmode=require`,
+    `${HOSTED}?sslmode=no-verify`,
+    LOCAL,
+  ];
+  for (const url of urls) {
+    const cfg = pgAdapterConfig(url);
+    assert.doesNotMatch(cfg.connectionString, /sslmode=no-verify/, url);
+  }
+});
+
+test("isHostedPostgresUrl uses host or libpq modes, not no-verify alone", () => {
+  // A random host with only sslmode=no-verify is not classified as hosted.
+  assert.equal(
+    pgAdapterSsl("postgresql://u:p@db.example.internal:5432/postgres?sslmode=no-verify"),
+    false,
+  );
+  assert.deepEqual(
+    pgAdapterSsl("postgresql://u:p@db.example.internal:5432/postgres?sslmode=require"),
+    { rejectUnauthorized: false },
+  );
 });

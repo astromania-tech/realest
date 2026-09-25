@@ -30,12 +30,14 @@ function isLocalDockerUrl(lower) {
 }
 
 function isHostedPostgresUrl(lower) {
+  // Host detection by hostname. Also treat libpq sslmode hints as hosted
+  // (require / verify-ca / verify-full) so a non-supabase host with TLS
+  // still gets rejectUnauthorized: false. Do not key off node-pg-only
+  // sslmode=no-verify; we never emit that mode.
   return (
     lower.includes("supabase.co") ||
     lower.includes("pooler.supabase.com") ||
-    lower.includes("sslmode=require") ||
-    lower.includes("sslmode=verify") ||
-    lower.includes("sslmode=no-verify")
+    /[?&]sslmode=(require|verify-ca|verify-full)(&|$)/.test(lower)
   );
 }
 
