@@ -5,7 +5,10 @@
 export async function applyWaitlistJoinRewards(record, deps) {
   if (!record) return { rewardsOk: true };
   if (!deps?.ensureWaitlistCohortReward || !deps?.recomputeWaitlistRankings) {
-    throw new Error("applyWaitlistJoinRewards requires reward deps");
+    console.error(
+      "❌ Waitlist reward/rank skipped: missing deps. Email will still send.",
+    );
+    return { rewardsOk: false };
   }
   try {
     await deps.ensureWaitlistCohortReward(record);
