@@ -12,19 +12,19 @@ test("pgAdapterConfig pins sslmode=disable on local Docker", () => {
   assert.match(cfg.connectionString, /sslmode=disable/);
 });
 
-test("pgAdapterConfig verifies the cert on hosted supabase", () => {
+test("pgAdapterConfig encrypts hosted supabase without verify-full", () => {
   const cfg = pgAdapterConfig(HOSTED);
-  assert.deepEqual(cfg.ssl, { rejectUnauthorized: true });
-  assert.match(cfg.connectionString, /sslmode=verify-full/);
+  assert.deepEqual(cfg.ssl, { rejectUnauthorized: false });
+  assert.match(cfg.connectionString, /sslmode=require/);
   assert.doesNotMatch(cfg.connectionString, /sslmode=disable/);
-  assert.doesNotMatch(cfg.connectionString, /sslmode=require/);
+  assert.doesNotMatch(cfg.connectionString, /sslmode=verify-full/);
 });
 
-test("hosted sslmode=require is upgraded to verify-full", () => {
-  const cfg = pgAdapterConfig(`${HOSTED}?sslmode=require`);
-  assert.deepEqual(cfg.ssl, { rejectUnauthorized: true });
-  assert.match(cfg.connectionString, /sslmode=verify-full/);
-  assert.doesNotMatch(cfg.connectionString, /sslmode=require/);
+test("hosted sslmode=verify-full is downgraded to require", () => {
+  const cfg = pgAdapterConfig(`${HOSTED}?sslmode=verify-full`);
+  assert.deepEqual(cfg.ssl, { rejectUnauthorized: false });
+  assert.match(cfg.connectionString, /sslmode=require/);
+  assert.doesNotMatch(cfg.connectionString, /sslmode=verify-full/);
 });
 
 test("local Docker URL does not force TLS", () => {
@@ -35,23 +35,23 @@ test("local Docker URL does not force TLS", () => {
   );
 });
 
-test("hosted supabase URL verifies TLS", () => {
-  assert.deepEqual(pgAdapterSsl(HOSTED), { rejectUnauthorized: true });
+test("hosted supabase URL uses TLS without CA verify", () => {
+  assert.deepEqual(pgAdapterSsl(HOSTED), { rejectUnauthorized: false });
 });
 
-test("pooler.supabase.com verifies TLS", () => {
+test("pooler.supabase.com uses TLS without CA verify", () => {
   assert.deepEqual(
     pgAdapterSsl(
       "postgresql://u:p@aws-0-eu-west-1.pooler.supabase.com:6543/postgres",
     ),
-    { rejectUnauthorized: true },
+    { rejectUnauthorized: false },
   );
 });
 
-test("sslmode=require still uses TLS and verifies the cert", () => {
+test("sslmode=require still uses TLS without CA verify", () => {
   assert.deepEqual(
     pgAdapterSsl("postgresql://u:p@db.internal:5432/postgres?sslmode=require"),
-    { rejectUnauthorized: true },
+    { rejectUnauthorized: false },
   );
 });
 
@@ -59,16 +59,20 @@ test("sslmode=disable wins", () => {
   assert.equal(pgAdapterSsl(`${HOSTED}?sslmode=disable`), false);
 });
 
-test("hosted TLS never sets rejectUnauthorized false", () => {
+test("hosted TLS matches last-known working Vercel handshake", () => {
   const cases = [
     HOSTED,
     `${HOSTED}?sslmode=require`,
+    `${HOSTED}?sslmode=verify-full`,
     "postgresql://u:p@aws-0-eu-west-1.pooler.supabase.com:6543/postgres",
     "postgresql://u:p@db.internal:5432/postgres?sslmode=require",
   ];
   for (const url of cases) {
     const ssl = pgAdapterSsl(url);
     assert.notEqual(ssl, false, url);
-    assert.equal(ssl.rejectUnauthorized, true, url);
+    assert.equal(ssl.rejectUnauthorized, false, url);
+    const cfg = pgAdapterConfig(url);
+    assert.match(cfg.connectionString, /sslmode=require/, url);
+    assert.doesNotMatch(cfg.connectionString, /sslmode=verify-full/, url);
   }
 });
