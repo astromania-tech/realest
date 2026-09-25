@@ -38,6 +38,13 @@ test("P2003 from ranking does not throw", async () => {
   assert.equal(out.rewardsOk, false);
 });
 
+test("missing deps returns rewardsOk false and does not throw", async () => {
+  const out = await applyWaitlistJoinRewards(record, {});
+  assert.deepEqual(out, { rewardsOk: false });
+  const outNull = await applyWaitlistJoinRewards(record, undefined);
+  assert.deepEqual(outNull, { rewardsOk: false });
+});
+
 test("success path calls both deps", async () => {
   const calls = [];
   const out = await applyWaitlistJoinRewards(record, {

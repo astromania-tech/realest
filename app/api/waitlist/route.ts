@@ -144,19 +144,26 @@ export async function POST(request: NextRequest) {
     console.log(`New waitlist subscriber: ${subscriptionData.email} (${subscriptionData.firstName} ${subscriptionData.lastName || ''})`);
 
     if (result.data) {
-      await applyWaitlistJoinRewards(
-        {
-          id: result.data.id,
-          email: result.data.email,
-          first_name: result.data.first_name,
-          referral_code: result.data.referral_code,
-          referral_count: result.data.referral_count,
-          persona: result.data.persona,
-          poll_completion_count: result.data.poll_completion_count,
-          subscribed_at: result.data.subscribed_at,
-        },
-        { ensureWaitlistCohortReward, recomputeWaitlistRankings },
-      );
+      try {
+        await applyWaitlistJoinRewards(
+          {
+            id: result.data.id,
+            email: result.data.email,
+            first_name: result.data.first_name,
+            referral_code: result.data.referral_code,
+            referral_count: result.data.referral_count,
+            persona: result.data.persona,
+            poll_completion_count: result.data.poll_completion_count,
+            subscribed_at: result.data.subscribed_at,
+          },
+          { ensureWaitlistCohortReward, recomputeWaitlistRankings },
+        );
+      } catch (error) {
+        console.error(
+          "❌ Waitlist reward/rank failed after subscribe. Email will still send.",
+          error,
+        );
+      }
     }
 
     const positionData = await getWaitlistPosition(subscriptionData.email);
