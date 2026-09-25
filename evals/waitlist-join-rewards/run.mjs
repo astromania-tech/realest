@@ -20,6 +20,28 @@ const checks = {
       !/await ensureWaitlistCohortReward\(\{/.test(text)
     );
   },
+  route_does_not_wrap_helper: () => {
+    const text = readFileSync(join(ROOT, "app/api/waitlist/route.ts"), "utf8");
+    const start = text.indexOf("if (result.data)");
+    const end = text.indexOf("const positionData");
+    if (start < 0 || end < 0 || end <= start) return false;
+    const window = text.slice(start, end);
+    return (
+      window.includes("applyWaitlistJoinRewards") &&
+      !window.includes("try {") &&
+      !window.includes("catch (error)")
+    );
+  },
+  helper_never_throws_on_missing_deps: () => {
+    const text = readFileSync(
+      join(ROOT, "scripts/lib/waitlist-join-rewards.mjs"),
+      "utf8",
+    );
+    return (
+      text.includes("return { rewardsOk: false }") &&
+      !text.includes('throw new Error("applyWaitlistJoinRewards requires reward deps")')
+    );
+  },
   helper_does_not_throw_on_p2003: () => {
     const result = spawnSync(
       process.execPath,
