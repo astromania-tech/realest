@@ -2,16 +2,20 @@
  * Prisma/pg SSL: local Docker Postgres has no TLS. Hosted Supabase does.
  * Same-input-same-output. Do not decide this in a model reply.
  *
- * node-pg Object.assign(config, parse(url)) can drop the ssl object. Pin
- * sslmode on the URL so the handshake cannot silently change.
+ * Working production handshake (PR #42/#43 on main, e.g. d120b4c / 490a460):
  *
- * Production last worked (pre-24e6451 / 4d9cc35) with
- * ssl: { rejectUnauthorized: false }. Forcing sslmode=verify-full on Vercel
- * failed with P1011 "self-signed certificate in certificate chain"
- * (realest.ng waitlist POST 2026-09-25). Do not require a Vercel env change.
+ *   new PrismaPg({
+ *     connectionString: process.env.DATABASE_URL,
+ *     ssl: { rejectUnauthorized: false },
+ *   })
  *
- * Hosted: encrypt (sslmode=require), do not verify the CA/hostname.
- * Local: sslmode=disable.
+ * Do not rewrite sslmode on hosted URLs. Current pg treats sslmode=require
+ * as verify-full; pinning require/verify-full on the URL caused P1011 on
+ * Vercel even when ssl.rejectUnauthorized was false (URL parse overrides).
+ *
+ * Local Docker needs sslmode=disable (no TLS). Hosted: leave the URL as
+ * Vercel provides it; only set ssl: { rejectUnauthorized: false }.
+ * No Vercel env change.
  */
 
 const HOSTED_TLS = { rejectUnauthorized: false };
@@ -26,11 +30,14 @@ function isLocalDockerUrl(lower) {
 }
 
 function isHostedPostgresUrl(lower) {
+  // Host detection by hostname. Also treat libpq sslmode hints as hosted
+  // (require / verify-ca / verify-full) so a non-supabase host with TLS
+  // still gets rejectUnauthorized: false. Do not key off node-pg-only
+  // sslmode=no-verify; we never emit that mode.
   return (
     lower.includes("supabase.co") ||
     lower.includes("pooler.supabase.com") ||
-    lower.includes("sslmode=require") ||
-    lower.includes("sslmode=verify")
+    /[?&]sslmode=(require|verify-ca|verify-full)(&|$)/.test(lower)
   );
 }
 
@@ -43,6 +50,15 @@ function withSslMode(connectionString, mode) {
   return `${connectionString}${sep}sslmode=${mode}`;
 }
 
+/** Strip sslmode so URL parse cannot override the explicit ssl object. */
+function withoutSslMode(connectionString) {
+  if (!connectionString) return connectionString;
+  let url = connectionString.replace(/([?&])sslmode=[^&]*/gi, "$1");
+  url = url.replace(/\?&/, "?").replace(/[?&]$/, "");
+  url = url.replace(/\?&+/g, "?").replace(/&&+/g, "&");
+  return url;
+}
+
 export function pgAdapterSsl(connectionString) {
   if (!connectionString) return false;
   const lower = String(connectionString).toLowerCase();
@@ -51,12 +67,17 @@ export function pgAdapterSsl(connectionString) {
   return false;
 }
 
-/** Config object for `new PrismaPg(...)`. Local URLs get sslmode=disable. */
+/**
+ * Config for `new PrismaPg(...)`.
+ * Local: sslmode=disable, ssl false.
+ * Hosted: DATABASE_URL as provided (no sslmode pin), ssl rejectUnauthorized false.
+ */
 export function pgAdapterConfig(connectionString) {
   const ssl = pgAdapterSsl(connectionString);
   if (!connectionString) return { connectionString, ssl: false };
   if (ssl === false) {
     return { connectionString: withSslMode(connectionString, "disable"), ssl: false };
   }
-  return { connectionString: withSslMode(connectionString, "require"), ssl };
+  // Match PR #43: do not rewrite hosted sslmode; pass ssl object only.
+  return { connectionString: withoutSslMode(connectionString), ssl };
 }
