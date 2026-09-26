@@ -7,7 +7,7 @@
 3. For API route changes, update the OpenAPI spec with the canonical generator command:
 
 ```bash
-node scripts/generate-api-spec.mjs
+node scripts/generate-api-spec.ts
 ```
 
 4. Do not hand-edit `lib/openapi/generated.json`. Regenerate it from the source routes instead.
@@ -23,5 +23,5 @@ node scripts/generate-api-spec.mjs
 
 - `npm run lint`
 - `npm run typecheck`
-- `node scripts/generate-api-spec.mjs` for API changes
+- `node scripts/generate-api-spec.ts` for API changes
 - Update README or docs when the workflow changes

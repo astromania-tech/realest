@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import { inspectJwt } from './jwt-auth.mjs'
+// @ts-nocheck
+import { inspectJwt } from './jwt-auth.ts'
 
 const candidates = [
   { name: 'AGENT_JWT_SECRET', value: process.env.AGENT_JWT_SECRET },

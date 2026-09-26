@@ -22,7 +22,7 @@ jobs:
         run: npm ci
 
       - name: Regenerate OpenAPI spec
-        run: node scripts/generate-api-spec.mjs
+        run: npx tsx scripts/generate-api-spec.ts
 
       - name: Verify generated spec is committed
         run: git diff --exit-code -- lib/openapi/generated.json

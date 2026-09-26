@@ -1,13 +1,14 @@
 #!/usr/bin/env node
+// @ts-nocheck
 
 /**
  * Dynamic OpenAPI Spec Generator
  *
- * Scans app/api/**/route.ts files for openApi metadata exports
+ * Scans app/api route.ts files (nested under app/api) for openApi metadata exports
  * and automatically builds the complete OpenAPI 3.0.0 specification.
  *
  * Usage:
- *   node scripts/generate-api-spec-dynamic.mjs
+ *   node scripts/generate-api-spec-dynamic.ts
  */
 
 import fs from 'fs/promises'
@@ -90,7 +91,7 @@ async function loadRouteMetadata(filePath) {
  */
 async function importRouteModule(filePath) {
   // Use dynamic import with tsx/esbuild support
-  // Since we're in .mjs, we can use import() with file:// URLs
+  // Since we're in .ts, we can use import() with file:// URLs
   try {
     // Convert .ts to .js path for import (tsx handles this automatically)
     const absolutePath = path.resolve(rootDir, filePath)

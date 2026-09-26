@@ -1,6 +1,7 @@
+// @ts-nocheck
 import fs from 'node:fs';
 import path from 'node:path';
-import { loadSupabaseAccessToken } from './jwt-auth.mjs';
+import { loadSupabaseAccessToken } from './jwt-auth.ts';
 
 const baseUrl = process.env.BASE_URL ?? 'http://localhost:3000';
 

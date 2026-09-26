@@ -51,12 +51,13 @@ const checks = {
   },
   gate_tests_pass: () => {
     const result = spawnSync(
-      process.execPath,
+      "npx",
       [
+        "tsx",
         "--test",
-        join(ROOT, "scripts", "start-app.test.mjs"),
-        join(ROOT, "scripts", "migration-ledger.test.mjs"),
-        join(ROOT, "scripts", "readme-install.test.mjs"),
+        join(ROOT, "scripts", "start-app.test.ts"),
+        join(ROOT, "scripts", "migration-ledger.test.ts"),
+        join(ROOT, "scripts", "readme-install.test.ts"),
       ],
       { cwd: ROOT, encoding: "utf8" },
     );

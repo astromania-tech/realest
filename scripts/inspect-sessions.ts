@@ -1,6 +1,7 @@
 #!/usr/bin/env node
+// @ts-nocheck
 import 'dotenv/config'
-import { loadSupabaseAccessToken, inspectJwt } from './jwt-auth.mjs'
+import { loadSupabaseAccessToken, inspectJwt } from './jwt-auth.ts'
 
 async function main() {
   const svc = process.env.SUPABASE_SERVICE_ROLE_KEY

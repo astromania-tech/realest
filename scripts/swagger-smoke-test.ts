@@ -1,8 +1,9 @@
 #!/usr/bin/env node
+// @ts-nocheck
 // Simple smoke tester for OpenAPI paths — non-destructive.
-// Usage: node scripts/swagger-smoke-test.mjs <BEARER_TOKEN>
+// Usage: node scripts/swagger-smoke-test.ts <BEARER_TOKEN>
 
-import { loadJwtToken } from './jwt-auth.mjs';
+import { loadJwtToken } from './jwt-auth.ts';
 
 const REPLACE_PARAM = 'test-id';
 const TIMEOUT_MS = 15000;

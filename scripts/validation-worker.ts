@@ -1,4 +1,5 @@
-import { loadSupabaseAccessToken } from './jwt-auth.mjs'
+// @ts-nocheck
+import { loadSupabaseAccessToken } from './jwt-auth.ts'
 
 const baseUrl = process.env.BASE_URL ?? 'http://localhost:3000'
 const once = process.argv.includes('--once')

@@ -1,8 +1,9 @@
 #!/usr/bin/env node
+// @ts-nocheck
 import 'dotenv/config'
 import fs from 'node:fs'
 import path from 'node:path'
-import { loadSupabaseAccessToken } from './jwt-auth.mjs'
+import { loadSupabaseAccessToken } from './jwt-auth.ts'
 
 const baseUrl = process.env.BASE_URL ?? 'http://localhost:3000'
 const uploadsDir = path.join(process.cwd(), 'uploads')

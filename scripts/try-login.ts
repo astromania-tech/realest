@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck
 import 'dotenv/config'
 
 const base = (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '').replace(/\/$/, '')

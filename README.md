@@ -264,7 +264,7 @@ npm test
 When API routes change, regenerate the canonical OpenAPI artifact with:
 
 ```bash
-node scripts/generate-api-spec.mjs
+node scripts/generate-api-spec.ts
 ```
 
 Do not edit `lib/openapi/generated.json` by hand. Always regenerate it from the source routes so the Swagger output stays in sync.

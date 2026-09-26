@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * embed-fonts-in-svgs.mjs
  *
@@ -5,8 +6,8 @@
  * Required because SVGs loaded via <img> are sandboxed from the page's
  * @font-face declarations — the font must be self-contained in the file.
  *
- * Usage: npx tsx scripts/embed-fonts-in-svgs.mjs
- *   (or: node scripts/embed-fonts-in-svgs.mjs)
+ * Usage: npx tsx scripts/embed-fonts-in-svgs.ts
+ *   (or: node scripts/embed-fonts-in-svgs.ts)
  */
 
 import fs from 'fs';

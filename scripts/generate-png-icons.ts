@@ -1,3 +1,4 @@
+// @ts-nocheck
 import sharp from 'sharp';
 import { Resvg } from '@resvg/resvg-js';
 import { promises as fs } from 'fs';
