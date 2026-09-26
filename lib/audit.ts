@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma"
+import { Prisma } from "@/lib/prisma/client"
 
 export type AuditAction = 
   | "create_subadmin"
@@ -15,15 +16,23 @@ export interface AuditLogEntry {
   metadata?: Record<string, any> | null
 }
 
+/** Normalize optional audit fields to SQL NULL (not JS undefined). */
+export function auditLogCreateData(entry: AuditLogEntry) {
+  return {
+    actor_id: entry.actor_id,
+    action: entry.action,
+    target_id: entry.target_id ?? null,
+    metadata:
+      entry.metadata === undefined || entry.metadata === null
+        ? Prisma.DbNull
+        : (entry.metadata as Prisma.InputJsonValue),
+  }
+}
+
 export async function logAdminAction(entry: AuditLogEntry) {
   try {
     await prisma.admin_audit_log.create({
-      data: {
-        actor_id: entry.actor_id,
-        action: entry.action,
-        target_id: entry.target_id ?? null,
-        metadata: entry.metadata ?? undefined,
-      },
+      data: auditLogCreateData(entry),
     })
   } catch (err) {
     console.error("[Audit Log Error]", err)
