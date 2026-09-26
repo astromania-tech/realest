@@ -5,7 +5,7 @@ echo "🔍 Running pre-commit checks..."
 echo ""
 
 echo "🧪 Gate tests..."
-npx tsx --test scripts/start-app.test.ts scripts/migration-ledger.test.ts scripts/readme-install.test.ts lib/pg-ssl.test.ts lib/resend-key.test.ts lib/waitlist-join-rewards.test.ts lib/route-lockdown-analysis.test.ts
+npx tsx --test scripts/start-app.test.ts scripts/migration-ledger.test.ts scripts/readme-install.test.ts lib/pg-ssl.test.ts lib/resend-key.test.ts lib/waitlist-join-rewards.test.ts lib/route-lockdown-analysis.test.ts scripts/lib/load-cli-env.test.ts lib/validation/ocr.test.ts
 if [ $? -ne 0 ]; then
   echo "❌ Gate tests failed. Commit aborted."
   exit 1

@@ -1,6 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { loadCliEnv } from './lib/load-cli-env.ts';
 import { loadSupabaseAccessToken } from './jwt-auth.ts';
+
+loadCliEnv();
 
 const baseUrl = process.env.BASE_URL ?? 'http://localhost:3000';
 
@@ -46,6 +49,7 @@ async function requestJson(url: string, options?: RequestInit) {
 }
 
 async function processValidationJob(baseUrl: string, headers: Record<string, string>, jobId: string) {
+  console.log(`[job] processing ${jobId}...`);
   const processResult = await requestJson(`${baseUrl}/api/admin/validation/jobs/process`, {
     method: 'POST',
     headers: {
@@ -53,6 +57,8 @@ async function processValidationJob(baseUrl: string, headers: Record<string, str
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ jobId }),
+    // Image OCR used to hang the process route indefinitely; fail clearly instead.
+    signal: AbortSignal.timeout(30_000),
   });
 
   if (!processResult.response.ok) {
@@ -150,6 +156,41 @@ async function loadAdminPropertySeed(token: string) {
   return createResult.body?.property ?? createResult.body;
 }
 
+function hasAnyEnv(names: string[]): boolean {
+  return names.some((name) => {
+    const value = process.env[name];
+    return typeof value === 'string' && value.trim().length > 0;
+  });
+}
+
+/** Seed via owner/agent only when creds are already in env — never prompt for optional roles. */
+async function tryEnvRolePropertySeed(options: {
+  label: string;
+  emailEnvNames: string[];
+  passwordEnvNames: string[];
+  refreshTokenEnvNames: string[];
+}): Promise<unknown | null> {
+  const { label, emailEnvNames, passwordEnvNames, refreshTokenEnvNames } = options;
+  if (!hasAnyEnv(emailEnvNames) && !hasAnyEnv(refreshTokenEnvNames)) {
+    console.log(`[seed] skipping ${label}: no ${label.toUpperCase()}_EMAIL / refresh token in env`);
+    return null;
+  }
+
+  try {
+    const token = await loadSupabaseAccessToken({
+      label,
+      emailEnvNames,
+      passwordEnvNames,
+      refreshTokenEnvNames,
+    });
+    return await loadPropertySeed(token, label);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.log(`[seed] ${label} path failed, continuing: ${message}`);
+    return null;
+  }
+}
+
 async function main() {
   const adminToken = await loadSupabaseAccessToken({
     label: 'admin',
@@ -177,28 +218,25 @@ async function main() {
 
   let firstProperty = queueResult.body?.data?.[0];
   if (!firstProperty?.id) {
-    const ownerToken = await loadSupabaseAccessToken({
-      label: 'owner',
-      emailEnvNames: ['OWNER_EMAIL', 'SUPABASE_OWNER_EMAIL', 'REALEST_OWNER_EMAIL'],
-      passwordEnvNames: ['OWNER_PASSWORD', 'SUPABASE_OWNER_PASSWORD', 'REALEST_OWNER_PASSWORD'],
-      refreshTokenEnvNames: ['OWNER_REFRESH_TOKEN', 'SUPABASE_OWNER_REFRESH_TOKEN', 'REALEST_OWNER_REFRESH_TOKEN'],
-    });
+    console.log('[seed] ML queue empty — creating a smoke property');
 
-    try {
-      firstProperty = await loadPropertySeed(ownerToken, 'owner');
-    } catch (ownerError) {
-      try {
-        const agentToken = await loadSupabaseAccessToken({
-          label: 'agent',
-          emailEnvNames: ['AGENT_EMAIL', 'SUPABASE_AGENT_EMAIL', 'REALEST_AGENT_EMAIL'],
-          passwordEnvNames: ['AGENT_PASSWORD', 'SUPABASE_AGENT_PASSWORD', 'REALEST_AGENT_PASSWORD'],
-          refreshTokenEnvNames: ['AGENT_REFRESH_TOKEN', 'SUPABASE_AGENT_REFRESH_TOKEN', 'REALEST_AGENT_REFRESH_TOKEN'],
-        });
+    firstProperty =
+      (await tryEnvRolePropertySeed({
+        label: 'owner',
+        emailEnvNames: ['OWNER_EMAIL', 'SUPABASE_OWNER_EMAIL', 'REALEST_OWNER_EMAIL'],
+        passwordEnvNames: ['OWNER_PASSWORD', 'SUPABASE_OWNER_PASSWORD', 'REALEST_OWNER_PASSWORD'],
+        refreshTokenEnvNames: ['OWNER_REFRESH_TOKEN', 'SUPABASE_OWNER_REFRESH_TOKEN', 'REALEST_OWNER_REFRESH_TOKEN'],
+      })) ??
+      (await tryEnvRolePropertySeed({
+        label: 'agent',
+        emailEnvNames: ['AGENT_EMAIL', 'SUPABASE_AGENT_EMAIL', 'REALEST_AGENT_EMAIL'],
+        passwordEnvNames: ['AGENT_PASSWORD', 'SUPABASE_AGENT_PASSWORD', 'REALEST_AGENT_PASSWORD'],
+        refreshTokenEnvNames: ['AGENT_REFRESH_TOKEN', 'SUPABASE_AGENT_REFRESH_TOKEN', 'REALEST_AGENT_REFRESH_TOKEN'],
+      }));
 
-        firstProperty = await loadPropertySeed(agentToken, 'agent');
-      } catch (agentError) {
-        firstProperty = await loadAdminPropertySeed(adminToken);
-      }
+    if (!firstProperty) {
+      console.log('[seed] using admin create path');
+      firstProperty = await loadAdminPropertySeed(adminToken);
     }
 
     const refreshedQueue = await requestJson(`${baseUrl}/api/admin/validation/ml?page=1&per_page=5`, { headers });

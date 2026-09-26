@@ -1,5 +1,8 @@
 import readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
+import { loadCliEnv } from "./lib/load-cli-env.ts";
+
+loadCliEnv();
 
 export type JwtInspectResult =
   | { valid: true; reason: "valid"; expiresAt: number | null }
