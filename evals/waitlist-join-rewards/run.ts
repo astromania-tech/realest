@@ -1,8 +1,7 @@
-#!/usr/bin/env node
 /**
  * Deterministic eval: waitlist join still sends mail if rewards throw.
  *
- *   node evals/waitlist-join-rewards/run.mjs
+ *   npx tsx evals/waitlist-join-rewards/run.ts
  */
 import { readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
@@ -12,7 +11,9 @@ import { fileURLToPath } from "node:url";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const CASES_PATH = join(ROOT, "evals", "waitlist-join-rewards", "cases.json");
 
-const checks = {
+type CheckFn = () => boolean;
+
+const checks: Record<string, CheckFn> = {
   route_uses_safe_helper: () => {
     const text = readFileSync(join(ROOT, "app/api/waitlist/route.ts"), "utf8");
     return (
@@ -40,27 +41,29 @@ const checks = {
     );
     return (
       text.includes("return { rewardsOk: false }") &&
-      !text.includes('throw new Error("applyWaitlistJoinRewards requires reward deps")')
+      !text.includes(
+        'throw new Error("applyWaitlistJoinRewards requires reward deps")',
+      )
     );
   },
   helper_does_not_throw_on_p2003: () => {
     const result = spawnSync(
-      process.execPath,
-      [
-        "--experimental-strip-types",
-        "--test",
-        "lib/waitlist-join-rewards.test.ts",
-      ],
+      "npx",
+      ["tsx", "--test", "lib/waitlist-join-rewards.test.ts"],
       { cwd: ROOT, encoding: "utf8" },
     );
     return result.status === 0;
   },
 };
 
-const spec = JSON.parse(readFileSync(CASES_PATH, "utf8"));
+const spec = JSON.parse(readFileSync(CASES_PATH, "utf8")) as {
+  threshold: number;
+  cases: Array<{ id: string; check: string }>;
+};
+
 let passed = 0;
 for (const c of spec.cases) {
-  const ok = Boolean(checks[c.check]());
+  const ok = Boolean(checks[c.check]?.());
   console.log(`${ok ? "pass" : "FAIL"}  ${c.id}`);
   if (ok) passed += 1;
 }
