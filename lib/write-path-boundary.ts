@@ -1,9 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 
-/** Matches supabase/service client table access: .from('table') or .from("table") */
+/** Matches supabase/service client table access: .from('table') / .from("TableName") */
 const TABLE_FROM_RE =
-  /\.(?:from)\(\s*['"]([a-z_][a-z0-9_]*)['"]\s*\)/gi;
+  /\.(?:from)\(\s*['"]([A-Za-z_][A-Za-z0-9_]*)['"]\s*\)/g;
 
 /** Storage bucket access is allowed; strip those before flagging. */
 const STORAGE_FROM_RE = /\.storage\s*\.from\(\s*['"][^'"]+['"]\s*\)/gi;
@@ -47,7 +47,6 @@ export function findSupabaseTableFromViolations(
       let match: RegExpExecArray | null;
       while ((match = TABLE_FROM_RE.exec(line)) !== null) {
         const table = match[1];
-        // Ignore obvious non-table placeholders if any appear in comments-only lines
         if (line.trimStart().startsWith("//") || line.trimStart().startsWith("*")) continue;
         violations.push({
           file: path.relative(process.cwd(), file),
@@ -60,4 +59,11 @@ export function findSupabaseTableFromViolations(
   }
 
   return violations;
+}
+
+/** Test helper: does one source line look like a table .from()? */
+export function lineHasTableFrom(line: string): boolean {
+  const scrubbed = line.replace(STORAGE_FROM_RE, ".storage.from(/*bucket*/)");
+  TABLE_FROM_RE.lastIndex = 0;
+  return TABLE_FROM_RE.test(scrubbed);
 }

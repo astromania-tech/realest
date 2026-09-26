@@ -3,7 +3,9 @@ import { getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { logAdminAction } from "@/lib/audit";
 import {
+  mergeUserMetadataWithModeration,
   nextIsActive,
+  nextModerationState,
   shouldUnlistNonLiveProperties,
 } from "@/lib/admin/user-moderation";
 import { z } from "zod";
@@ -11,7 +13,7 @@ import { z } from "zod";
 const suspensionSchema = z.object({
   action: z.enum(["suspend", "unsuspend", "ban", "unban"]),
   reason: z.string().min(10, "Reason must be at least 10 characters"),
-  duration_days: z.number().optional(),
+  duration_days: z.number().positive().optional(),
   notes: z.string().optional(),
 });
 
@@ -74,33 +76,44 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     const isActive = nextIsActive(action, targetUserRow.is_active);
-    let suspensionEndDate: string | null = null;
-    if (action === "suspend" && duration_days) {
-      suspensionEndDate = new Date(
-        Date.now() + duration_days * 24 * 60 * 60 * 1000,
-      ).toISOString();
-    }
+    const moderation = nextModerationState({
+      action,
+      reason,
+      notes,
+      durationDays: duration_days,
+    });
+    const metadata = mergeUserMetadataWithModeration(
+      targetUserRow.metadata,
+      moderation,
+    );
 
     const updatedUser = await prisma.users.update({
       where: { id },
       data: {
         is_active: isActive,
+        metadata,
         updated_at: new Date(),
       },
     });
 
     if (shouldUnlistNonLiveProperties(action)) {
-      // properties.owner_id → owners.id; owners.profile_id → users/profiles id
-      await prisma.properties.updateMany({
-        where: {
-          owners: { profile_id: id },
-          status: { not: "live" },
-        },
-        data: {
-          status: "unlisted",
-          updated_at: new Date(),
-        },
+      // updateMany does not accept nested relation filters — resolve owners.id first
+      const owner = await prisma.owners.findUnique({
+        where: { profile_id: id },
+        select: { id: true },
       });
+      if (owner) {
+        await prisma.properties.updateMany({
+          where: {
+            owner_id: owner.id,
+            status: { not: "live" },
+          },
+          data: {
+            status: "unlisted",
+            updated_at: new Date(),
+          },
+        });
+      }
     }
 
     await logAdminAction({
@@ -112,11 +125,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         reason,
         duration_days: duration_days ?? null,
         notes: notes ?? null,
-        suspension_end_date: suspensionEndDate,
+        suspension_end_date: moderation.end_date,
         previous_is_active: targetUserRow.is_active,
         next_is_active: isActive,
         previous_role: targetUserRow.role,
         target_user_email: targetUserRow.profiles?.email ?? null,
+        moderation,
       },
     });
 
@@ -125,6 +139,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       user: {
         id: updatedUser.id,
         is_active: updatedUser.is_active,
+        moderation,
       },
     });
   } catch (err) {
