@@ -4,7 +4,8 @@
  * Admin-only.
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { requireAdmin } from '@/lib/auth/require-admin';
+import { prisma } from '@/lib/prisma';
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
 
 export const openApiDELETE: OpenApiMetadata = {
@@ -22,39 +23,19 @@ export const openApiDELETE: OpenApiMetadata = {
   },
 }
 
-async function requireAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await getAuthUser();
-  if (!user) return { supabase, error: 'Unauthorized', status: 401 as const };
-
-  const { data: userRow } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (userRow?.role !== 'admin') return { supabase, error: 'Forbidden', status: 403 as const };
-  return { supabase, error: null, status: 200 as const };
-}
-
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { supabase, error, status } = await requireAdmin();
-  if (error) return NextResponse.json({ error }, { status });
+  const admin = await requireAdmin();
+  if (!admin.ok) return NextResponse.json({ error: admin.error }, { status: admin.status });
 
   const { id } = await params;
 
-  const { error: deleteError } = await supabase
-    .from('waitlist')
-    .delete()
-    .eq('id', id);
-
-  if (deleteError) {
-    return NextResponse.json({ error: deleteError.message }, { status: 500 });
+  try {
+    await prisma.waitlist.delete({ where: { id } });
+  } catch (err) {
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
 
   return NextResponse.json({ success: true });

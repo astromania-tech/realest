@@ -8,17 +8,8 @@
  * Admin-only.
  */
 import { NextResponse } from 'next/server';
-import { createClient, getAuthUser } from "@/lib/supabase/server";
-import { createServiceClient } from '@/lib/supabase/service';
-
-async function requireAdminUser() {
-  const supabase = await createClient();
-  const { data: { user } } = await getAuthUser();
-  if (!user) return { error: 'Unauthorized', status: 401 };
-  const { data: row } = await supabase.from('users').select('role').eq('id', user.id).single();
-  if (row?.role !== 'admin') return { error: 'Forbidden', status: 403 };
-  return { error: null, status: 200 };
-}
+import { requireAdmin } from '@/lib/auth/require-admin';
+import { prisma } from '@/lib/prisma';
 
 export const openApiGET = {
   method: 'get',
@@ -33,20 +24,23 @@ export const openApiGET = {
 } as const;
 
 export async function GET() {
-  const { error, status } = await requireAdminUser();
-  if (error) return NextResponse.json({ error }, { status });
+  const admin = await requireAdmin();
+  if (!admin.ok) return NextResponse.json({ error: admin.error }, { status: admin.status });
 
-  const svc = createServiceClient();
-
-  // All waitlist entries with referral data
-  const { data: rows, error: dbErr } = await svc
-    .from('waitlist')
-    .select('id, email, first_name, last_name, referral_code, referred_by, referral_count, status, subscribed_at')
-    .order('referral_count', { ascending: false });
-
-  if (dbErr) return NextResponse.json({ error: dbErr.message }, { status: 500 });
-
-  const all = rows ?? [];
+  const all = await prisma.waitlist.findMany({
+    select: {
+      id: true,
+      email: true,
+      first_name: true,
+      last_name: true,
+      referral_code: true,
+      referred_by: true,
+      referral_count: true,
+      status: true,
+      subscribed_at: true,
+    },
+    orderBy: { referral_count: 'desc' },
+  });
 
   // Build a lookup map: id → entry
   const byId: Record<string, typeof all[0]> = {};

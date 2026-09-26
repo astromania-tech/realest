@@ -8,7 +8,7 @@
 import { getAuthUser } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { createServerClient } from "@supabase/ssr";
+import { prisma } from "@/lib/prisma";
 import { sendWelcomeEmail } from "@/lib/emailService";
 
 const schema = z.object({
@@ -18,18 +18,6 @@ const schema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    // Authenticate the caller
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll: () => request.cookies.getAll(),
-          setAll: () => {}, // read-only here
-        },
-      },
-    );
-
     const {
       data: { user },
       error: authError,
@@ -42,16 +30,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Parse + validate body
     const body = await request.json();
     const { userType, dashboardUrl } = schema.parse(body);
 
-    // Fetch profile for personalisation (service role not needed — user fetches own profile)
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("full_name, email")
-      .eq("id", user.id)
-      .single();
+    const profile = await prisma.profiles.findUnique({
+      where: { id: user.id },
+      select: { full_name: true, email: true },
+    });
 
     const firstName = profile?.full_name?.split(" ")[0] || "there";
     const email = profile?.email || user.email || "";
@@ -72,23 +57,21 @@ export async function POST(request: NextRequest) {
 
     if (!result.success) {
       console.error("[WelcomeEmail] Send failed:", result.error);
-      // Non-fatal — onboarding is complete regardless of email delivery
       return NextResponse.json(
         { success: false, error: result.error },
         { status: 502 },
       );
     }
 
-    console.log("[WelcomeEmail] Sent to", email, "— id:", result.messageId);
     return NextResponse.json({ success: true });
-  } catch (err) {
-    if (err instanceof z.ZodError) {
+  } catch (error) {
+    if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { success: false, error: err.errors[0].message },
+        { success: false, error: error.issues[0]?.message ?? "Invalid request" },
         { status: 400 },
       );
     }
-    console.error("[WelcomeEmail] Unexpected error:", err);
+    console.error("[WelcomeEmail] Unexpected error:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 },

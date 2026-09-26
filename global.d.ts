@@ -10,3 +10,6 @@ declare module "npm:@supabase/supabase-js@2" {
     rpc<T = unknown>(...rpcArgs: unknown[]): Promise<{ data: T | null; error: Error | null }>;
   };
 }
+
+/** Next/webpack/turbopack side-effect CSS imports (e.g. app/layout.tsx). */
+declare module "*.css";

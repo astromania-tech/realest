@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse, after } from 'next/server';
-import { createServiceClient } from '@/lib/supabase/service';
+import { prisma } from '@/lib/prisma';
 import { sendReferralSuccessEmail } from '@/lib/emailService';
 import {
   ensureReferralMilestoneRewards,
@@ -43,17 +43,6 @@ export const openApiPOST: OpenApiMetadata = {
  *
  * Called client-side immediately after a successful signUpWithPassword() to
  * attribute the new account to the person whose referral link they used.
- *
- * Anti-abuse rules:
- *  - The profile must exist AND be no older than 120 seconds (brand-new account).
- *  - The profile must not already have been attributed.
- *
- * Lookup order for the referrer:
- *  1. profiles.referral_code   — referrer is a registered user
- *  2. waitlist.referral_code   — referrer is still waitlist-only
- *
- * Attribution and the referrer notification email are dispatched inside after()
- * so they never block the HTTP response.
  */
 export async function POST(request: NextRequest) {
   let email: string;
@@ -71,68 +60,74 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Missing email or refCode' }, { status: 400 });
   }
 
-  const svc = createServiceClient();
+  const cutoff = new Date(Date.now() - 120_000);
 
-  // Profile must be brand new (created in the last 120 seconds)
-  const cutoff = new Date(Date.now() - 120_000).toISOString();
-  const { data: newProfile } = await svc
-    .from('profiles')
-    .select('id, email, full_name, referred_by, referred_by_code')
-    .eq('email', email)
-    .gte('created_at', cutoff)
-    .maybeSingle();
+  const newProfile = await prisma.profiles.findFirst({
+    where: {
+      email,
+      created_at: { gte: cutoff },
+    },
+    select: {
+      id: true,
+      email: true,
+      full_name: true,
+      referred_by: true,
+      referred_by_code: true,
+    },
+  });
 
   if (!newProfile) {
-    // Either the profile doesn't exist yet or the window has passed — ignore silently
     return NextResponse.json({ ok: false, error: 'Profile not found or attribution window expired' }, { status: 404 });
   }
 
-  // Already attributed — idempotent no-op
   if (newProfile.referred_by || newProfile.referred_by_code) {
     return NextResponse.json({ ok: true, already: true });
   }
 
-  // Fire attribution + notification asynchronously after the response is sent
   after(async () => {
     try {
       const referredFirstName = newProfile.full_name?.split(' ')[0] ?? 'Someone';
-      const { data: linkedWaitlistProfile } = await svc
-        .from('waitlist')
-        .select('id')
-        .eq('email', email)
-        .maybeSingle();
+      const linkedWaitlistProfile = await prisma.waitlist.findFirst({
+        where: { email },
+        select: { id: true },
+      });
 
-      // ── 1. Check registered referrer first ───────────────────────────────
-      const { data: registeredReferrer } = await svc
-        .from('profiles')
-        .select('id, email, full_name, referral_code, referral_count')
-        .eq('referral_code', refCode)
-        .neq('id', newProfile.id)
-        .maybeSingle();
+      const registeredReferrer = await prisma.profiles.findFirst({
+        where: {
+          referral_code: refCode,
+          id: { not: newProfile.id },
+        },
+        select: {
+          id: true,
+          email: true,
+          full_name: true,
+          referral_code: true,
+          referral_count: true,
+        },
+      });
 
       if (registeredReferrer) {
-        await svc
-          .from('profiles')
-          .update({ referred_by: registeredReferrer.id, referred_by_code: refCode })
-          .eq('id', newProfile.id);
+        await prisma.profiles.update({
+          where: { id: newProfile.id },
+          data: { referred_by: registeredReferrer.id, referred_by_code: refCode },
+        });
 
         const newCount = (registeredReferrer.referral_count ?? 0) + 1;
-        await svc
-          .from('profiles')
-          .update({ referral_count: newCount })
-          .eq('id', registeredReferrer.id);
+        await prisma.profiles.update({
+          where: { id: registeredReferrer.id },
+          data: { referral_count: newCount },
+        });
 
-        const { data: referrerWaitlist } = await svc
-          .from('waitlist')
-          .select('id, email, referral_code, referral_count')
-          .eq('email', registeredReferrer.email)
-          .maybeSingle();
+        const referrerWaitlist = await prisma.waitlist.findFirst({
+          where: { email: registeredReferrer.email },
+          select: { id: true, email: true, referral_code: true, referral_count: true },
+        });
 
         if (referrerWaitlist) {
-          await svc
-            .from('waitlist')
-            .update({ referral_count: Math.max(referrerWaitlist.referral_count ?? 0, newCount) })
-            .eq('id', referrerWaitlist.id);
+          await prisma.waitlist.update({
+            where: { id: referrerWaitlist.id },
+            data: { referral_count: Math.max(referrerWaitlist.referral_count ?? 0, newCount) },
+          });
         }
 
         await recordReferralEvent({
@@ -143,7 +138,7 @@ export async function POST(request: NextRequest) {
           referralCode: registeredReferrer.referral_code ?? refCode,
           eventType: 'registration_referral_attributed',
           metadata: { referred_email: email },
-        }, svc);
+        });
 
         await ensureReferralMilestoneRewards({
           userEmail: registeredReferrer.email,
@@ -151,9 +146,9 @@ export async function POST(request: NextRequest) {
           referralCode: registeredReferrer.referral_code ?? refCode,
           waitlistId: referrerWaitlist?.id,
           profileId: registeredReferrer.id,
-        }, svc);
+        });
 
-        await recomputeWaitlistRankings(svc);
+        await recomputeWaitlistRankings();
 
         await sendReferralSuccessEmail(registeredReferrer.email, {
           referrerFirstName: registeredReferrer.full_name?.split(' ')[0] ?? 'there',
@@ -168,24 +163,22 @@ export async function POST(request: NextRequest) {
         return;
       }
 
-      // ── 2. Fall back to waitlist-only referrer ────────────────────────────
-      const { data: waitlistReferrer } = await svc
-        .from('waitlist')
-        .select('id, email, first_name, referral_code, referral_count')
-        .eq('referral_code', refCode)
-        .maybeSingle();
+      const waitlistReferrer = await prisma.waitlist.findFirst({
+        where: { referral_code: refCode },
+        select: { id: true, email: true, first_name: true, referral_code: true, referral_count: true },
+      });
 
       if (waitlistReferrer) {
-        await svc
-          .from('profiles')
-          .update({ referred_by_code: refCode })
-          .eq('id', newProfile.id);
+        await prisma.profiles.update({
+          where: { id: newProfile.id },
+          data: { referred_by_code: refCode },
+        });
 
         const newCount = (waitlistReferrer.referral_count ?? 0) + 1;
-        await svc
-          .from('waitlist')
-          .update({ referral_count: newCount })
-          .eq('id', waitlistReferrer.id);
+        await prisma.waitlist.update({
+          where: { id: waitlistReferrer.id },
+          data: { referral_count: newCount },
+        });
 
         await recordReferralEvent({
           referrerWaitlistId: waitlistReferrer.id,
@@ -194,16 +187,16 @@ export async function POST(request: NextRequest) {
           referralCode: waitlistReferrer.referral_code ?? refCode,
           eventType: 'registration_referral_attributed',
           metadata: { referred_email: email },
-        }, svc);
+        });
 
         await ensureReferralMilestoneRewards({
           userEmail: waitlistReferrer.email,
           referralCount: newCount,
           referralCode: waitlistReferrer.referral_code ?? refCode,
           waitlistId: waitlistReferrer.id,
-        }, svc);
+        });
 
-        await recomputeWaitlistRankings(svc);
+        await recomputeWaitlistRankings();
 
         await sendReferralSuccessEmail(waitlistReferrer.email, {
           referrerFirstName: waitlistReferrer.first_name ?? 'there',
@@ -221,5 +214,5 @@ export async function POST(request: NextRequest) {
     }
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, accepted: true });
 }

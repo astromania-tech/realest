@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server"
 import { randomBytes } from "crypto"
-import { createClient, getAuthUser } from "@/lib/supabase/server"
+import { getAuthUser } from "@/lib/supabase/server"
 import { createServiceClient } from "@/lib/supabase/service"
 import { logAdminAction } from "@/lib/audit"
 import { sendSubAdminInvitationEmail } from "@/lib/emailService"
 import { prisma } from "@/lib/prisma"
+import { createWithAuthDbCompensate } from "@/lib/auth/auth-db-compensate"
 import type { OpenApiMetadata } from "@/lib/openapi/route-metadata"
 
 export const openApiPOST: OpenApiMetadata = {
@@ -37,6 +38,42 @@ export const openApiPOST: OpenApiMetadata = {
   },
 }
 
+export async function persistSubAdminRecords(params: {
+  userId: string
+  email: string
+  fullName: string
+}) {
+  const { userId, email, fullName } = params
+  await prisma.$transaction([
+    prisma.users.upsert({
+      where: { id: userId },
+      create: {
+        id: userId,
+        email,
+        full_name: fullName,
+        role: "admin",
+      },
+      update: {
+        email,
+        full_name: fullName,
+        role: "admin",
+      },
+    }),
+    prisma.profiles.upsert({
+      where: { id: userId },
+      create: {
+        id: userId,
+        email,
+        full_name: fullName,
+      },
+      update: {
+        email,
+        full_name: fullName,
+      },
+    }),
+  ])
+}
+
 export async function POST(request: Request) {
   try {
     const { email, full_name } = (await request.json()) as {
@@ -48,7 +85,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing email or full_name" }, { status: 400 })
     }
 
-    const supabase = await createClient()
     const { data: { user } } = await getAuthUser()
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
@@ -60,64 +96,67 @@ export async function POST(request: Request) {
     const adminProfile = await prisma.profiles.findUnique({ where: { id: user.id }, select: { full_name: true } })
 
     const service = createServiceClient()
-
     const securePassword = randomBytes(32).toString("hex")
 
-    // Create the user via admin API (service role)
-    const { data: created, error: adminError } = await service.auth.admin.createUser({
-      email,
-      password: securePassword,
-      email_confirm: true,
-      user_metadata: {
-        full_name,
-        user_type: "admin",
+    const provisioned = await createWithAuthDbCompensate({
+      createAuthUser: async () => {
+        const { data: created, error: adminError } = await service.auth.admin.createUser({
+          email,
+          password: securePassword,
+          email_confirm: true,
+          user_metadata: {
+            full_name,
+            user_type: "admin",
+          },
+        })
+        if (adminError) throw new Error(adminError.message)
+        const id = created.user?.id
+        if (!id) throw new Error("User creation failed")
+        return { userId: id }
+      },
+      persistDb: async (userId) => {
+        await persistSubAdminRecords({
+          userId,
+          email,
+          fullName: full_name,
+        })
+      },
+      deleteAuthUser: async (userId) => {
+        const { error: deleteError } = await service.auth.admin.deleteUser(userId)
+        if (deleteError) {
+          console.error("[subadmins] Auth rollback deleteUser failed:", deleteError)
+          throw deleteError
+        }
       },
     })
 
-    if (adminError) {
-      return NextResponse.json({ error: adminError.message }, { status: 500 })
+    if (!provisioned.ok) {
+      const message =
+        provisioned.error === "auth_create_failed"
+          ? "Failed to create sub-admin auth user"
+          : "Failed to create sub-admin database records"
+      return NextResponse.json({ error: message }, { status: 500 })
     }
 
-    const newUserId = created.user?.id
-    if (!newUserId) {
-      return NextResponse.json({ error: "User creation failed" }, { status: 500 })
-    }
+    const newUserId = provisioned.userId
 
-    // Insert profile row with admin role
-    const { error: profileError } = await service
-      .from("profiles")
-      .insert({
-        id: newUserId,
-        user_type: "admin",
-        full_name,
-        email,
-      })
-
-    if (profileError) {
-      return NextResponse.json({ error: profileError.message }, { status: 500 })
-    }
-
-    // Generate password reset link (secure, expires in 24 hours)
     const { data: resetData, error: resetError } = await service.auth.admin.generateLink({
       type: "recovery",
       email,
     })
 
     if (resetError || !resetData.properties?.action_link) {
+      // Auth + DB are consistent; do not delete. Admin can resend invite.
       return NextResponse.json({ error: "Failed to generate reset link" }, { status: 500 })
     }
 
-    const resetLink = resetData.properties.action_link
-
-    // Send invitation email via React Email + Resend
     await sendSubAdminInvitationEmail({
       email,
       full_name,
       inviter_name: adminProfile?.full_name ?? "RealEST Admin",
-      reset_link: resetLink,
+      reset_link: resetData.properties.action_link,
     })
 
-    // Log the admin action
     await logAdminAction({
       actor_id: user.id,
       action: "create_subadmin",
