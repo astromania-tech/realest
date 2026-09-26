@@ -1,11 +1,9 @@
-#!/usr/bin/env node
 /**
  * Periodic eval for clone-and-run.
  * Deterministic checks only. Pass threshold is 1.0 (every case must pass).
  *
- *   node evals/start-app/run.mjs
+ *   npx tsx evals/start-app/run.ts
  */
-
 import { existsSync, readFileSync, accessSync, constants } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { dirname, join } from "node:path";
@@ -14,7 +12,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const CASES_PATH = join(ROOT, "evals", "start-app", "cases.json");
 
-function isExecutable(path) {
+function isExecutable(path: string): boolean {
   try {
     accessSync(path, constants.X_OK);
     return true;
@@ -23,12 +21,14 @@ function isExecutable(path) {
   }
 }
 
-function gitCheckIgnore(path) {
+function gitCheckIgnore(path: string): boolean {
   const result = spawnSync("git", ["check-ignore", "-q", path], { cwd: ROOT });
   return result.status === 0;
 }
 
-const checks = {
+type CheckFn = () => boolean;
+
+const checks: Record<string, CheckFn> = {
   start_sh_exists: () => existsSync(join(ROOT, "start.sh")),
   start_sh_executable: () => isExecutable(join(ROOT, "start.sh")),
   env_example_exists: () => existsSync(join(ROOT, ".env.example")),
@@ -42,7 +42,9 @@ const checks = {
     );
   },
   package_json_has_start_app: () => {
-    const pkg = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"));
+    const pkg = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")) as {
+      scripts?: Record<string, string>;
+    };
     return Boolean(pkg.scripts && pkg.scripts["start:app"]);
   },
   gitignore_allows_env_example: () => {
@@ -69,7 +71,9 @@ const checks = {
   },
   readme_has_clone_url: () => {
     const text = readFileSync(join(ROOT, "README.md"), "utf8");
-    return text.includes("git clone https://github.com/astromania-tech/realest.git");
+    return text.includes(
+      "git clone https://github.com/astromania-tech/realest.git",
+    );
   },
   readme_omits_false_sql_install: () => {
     const text = readFileSync(join(ROOT, "README.md"), "utf8");
@@ -97,9 +101,12 @@ const checks = {
   },
 };
 
-function main() {
-  const spec = JSON.parse(readFileSync(CASES_PATH, "utf8"));
-  const results = [];
+function main(): void {
+  const spec = JSON.parse(readFileSync(CASES_PATH, "utf8")) as {
+    threshold: number;
+    cases: Array<{ id: string }>;
+  };
+  const results: Array<{ id: string; pass: boolean; detail: string }> = [];
 
   for (const testCase of spec.cases) {
     const fn = checks[testCase.id];

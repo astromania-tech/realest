@@ -1,20 +1,20 @@
 #!/usr/bin/env node
-
 /**
  * Route Lockdown Test Utility
  * Tests the coming-soon mode route protection to ensure complete lockdown
  */
 
-const http = require("http");
-const { URL } = require("url");
+import http from "node:http";
+import { URL } from "node:url";
+import {
+  analyzeRouteLockdownResponse,
+  type LockdownRouteAnalysis,
+} from "../lib/route-lockdown-analysis.ts";
 
-// Configuration
 const BASE_URL = process.env.TEST_BASE_URL || "http://localhost:3000";
 const VERBOSE = process.env.VERBOSE === "true";
 
-// Test routes - these should be blocked in coming-soon mode
 const TEST_ROUTES = [
-  // Public routes that should be blocked
   "/about",
   "/buy",
   "/rent",
@@ -28,41 +28,26 @@ const TEST_ROUTES = [
   "/careers",
   "/events",
   "/press",
-
-  // Authentication routes
   "/login",
   "/register",
   "/register-success",
-
-  // Protected dashboard routes
   "/admin",
   "/profile",
   "/owner",
   "/owner/inquiries",
   "/owner/list-property",
   "/onboarding",
-  "/onboarding",
-
-  // Demo routes
   "/design-showcase",
   "/design-test",
   "/form-showcase",
   "/phase2-demo",
-
-  // Other routes
   "/search",
   "/realest-status",
   "/property/123",
 ];
 
-// Routes that should be allowed in coming-soon mode
-const ALLOWED_ROUTES = [
-  "/", // Home page (coming soon)
-  "/not-found", // 404 page
-  "/favicon.ico", // Favicon
-];
+const ALLOWED_ROUTES = ["/", "/not-found", "/favicon.ico"];
 
-// Colors for console output
 const colors = {
   red: "\x1b[31m",
   green: "\x1b[32m",
@@ -73,17 +58,31 @@ const colors = {
   white: "\x1b[37m",
   reset: "\x1b[0m",
   bold: "\x1b[1m",
+} as const;
+
+type ColorName = keyof typeof colors;
+
+type HttpResponse = {
+  statusCode: number | undefined;
+  headers: http.IncomingHttpHeaders;
+  body: string;
+  url: string;
 };
 
-function colorize(text, color) {
+type RouteAnalysis = LockdownRouteAnalysis & {
+  contentType?: string;
+  error?: string;
+};
+
+function colorize(text: string, color: ColorName): string {
   return `${colors[color]}${text}${colors.reset}`;
 }
 
-function makeRequest(url) {
+function makeRequest(url: string): Promise<HttpResponse> {
   return new Promise((resolve, reject) => {
     const urlObj = new URL(url);
 
-    const options = {
+    const options: http.RequestOptions = {
       hostname: urlObj.hostname,
       port: urlObj.port || (urlObj.protocol === "https:" ? 443 : 80),
       path: urlObj.pathname + urlObj.search,
@@ -99,7 +98,7 @@ function makeRequest(url) {
     const req = http.request(options, (res) => {
       let data = "";
 
-      res.on("data", (chunk) => {
+      res.on("data", (chunk: Buffer | string) => {
         data += chunk;
       });
 
@@ -108,7 +107,7 @@ function makeRequest(url) {
           statusCode: res.statusCode,
           headers: res.headers,
           body: data,
-          url: url,
+          url,
         });
       });
     });
@@ -126,83 +125,71 @@ function makeRequest(url) {
   });
 }
 
-function analyzeResponse(response, route, shouldBeBlocked = true) {
-  const { statusCode, body, headers } = response;
-
-  // Check if it's a 404 response (blocked)
-  const isNotFound =
-    statusCode === 404 ||
-    body.includes("Page Not Found") ||
-    body.includes("404");
-
-  // Check if it's the coming soon page (home route response)
-  const isComingSoon =
-    body.includes("Something Amazing") && body.includes("Is Coming Soon");
-
-  // Check if it's an actual page content (not blocked)
-  const hasPageContent = !isNotFound && !isComingSoon && statusCode === 200;
-
-  const result = {
-    route,
-    statusCode,
-    isBlocked: isNotFound,
-    isComingSoon,
-    hasPageContent,
-    shouldBeBlocked,
-    passed: shouldBeBlocked ? isNotFound : !isNotFound,
-    contentType: headers["content-type"] || "unknown",
+function analyzeResponse(
+  response: HttpResponse,
+  route: string,
+  shouldBeBlocked = true,
+): RouteAnalysis {
+  const result: RouteAnalysis = {
+    ...analyzeRouteLockdownResponse(
+      { statusCode: response.statusCode, body: response.body },
+      route,
+      shouldBeBlocked,
+    ),
+    contentType: response.headers["content-type"] || "unknown",
   };
 
   if (VERBOSE) {
     console.log(colorize(`\n--- Analysis for ${route} ---`, "cyan"));
-    console.log(`Status: ${statusCode}`);
-    console.log(`Is Blocked (404): ${isBlocked}`);
-    console.log(`Is Coming Soon: ${isComingSoon}`);
-    console.log(`Has Page Content: ${hasPageContent}`);
+    console.log(`Status: ${result.statusCode}`);
+    console.log(`Is Blocked (404): ${result.isBlocked}`);
+    console.log(`Is Coming Soon: ${result.isComingSoon}`);
+    console.log(`Has Page Content: ${result.hasPageContent}`);
     console.log(`Should Be Blocked: ${shouldBeBlocked}`);
+    console.log(`Actual Behavior: ${result.actualBehavior}`);
     console.log(`Test Passed: ${result.passed}`);
   }
 
   return result;
 }
 
-async function testRoute(route, shouldBeBlocked = true) {
+async function testRoute(
+  route: string,
+  shouldBeBlocked = true,
+): Promise<RouteAnalysis> {
   try {
     const url = `${BASE_URL}${route}`;
     const response = await makeRequest(url);
     const analysis = analyzeResponse(response, route, shouldBeBlocked);
 
-    // Display result
     const status = analysis.passed
       ? colorize("✓ PASS", "green")
       : colorize("✗ FAIL", "red");
     const expectedBehavior = shouldBeBlocked ? "BLOCKED" : "ALLOWED";
-    const actualBehavior = analysis.isBlocked
-      ? "BLOCKED"
-      : analysis.isComingSoon
-        ? "COMING_SOON"
-        : analysis.hasPageContent
-          ? "ACCESSIBLE"
-          : "UNKNOWN";
 
     console.log(
-      `${status} ${route.padEnd(25)} | Expected: ${expectedBehavior.padEnd(10)} | Actual: ${actualBehavior.padEnd(12)} | Status: ${analysis.statusCode}`,
+      `${status} ${route.padEnd(25)} | Expected: ${expectedBehavior.padEnd(10)} | Actual: ${analysis.actualBehavior.padEnd(12)} | Status: ${analysis.statusCode}`,
     );
 
     return analysis;
-  } catch (error) {
-    console.log(
-      colorize(`✗ ERROR ${route.padEnd(24)} | ${error.message}`, "red"),
-    );
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.log(colorize(`✗ ERROR ${route.padEnd(24)} | ${message}`, "red"));
     return {
       route,
-      error: error.message,
+      statusCode: undefined,
+      isBlocked: false,
+      isComingSoon: false,
+      hasPageContent: false,
+      shouldBeBlocked,
+      actualBehavior: "ERROR",
+      error: message,
       passed: false,
     };
   }
 }
 
-async function runTests() {
+async function runTests(): Promise<void> {
   console.log(
     colorize("\n🔒 RealProof Marketplace - Route Lockdown Test", "bold"),
   );
@@ -211,9 +198,8 @@ async function runTests() {
   console.log(`Mode: Coming Soon Lockdown Test`);
   console.log(colorize("-".repeat(55), "blue"));
 
-  const results = [];
+  const results: RouteAnalysis[] = [];
 
-  // Test blocked routes
   console.log(
     colorize("\n📛 Testing Routes That Should Be BLOCKED:", "yellow"),
   );
@@ -222,10 +208,9 @@ async function runTests() {
   for (const route of TEST_ROUTES) {
     const result = await testRoute(route, true);
     results.push(result);
-    await new Promise((resolve) => setTimeout(resolve, 100)); // Small delay to avoid overwhelming server
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
 
-  // Test allowed routes
   console.log(colorize("\n✅ Testing Routes That Should Be ALLOWED:", "green"));
   console.log(colorize("-".repeat(50), "green"));
 
@@ -235,7 +220,6 @@ async function runTests() {
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
 
-  // Summary
   const totalTests = results.length;
   const passedTests = results.filter((r) => r.passed).length;
   const failedTests = totalTests - passedTests;
@@ -263,7 +247,9 @@ async function runTests() {
           ? r.error
           : r.shouldBeBlocked
             ? "Route is accessible but should be blocked"
-            : "Route is blocked but should be accessible";
+            : r.route === "/not-found"
+              ? "Allowlisted /not-found did not serve the intentional 404 page"
+              : "Route is blocked but should be accessible";
         console.log(`   ${r.route}: ${issue}`);
       });
   }
@@ -293,11 +279,10 @@ async function runTests() {
   process.exit(failedTests > 0 ? 1 : 0);
 }
 
-// Handle command line arguments
 if (process.argv.includes("--help") || process.argv.includes("-h")) {
   console.log(colorize("Route Lockdown Test Utility", "bold"));
   console.log("\nUsage:");
-  console.log("  node scripts/test-route-lockdown.js [options]");
+  console.log("  npx tsx scripts/test-route-lockdown.ts [options]");
   console.log("\nEnvironment Variables:");
   console.log(
     "  TEST_BASE_URL   Base URL to test against (default: http://localhost:3000)",
@@ -310,8 +295,8 @@ if (process.argv.includes("--help") || process.argv.includes("-h")) {
   process.exit(0);
 }
 
-// Run the tests
-runTests().catch((error) => {
-  console.error(colorize(`\n💥 Test runner error: ${error.message}`, "red"));
+runTests().catch((error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error);
+  console.error(colorize(`\n💥 Test runner error: ${message}`, "red"));
   process.exit(1);
 });

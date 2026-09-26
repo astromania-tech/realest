@@ -1,0 +1,21 @@
+{
+  "threshold": 1,
+  "cases": [
+    {
+      "id": "analysis_exported_and_used",
+      "check": "analysis_exported_and_used"
+    },
+    {
+      "id": "status_not_body_is_block_signal",
+      "check": "status_not_body_is_block_signal"
+    },
+    {
+      "id": "not_found_allowlist_special_cased",
+      "check": "not_found_allowlist_special_cased"
+    },
+    {
+      "id": "gate_unit_tests_green",
+      "check": "gate_unit_tests_green"
+    }
+  ]
+}
