@@ -61,3 +61,6 @@ next-env.d.ts
 _build-log.txt
 _server-log.txt
 supabase/.temp/cli-latest
+
+# Local verification engine stores (API keys, ledger, smoke artifacts) — never commit
+.data/
