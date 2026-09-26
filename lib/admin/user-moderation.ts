@@ -5,11 +5,22 @@
 
 export type ModerationAction = "suspend" | "unsuspend" | "ban" | "unban";
 
+/**
+ * Next users.is_active value after a moderation action.
+ * suspend/ban → false (idempotent if already inactive).
+ * unsuspend/unban → true (idempotent if already active).
+ */
 export function nextIsActive(
   action: ModerationAction,
-  _currentIsActive: boolean,
+  currentIsActive: boolean,
 ): boolean {
-  return action === "unsuspend" || action === "unban";
+  if (action === "unsuspend" || action === "unban") {
+    return true;
+  }
+  if (action === "suspend" || action === "ban") {
+    return false;
+  }
+  return currentIsActive;
 }
 
 export function shouldUnlistNonLiveProperties(action: ModerationAction): boolean {

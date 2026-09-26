@@ -20,6 +20,16 @@ test("[A-01] unsuspend and unban reactivate the user", () => {
   assert.equal(nextIsActive("unban", false), true);
 });
 
+test("[A-01] suspend/ban on already inactive user stay inactive", () => {
+  assert.equal(nextIsActive("suspend", false), false);
+  assert.equal(nextIsActive("ban", false), false);
+});
+
+test("[A-01] unsuspend/unban on already active user stay active", () => {
+  assert.equal(nextIsActive("unsuspend", true), true);
+  assert.equal(nextIsActive("unban", true), true);
+});
+
 test("[A-01] non-live listings are unlisted only on suspend/ban", () => {
   assert.equal(shouldUnlistNonLiveProperties("suspend"), true);
   assert.equal(shouldUnlistNonLiveProperties("ban"), true);
