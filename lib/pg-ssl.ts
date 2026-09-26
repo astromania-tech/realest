@@ -18,9 +18,16 @@
  * No Vercel env change.
  */
 
-const HOSTED_TLS = { rejectUnauthorized: false };
+export type PgSslOption = false | { rejectUnauthorized: boolean };
 
-function isLocalDockerUrl(lower) {
+export type PgAdapterConfig = {
+  connectionString: string | undefined;
+  ssl: PgSslOption;
+};
+
+const HOSTED_TLS: PgSslOption = { rejectUnauthorized: false };
+
+function isLocalDockerUrl(lower: string): boolean {
   return (
     /@(localhost|127\.0\.0\.1|\[::1\])[:/]/.test(lower) ||
     lower.includes("@localhost:") ||
@@ -29,7 +36,7 @@ function isLocalDockerUrl(lower) {
   );
 }
 
-function isHostedPostgresUrl(lower) {
+function isHostedPostgresUrl(lower: string): boolean {
   // Host detection by hostname. Also treat libpq sslmode hints as hosted
   // (require / verify-ca / verify-full) so a non-supabase host with TLS
   // still gets rejectUnauthorized: false. Do not key off node-pg-only
@@ -41,8 +48,7 @@ function isHostedPostgresUrl(lower) {
   );
 }
 
-function withSslMode(connectionString, mode) {
-  if (!connectionString) return connectionString;
+function withSslMode(connectionString: string, mode: string): string {
   if (/[?&]sslmode=/i.test(connectionString)) {
     return connectionString.replace(/([?&]sslmode=)[^&]*/i, `$1${mode}`);
   }
@@ -51,15 +57,16 @@ function withSslMode(connectionString, mode) {
 }
 
 /** Strip sslmode so URL parse cannot override the explicit ssl object. */
-function withoutSslMode(connectionString) {
-  if (!connectionString) return connectionString;
+function withoutSslMode(connectionString: string): string {
   let url = connectionString.replace(/([?&])sslmode=[^&]*/gi, "$1");
   url = url.replace(/\?&/, "?").replace(/[?&]$/, "");
   url = url.replace(/\?&+/g, "?").replace(/&&+/g, "&");
   return url;
 }
 
-export function pgAdapterSsl(connectionString) {
+export function pgAdapterSsl(
+  connectionString: string | undefined,
+): PgSslOption {
   if (!connectionString) return false;
   const lower = String(connectionString).toLowerCase();
   if (lower.includes("sslmode=disable") || isLocalDockerUrl(lower)) return false;
@@ -72,11 +79,16 @@ export function pgAdapterSsl(connectionString) {
  * Local: sslmode=disable, ssl false.
  * Hosted: DATABASE_URL as provided (no sslmode pin), ssl rejectUnauthorized false.
  */
-export function pgAdapterConfig(connectionString) {
+export function pgAdapterConfig(
+  connectionString: string | undefined,
+): PgAdapterConfig {
   const ssl = pgAdapterSsl(connectionString);
   if (!connectionString) return { connectionString, ssl: false };
   if (ssl === false) {
-    return { connectionString: withSslMode(connectionString, "disable"), ssl: false };
+    return {
+      connectionString: withSslMode(connectionString, "disable"),
+      ssl: false,
+    };
   }
   // Match PR #43: do not rewrite hosted sslmode; pass ssl object only.
   return { connectionString: withoutSslMode(connectionString), ssl };

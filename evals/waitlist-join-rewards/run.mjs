@@ -17,6 +17,7 @@ const checks = {
     const text = readFileSync(join(ROOT, "app/api/waitlist/route.ts"), "utf8");
     return (
       text.includes("applyWaitlistJoinRewards") &&
+      text.includes("@/lib/waitlist-join-rewards") &&
       !/await ensureWaitlistCohortReward\(\{/.test(text)
     );
   },
@@ -34,7 +35,7 @@ const checks = {
   },
   helper_never_throws_on_missing_deps: () => {
     const text = readFileSync(
-      join(ROOT, "scripts/lib/waitlist-join-rewards.mjs"),
+      join(ROOT, "lib/waitlist-join-rewards.ts"),
       "utf8",
     );
     return (
@@ -45,7 +46,11 @@ const checks = {
   helper_does_not_throw_on_p2003: () => {
     const result = spawnSync(
       process.execPath,
-      ["--test", "scripts/waitlist-join-rewards.test.mjs"],
+      [
+        "--experimental-strip-types",
+        "--test",
+        "lib/waitlist-join-rewards.test.ts",
+      ],
       { cwd: ROOT, encoding: "utf8" },
     );
     return result.status === 0;
