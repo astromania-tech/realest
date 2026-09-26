@@ -209,7 +209,7 @@ async function resolveListenPort(preferredPort: number, repoRoot: string) {
   if (decision.action === "reuse") {
     const url = `http://127.0.0.1:${decision.port}`;
     try {
-      const response = await fetch(url, { redirect: "manual", cache: "no-store" });
+      const response = await fetch(url, { redirect: "manual" });
       const html = await response.text();
       if (looksLikeRealestHtml(html)) {
         return { ...decision, pid, occupantCwd };
@@ -425,7 +425,7 @@ async function main(): Promise<number> {
     ]);
     log(startAppReadyLine(url));
     try {
-      const homepage = await fetch(url, { redirect: "manual", cache: "no-store" });
+      const homepage = await fetch(url, { redirect: "manual" });
       log(`Homepage HTTP ${homepage.status}`);
       if (homepage.status >= 500) {
         log(

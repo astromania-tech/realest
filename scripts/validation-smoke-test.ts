@@ -1,12 +1,11 @@
-// @ts-nocheck
 import fs from 'node:fs';
 import path from 'node:path';
 import { loadSupabaseAccessToken } from './jwt-auth.ts';
 
 const baseUrl = process.env.BASE_URL ?? 'http://localhost:3000';
 
-function toFile(buffer, name, type) {
-  return new File([buffer], name, { type });
+function toFile(buffer: Buffer, name: string, type: string) {
+  return new File([new Uint8Array(buffer)], name, { type });
 }
 
 function makeSamplePdf() {
@@ -39,14 +38,14 @@ trailer
   return Buffer.from(pdfText.trim(), 'utf8');
 }
 
-async function requestJson(url, options) {
+async function requestJson(url: string, options?: RequestInit) {
   const response = await fetch(url, options);
   const contentType = response.headers.get('content-type') ?? '';
   const body = contentType.includes('application/json') ? await response.json() : await response.text();
   return { response, body, contentType };
 }
 
-async function processValidationJob(baseUrl, headers, jobId) {
+async function processValidationJob(baseUrl: string, headers: Record<string, string>, jobId: string) {
   const processResult = await requestJson(`${baseUrl}/api/admin/validation/jobs/process`, {
     method: 'POST',
     headers: {
@@ -78,7 +77,7 @@ async function processValidationJob(baseUrl, headers, jobId) {
   throw new Error(`Timed out waiting for validation job ${jobId}`);
 }
 
-function buildSmokePropertyPayload(sourceRole) {
+function buildSmokePropertyPayload(sourceRole: string) {
   const nonce = Date.now().toString(36);
   const latitude = 4.9001 + (Number.parseInt(nonce.slice(-2), 36) % 7) * 0.001;
   const longitude = 6.2501 + (Number.parseInt(nonce.slice(-2), 36) % 7) * 0.001;
@@ -107,7 +106,7 @@ function buildSmokePropertyPayload(sourceRole) {
   };
 }
 
-async function loadPropertySeed(token, role) {
+async function loadPropertySeed(token: string, role: string) {
   const listResult = await requestJson(`${baseUrl}/api/properties/owner?page=1&limit=5`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -133,7 +132,7 @@ async function loadPropertySeed(token, role) {
   return createResult.body?.property ?? createResult.body;
 }
 
-async function loadAdminPropertySeed(token) {
+async function loadAdminPropertySeed(token: string) {
   const createResult = await requestJson(`${baseUrl}/api/admin/properties`, {
     method: 'POST',
     headers: {

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import sharp from 'sharp';
 import { Resvg } from '@resvg/resvg-js';
 import { promises as fs } from 'fs';
@@ -91,7 +90,11 @@ const iconConfigs = [
   },
 ];
 
-async function convertSvgToPng(svgPath, pngPath, size) {
+async function convertSvgToPng(
+  svgPath: string,
+  pngPath: string,
+  size: number,
+): Promise<{ success: true; size: number } | { success: false; error: string }> {
   try {
     // Read SVG file
     const svgBuffer = await fs.readFile(svgPath);
@@ -124,8 +127,11 @@ async function convertSvgToPng(svgPath, pngPath, size) {
     await fs.writeFile(pngPath, optimizedBuffer);
 
     return { success: true, size: optimizedBuffer.length };
-  } catch (error) {
-    return { success: false, error: error.message };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
   }
 }
 

@@ -42,7 +42,8 @@
     "generate:api-spec": "npx tsx scripts/generate-api-spec.ts",
     "docs:auto": "npm run generate:api-spec && npm run docs:openapi",
     "docs:generate": "npm run generate:api-spec",
-    "prebuild": "npm run generate:api-spec"
+    "prebuild": "npm run generate:api-spec",
+    "typecheck:scripts": "tsc -p scripts/tsconfig.json --pretty false"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"

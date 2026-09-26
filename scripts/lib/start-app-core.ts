@@ -318,7 +318,6 @@ export async function waitForHttp(
     try {
       const response = await fetchImpl(url, {
         redirect: "manual",
-        cache: "no-store",
       });
       if (await isReady(response)) {
         return {
