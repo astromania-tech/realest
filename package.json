@@ -14,7 +14,7 @@
     "typecheck": "tsc --noEmit",
     "precommit": "npm run typecheck && npm run lint",
     "start": "next start",
-    "test": "npx tsx --test scripts/start-app.test.ts scripts/migration-ledger.test.ts scripts/readme-install.test.ts lib/pg-ssl.test.ts lib/resend-key.test.ts lib/waitlist-join-rewards.test.ts lib/route-lockdown-analysis.test.ts scripts/lib/load-cli-env.test.ts lib/validation/ocr.test.ts lib/a01-write-path-boundary.test.ts lib/admin/a01-user-moderation.test.ts lib/auth/a01-require-admin.test.ts lib/a01-audit.test.ts lib/geo/a01-geo.test.ts",
+    "test": "npx tsx --test scripts/start-app.test.ts scripts/migration-ledger.test.ts scripts/readme-install.test.ts lib/pg-ssl.test.ts lib/resend-key.test.ts lib/waitlist-join-rewards.test.ts lib/route-lockdown-analysis.test.ts scripts/lib/load-cli-env.test.ts lib/validation/ocr.test.ts lib/a01-write-path-boundary.test.ts lib/admin/a01-user-moderation.test.ts lib/auth/a01-require-admin.test.ts lib/a01-audit.test.ts lib/geo/a01-geo.test.ts lib/auth/a01-subadmin-compensate.test.ts",
     "eval:start-app": "npx tsx evals/start-app/run.ts",
     "eval:waitlist-join-rewards": "npx tsx evals/waitlist-join-rewards/run.ts",
     "eval:route-lockdown": "npx tsx evals/route-lockdown/run.ts",
