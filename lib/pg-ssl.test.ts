@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { parse as parsePgUrl } from "pg-connection-string";
-import { pgAdapterConfig, pgAdapterSsl } from "./lib/pg-ssl.mjs";
+import { pgAdapterConfig, pgAdapterSsl } from "./pg-ssl.ts";
 
 const HOSTED =
   "postgresql://postgres:secret@db.abcdefgh.supabase.co:6543/postgres";
@@ -10,28 +10,28 @@ const LOCAL = "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
 test("pgAdapterConfig pins sslmode=disable on local Docker", () => {
   const cfg = pgAdapterConfig(LOCAL);
   assert.equal(cfg.ssl, false);
-  assert.match(cfg.connectionString, /sslmode=disable/);
+  assert.match(cfg.connectionString!, /sslmode=disable/);
 });
 
 test("hosted matches PR #43: no sslmode rewrite, rejectUnauthorized false", () => {
   const cfg = pgAdapterConfig(HOSTED);
   assert.deepEqual(cfg.ssl, { rejectUnauthorized: false });
   assert.equal(cfg.connectionString, HOSTED);
-  assert.doesNotMatch(cfg.connectionString, /sslmode=/);
+  assert.doesNotMatch(cfg.connectionString!, /sslmode=/);
 });
 
 test("hosted strips sslmode=require so pg cannot alias it to verify-full", () => {
   const cfg = pgAdapterConfig(`${HOSTED}?sslmode=require`);
   assert.deepEqual(cfg.ssl, { rejectUnauthorized: false });
-  assert.doesNotMatch(cfg.connectionString, /sslmode=/);
+  assert.doesNotMatch(cfg.connectionString!, /sslmode=/);
   assert.equal(cfg.connectionString, HOSTED);
 });
 
 test("hosted strips sslmode=verify-full", () => {
   const cfg = pgAdapterConfig(`${HOSTED}?sslmode=verify-full&pgbouncer=true`);
   assert.deepEqual(cfg.ssl, { rejectUnauthorized: false });
-  assert.doesNotMatch(cfg.connectionString, /sslmode=/);
-  assert.match(cfg.connectionString, /pgbouncer=true/);
+  assert.doesNotMatch(cfg.connectionString!, /sslmode=/);
+  assert.match(cfg.connectionString!, /pgbouncer=true/);
 });
 
 test("local Docker URL does not force TLS", () => {
@@ -63,7 +63,7 @@ test("after config, URL parse does not reintroduce verify-full", () => {
   const cfg = pgAdapterConfig(`${HOSTED}?sslmode=require`);
   const merged = Object.assign(
     { connectionString: cfg.connectionString, ssl: cfg.ssl },
-    parsePgUrl(cfg.connectionString),
+    parsePgUrl(cfg.connectionString!),
   );
   assert.equal(merged.ssl.rejectUnauthorized, false);
 });
@@ -90,10 +90,14 @@ test("hosted TLS matches last-known working Vercel handshake (PR #43)", () => {
   for (const url of cases) {
     const ssl = pgAdapterSsl(url);
     assert.notEqual(ssl, false, url);
-    assert.equal(ssl.rejectUnauthorized, false, url);
+    assert.equal(
+      typeof ssl === "object" && ssl.rejectUnauthorized,
+      false,
+      url,
+    );
     const cfg = pgAdapterConfig(url);
-    assert.doesNotMatch(cfg.connectionString, /sslmode=/, url);
-    assert.doesNotMatch(cfg.connectionString, /no-verify/, url);
+    assert.doesNotMatch(cfg.connectionString!, /sslmode=/, url);
+    assert.doesNotMatch(cfg.connectionString!, /no-verify/, url);
     assert.deepEqual(cfg.ssl, { rejectUnauthorized: false }, url);
   }
 });
@@ -107,18 +111,21 @@ test("config never emits sslmode=no-verify", () => {
   ];
   for (const url of urls) {
     const cfg = pgAdapterConfig(url);
-    assert.doesNotMatch(cfg.connectionString, /sslmode=no-verify/, url);
+    assert.doesNotMatch(cfg.connectionString!, /sslmode=no-verify/, url);
   }
 });
 
 test("isHostedPostgresUrl uses host or libpq modes, not no-verify alone", () => {
-  // A random host with only sslmode=no-verify is not classified as hosted.
   assert.equal(
-    pgAdapterSsl("postgresql://u:p@db.example.internal:5432/postgres?sslmode=no-verify"),
+    pgAdapterSsl(
+      "postgresql://u:p@db.example.internal:5432/postgres?sslmode=no-verify",
+    ),
     false,
   );
   assert.deepEqual(
-    pgAdapterSsl("postgresql://u:p@db.example.internal:5432/postgres?sslmode=require"),
+    pgAdapterSsl(
+      "postgresql://u:p@db.example.internal:5432/postgres?sslmode=require",
+    ),
     { rejectUnauthorized: false },
   );
 });

@@ -8,18 +8,27 @@
  * time so a keyless compile cannot freeze skip into production.
  */
 
-export function isResendConfigured(env = process.env) {
+export type ResendEnv = {
+  RESEND_API_KEY?: string;
+  VERCEL_ENV?: string;
+  ADMIN_EMAIL?: string;
+  NODE_ENV?: string;
+  [key: string]: string | undefined;
+};
+
+export type ResendAction = "send" | "skip-local" | "missing-on-production";
+
+export function isResendConfigured(env: ResendEnv = process.env): boolean {
   return Boolean(String(env.RESEND_API_KEY ?? "").trim());
 }
 
-/** @returns {"send" | "skip-local" | "missing-on-production"} */
-export function resolveResendAction(env = process.env) {
+export function resolveResendAction(env: ResendEnv = process.env): ResendAction {
   if (isResendConfigured(env)) return "send";
   if (env.VERCEL_ENV === "production") return "missing-on-production";
   return "skip-local";
 }
 
-export function resendSkipReason(env = process.env) {
+export function resendSkipReason(env: ResendEnv = process.env): string | null {
   const action = resolveResendAction(env);
   if (action === "send") return null;
   if (action === "missing-on-production") {
@@ -28,13 +37,15 @@ export function resendSkipReason(env = process.env) {
   return "RESEND_API_KEY not set — email sending skipped (local)";
 }
 
-export function resendApiKey(env = process.env) {
+export function resendApiKey(env: ResendEnv = process.env): string | null {
   if (!isResendConfigured(env)) return null;
   return String(env.RESEND_API_KEY).trim();
 }
 
 /** Admin notify: same key gate as other mail, then ADMIN_EMAIL. */
-export function adminNotificationSkipReason(env = process.env) {
+export function adminNotificationSkipReason(
+  env: ResendEnv = process.env,
+): string | null {
   const skip = resendSkipReason(env);
   if (skip) return skip;
   if (!String(env.ADMIN_EMAIL ?? "").trim()) {

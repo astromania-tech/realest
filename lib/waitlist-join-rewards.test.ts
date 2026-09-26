@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { applyWaitlistJoinRewards } from "./lib/waitlist-join-rewards.mjs";
+import { applyWaitlistJoinRewards } from "./waitlist-join-rewards.ts";
 
 const record = {
   id: "w1",
@@ -46,7 +46,7 @@ test("missing deps returns rewardsOk false and does not throw", async () => {
 });
 
 test("success path calls both deps", async () => {
-  const calls = [];
+  const calls: string[] = [];
   const out = await applyWaitlistJoinRewards(record, {
     ensureWaitlistCohortReward: async (row) => {
       calls.push("ensure:" + row.id);

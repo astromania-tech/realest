@@ -15,7 +15,7 @@
     "typecheck": "tsc --noEmit",
     "precommit": "npm run typecheck && npm run lint",
     "start": "next start",
-    "test": "node --test scripts/start-app.test.mjs scripts/migration-ledger.test.mjs scripts/readme-install.test.mjs scripts/prisma-ssl.test.mjs scripts/resend-key.test.mjs scripts/waitlist-join-rewards.test.mjs",
+    "test": "node --test scripts/start-app.test.mjs scripts/migration-ledger.test.mjs scripts/readme-install.test.mjs && node --experimental-strip-types --test lib/pg-ssl.test.ts lib/resend-key.test.ts lib/waitlist-join-rewards.test.ts",
     "eval:start-app": "node evals/start-app/run.mjs",
     "eval:waitlist-join-rewards": "node evals/waitlist-join-rewards/run.mjs",
     "setup:branches": "bash scripts/setup-branch-management.sh",

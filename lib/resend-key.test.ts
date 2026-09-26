@@ -6,7 +6,7 @@ import {
   resendApiKey,
   resendSkipReason,
   resolveResendAction,
-} from "./lib/resend-key.mjs";
+} from "./resend-key.ts";
 
 test("missing key is not configured", () => {
   assert.equal(isResendConfigured({}), false);
@@ -39,7 +39,7 @@ test("local with key still sends", () => {
 
 test("local without key skips", () => {
   assert.equal(resolveResendAction({ NODE_ENV: "development" }), "skip-local");
-  assert.match(resendSkipReason({ NODE_ENV: "development" }), /local/);
+  assert.match(resendSkipReason({ NODE_ENV: "development" })!, /local/);
   assert.equal(resendApiKey({ NODE_ENV: "development" }), null);
 });
 
@@ -47,7 +47,7 @@ test("production without key is not the local skip", () => {
   const env = { VERCEL_ENV: "production" };
   assert.equal(resolveResendAction(env), "missing-on-production");
   assert.equal(resendSkipReason(env), "RESEND_API_KEY not configured");
-  assert.doesNotMatch(resendSkipReason(env), /local/);
+  assert.doesNotMatch(resendSkipReason(env)!, /local/);
 });
 
 test("key present wins over missing VERCEL_ENV", () => {
@@ -57,7 +57,7 @@ test("key present wins over missing VERCEL_ENV", () => {
 test("admin notify uses the same local skip as other mail", () => {
   const env = { NODE_ENV: "development" };
   assert.equal(adminNotificationSkipReason(env), resendSkipReason(env));
-  assert.match(adminNotificationSkipReason(env), /local/);
+  assert.match(adminNotificationSkipReason(env)!, /local/);
 });
 
 test("admin notify with key still needs ADMIN_EMAIL", () => {

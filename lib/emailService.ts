@@ -98,7 +98,7 @@ import {
   type PollResultsSummaryEmailData,
   VerificationEmailData,
 } from '@/emails';
-import { adminNotificationSkipReason, resendApiKey, resendSkipReason, resolveResendAction } from '../scripts/lib/resend-key.mjs';
+import { adminNotificationSkipReason, resendApiKey, resendSkipReason, resolveResendAction } from '@/lib/resend-key';
 
 const FROM_EMAIL           = process.env.FROM_EMAIL            || 'RealEST Connect <info@connect.realest.ng>';
 const FROM_EMAIL_AUTH      = process.env.FROM_EMAIL_AUTH       || FROM_EMAIL;
