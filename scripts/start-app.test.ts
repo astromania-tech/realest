@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import type { AddressInfo } from "node:net";
 
 import {
   collectEnvIssues,
@@ -25,9 +26,18 @@ import {
   serializeEnvFile,
   startAppReadyLine,
   waitForHttp,
-} from "./lib/start-app-core.mjs";
+} from "./lib/start-app-core.ts";
 
 const REPO_ROOT = join(fileURLToPath(new URL(".", import.meta.url)), "..");
+const TSX_BIN = join(REPO_ROOT, "node_modules", ".bin", "tsx");
+
+function runStartApp(args: string[], env: NodeJS.ProcessEnv) {
+  const script = join(REPO_ROOT, "scripts", "start-app.ts");
+  return spawnSync(TSX_BIN, [script, ...args], {
+    encoding: "utf8",
+    env,
+  });
+}
 
 test("parseEnvFile skips comments and unwraps quotes", () => {
   const env = parseEnvFile(`
@@ -93,6 +103,7 @@ test("node version gate accepts 20+ only", () => {
   });
   assert.equal(meetsNodeRequirement("v18.20.0"), false);
   assert.equal(meetsNodeRequirement("v20.0.0"), true);
+  assert.equal(meetsNodeRequirement("v22.6.0"), true);
   assert.equal(meetsNodeRequirement("v24.20.0"), true);
   assert.equal(meetsNodeRequirement("nope"), false);
 });
@@ -208,9 +219,11 @@ test("waitForHttp resolves when the server answers", async () => {
     res.writeHead(204);
     res.end();
   });
-  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
-  const { port } = server.address();
-  const result = await waitForHttp(`http://127.0.0.1:${port}/`, {
+  await new Promise<void>((resolve) => {
+    server.listen(0, "127.0.0.1", () => resolve());
+  });
+  const address = server.address() as AddressInfo;
+  const result = await waitForHttp(`http://127.0.0.1:${address.port}/`, {
     timeoutMs: 2_000,
     intervalMs: 50,
   });
@@ -248,20 +261,11 @@ test("start-app --check fails in a repo without keys", () => {
     "NEXT_PUBLIC_SUPABASE_URL=your-supabase-url\nNEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key\n",
   );
 
-  const script = join(REPO_ROOT, "scripts", "start-app.mjs");
-  const result = spawnSync(
-    process.execPath,
-    [script, "--check", "--no-local-supabase"],
-    {
-      cwd: dir,
-      encoding: "utf8",
-      env: {
-        PATH: process.env.PATH,
-        HOME: process.env.HOME,
-        START_APP_ROOT: dir,
-      },
-    },
-  );
+  const result = runStartApp(["--check", "--no-local-supabase"], {
+    PATH: process.env.PATH,
+    HOME: process.env.HOME,
+    START_APP_ROOT: dir,
+  });
   assert.notEqual(result.status, 0);
   assert.match(`${result.stderr}${result.stdout}`, /Missing:/);
 });
@@ -284,20 +288,11 @@ test("start-app --check passes when required keys are real", () => {
     ].join("\n"),
   );
 
-  const script = join(REPO_ROOT, "scripts", "start-app.mjs");
-  const result = spawnSync(
-    process.execPath,
-    [script, "--check", "--no-local-supabase"],
-    {
-      cwd: dir,
-      encoding: "utf8",
-      env: {
-        PATH: process.env.PATH,
-        HOME: process.env.HOME,
-        START_APP_ROOT: dir,
-      },
-    },
-  );
+  const result = runStartApp(["--check", "--no-local-supabase"], {
+    PATH: process.env.PATH,
+    HOME: process.env.HOME,
+    START_APP_ROOT: dir,
+  });
   assert.equal(result.status, 0, result.stderr + result.stdout);
   assert.match(result.stdout, /Env check passed/);
 });

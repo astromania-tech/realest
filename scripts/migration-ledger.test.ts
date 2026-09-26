@@ -10,15 +10,15 @@ import {
   parseMigrationVersion,
   PRODUCTION_ONLY_VERSIONS,
   SHARED_MIGRATION_VERSIONS,
-} from "./lib/production-migration-ledger.mjs";
+} from "./lib/production-migration-ledger.ts";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const MIGRATIONS_DIR = join(ROOT, "supabase", "migrations");
 
-function localVersions() {
+function localVersions(): string[] {
   return readdirSync(MIGRATIONS_DIR)
     .map(parseMigrationVersion)
-    .filter(Boolean)
+    .filter((version): version is string => Boolean(version))
     .sort();
 }
 

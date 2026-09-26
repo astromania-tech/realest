@@ -5,8 +5,8 @@
  * Required because SVGs loaded via <img> are sandboxed from the page's
  * @font-face declarations — the font must be self-contained in the file.
  *
- * Usage: npx tsx scripts/embed-fonts-in-svgs.mjs
- *   (or: node scripts/embed-fonts-in-svgs.mjs)
+ * Usage: npx tsx scripts/embed-fonts-in-svgs.ts
+ *   (or: node scripts/embed-fonts-in-svgs.ts)
  */
 
 import fs from 'fs';
@@ -17,7 +17,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 
 // Font file → @font-face declaration to inject
-const FONTS = [
+const FONTS: FontSpec[] = [
   {
     family: 'Neulis Neue',
     weight: 'bold',
@@ -35,9 +35,17 @@ const SVG_FILES = [
   'public/realest-logo-wordmark-light.svg',
 ];
 
-function buildFontFaceBlock(fonts) {
+type FontSpec = {
+  family: string;
+  weight: string;
+  style: string;
+  file: string;
+  format: string;
+};
+
+function buildFontFaceBlock(fonts: FontSpec[]): string {
   return fonts
-    .map(({ family, weight, style, file, format }) => {
+    .map(({ family, weight, style, file, format }: FontSpec) => {
       const b64 = fs.readFileSync(file).toString('base64');
       return (
         `@font-face {\n` +
@@ -51,12 +59,12 @@ function buildFontFaceBlock(fonts) {
     .join('\n');
 }
 
-function injectStyleIntoSvg(svgContent, styleBlock) {
+function injectStyleIntoSvg(svgContent: string, styleBlock: string): string {
   // If a <style> already exists inside <defs>, append to it
   if (/<defs[^>]*>[\s\S]*?<style[\s\S]*?<\/style>[\s\S]*?<\/defs>/i.test(svgContent)) {
     return svgContent.replace(
       /(<style[^>]*>)([\s\S]*?)(<\/style>)/i,
-      (_, open, existing, close) => `${open}${existing}\n${styleBlock}${close}`,
+      (_: string, open: string, existing: string, close: string) => `${open}${existing}\n${styleBlock}${close}`,
     );
   }
 
@@ -111,8 +119,8 @@ for (const relative of SVG_FILES) {
     fs.writeFileSync(svgPath, modified, 'utf8');
     console.log(`  ✓ ${relative}`);
     ok++;
-  } catch (err) {
-    console.error(`  ✗ ${relative}: ${err.message}`);
+  } catch (err: unknown) {
+    console.error(`  ✗ ${relative}: ${err instanceof Error ? err.message : String(err)}`);
     fail++;
   }
 }

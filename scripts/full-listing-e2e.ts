@@ -2,7 +2,7 @@
 import 'dotenv/config'
 import fs from 'node:fs'
 import path from 'node:path'
-import { loadSupabaseAccessToken } from './jwt-auth.mjs'
+import { loadSupabaseAccessToken } from './jwt-auth.ts'
 
 const baseUrl = process.env.BASE_URL ?? 'http://localhost:3000'
 const uploadsDir = path.join(process.cwd(), 'uploads')
@@ -10,14 +10,14 @@ const resortAddress = 'No 1, 7th Avenue, New Otuoke road, Bayelsa Palm, Yenagoa,
 const resortLatitude = 4.9334651
 const resortLongitude = 6.2747786
 
-function toFile(buffer, name, type) {
+function toFile(buffer: Buffer, name: string, type: string) {
   // In Node, constructing a browser File can be unreliable across versions.
   // Return raw buffer and filename so callers can append it to FormData
   // in a Node-friendly way: `formData.set('file', buffer, filename)`.
   return { buffer, name, type }
 }
 
-function mimeTypeForFile(fileName) {
+function mimeTypeForFile(fileName: string) {
   const ext = path.extname(fileName).toLowerCase()
   if (ext === '.jpg' || ext === '.jpeg') return 'image/jpeg'
   if (ext === '.png') return 'image/png'
@@ -26,14 +26,14 @@ function mimeTypeForFile(fileName) {
   return 'application/octet-stream'
 }
 
-async function requestJson(url, options = {}) {
+async function requestJson(url: string, options: RequestInit = {}) {
   const response = await fetch(url, options)
   const contentType = response.headers.get('content-type') ?? ''
   const body = contentType.includes('application/json') ? await response.json() : await response.text()
   return { response, body, contentType }
 }
 
-async function processValidationJob(baseUrl, headers, jobId) {
+async function processValidationJob(baseUrl: string, headers: Record<string, string>, jobId: string) {
   const processResult = await requestJson(`${baseUrl}/api/admin/validation/jobs/process`, {
     method: 'POST',
     headers: {
@@ -65,7 +65,7 @@ async function processValidationJob(baseUrl, headers, jobId) {
   throw new Error(`Timed out waiting for validation job ${jobId}`);
 }
 
-function readFileAsBlob(filePath) {
+function readFileAsBlob(filePath: string) {
   const buffer = fs.readFileSync(filePath)
   return { buffer, mimeType: mimeTypeForFile(filePath), fileName: path.basename(filePath) }
 }

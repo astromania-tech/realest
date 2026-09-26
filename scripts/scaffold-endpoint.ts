@@ -19,11 +19,11 @@ const __dirname = path.dirname(__filename)
 
 // Parse arguments
 const args = process.argv.slice(2)
-const params = {}
+const params: Record<string, string> = {}
 
 args.forEach((arg) => {
   const [key, value] = arg.replace(/^--/, '').split('=')
-  params[key] = value
+  if (key) params[key] = value ?? ''
 })
 
 const { name, category = 'API', method = 'POST' } = params

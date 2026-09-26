@@ -3,11 +3,11 @@
 /**
  * Dynamic OpenAPI Spec Generator
  *
- * Scans app/api/**/route.ts files for openApi metadata exports
+ * Scans app/api route.ts files (nested under app/api) for openApi metadata exports
  * and automatically builds the complete OpenAPI 3.0.0 specification.
  *
  * Usage:
- *   node scripts/generate-api-spec-dynamic.mjs
+ *   node scripts/generate-api-spec-dynamic.ts
  */
 
 import fs from 'fs/promises'
@@ -24,7 +24,7 @@ const rootDir = path.join(__dirname, '..')
  *   app/api/properties/route.ts → /api/properties
  *   app/api/properties/[id]/route.ts → /api/properties/{id}
  */
-function filePathToOpenApiPath(filePath) {
+function filePathToOpenApiPath(filePath: string): string | null {
   // Extract the API portion: app/api/...
   const match = filePath.match(/app\/api\/(.+)\/route\.ts/)
   if (!match) return null
@@ -37,8 +37,17 @@ function filePathToOpenApiPath(filePath) {
 /**
  * Infer HTTP method from exports in the module
  */
-function inferHttpMethod(moduleExports) {
-  const { openApi, GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS } = moduleExports
+function inferHttpMethod(moduleExports: Record<string, unknown>): string {
+  const { openApi, GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS } = moduleExports as {
+    openApi?: { method?: string }
+    GET?: unknown
+    POST?: unknown
+    PUT?: unknown
+    PATCH?: unknown
+    DELETE?: unknown
+    HEAD?: unknown
+    OPTIONS?: unknown
+  }
 
   if (openApi?.method) {
     return openApi.method.toLowerCase()
@@ -60,7 +69,7 @@ function inferHttpMethod(moduleExports) {
  * Load route metadata from a file
  * This is a simplified loader; in production you might use tsx or esbuild
  */
-async function loadRouteMetadata(filePath) {
+async function loadRouteMetadata(filePath: string): Promise<null> {
   try {
     // Read the file content
     const content = await fs.readFile(filePath, 'utf-8')
@@ -78,8 +87,11 @@ async function loadRouteMetadata(filePath) {
     //
     // For now, return null to signal "no metadata"
     return null
-  } catch (error) {
-    console.warn(`⚠️  Failed to load metadata from ${filePath}:`, error.message)
+  } catch (error: unknown) {
+    console.warn(
+      `⚠️  Failed to load metadata from ${filePath}:`,
+      error instanceof Error ? error.message : String(error),
+    )
     return null
   }
 }
@@ -88,23 +100,12 @@ async function loadRouteMetadata(filePath) {
  * Try to dynamically import a route module using tsx or node
  * This is done via a child process to avoid .ts parsing issues
  */
-async function importRouteModule(filePath) {
-  // Use dynamic import with tsx/esbuild support
-  // Since we're in .mjs, we can use import() with file:// URLs
+async function importRouteModule(filePath: string): Promise<Record<string, unknown> | null> {
   try {
-    // Convert .ts to .js path for import (tsx handles this automatically)
     const absolutePath = path.resolve(rootDir, filePath)
-    
-    // We need to use tsx to load TypeScript files
-    // For now, we'll require('tsx') to handle TS
-    const { register } = await import('tsx/esm')
-    
-    // This attempts to dynamically import the route
-    // Note: In Node 18+, we can use import() directly for .ts with tsx
     const module = await import(`file://${absolutePath}?t=${Date.now()}`)
-    return module
-  } catch (error) {
-    // console.warn(`⚠️  Could not import ${filePath}:`, error.message)
+    return module as Record<string, unknown>
+  } catch {
     return null
   }
 }
@@ -120,7 +121,15 @@ async function generateSpec() {
   console.log(`📂 Found ${routeFiles.length} API route files\n`)
 
   // Pre-defined endpoint metadata (fallback for routes without openApi export)
-  const preDefinedEndpoints = {
+  type EndpointOp = {
+    summary?: string
+    description?: string
+    tags?: string[]
+    security?: unknown[]
+    parameters?: unknown[]
+    responses?: Record<string, unknown>
+  }
+  const preDefinedEndpoints: Record<string, Record<string, EndpointOp>> = {
     '/api/properties': {
       post: {
         summary: 'Create property listing',
@@ -249,11 +258,12 @@ async function generateSpec() {
   }
 
   // Build paths from pre-defined endpoints
+  const paths: Record<string, Record<string, unknown>> = {}
   Object.entries(preDefinedEndpoints).forEach(([pathKey, methods]) => {
-    spec.paths[pathKey] = {}
+    paths[pathKey] = {}
 
     Object.entries(methods).forEach(([method, operation]) => {
-      spec.paths[pathKey][method] = {
+      paths[pathKey][method] = {
         ...operation,
         operationId: `${method.toUpperCase()}${pathKey.replace(/\//g, '_').replace(/{/g, '').replace(/}/g, '')}`,
         responses: operation.responses || {
@@ -269,6 +279,7 @@ async function generateSpec() {
       }
     })
   })
+  spec.paths = paths
 
   // Write the generated spec
   const outputPath = path.join(rootDir, 'lib', 'openapi', 'generated.json')

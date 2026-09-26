@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 // Simple smoke tester for OpenAPI paths — non-destructive.
-// Usage: node scripts/swagger-smoke-test.mjs <BEARER_TOKEN>
+// Usage: node scripts/swagger-smoke-test.ts <BEARER_TOKEN>
 
-import { loadJwtToken } from './jwt-auth.mjs';
+import { loadJwtToken } from './jwt-auth.ts';
 
 const REPLACE_PARAM = 'test-id';
 const TIMEOUT_MS = 15000;
 
-async function timeout(ms) {
+async function timeout(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-function sanitizePath(path) {
+function sanitizePath(path: string) {
   return path.replace(/{[^}]+}/g, REPLACE_PARAM);
 }
 
@@ -33,7 +33,18 @@ function sanitizePath(path) {
     const paths = Object.keys(spec.paths || {});
     console.log(`Found ${paths.length} paths in spec`);
 
-    const results = [];
+    const results: Array<{
+  path: string
+  method: string
+  probeMethod: string
+  url: string
+  status: number | null
+  statusText: string
+  ok: boolean
+  ct: string
+  elapsed: number
+  bodySnippet: string
+}> = [];
     for (const p of paths) {
       const methods = Object.keys(spec.paths[p]);
       for (const m of methods) {
@@ -61,8 +72,8 @@ function sanitizePath(path) {
           } catch (e) {
             bodySnippet = '<no body/failed to read>';
           }
-        } catch (err) {
-          statusText = String(err.message || err);
+        } catch (err: unknown) {
+          statusText = String((err instanceof Error ? err.message : String(err)) || err);
         }
         const elapsed = Date.now() - start;
         const entry = { path: p, method, probeMethod, url, status, statusText, ok, ct, elapsed, bodySnippet };
@@ -74,13 +85,20 @@ function sanitizePath(path) {
     }
 
     // Summarize
-    const summary = results.reduce((acc, r) => {
-      if (!acc.byStatus[r.status]) acc.byStatus[r.status] = 0;
-      acc.byStatus[r.status] += 1;
-      if (!r.ok) acc.failures.push(r);
-      return acc;
-    }, { total: results.length, byStatus: {}, failures: [] });
-
+    const summary = results.reduce(
+      (acc, r) => {
+        const key = String(r.status)
+        if (!acc.byStatus[key]) acc.byStatus[key] = 0
+        acc.byStatus[key] += 1
+        if (!r.ok) acc.failures.push(r)
+        return acc
+      },
+      {
+        total: results.length,
+        byStatus: {} as Record<string, number>,
+        failures: [] as typeof results,
+      },
+    );
     console.log('\nSmoke test complete. Summary:');
     console.log(`Total checks: ${summary.total}`);
     console.log('By status:', summary.byStatus);
@@ -100,11 +118,11 @@ function sanitizePath(path) {
       fs.writeFileSync(process.cwd() + '/scripts/swagger-smoke-results.json', JSON.stringify({ generatedAt: new Date().toISOString(), results }, null, 2));
       console.log('Saved results to scripts/swagger-smoke-results.json');
     } catch (e) {
-      console.warn('Failed to write results file:', e?.message || e);
+      console.warn('Failed to write results file:', e instanceof Error ? e.message : String(e));
     }
 
     process.exit(0);
-  } catch (err) {
+  } catch (err: unknown) {
     console.error('Error during smoke test:', err);
     process.exit(1);
   }
