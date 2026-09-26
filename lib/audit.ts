@@ -1,4 +1,4 @@
-import { createServiceClient } from "@/lib/supabase/service"
+import { prisma } from "@/lib/prisma"
 
 export type AuditAction = 
   | "create_subadmin"
@@ -6,6 +6,7 @@ export type AuditAction =
   | "reject_agent"
   | "delete_property"
   | "update_property_status"
+  | "user_moderation"
 
 export interface AuditLogEntry {
   actor_id: string
@@ -16,13 +17,13 @@ export interface AuditLogEntry {
 
 export async function logAdminAction(entry: AuditLogEntry) {
   try {
-    const service = createServiceClient()
-    await service.from("admin_audit_log").insert({
-      actor_id: entry.actor_id,
-      action: entry.action,
-      target_id: entry.target_id ?? null,
-      metadata: entry.metadata ?? null,
-      created_at: new Date().toISOString(),
+    await prisma.admin_audit_log.create({
+      data: {
+        actor_id: entry.actor_id,
+        action: entry.action,
+        target_id: entry.target_id ?? null,
+        metadata: entry.metadata ?? undefined,
+      },
     })
   } catch (err) {
     console.error("[Audit Log Error]", err)

@@ -6,7 +6,7 @@
  * Admin-only.
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { requireAdmin } from '@/lib/auth/require-admin';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
@@ -81,32 +81,15 @@ export const openApiDELETE: OpenApiMetadata = {
   },
 };
 
-async function requireAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await getAuthUser();
 
-  if (!user) return { user: null, error: 'Unauthorized', status: 401 };
-
-  const { data: userRow } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (userRow?.role !== 'admin') return { user: null, error: 'Forbidden', status: 403 };
-
-  return { user, error: null, status: 200 };
-}
 
 // ── GET ───────────────────────────────────────────────────────────────────────
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { error, status } = await requireAdmin();
-  if (error) return NextResponse.json({ error }, { status });
+  const admin = await requireAdmin();
+  if (!admin.ok) return NextResponse.json({ error: admin.error }, { status: admin.status });
 
   const { id } = await params;
   const campaignIdResult = campaignIdSchema.safeParse(id);
@@ -128,8 +111,8 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { error, status } = await requireAdmin();
-  if (error) return NextResponse.json({ error }, { status });
+  const admin = await requireAdmin();
+  if (!admin.ok) return NextResponse.json({ error: admin.error }, { status: admin.status });
 
   const { id } = await params;
   const campaignIdResult = campaignIdSchema.safeParse(id);
@@ -180,8 +163,8 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { error, status } = await requireAdmin();
-  if (error) return NextResponse.json({ error }, { status });
+  const admin = await requireAdmin();
+  if (!admin.ok) return NextResponse.json({ error: admin.error }, { status: admin.status });
 
   const { id } = await params;
   const campaignIdResult = campaignIdSchema.safeParse(id);

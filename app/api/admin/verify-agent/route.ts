@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { createClient, getAuthUser } from "@/lib/supabase/server"
+import { getAuthUser } from "@/lib/supabase/server"
 import { logAdminAction } from "@/lib/audit"
 import { prisma } from "@/lib/prisma"
 import type { OpenApiMetadata } from "@/lib/openapi/route-metadata"
@@ -43,9 +43,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing agentId or action" }, { status: 400 })
     }
 
-    const supabase = await createClient()
-
-    // Ensure requester is admin
     const { data: { user } } = await getAuthUser()
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
@@ -54,7 +51,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    // Update agent verification using schema-valid fields: verified (bool) + verification_date
     await prisma.agents.update({
       where: { id: agentId },
       data: {
@@ -63,7 +59,6 @@ export async function POST(request: Request) {
       },
     })
 
-    // Log the admin action
     await logAdminAction({
       actor_id: user.id,
       action: action === "approve" ? "approve_agent" : "reject_agent",

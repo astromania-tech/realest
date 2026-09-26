@@ -1,5 +1,4 @@
-import { createClient, getAuthUser } from "@/lib/supabase/server";
-import { createServiceClient } from "@/lib/supabase/service";
+import { getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { generateSignedUrl } from "@/lib/utils/upload-utils";
@@ -60,7 +59,6 @@ export const openApiPOST: OpenApiMetadata = {
 
 export async function GET(request: Request, { params }: RouteParams) {
   try {
-    const supabase = await createClient();
     const { id } = await params;
     const propertyIdResult = propertyIdSchema.safeParse(id);
     if (!propertyIdResult.success) {
@@ -198,24 +196,16 @@ export async function POST(request: Request, { params }: RouteParams) {
 
     const publicUrl = signedUrlResult.public_url;
 
-    const serviceSupabase = createServiceClient();
-    const { data: documentRecord, error: insertError } = await serviceSupabase
-      .from("property_documents")
-      .insert({
+    const documentRecord = await prisma.property_documents.create({
+      data: {
         property_id: propertyId,
         document_type: documentType,
         document_url: publicUrl,
         file_name: file.name,
         file_size: file.size,
-        verification_status: "pending", // Documents start as pending verification
-      })
-      .select()
-      .maybeSingle();
-
-    if (insertError) {
-      console.error("Failed to insert document record via service client:", insertError);
-      return NextResponse.json({ error: "Failed to save document record" }, { status: 500 });
-    }
+        verification_status: "pending",
+      },
+    });
 
     return NextResponse.json(
       { data: documentRecord, message: "Document uploaded successfully and submitted for verification" },

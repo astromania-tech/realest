@@ -8,7 +8,8 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import * as React from 'react';
-import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { requireAdmin } from '@/lib/auth/require-admin';
+import { prisma } from '@/lib/prisma';
 import { renderEmailFull } from '@/emails';
 import { Resend } from 'resend';
 import { interpolateSubject } from '@/lib/utils/interpolateSubject';
@@ -49,40 +50,23 @@ export const openApiPOST: OpenApiMetadata = {
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM_EMAIL_WAITLIST = process.env.FROM_EMAIL_WAITLIST ?? process.env.FROM_EMAIL ?? 'RealEST <hello@connect.realest.ng>';
 
-async function requireAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await getAuthUser();
-  if (!user) return { supabase, error: 'Unauthorized', status: 401 as const };
 
-  const { data: userRow } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (userRow?.role !== 'admin') return { supabase, error: 'Forbidden', status: 403 as const };
-  return { supabase, error: null, status: 200 as const };
-}
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { supabase, error, status } = await requireAdmin();
-  if (error) return NextResponse.json({ error }, { status });
+  const admin = await requireAdmin();
+  if (!admin.ok) return NextResponse.json({ error: admin.error }, { status: admin.status });
 
   const { id } = await params;
 
-  // Fetch subscriber (no 'position' column in waitlist table — position is computed client-side)
-  const { data: subscriber, error: fetchError } = await supabase
-    .from('waitlist')
-    .select('id, email, first_name, last_name')
-    .eq('id', id)
-    .single();
+  const subscriber = await prisma.waitlist.findUnique({
+    where: { id },
+    select: { id: true, email: true, first_name: true, last_name: true },
+  });
 
-  if (fetchError || !subscriber) {
+  if (!subscriber) {
     return NextResponse.json({ error: 'Subscriber not found' }, { status: 404 });
   }
 

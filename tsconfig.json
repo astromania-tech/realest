@@ -32,5 +32,5 @@
     ".next/dev/types/**/*.ts",
     "app/setting/_layout.tsx_"
   ],
-  "exclude": ["node_modules", "backups", "**/*.test.ts"]
+  "exclude": ["node_modules", "backups"]
 }

@@ -1,5 +1,6 @@
-import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { propertiesWithinRadius } from "@/lib/geo/properties-within-radius";
 import { NextResponse } from "next/server";
 import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
 
@@ -24,7 +25,6 @@ export const openApiPOST: OpenApiMetadata = {
 
 export async function GET(request: Request, { params }: RouteParams) {
   try {
-    const supabase = await createClient();
     const { id } = await params;
     const propertyId = id;
 
@@ -92,17 +92,15 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     duplicates.exact_address = exactMatches;
 
-    // 2. Nearby properties — use Supabase RPC (PostGIS)
+    // 2. Nearby properties — PostGIS via Prisma
     if (property.latitude && property.longitude) {
-      const { data: nearby } = await supabase.rpc("properties_within_radius", {
+      const nearby = await propertiesWithinRadius({
         lat: Number(property.latitude),
         lng: Number(property.longitude),
-        radius_km: 0.5,
-        exclude_property_id: propertyId,
+        radiusKm: 0.5,
+        excludePropertyId: propertyId,
       });
-      if (nearby) {
-        duplicates.nearby_properties = nearby.slice(0, 5);
-      }
+      duplicates.nearby_properties = nearby.slice(0, 5);
     }
 
     // 3. Similar titles in same state (basic text similarity)
