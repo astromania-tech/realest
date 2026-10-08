@@ -42,6 +42,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Deploy to Vercel Production
+        id: vercel-deploy
         uses: vercel/action@v7
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -53,6 +54,7 @@ jobs:
 
       - name: Notify Slack #realest-releases on success
         if: success()
+        continue-on-error: true
         run: |
           curl -X POST -H 'Content-type: application/json' \
             --data '{
@@ -63,6 +65,7 @@ jobs:
                   { "title": "Repo", "value": "${{ github.repository }}", "short": true },
                   { "title": "Branch", "value": "${{ github.ref_name }}", "short": true },
                   { "title": "Commit", "value": "<https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>", "short": false },
+                  { "title": "Deployment URL", "value": "<${{ steps.vercel-deploy.outputs.preview-url }}|${{ steps.vercel-deploy.outputs.preview-url }}>", "short": false },
                   { "title": "Triggered by", "value": "${{ github.actor }}", "short": true },
                   { "title": "Environment", "value": "Production (main)", "short": true }
                 ]
@@ -72,6 +75,7 @@ jobs:
 
       - name: Notify Slack #realest-incidents on failure
         if: failure()
+        continue-on-error: true
         run: |
           curl -X POST -H 'Content-type: application/json' \
             --data '{
