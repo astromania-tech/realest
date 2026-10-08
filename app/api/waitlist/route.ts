@@ -18,7 +18,7 @@ import {
   recomputeWaitlistRankings,
   recordReferralEvent,
 } from '@/lib/reward-engine';
-import { applyWaitlistJoinRewards } from '../../../scripts/lib/waitlist-join-rewards.mjs';
+import { applyWaitlistJoinRewards } from '@/lib/waitlist-join-rewards';
 import {
   buildReferralShareUrl,
   getCurrentMilestone,
@@ -153,7 +153,9 @@ export async function POST(request: NextRequest) {
           referral_count: result.data.referral_count,
           persona: result.data.persona,
           poll_completion_count: result.data.poll_completion_count,
-          subscribed_at: result.data.subscribed_at,
+          subscribed_at: result.data.subscribed_at
+            ? String(result.data.subscribed_at)
+            : null,
         },
         { ensureWaitlistCohortReward, recomputeWaitlistRankings },
       );

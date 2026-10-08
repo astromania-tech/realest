@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/service";
+import { prisma } from "@/lib/prisma";
 import { deriveNumericOtp } from "@/lib/utils/otp";
 import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
 
@@ -54,12 +55,10 @@ export async function POST(request: NextRequest) {
 
     const supabase = createServiceClient();
 
-    // Look up profile for personalisation — service role bypasses RLS
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("full_name")
-      .eq("email", email)
-      .single();
+    const profile = await prisma.profiles.findFirst({
+      where: { email },
+      select: { full_name: true },
+    });
 
     // If no profile exists, return success anyway (no user enumeration)
     if (!profile) {

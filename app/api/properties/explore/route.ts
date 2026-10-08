@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { prisma, Prisma } from '@/lib/prisma'
+import { propertiesWithinRadius } from '@/lib/geo/properties-within-radius'
 import { z } from 'zod'
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata'
 
@@ -99,17 +99,16 @@ export async function GET(request: NextRequest) {
       where.state = query.state
     }
 
-    // Geospatial radius search — use Supabase RPC (PostGIS)
+    // Geospatial radius search — PostGIS via Prisma
     if (query.latitude && query.longitude && query.radius_km) {
-      const supabase = await createClient()
-      const { data: radiusProperties } = await supabase.rpc('properties_within_radius', {
+      const radiusProperties = await propertiesWithinRadius({
         lat: query.latitude,
         lng: query.longitude,
-        radius_km: query.radius_km,
+        radiusKm: query.radius_km,
       })
 
-      if (radiusProperties && radiusProperties.length > 0) {
-        const radiusIds = radiusProperties.map((p: any) => p.id)
+      if (radiusProperties.length > 0) {
+        const radiusIds = radiusProperties.map((p) => p.id)
         where.id = { in: radiusIds }
       } else {
         return NextResponse.json({

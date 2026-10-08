@@ -9,8 +9,10 @@
  */
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
-import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { requireAdmin } from '@/lib/auth/require-admin';
+import { prisma } from '@/lib/prisma';
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
+import type { UserRole } from '@/lib/prisma/client';
 
 export const openApiGET: OpenApiMetadata = {
   method: 'get',
@@ -105,23 +107,9 @@ const DB_SEGMENTS = [
 
 export async function GET() {
   // Auth guard
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await getAuthUser();
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const { data: userRow } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (userRow?.role !== 'admin') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  const admin = await requireAdmin();
+  if (!admin.ok) {
+    return NextResponse.json({ error: admin.error }, { status: admin.status });
   }
 
   // ── Fetch Resend contact counts in parallel ────────────────────────────────
@@ -152,26 +140,18 @@ export async function GET() {
   const dbSegmentsWithCounts = await Promise.all(
     DB_SEGMENTS.map(async (segment) => {
       try {
-        // Waitlist segment queries a separate table
         if (segment.id === 'db_waitlist') {
-          const { count } = await supabase
-            .from('waitlist')
-            .select('id', { count: 'exact', head: true })
-            .eq('status', 'active');
-          return { ...segment, contactCount: count ?? 0 };
+          const count = await prisma.waitlist.count({ where: { status: 'active' } });
+          return { ...segment, contactCount: count };
         }
 
-        let query = supabase
-          .from('users')
-          .select('id', { count: 'exact', head: true })
-          .is('deleted_at', null);
-
+        const where: { deleted_at: null; role?: UserRole } = { deleted_at: null };
         if ('role' in segment.filter && segment.filter.role) {
-          query = query.eq('role', segment.filter.role);
+          where.role = segment.filter.role as UserRole;
         }
 
-        const { count } = await query;
-        return { ...segment, contactCount: count ?? 0 };
+        const count = await prisma.users.count({ where });
+        return { ...segment, contactCount: count };
       } catch {
         return { ...segment, contactCount: 0 };
       }

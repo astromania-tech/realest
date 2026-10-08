@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { syncWaitlistContextToProfile } from '@/lib/reward-engine';
-import { createServiceClient } from '@/lib/supabase/service';
+import { prisma } from '@/lib/prisma';
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
 
 export const openApiPOST: OpenApiMetadata = {
@@ -44,14 +44,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Email is required' }, { status: 400 });
   }
 
-  const svc = createServiceClient();
-  const cutoff = new Date(Date.now() - 15 * 60_000).toISOString();
-  const { data: profile } = await svc
-    .from('profiles')
-    .select('id, email, created_at')
-    .eq('email', email)
-    .gte('created_at', cutoff)
-    .maybeSingle();
+  const cutoff = new Date(Date.now() - 15 * 60_000);
+  const profile = await prisma.profiles.findFirst({
+    where: {
+      email,
+      created_at: { gte: cutoff },
+    },
+    select: { id: true, email: true, created_at: true },
+  });
 
   if (!profile) {
     return NextResponse.json(

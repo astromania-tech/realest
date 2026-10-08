@@ -8,7 +8,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import * as React from 'react';
-import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { requireAdmin } from '@/lib/auth/require-admin';
 import prisma from '@/lib/prisma';
 import { renderEmail } from '@/emails';
 import { z } from 'zod';
@@ -31,34 +31,14 @@ export const openApiGET: OpenApiMetadata = {
   },
 };
 
-async function requireAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await getAuthUser();
-  if (!user) return { error: 'Unauthorized', status: 401 as const };
 
-  const { data: userRow } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (userRow?.role !== 'admin') return { error: 'Forbidden', status: 403 as const };
-  return { error: null, status: 200 as const };
-}
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { error, status } = await requireAdmin();
-  if (error) {
-    return new Response(JSON.stringify({ error }), {
-      status,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+  const admin = await requireAdmin();
+  if (!admin.ok) return NextResponse.json({ error: admin.error }, { status: admin.status });
 
   const { id } = await params;
   const campaignIdResult = campaignIdSchema.safeParse(id);

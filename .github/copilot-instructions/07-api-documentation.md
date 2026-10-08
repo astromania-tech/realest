@@ -106,10 +106,10 @@ npm run dev
 # Then visit: http://localhost:3000/docs
 ```
 
-### Verify Setup
+### Regenerate OpenAPI Spec
 ```bash
-npm run docs:verify
-# Checks: 6 required files, 4 npm scripts
+npm run generate:api-spec
+# Writes: lib/openapi/generated.json (also runs on Vercel prebuild / CI)
 ```
 
 ### Export OpenAPI Spec
@@ -507,9 +507,9 @@ git commit -m "feat: add property approval endpoint
 
 **Pre-commit checks:**
 ```bash
-npm run docs:verify    # Verify all files exist
-npm run typecheck      # Check TypeScript
-npm run lint           # Check code style
+npm run generate:api-spec   # Rebuild tracked OpenAPI artifact
+npm run typecheck           # Check TypeScript
+npm run lint                # Check code style
 ```
 
 ---

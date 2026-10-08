@@ -11,10 +11,11 @@
  * Admin-only.
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { requireAdmin } from '@/lib/auth/require-admin';
 import prisma from '@/lib/prisma';
 import { renderCampaignTemplate, executeBulkSend, CampaignRecipient } from '@/lib/emailBulkSender';
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
+import type { Prisma } from '@/lib/prisma/client';
 
 export const openApiPOST: OpenApiMetadata = {
   method: 'post',
@@ -55,79 +56,56 @@ function fromForTemplate(templateName: string): string {
   return FROM_EMAIL;
 }
 
-async function requireAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await getAuthUser();
 
-  if (!user) return { user: null, error: 'Unauthorized', status: 401 };
-
-  const { data: userRow } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (userRow?.role !== 'admin') return { user: null, error: 'Forbidden', status: 403 };
-
-  return { user, error: null, status: 200 };
-}
 
 // ── Waitlist recipient query ───────────────────────────────────────────────────
 
 async function fetchWaitlistRecipients(): Promise<CampaignRecipient[]> {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from('waitlist')
-    .select('email, first_name, last_name, referral_code')
-    .eq('status', 'active');
-
-  if (error) throw new Error(`Waitlist query failed: ${error.message}`);
+  const data = await prisma.waitlist.findMany({
+    where: { status: 'active' },
+    select: { email: true, first_name: true, last_name: true, referral_code: true },
+  });
 
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return (data ?? [])
-    .filter((row) => typeof row.email === 'string' && EMAIL_RE.test((row.email as string).trim()))
+  return data
+    .filter((row) => typeof row.email === 'string' && EMAIL_RE.test(row.email.trim()))
     .map((row) => {
-      const firstName = (row.first_name as string | null)?.trim() || undefined;
-      const lastName = (row.last_name as string | null)?.trim() || undefined;
+      const firstName = row.first_name?.trim() || undefined;
+      const lastName = row.last_name?.trim() || undefined;
       const fullName = [firstName, lastName].filter(Boolean).join(' ') || undefined;
-      const referralCode = (row.referral_code as string | null)?.trim() || undefined;
+      const referralCode = row.referral_code?.trim() || undefined;
       const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://realest.ng';
       const referralUrl = referralCode ? `${BASE_URL}/refer?ref=${referralCode}` : undefined;
-      return { email: (row.email as string).trim(), firstName: firstName?.trim() || undefined, fullName: fullName?.trim() || undefined, referralCode, referralUrl };
+      return { email: row.email.trim(), firstName, fullName, referralCode, referralUrl };
     });
 }
-
-// ── DB segment recipient query ─────────────────────────────────────────────────
 
 async function fetchDbSegmentRecipients(
   audienceFilter: Record<string, unknown>,
 ): Promise<CampaignRecipient[]> {
-  const supabase = await createClient();
+  const where: Prisma.usersWhereInput = {
+    deleted_at: null,
+    email: { not: null },
+  };
 
-  // audienceFilter may contain: { role?: string, roles?: string[] }
-  let query = supabase
-    .from('users')
-    .select('email, full_name')
-    .is('deleted_at', null)
-    .not('email', 'is', null);
-
-  if (audienceFilter.role) {
-    query = query.eq('role', audienceFilter.role);
+  if (typeof audienceFilter.role === 'string') {
+    where.role = audienceFilter.role as Prisma.EnumUserRoleFilter['equals'];
   } else if (Array.isArray(audienceFilter.roles) && audienceFilter.roles.length > 0) {
-    query = query.in('role', audienceFilter.roles);
+    where.role = { in: audienceFilter.roles as Prisma.EnumUserRoleFilter['in'] };
   }
 
-  const { data, error } = await query;
-  if (error) throw new Error(`DB segment query failed: ${error.message}`);
+  const data = await prisma.users.findMany({
+    where,
+    select: { email: true, full_name: true },
+  });
 
-  return (data ?? []).map((row) => ({
-    email: row.email as string,
-    fullName: (row.full_name as string | null) ?? undefined,
-    firstName: (row.full_name as string | null)?.split(' ')[0] ?? undefined,
-  }));
+  return data
+    .filter((row) => !!row.email)
+    .map((row) => ({
+      email: row.email as string,
+      fullName: row.full_name ?? undefined,
+      firstName: row.full_name?.split(' ')[0] ?? undefined,
+    }));
 }
 
 // ── POST ──────────────────────────────────────────────────────────────────────
@@ -135,8 +113,8 @@ export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { error, status } = await requireAdmin();
-  if (error) return NextResponse.json({ error }, { status });
+  const admin = await requireAdmin();
+  if (!admin.ok) return NextResponse.json({ error: admin.error }, { status: admin.status });
 
   const { id } = await params;
 

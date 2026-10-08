@@ -35,15 +35,6 @@ yarn-error.log*
 /docs/done/
 /docs/Untitled
 /docs/api/*.md
-/docs/CONFLUENCE-MIGRATION.md
-
-# Local Confluence move scripts. Git does not track these.
-/scripts/docs-classify.test.mjs
-/scripts/docs-export-confluence.mjs
-/scripts/docs-publish-confluence.mjs
-/scripts/lib/docs-classify.mjs
-/scripts/lib/docs-walk.mjs
-/scripts/lib/md-to-storage.mjs
 
 # typescript
 *.tsbuildinfo
@@ -70,3 +61,6 @@ next-env.d.ts
 _build-log.txt
 _server-log.txt
 supabase/.temp/cli-latest
+
+# Local verification engine stores (API keys, ledger, smoke artifacts) — never commit
+.data/
