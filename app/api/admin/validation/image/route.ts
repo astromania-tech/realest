@@ -3,7 +3,7 @@ import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { enqueueValidationJob } from '@/lib/validation/validation-job-worker'
-import { uploadValidationAsset } from '@/lib/validation/validation-assets'
+import { uploadValidationAsset, type ValidationAssetSource } from '@/lib/validation/validation-assets'
 
 const imageValidationBodySchema = z.object({
   propertyId: z.string().uuid('Invalid property ID'),
@@ -69,9 +69,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    let source:
-      | { kind: 'url'; fileUrl: string; mimeType?: string }
-      | { kind: 'storage'; bucket: string; path: string; mimeType?: string; originalName?: string }
+    let source: ValidationAssetSource
 
     if (file && typeof (file as any).arrayBuffer === 'function') {
       source = await uploadValidationAsset({

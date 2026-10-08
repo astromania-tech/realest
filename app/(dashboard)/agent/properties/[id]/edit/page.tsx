@@ -46,6 +46,9 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
   const initialProperty = {
     ...property,
     price: Number(property.price),
+    description: property.description ?? "",
+    state: property.state ?? "",
+    price_frequency: property.price_frequency ?? "sale",
   }
 
   return (

@@ -27,7 +27,11 @@ export const openApiGET: OpenApiMetadata = {
   },
 };
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function mailClient(): Resend | null {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return null;
+  return new Resend(key);
+}
 
 // ── Configured Resend audiences ───────────────────────────────────────────────
 const RESEND_AUDIENCES = [
@@ -119,6 +123,8 @@ export async function GET() {
         return { ...audience, contactCount: 0, configured: false };
       }
       try {
+        const resend = mailClient();
+        if (!resend) return { ...audience, contactCount: 0, configured: false };
         const listRes = await (
           resend.contacts as unknown as {
             list: (opts: { audienceId: string }) => Promise<{

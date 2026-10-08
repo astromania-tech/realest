@@ -12,8 +12,7 @@ interface SentInquiry {
   property_id: string;
   message: string;
   status: string;
-  created_at: string;
-  owner_response?: string;
+  created_at: string | null;
   properties: {
     address: string;
     city: string;
@@ -44,18 +43,22 @@ export default function MyInquiriesPage() {
           message,
           status,
           created_at,
-          owner_response,
           properties (
             address,
             city
           )
         `,
         )
-        .eq("user_id", user.user.id)
+        .eq("sender_id", user.user.id)
         .order("created_at", { ascending: false });
 
       if (!error && data) {
-        setInquiries(data);
+        setInquiries(
+          data.map((row) => ({
+            ...row,
+            properties: row.properties ? [row.properties] : [],
+          })),
+        );
       }
       setIsLoading(false);
     };
@@ -173,23 +176,14 @@ export default function MyInquiriesPage() {
                         {inquiry.message}
                       </p>
 
-                      {inquiry.owner_response && (
-                        <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 mb-3">
-                          <p className="text-body-s font-medium text-primary mb-1">
-                            Owner Response:
-                          </p>
-                          <p className="text-body-s text-foreground">
-                            {inquiry.owner_response}
-                          </p>
-                        </div>
-                      )}
-
                       <div className="flex items-center gap-4 text-body-s text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
                           <span>
                             Sent{" "}
-                            {new Date(inquiry.created_at).toLocaleDateString()}
+                            {inquiry.created_at
+                              ? new Date(inquiry.created_at).toLocaleDateString()
+                              : "date unavailable"}
                           </span>
                         </div>
                         {inquiry.status === "viewed" && (

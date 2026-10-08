@@ -156,7 +156,17 @@ export function useUser(): UseUserReturn {
           return null;
         }
 
-        return profileData as BaseUserProfile;
+        return {
+          id: profileData.id,
+          email: profileData.email,
+          full_name: profileData.full_name,
+          phone: profileData.phone,
+          bio: profileData.bio,
+          avatar_url: profileData.avatar_url,
+          user_type: "user",
+          created_at: profileData.created_at ?? "",
+          updated_at: profileData.updated_at ?? "",
+        };
       } catch (err) {
         console.error("Error in fetchBasicProfile:", err);
         return null;
@@ -432,9 +442,21 @@ export function useUser(): UseUserReturn {
           "agent_details" in updates &&
           updates.agent_details
         ) {
+          const details = updates.agent_details;
           const { error } = await supabase
             .from("agents")
-            .update(updates.agent_details)
+            .update({
+              agency_name: details.agency_name,
+              license_number: details.license_number ?? undefined,
+              specialization: details.specialization,
+              verified: details.verified,
+              verification_date: details.verification_date,
+              years_experience: details.years_experience,
+              rating: details.rating,
+              total_sales: details.total_sales,
+              total_listings: details.total_listings,
+              whatsapp: details.whatsapp,
+            })
             .eq("profile_id", user.id);
 
           if (error) throw error;

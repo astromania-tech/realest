@@ -10,7 +10,7 @@ import { VerificationBadge, PropertyStatusChip } from "@/components/realest";
 interface SavedProperty {
   id: string;
   property_id: string;
-  saved_at: string;
+  created_at: string | null;
   properties: {
     id: string;
     title: string;
@@ -48,7 +48,7 @@ export default function FavoritesPage() {
             `
             id,
             property_id,
-            saved_at,
+            created_at,
             properties (
               id,
               title,
@@ -66,10 +66,26 @@ export default function FavoritesPage() {
           `,
           )
           .eq("user_id", user.user.id)
-          .order("saved_at", { ascending: false });
+          .order("created_at", { ascending: false });
 
         if (!error && data) {
-          setSavedProperties(data);
+          setSavedProperties(
+            data.map((row) => ({
+              id: row.id,
+              property_id: row.property_id,
+              created_at: row.created_at,
+              properties: row.properties
+                ? [
+                    {
+                      ...row.properties,
+                      bedrooms: row.properties.bedrooms ?? 0,
+                      bathrooms: row.properties.bathrooms ?? 0,
+                      square_feet: row.properties.square_feet ?? 0,
+                    },
+                  ]
+                : [],
+            })),
+          );
         }
       } finally {
         setIsLoading(false);
@@ -233,7 +249,9 @@ export default function FavoritesPage() {
                       <div className="mt-4 pt-4 border-t border-border/50">
                         <p className="text-xs text-muted-foreground">
                           Saved on{" "}
-                          {new Date(saved.saved_at).toLocaleDateString()}
+                          {saved.created_at
+                            ? new Date(saved.created_at).toLocaleDateString()
+                            : "Date unavailable"}
                         </p>
                       </div>
                     </Card.Content>

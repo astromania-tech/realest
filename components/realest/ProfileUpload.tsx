@@ -545,7 +545,7 @@ export function ProfileUpload({
                       Cancel
                     </RealEstButton>
                     <RealEstButton
-                      variant="default"
+                      variant="primary"
                       onClick={handleCropConfirm}
                       type="button"
                       disabled={isProcessingCrop || isUploading}
