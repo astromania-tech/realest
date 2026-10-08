@@ -8,6 +8,7 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -27,15 +28,21 @@ jobs:
       - name: Run linter
         run: npm run lint
 
+      - name: Run tests
+        run: npm run test
+
       - name: Generate OpenAPI spec
         run: npm run generate:api-spec
 
   deploy:
     needs: verify
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     environment: production
     permissions:
       contents: read
+    outputs:
+      deployment-url: ${{ steps.vercel-deploy.outputs.preview-url }}
 
     steps:
       - name: Checkout repository
@@ -51,6 +58,11 @@ jobs:
           prod: true
         env:
           VERCEL_ENV: production
+
+      - name: Display Deployment URL
+        run: |
+          echo "🚀 Deployment successful!"
+          echo "URL: ${{ steps.vercel-deploy.outputs.preview-url }}"
 
       - name: Notify Slack #realest-releases on success
         if: success()
@@ -84,7 +96,7 @@ jobs:
                 "color": "#E01E5A",
                 "fields": [
                   { "title": "Repo", "value": "${{ github.repository }}", "short": true },
-                  { "title": "Branch", "value": "${{ github.ref_name }}", "short": true },
+                  { "title": "Branch", "value": "main", "short": true },
                   { "title": "Workflow", "value": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View failed run>", "short": false },
                   { "title": "Author", "value": "${{ github.actor }}", "short": true }
                 ]
