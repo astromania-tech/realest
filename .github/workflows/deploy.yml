@@ -6,11 +6,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  verify:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -24,16 +21,37 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build application
-        run: npm run build
+      - name: Run type check
+        run: npm run typecheck
 
-      - name: Deploy application
-        run: |
-          echo "Add your actual deploy command here for your hosting platform."
-          echo "For example: npx vercel --prod"
-          echo "Or: npm run deploy"
+      - name: Run linter
+        run: npm run lint
 
-      - name: Notify Slack Releases on success
+      - name: Generate OpenAPI spec
+        run: npm run generate:api-spec
+
+  deploy:
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to Vercel Production
+        uses: vercel/action@v7
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          prod: true
+        env:
+          VERCEL_ENV: production
+
+      - name: Notify Slack #realest-releases on success
         if: success()
         run: |
           curl -X POST -H 'Content-type: application/json' \
@@ -45,22 +63,24 @@ jobs:
                   { "title": "Repo", "value": "${{ github.repository }}", "short": true },
                   { "title": "Branch", "value": "${{ github.ref_name }}", "short": true },
                   { "title": "Commit", "value": "<https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>", "short": false },
-                  { "title": "Triggered by", "value": "${{ github.actor }}", "short": true }
+                  { "title": "Triggered by", "value": "${{ github.actor }}", "short": true },
+                  { "title": "Environment", "value": "Production (main)", "short": true }
                 ]
               }]
             }' \
             "${{ secrets.SLACK_WEBHOOK_RELEASES }}"
 
-      - name: Notify Slack Incidents on failure
+      - name: Notify Slack #realest-incidents on failure
         if: failure()
         run: |
           curl -X POST -H 'Content-type: application/json' \
             --data '{
-              "text": "🔥 *Production deployment failed*",
+              "text": "🔥 *Production deployment FAILED*",
               "attachments": [{
                 "color": "#E01E5A",
                 "fields": [
                   { "title": "Repo", "value": "${{ github.repository }}", "short": true },
+                  { "title": "Branch", "value": "main", "short": true },
                   { "title": "Workflow", "value": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View failed run>", "short": false },
                   { "title": "Author", "value": "${{ github.actor }}", "short": true }
                 ]
