@@ -3,7 +3,6 @@ import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { propertyListingSchema } from '@/lib/validations/property'
-import { redeemFirstListingWaiver } from '@/lib/reward-engine'
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata'
 
 const querySchema = z.object({
@@ -257,9 +256,10 @@ export async function POST(request: Request) {
       console.log('Property flagged as potential duplicate:', property.id)
     }
 
-    const launchRewardRedemption = userRowPost.role === 'owner'
-      ? await redeemFirstListingWaiver(user.id, property.id)
-      : { redeemed: false, reason: 'Not applicable for this account.' }
+    const launchRewardRedemption = {
+      redeemed: false,
+      reason: 'Listing fee is not charged yet.',
+    }
 
     return NextResponse.json({
       data: property,
