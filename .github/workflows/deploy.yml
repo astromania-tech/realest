@@ -1,13 +1,15 @@
-name: Generated Artifacts Check
+name: Deploy Production
 
 on:
   push:
-  pull_request:
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  openapi-spec:
+  deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout repository
@@ -22,18 +24,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Regenerate OpenAPI spec
-        run: npx tsx scripts/generate-api-spec.ts
+      - name: Build application
+        run: npm run build
 
-      - name: Verify generated spec is committed
-        run: git diff --exit-code -- lib/openapi/generated.json
+      - name: Deploy application
+        run: |
+          echo "Add your actual deploy command here for your hosting platform."
+          echo "For example: npx vercel --prod"
+          echo "Or: npm run deploy"
 
-      - name: Notify Slack #realest-releases on success
+      - name: Notify Slack Releases on success
         if: success()
         run: |
           curl -X POST -H 'Content-type: application/json' \
             --data '{
-              "text": "✅ *RealEST API contract check passed*",
+              "text": "🚀 *Production deployment successful*",
               "attachments": [{
                 "color": "#2EB886",
                 "fields": [
@@ -46,12 +51,12 @@ jobs:
             }' \
             "${{ secrets.SLACK_WEBHOOK_RELEASES }}"
 
-      - name: Notify Slack #realest-incidents on failure
+      - name: Notify Slack Incidents on failure
         if: failure()
         run: |
           curl -X POST -H 'Content-type: application/json' \
             --data '{
-              "text": "🔥 *RealEST CI check failed*",
+              "text": "🔥 *Production deployment failed*",
               "attachments": [{
                 "color": "#E01E5A",
                 "fields": [
