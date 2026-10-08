@@ -7,7 +7,7 @@
  * Admin-only.
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { requireAdmin } from '@/lib/auth/require-admin';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
@@ -29,29 +29,14 @@ export const openApiGET: OpenApiMetadata = {
   },
 };
 
-async function requireAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await getAuthUser();
-  if (!user) return { supabase, error: 'Unauthorized', status: 401 as const };
 
-  const { data: userRow } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (userRow?.role !== 'admin') return { supabase, error: 'Forbidden', status: 403 as const };
-  return { supabase, error: null, status: 200 as const };
-}
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { supabase, error, status } = await requireAdmin();
-  if (error) return NextResponse.json({ error }, { status });
+  const admin = await requireAdmin();
+  if (!admin.ok) return NextResponse.json({ error: admin.error }, { status: admin.status });
 
   const { id } = await params;
   const campaignIdResult = campaignIdSchema.safeParse(id);
@@ -75,27 +60,22 @@ export async function GET(
   // db_segment — re-run the audience filter query
   const audienceFilter = (campaignRecord.audience_filter as Record<string, unknown>) ?? {};
 
-  let query = supabase
-    .from('users')
-    .select('id, email, full_name')
-    .is('deleted_at', null);
-
+  const where: Record<string, unknown> = { deleted_at: null };
   if (audienceFilter.role) {
-    query = query.eq('role', audienceFilter.role as string);
+    where.role = audienceFilter.role;
   } else if (Array.isArray(audienceFilter.roles) && audienceFilter.roles.length > 0) {
-    query = query.in('role', audienceFilter.roles as string[]);
+    where.role = { in: audienceFilter.roles };
   }
 
-  const { data, error: queryError } = await query;
+  const data = await prisma.users.findMany({
+    where: where as any,
+    select: { id: true, email: true, full_name: true },
+  });
 
-  if (queryError) {
-    return NextResponse.json({ error: queryError.message }, { status: 500 });
-  }
-
-  const recipients = (data ?? []).map((row) => ({
+  const recipients = data.map((row) => ({
     email: row.email as string,
-    fullName: (row.full_name as string | null) ?? undefined,
-    firstName: (row.full_name as string | null)?.split(' ')[0] ?? undefined,
+    fullName: row.full_name ?? undefined,
+    firstName: row.full_name?.split(' ')[0] ?? undefined,
   }));
 
   return NextResponse.json({

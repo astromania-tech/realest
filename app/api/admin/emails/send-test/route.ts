@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { requireAdmin } from '@/lib/auth/require-admin';
 import { Resend } from "resend";
 import { templateRegistry } from "@/emails/preview-registry";
 import { renderEmailFull } from "@/emails/utils/renderEmail";
@@ -46,23 +46,9 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(request: NextRequest) {
   // ── Auth guard ──────────────────────────────────────────────────────────────
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await getAuthUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data: userRow } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (userRow?.role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const admin = await requireAdmin();
+  if (!admin.ok) {
+    return NextResponse.json({ error: admin.error }, { status: admin.status });
   }
 
   // ── Parse + validate body ───────────────────────────────────────────────────

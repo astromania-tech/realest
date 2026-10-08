@@ -157,6 +157,41 @@ npm run dev
 
 2. Open [http://localhost:3000](http://localhost:3000) in your browser
 
+### Local validation smoke (admin ML pipeline)
+
+After local Supabase and the app are running, engineers can exercise the same admin validation path used in production (document → image → duplicate jobs). This is a **manual smoke**, not a CI gate.
+
+1. Ensure local Supabase is up (`npx supabase start` or `./start.sh`).
+2. Put admin login credentials in `.env.local` (Auth user that will be promoted to admin):
+
+```env
+ADMIN_EMAIL=you@example.com
+ADMIN_PASSWORD=your-local-password
+```
+
+3. Bootstrap local Auth + Storage (safe: both scripts refuse non-local Supabase URLs):
+
+```bash
+npm run create:local-admin
+npm run ensure:local-buckets
+```
+
+4. Start the app on port 3000, then:
+
+```bash
+npm run test:validation
+```
+
+Expect document/image/duplicate jobs to enqueue and complete. Synthetic fixtures may be **rejected**; a green smoke means the pipeline finished, not that junk inputs were accepted.
+
+Coming-soon route lockdown (app must be in coming-soon mode):
+
+```bash
+npm run dev:coming-soon
+# other terminal
+npm run test:lockdown
+```
+
 ### Zed IDE Integration
 
 This project is optimized for Zed IDE with AI-powered development features:
@@ -264,7 +299,7 @@ npm test
 When API routes change, regenerate the canonical OpenAPI artifact with:
 
 ```bash
-node scripts/generate-api-spec.mjs
+node scripts/generate-api-spec.ts
 ```
 
 Do not edit `lib/openapi/generated.json` by hand. Always regenerate it from the source routes so the Swagger output stays in sync.

@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const { page, per_page, sort, user_type, search } = queryValidation.data
+    const { page, per_page, sort, user_type, search, status } = queryValidation.data
     const pageNum = parseInt(page)
     const perPageNum = parseInt(per_page)
     const skip = (pageNum - 1) * perPageNum
@@ -82,6 +82,12 @@ export async function GET(request: NextRequest) {
     const where: Prisma.usersWhereInput = {}
     if (user_type) {
       where.role = user_type as Prisma.EnumUserRoleFilter
+    }
+    if (status === 'active') {
+      where.is_active = true
+    } else if (status === 'suspended' || status === 'banned') {
+      // Schema has one flag (is_active). Suspend and ban both deactivate.
+      where.is_active = false
     }
     if (search) {
       where.profiles = {
@@ -151,7 +157,7 @@ export async function GET(request: NextRequest) {
       updated_at: u.updated_at,
       property_count: propCountMap[u.id] ?? 0,
       inquiry_count: inqCountMap[u.id] ?? 0,
-      is_active: true,
+      is_active: u.is_active,
       last_activity: u.updated_at,
       account_age_days: Math.floor(
         (Date.now() - new Date(u.created_at ?? 0).getTime()) / (1000 * 60 * 60 * 24)

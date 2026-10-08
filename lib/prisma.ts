@@ -9,7 +9,7 @@
 import "dotenv/config"
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from './prisma/client'
-import { pgAdapterConfig } from '../scripts/lib/pg-ssl.mjs'
+import { pgAdapterConfig } from '@/lib/pg-ssl'
 
 // Singleton pattern for Next.js (prevents multiple instances in dev mode)
 const globalForPrisma = globalThis as unknown as {

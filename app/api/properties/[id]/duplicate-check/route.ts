@@ -1,7 +1,8 @@
 // realest/app/api/properties/[id]/duplicate-check/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { propertiesWithinRadius } from "@/lib/geo/properties-within-radius";
 import { z } from "zod";
 import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
 
@@ -76,7 +77,6 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const supabase = await createClient();
     const { id } = await params;
     const propertyIdResult = propertyIdSchema.safeParse(id);
     if (!propertyIdResult.success) {
@@ -156,16 +156,16 @@ export async function POST(
       }
     }
 
-    // 2. Geospatial proximity check (uses Supabase RPC for PostGIS)
+    // 2. Geospatial proximity check (PostGIS via Prisma)
     if (checkLatitude && checkLongitude) {
-      const { data: radiusProperties } = await supabase.rpc("properties_within_radius", {
+      const radiusProperties = await propertiesWithinRadius({
         lat: checkLatitude,
         lng: checkLongitude,
-        radius_km: validatedData.radius,
+        radiusKm: validatedData.radius,
       });
 
-      if (radiusProperties && radiusProperties.length > 0) {
-        const radiusIds: string[] = radiusProperties.map((p: any) => p.id).filter((id: string) => id !== propertyId);
+      if (radiusProperties.length > 0) {
+        const radiusIds: string[] = radiusProperties.map((p) => p.id).filter((id) => id !== propertyId);
         if (radiusIds.length > 0) {
           const proximityMatches = await prisma.properties.findMany({
             where: { id: { in: radiusIds }, status: "live", NOT: { id: propertyId } },

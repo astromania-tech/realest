@@ -3,6 +3,7 @@ name: Generated Artifacts Check
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 jobs:
   openapi-spec:
@@ -22,7 +23,42 @@ jobs:
         run: npm ci
 
       - name: Regenerate OpenAPI spec
-        run: node scripts/generate-api-spec.mjs
+        run: npx tsx scripts/generate-api-spec.ts
 
       - name: Verify generated spec is committed
         run: git diff --exit-code -- lib/openapi/generated.json
+
+      - name: Notify Slack #realest-releases on success
+        if: success()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{
+              "text": "✅ *RealEST API contract check passed*",
+              "attachments": [{
+                "color": "#2EB886",
+                "fields": [
+                  { "title": "Repo", "value": "${{ github.repository }}", "short": true },
+                  { "title": "Branch", "value": "${{ github.ref_name }}", "short": true },
+                  { "title": "Commit", "value": "<https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>", "short": false },
+                  { "title": "Triggered by", "value": "${{ github.actor }}", "short": true }
+                ]
+              }]
+            }' \
+            "${{ secrets.SLACK_WEBHOOK_RELEASES }}"
+
+      - name: Notify Slack #realest-incidents on failure
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{
+              "text": "🔥 *RealEST CI check failed*",
+              "attachments": [{
+                "color": "#E01E5A",
+                "fields": [
+                  { "title": "Repo", "value": "${{ github.repository }}", "short": true },
+                  { "title": "Workflow", "value": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View failed run>", "short": false },
+                  { "title": "Author", "value": "${{ github.actor }}", "short": true }
+                ]
+              }]
+            }' \
+            "${{ secrets.SLACK_WEBHOOK_INCIDENTS }}"

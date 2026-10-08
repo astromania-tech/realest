@@ -15,7 +15,7 @@
  * const spec = generator.generate()
  *
  * // Or use CLI script
- * node scripts/generate-api-spec.mjs
+ * node scripts/generate-api-spec.ts
  * ```
  */
 

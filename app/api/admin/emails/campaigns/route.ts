@@ -5,7 +5,7 @@
  * Admin-only.
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { requireAdmin } from '@/lib/auth/require-admin';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@/lib/prisma/client';
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
@@ -64,30 +64,11 @@ export const openApiPOST: OpenApiMetadata = {
   },
 };
 
-// ── Auth helper ───────────────────────────────────────────────────────────────
-async function requireAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await getAuthUser();
-
-  if (!user) return { user: null, profileId: null, error: 'Unauthorized', status: 401 };
-
-  const { data: userRow } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (userRow?.role !== 'admin') return { user: null, profileId: null, error: 'Forbidden', status: 403 };
-
-  return { user, profileId: user.id, error: null, status: 200 };
-}
-
 // ── GET ───────────────────────────────────────────────────────────────────────
 export async function GET(request: NextRequest) {
-  const { error, status, profileId } = await requireAdmin();
-  if (error) return NextResponse.json({ error }, { status });
+  const admin = await requireAdmin();
+  if (!admin.ok) return NextResponse.json({ error: admin.error }, { status: admin.status });
+  const profileId = admin.userId;
 
   const { searchParams } = new URL(request.url);
   const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
@@ -116,8 +97,9 @@ export async function GET(request: NextRequest) {
 
 // ── POST ──────────────────────────────────────────────────────────────────────
 export async function POST(request: NextRequest) {
-  const { error, status, profileId } = await requireAdmin();
-  if (error) return NextResponse.json({ error }, { status });
+  const admin = await requireAdmin();
+  if (!admin.ok) return NextResponse.json({ error: admin.error }, { status: admin.status });
+  const profileId = admin.userId;
 
   let body: Record<string, unknown>;
   try {

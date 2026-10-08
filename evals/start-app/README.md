@@ -5,7 +5,7 @@ Measures whether a fresh clone can find and trust the start path.
 ## Run
 
 ```bash
-node evals/start-app/run.mjs
+npm run eval:start-app
 ```
 
 Pass threshold: `1.0` (every case).

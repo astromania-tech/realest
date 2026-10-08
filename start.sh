@@ -45,4 +45,8 @@ if ! command -v node >/dev/null 2>&1; then
   exit 1
 fi
 
-exec node "${ROOT}/scripts/start-app.mjs" "$@"
+# TypeScript CLI via tsx (works on Node 20+; npx fetches tsx if not installed yet).
+if [[ -x "${ROOT}/node_modules/.bin/tsx" ]]; then
+  exec "${ROOT}/node_modules/.bin/tsx" "${ROOT}/scripts/start-app.ts" "$@"
+fi
+exec npx --yes tsx "${ROOT}/scripts/start-app.ts" "$@"

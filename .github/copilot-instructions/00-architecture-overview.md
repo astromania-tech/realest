@@ -23,12 +23,8 @@ Next.js 16 App Router
 
 ### Backend & Database
 ```
-Supabase PostgreSQL
-├── PostGIS Extension (Geospatial queries)
-├── Row-Level Security (RLS) Policies
-├── Realtime Subscriptions
-├── Storage (Images, Documents)
-└── Edge Functions (ML triggers, notifications)
+Supabase PostgreSQL (auth + storage + PostGIS SQL functions)
+Prisma (all application table reads/writes — see docs/engineering/data-write-path.md)
 ```
 
 ### Design System (OKLCH-based)
