@@ -37,33 +37,16 @@ jobs:
   deploy:
     needs: verify
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 5
     environment: production
     permissions:
       contents: read
-    outputs:
-      deployment-url: ${{ steps.vercel-deploy.outputs.preview-url }}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Deploy to Vercel Production
-        id: vercel-deploy
-        uses: amondnet/vercel-action@v42.3.0
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
-          github-comment: false
-        env:
-          VERCEL_ENV: production
-
-      - name: Display Deployment URL
+      - name: Leave production to the Vercel GitHub app
         run: |
-          echo "🚀 Deployment successful!"
-          echo "URL: ${{ steps.vercel-deploy.outputs.preview-url }}"
+          echo "Production is deployed by the Vercel GitHub app (vercel[bot])."
+          echo "This workflow does not call the Vercel CLI or a deploy action."
 
       - name: Notify Slack #realest-releases on success
         if: success()
@@ -71,14 +54,14 @@ jobs:
         run: |
           curl -X POST -H 'Content-type: application/json' \
             --data '{
-              "text": "🚀 *Production deployment successful*",
+              "text": "🚀 *Verify passed. Production is deployed by the Vercel GitHub app.*",
               "attachments": [{
                 "color": "#2EB886",
                 "fields": [
                   { "title": "Repo", "value": "${{ github.repository }}", "short": true },
                   { "title": "Branch", "value": "${{ github.ref_name }}", "short": true },
                   { "title": "Commit", "value": "<https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>", "short": false },
-                  { "title": "Deployment URL", "value": "<${{ steps.vercel-deploy.outputs.preview-url }}|${{ steps.vercel-deploy.outputs.preview-url }}>", "short": false },
+                  { "title": "Deployed by", "value": "vercel[bot]", "short": true },
                   { "title": "Triggered by", "value": "${{ github.actor }}", "short": true },
                   { "title": "Environment", "value": "Production (main)", "short": true }
                 ]
