@@ -45,7 +45,7 @@ jobs:
     steps:
       - name: Leave production to the Vercel GitHub app
         run: |
-          echo "Production is deployed by the Vercel GitHub app (vercel[bot])."
+          echo "Production deployment will be handled by the Vercel GitHub app (vercel[bot])."
           echo "This workflow does not call the Vercel CLI or a deploy action."
 
       - name: Notify Slack #realest-releases on success
@@ -54,14 +54,14 @@ jobs:
         run: |
           curl -X POST -H 'Content-type: application/json' \
             --data '{
-              "text": "🚀 *Verify passed. Production is deployed by the Vercel GitHub app.*",
+              "text": "🚀 *Verify passed. Production deployment will be handled by the Vercel GitHub app.*",
               "attachments": [{
                 "color": "#2EB886",
                 "fields": [
                   { "title": "Repo", "value": "${{ github.repository }}", "short": true },
                   { "title": "Branch", "value": "${{ github.ref_name }}", "short": true },
                   { "title": "Commit", "value": "<https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>", "short": false },
-                  { "title": "Deployed by", "value": "vercel[bot]", "short": true },
+                  { "title": "Deploy path", "value": "vercel[bot]", "short": true },
                   { "title": "Triggered by", "value": "${{ github.actor }}", "short": true },
                   { "title": "Environment", "value": "Production (main)", "short": true }
                 ]
