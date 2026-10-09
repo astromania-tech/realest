@@ -5,6 +5,12 @@ declare const Deno: {
   serve(handler: (request: Request) => Promise<Response>): void;
 };
 
+declare module "npm:@supabase/supabase-js@2.49.1" {
+  export function createClient(...args: unknown[]): {
+    from(table: string): any;
+  };
+}
+
 declare module "npm:@supabase/supabase-js@2" {
   export function createClient(...args: unknown[]): {
     rpc<T = unknown>(...rpcArgs: unknown[]): Promise<{ data: T | null; error: Error | null }>;

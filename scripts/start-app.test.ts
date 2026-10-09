@@ -265,6 +265,7 @@ test("start-app --check fails in a repo without keys", () => {
     PATH: process.env.PATH,
     HOME: process.env.HOME,
     START_APP_ROOT: dir,
+    NODE_ENV: "test",
   });
   assert.notEqual(result.status, 0);
   assert.match(`${result.stderr}${result.stdout}`, /Missing:/);
@@ -292,6 +293,7 @@ test("start-app --check passes when required keys are real", () => {
     PATH: process.env.PATH,
     HOME: process.env.HOME,
     START_APP_ROOT: dir,
+    NODE_ENV: "test",
   });
   assert.equal(result.status, 0, result.stderr + result.stdout);
   assert.match(result.stdout, /Env check passed/);

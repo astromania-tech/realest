@@ -159,7 +159,7 @@ export default function AgentDashboardPage() {
           const formattedInquiries: InquiryData[] = inquiries.map((inq) => ({
             id: inq.id,
             message: inq.message,
-            created_at: inq.created_at,
+            created_at: inq.created_at ?? "",
             sender: Array.isArray(inq.sender) ? inq.sender[0] : inq.sender,
             property: Array.isArray(inq.property) ? inq.property[0] : inq.property,
           }));

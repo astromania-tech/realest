@@ -65,6 +65,9 @@ test("after config, URL parse does not reintroduce verify-full", () => {
     { connectionString: cfg.connectionString, ssl: cfg.ssl },
     parsePgUrl(cfg.connectionString!),
   );
+  if (!merged.ssl || typeof merged.ssl === "boolean" || typeof merged.ssl === "string") {
+    assert.fail("expected an ssl config object");
+  }
   assert.equal(merged.ssl.rejectUnauthorized, false);
 });
 
