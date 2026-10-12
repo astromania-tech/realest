@@ -16,6 +16,15 @@ test("README still documents ./start.sh as the launcher", () => {
   assert.equal(README.includes("./start.sh"), true);
 });
 
+test("README lists the tools to install before clone", () => {
+  assert.match(README, /Install these before you clone/);
+  assert.match(README, /\*\*Git\*\*/);
+  assert.match(README, /Node\.js 20/);
+  assert.match(README, /\*\*npm\*\*/);
+  assert.match(README, /Docker, with the engine running/);
+  assert.match(README, /Do not install the Supabase CLI/);
+});
+
 test("README does not tell cloners to run missing scripts/001_*.sql files", () => {
   assert.equal(README.includes("scripts/001_create_profiles.sql"), false);
   assert.equal(README.includes("scripts/007_create_profile_trigger.sql"), false);

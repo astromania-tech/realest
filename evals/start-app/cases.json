@@ -39,6 +39,10 @@
       "intent": "Getting Started tells a new cloner the one command to run."
     },
     {
+      "id": "readme_lists_preclone_dependencies",
+      "intent": "Getting Started names Git, Node 20, npm, and a running Docker engine, and says the Supabase CLI is not a separate install."
+    },
+    {
       "id": "readme_has_clone_url",
       "intent": "Getting Started names the real GitHub clone URL, not a placeholder."
     },
