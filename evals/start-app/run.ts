@@ -69,6 +69,17 @@ const checks: Record<string, CheckFn> = {
     const text = readFileSync(join(ROOT, "README.md"), "utf8");
     return text.includes("./start.sh");
   },
+  readme_lists_preclone_dependencies: () => {
+    const text = readFileSync(join(ROOT, "README.md"), "utf8");
+    return (
+      text.includes("Install these before you clone") &&
+      text.includes("**Git**") &&
+      text.includes("Node.js 20") &&
+      text.includes("**npm**") &&
+      text.includes("Docker, with the engine running") &&
+      text.includes("Do not install the Supabase CLI")
+    );
+  },
   readme_has_clone_url: () => {
     const text = readFileSync(join(ROOT, "README.md"), "utf8");
     return text.includes(

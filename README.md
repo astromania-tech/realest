@@ -25,10 +25,15 @@ Nigeria's premier property marketplace that revolutionizes real estate through g
 
 ### Prerequisites
 
-- Git
-- Node.js 20.x or later (fnm or nvm is enough if `node` is not on PATH)
-- npm (comes with Node)
-- Docker, for the local database on a first clone
+Install these before you clone. `./start.sh` does not install them.
+
+- **Git**
+- **Node.js 20** or later, and **npm**. npm comes with the Node installer. If `node` is not on your PATH yet, [fnm](https://github.com/Schniz/fnm) or nvm is enough. This repo's `.node-version` is `20`.
+- **Docker, with the engine running.** On macOS and Windows that is Docker Desktop. On Linux that is the Docker Engine service. `./start.sh` checks that the `docker` command is on your PATH, then starts the local database. Installing Docker and leaving the engine stopped is not enough.
+
+Do not install the Supabase CLI. On a first clone with no `.env.local`, `./start.sh` downloads it with `npx` and uses it to start the local database inside Docker. A Supabase account is not required for that local database.
+
+To run without Docker, use a hosted Supabase project instead. That path is in **Installation** below. The homepage still needs `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 
 ### Clone
 
@@ -50,7 +55,7 @@ That script:
 1. Finds Node 20+ (fnm or nvm if your shell has no `node` yet)
 2. Runs `npm ci` when `node_modules` is missing
 3. Uses `.env.local` if the required Supabase keys are set
-4. If those keys are missing and Docker is installed, starts local Supabase and writes `.env.local`
+4. If those keys are missing and `docker` is on PATH, downloads the Supabase CLI with `npx`, starts local Supabase, and writes `.env.local`
 5. Starts the app at [http://localhost:3000](http://localhost:3000), or the next free port if 3000 is already taken by another process
 
 Required keys (homepage will not load without them):
