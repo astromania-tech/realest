@@ -64,3 +64,6 @@ supabase/.temp/cli-latest
 
 # Local verification engine stores (API keys, ledger, smoke artifacts) — never commit
 .data/
+
+# Cursor project rules. Local only. Do not commit.
+.cursor/
