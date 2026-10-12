@@ -25,6 +25,7 @@ import {
   getWaitlistRewardCopy,
   isWaitlistPersona,
 } from '@/lib/referral-system';
+import { REFERRAL_CREDIT_EVENT_TYPES, referralAlreadyCredited } from '@/lib/referral-credit';
 import prisma from '@/lib/prisma'; // ← replaces createServiceClient
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
 
@@ -188,6 +189,18 @@ export async function POST(request: NextRequest) {
             });
 
             if (referrer) {
+              const priorCredit = await prisma.referral_events.findFirst({
+                where: {
+                  referred_waitlist_id: result.data!.id,
+                  event_type: { in: [...REFERRAL_CREDIT_EVENT_TYPES] },
+                },
+                select: { event_type: true },
+              });
+              if (referralAlreadyCredited(priorCredit ? [priorCredit] : [])) {
+                console.log(`Referral already credited for waitlist ${result.data!.id}`);
+                return;
+              }
+
               const newCount = (referrer.referral_count ?? 0) + 1;
 
               // Update referred_by on the new entry and increment referrer count

@@ -22,7 +22,7 @@ interface EventSpace {
   price: number;
   address: string;
   city: string;
-  capacity: number;
+  capacity: number | null;
   square_feet: number;
   listing_type: string;
   property_type: string;
@@ -47,7 +47,21 @@ export default function EventsPage() {
         .limit(12);
 
       if (!error && data) {
-        setSpaces(data as EventSpace[]);
+        setSpaces(
+          data.map((row) => ({
+            id: row.id,
+            title: row.title,
+            price: Number(row.price),
+            address: row.address,
+            city: row.city,
+            capacity: null,
+            square_feet: row.square_feet ?? 0,
+            listing_type: row.listing_type,
+            property_type: row.property_type,
+            verification_status: row.verification_status,
+            amenities: [],
+          })),
+        );
       }
       setIsLoading(false);
     };
@@ -199,13 +213,15 @@ export default function EventsPage() {
                         EVENT SPACE
                       </Chip>
                       {/* Capacity Badge */}
-                      <Chip
-                        variant="secondary"
-                        className="absolute bottom-3 left-3 bg-background/90 backdrop-blur-sm border-border/50 text-xs"
-                      >
-                        <Users className="w-3 h-3 mr-1" />
-                        {space.capacity} guests
-                      </Chip>
+                      {space.capacity != null && (
+                        <Chip
+                          variant="secondary"
+                          className="absolute bottom-3 left-3 bg-background/90 backdrop-blur-sm border-border/50 text-xs"
+                        >
+                          <Users className="w-3 h-3 mr-1" />
+                          {space.capacity} guests
+                        </Chip>
+                      )}
                     </div>
 
                     <Card.Content className="p-6">
@@ -243,10 +259,12 @@ export default function EventsPage() {
                       )}
 
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Users className="w-4 h-4" />
-                          <span>{space.capacity}</span>
-                        </div>
+                        {space.capacity != null && (
+                          <div className="flex items-center gap-1">
+                            <Users className="w-4 h-4" />
+                            <span>{space.capacity}</span>
+                          </div>
+                        )}
                         {space.square_feet > 0 && (
                           <div className="flex items-center gap-1">
                             <Sparkles className="w-4 h-4" />
