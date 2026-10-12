@@ -25,13 +25,13 @@ import { ProfileUpload } from "@/components/realest/ProfileUpload";
 
 interface UserProfile {
   id: string;
-  full_name: string;
-  phone: string;
-  bio: string;
+  full_name: string | null;
+  phone: string | null;
+  bio: string | null;
   email: string;
   user_type: string;
-  created_at: string;
-  avatar_url?: string;
+  created_at: string | null;
+  avatar_url?: string | null;
 }
 
 export default function PublicProfilePage() {
@@ -68,7 +68,22 @@ export default function PublicProfilePage() {
           return;
         }
 
-        setProfile(profileData);
+        const { data: roleRow } = await supabase
+          .from("users")
+          .select("role")
+          .eq("id", userId)
+          .maybeSingle();
+
+        setProfile({
+          id: profileData.id,
+          full_name: profileData.full_name,
+          phone: profileData.phone,
+          bio: profileData.bio,
+          email: profileData.email,
+          user_type: roleRow?.role ?? "user",
+          created_at: profileData.created_at,
+          avatar_url: profileData.avatar_url,
+        });
 
         // Fetch stats (mock for now - replace with real queries)
         // Total listings by this user
@@ -190,7 +205,10 @@ export default function PublicProfilePage() {
                     </Chip>
                     <div className="flex items-center gap-1 text-sm text-muted-foreground">
                       <Calendar className="w-4 h-4" />
-                      Joined {new Date(profile.created_at).toLocaleDateString()}
+                      Joined{" "}
+                      {profile.created_at
+                        ? new Date(profile.created_at).toLocaleDateString()
+                        : "date unavailable"}
                     </div>
                   </div>
 

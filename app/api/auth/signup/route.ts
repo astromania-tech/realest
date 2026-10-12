@@ -4,7 +4,11 @@ import { renderCampaignTemplate } from '@/lib/emailBulkSender';
 import { Resend } from 'resend';
 import { sendVerificationEmail } from '@/lib/emailService';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function mailClient(): Resend | null {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return null;
+  return new Resend(key);
+}
 
 /**
  * POST /api/auth/signup
@@ -61,16 +65,21 @@ export async function POST(request: NextRequest) {
 
     const from = process.env.FROM_EMAIL_AUTH || process.env.FROM_EMAIL || 'RealEST <noreply@realest.ng>';
 
-    const { error: resendError } = await resend.emails.send({
-      from,
-      to: email,
-      subject: 'Verify your RealEST account',
-      html,
-    });
+    const resend = mailClient();
+    if (!resend) {
+      console.error('Resend signup email skipped: RESEND_API_KEY is not set');
+    } else {
+      const { error: resendError } = await resend.emails.send({
+        from,
+        to: email,
+        subject: 'Verify your RealEST account',
+        html,
+      });
 
-    if (resendError) {
-      console.error('Resend signup email error:', resendError);
-      // Note: User record is created, they can request a resend later if this fails
+      if (resendError) {
+        console.error('Resend signup email error:', resendError);
+        // Note: User record is created, they can request a resend later if this fails
+      }
     }
 
     return NextResponse.json({ success: true, user: userData.user });

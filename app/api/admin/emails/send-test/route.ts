@@ -37,7 +37,11 @@ export const openApiPOST: OpenApiMetadata = {
   },
 };
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function mailClient(): Resend | null {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return null;
+  return new Resend(key);
+}
 const FROM_EMAIL =
   process.env.FROM_EMAIL || "RealEST Connect <info@connect.realest.ng>";
 
@@ -90,6 +94,11 @@ export async function POST(request: NextRequest) {
   // ── Render + send ───────────────────────────────────────────────────────────
   try {
     const { html, text } = await renderEmailFull(entry.element);
+
+    const resend = mailClient();
+    if (!resend) {
+      return NextResponse.json({ error: "Email service is not configured" }, { status: 503 });
+    }
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,

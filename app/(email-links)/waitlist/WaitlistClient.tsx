@@ -22,6 +22,26 @@ export default function WaitlistClient({ initialTotal }: { initialTotal: number 
     referralCode?: string | null;
   } | null>(null);
 
+  useEffect(() => {
+    let cancelled = false;
+    const loadCount = async () => {
+      try {
+        const response = await fetch('/api/waitlist?stats=true');
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!cancelled && typeof data.active === 'number') {
+          setTotalCount(data.active);
+        }
+      } catch {
+        // Keep the server count when the stats request fails.
+      }
+    };
+    loadCount();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   if (result !== null) {
     return (
       <div className="min-h-screen bg-background">

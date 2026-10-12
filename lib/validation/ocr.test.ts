@@ -7,10 +7,14 @@ import {
 } from "./ocr.ts";
 
 test("resolveOcrTimeoutMs defaults and rejects bad values", () => {
-  assert.equal(resolveOcrTimeoutMs({}), DEFAULT_OCR_TIMEOUT_MS);
-  assert.equal(resolveOcrTimeoutMs({ VALIDATION_OCR_TIMEOUT_MS: "5000" }), 5000);
-  assert.equal(resolveOcrTimeoutMs({ VALIDATION_OCR_TIMEOUT_MS: "0" }), DEFAULT_OCR_TIMEOUT_MS);
-  assert.equal(resolveOcrTimeoutMs({ VALIDATION_OCR_TIMEOUT_MS: "nope" }), DEFAULT_OCR_TIMEOUT_MS);
+  const env = (overrides: Partial<NodeJS.ProcessEnv> = {}): NodeJS.ProcessEnv => ({
+    ...overrides,
+    NODE_ENV: "test",
+  });
+  assert.equal(resolveOcrTimeoutMs(env()), DEFAULT_OCR_TIMEOUT_MS);
+  assert.equal(resolveOcrTimeoutMs(env({ VALIDATION_OCR_TIMEOUT_MS: "5000" })), 5000);
+  assert.equal(resolveOcrTimeoutMs(env({ VALIDATION_OCR_TIMEOUT_MS: "0" })), DEFAULT_OCR_TIMEOUT_MS);
+  assert.equal(resolveOcrTimeoutMs(env({ VALIDATION_OCR_TIMEOUT_MS: "nope" })), DEFAULT_OCR_TIMEOUT_MS);
 });
 
 test("withTimeout rejects when the promise never settles", async () => {

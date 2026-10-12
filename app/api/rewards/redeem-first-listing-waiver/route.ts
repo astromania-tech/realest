@@ -1,10 +1,8 @@
-// This API route allows authenticated users to redeem a waiver for the first listing fee.
+// The listing fee is not charged yet. This route must not mark the waiver redeemed.
 import { NextRequest, NextResponse } from 'next/server';
-import { redeemFirstListingWaiver } from '@/lib/reward-engine';
-import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/supabase/server";
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
   const { data: { user }, error } = await getAuthUser();
 
   if (error || !user) {
@@ -23,6 +21,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Listing ID is required' }, { status: 400 });
   }
 
-  const redemption = await redeemFirstListingWaiver(user.id, listingId);
-  return NextResponse.json({ ok: true, redemption });
+  return NextResponse.json({
+    ok: true,
+    redemption: { redeemed: false, reason: 'Listing fee is not charged yet.' },
+  });
 }
