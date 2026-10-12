@@ -24,7 +24,11 @@ const MAX_BATCH_SIZE = 100;
 /** Milliseconds to wait between consecutive batch requests (≈ 1.8 req/sec). */
 const BATCH_DELAY_MS = 550;
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function mailClient(): Resend {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) throw new Error("RESEND_API_KEY is not set");
+  return new Resend(key);
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -125,6 +129,7 @@ async function sendBroadcast(opts: BroadcastSendOptions): Promise<BulkSendResult
   if (!process.env.RESEND_API_KEY) {
     return { success: false, sent: 0, failed: 0, error: 'RESEND_API_KEY not configured' };
   }
+  const resend = mailClient();
 
   try {
     // 1. Create the broadcast
@@ -189,6 +194,7 @@ async function sendBatch(opts: BatchSendOptions): Promise<BulkSendResult> {
   if (!process.env.RESEND_API_KEY) {
     return { success: false, sent: 0, failed: 0, error: 'RESEND_API_KEY not configured' };
   }
+  const resend = mailClient();
   if (!opts.recipients.length) {
     return { success: true, sent: 0, failed: 0 };
   }

@@ -283,13 +283,6 @@ export async function syncWaitlistContextToProfile(
     },
   });
 
-  if (candidateRole !== 'user') {
-    await prisma.users.update({
-      where: { id: profileId },
-      data: { role: candidateRole as any },
-    });
-  }
-
   // Link any unlinked reward entitlements to this profile
   await prisma.reward_entitlements.updateMany({
     where: {

@@ -410,9 +410,9 @@ export function PropertyForm({ initial, mode, role = "agent" }: { initial?: Part
       </div>
 
       <div className="flex gap-4 border-t pt-4 border-default-100">
-        <Checkbox checked={values.has_pool} onCheckedChange={(val) => setValues({ ...values, has_pool: val })}>Has Pool</Checkbox>
-        <Checkbox checked={values.has_garage} onCheckedChange={(val) => setValues({ ...values, has_garage: val })}>Has Garage</Checkbox>
-        <Checkbox checked={values.has_garden} onCheckedChange={(val) => setValues({ ...values, has_garden: val })}>Has Garden</Checkbox>
+        <Checkbox checked={values.has_pool} onCheckedChange={(val) => setValues({ ...values, has_pool: val === true })}>Has Pool</Checkbox>
+        <Checkbox checked={values.has_garage} onCheckedChange={(val) => setValues({ ...values, has_garage: val === true })}>Has Garage</Checkbox>
+        <Checkbox checked={values.has_garden} onCheckedChange={(val) => setValues({ ...values, has_garden: val === true })}>Has Garden</Checkbox>
       </div>
 
       <div className="flex justify-end gap-3 pt-4">
@@ -436,8 +436,8 @@ export function PropertyForm({ initial, mode, role = "agent" }: { initial?: Part
             Delete
           </Button>
         )}
-        <Button variant="primary" onPress={handleStage1} isLoading={loading}>
-          Save & Continue
+        <Button variant="primary" onPress={handleStage1} isDisabled={loading}>
+          {loading ? "Saving..." : "Save & Continue"}
         </Button>
       </div>
     </Card>

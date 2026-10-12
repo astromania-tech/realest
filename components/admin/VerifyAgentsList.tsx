@@ -22,7 +22,7 @@ export function VerifyAgentsList({ initialAgents }: VerifyAgentsListProps) {
           event: "UPDATE",
           schema: "public",
           table: "agents",
-          filter: "verification_status=eq.pending",
+          filter: "verified=eq.true",
         },
         (payload) => {
           console.log("Agent updated:", payload)
@@ -36,14 +36,14 @@ export function VerifyAgentsList({ initialAgents }: VerifyAgentsListProps) {
           event: "INSERT",
           schema: "public",
           table: "agents",
-          filter: "verification_status=eq.pending",
+          filter: "verified=eq.false",
         },
         async (payload) => {
           console.log("New pending agent:", payload)
           // Fetch full agent details including profile
           const { data } = await supabase
             .from("agents")
-            .select("id, profile_id, agency_name, license_number, verification_status, license_certificate_url, profiles(full_name)")
+            .select("id, profile_id, agency_name, license_number, verified, profiles(full_name)")
             .eq("id", payload.new.id)
             .single()
 
@@ -54,8 +54,8 @@ export function VerifyAgentsList({ initialAgents }: VerifyAgentsListProps) {
               full_name: (data.profiles as any)?.full_name ?? null,
               agency_name: data.agency_name ?? null,
               license_number: data.license_number ?? null,
-              verification_status: data.verification_status ?? "pending",
-              license_certificate_url: data.license_certificate_url ?? null,
+              verification_status: data.verified ? "approved" : "pending",
+              license_certificate_url: null,
             }
             setAgents((prev) => [newAgent, ...prev])
           }

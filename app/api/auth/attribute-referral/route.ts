@@ -7,6 +7,7 @@ import {
   recordReferralEvent,
 } from '@/lib/reward-engine';
 import { buildReferralShareUrl } from '@/lib/referral-system';
+import { REFERRAL_CREDIT_EVENT_TYPES, referralAlreadyCredited } from '@/lib/referral-credit';
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
 
 export const openApiPOST: OpenApiMetadata = {
@@ -91,6 +92,37 @@ export async function POST(request: NextRequest) {
         where: { email },
         select: { id: true },
       });
+
+      const priorCredit = await prisma.referral_events.findFirst({
+        where: {
+          event_type: { in: [...REFERRAL_CREDIT_EVENT_TYPES] },
+          OR: [
+            ...(linkedWaitlistProfile?.id
+              ? [{ referred_waitlist_id: linkedWaitlistProfile.id }]
+              : []),
+            { referred_profile_id: newProfile.id },
+            { metadata: { path: ['referred_email'], equals: email } },
+          ],
+        },
+        select: { event_type: true, referral_code: true },
+      });
+
+      if (referralAlreadyCredited(priorCredit ? [priorCredit] : [])) {
+        if ((priorCredit?.referral_code ?? '').toUpperCase() === refCode) {
+          const sameReferrer = await prisma.profiles.findFirst({
+            where: { referral_code: refCode, id: { not: newProfile.id } },
+            select: { id: true },
+          });
+          await prisma.profiles.update({
+            where: { id: newProfile.id },
+            data: sameReferrer
+              ? { referred_by: sameReferrer.id, referred_by_code: refCode }
+              : { referred_by_code: refCode },
+          });
+        }
+        console.log(`Referral already credited for ${email}; count unchanged`);
+        return;
+      }
 
       const registeredReferrer = await prisma.profiles.findFirst({
         where: {
