@@ -1,7 +1,15 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/lib/prisma/client";
 import { readValidationAsset, type ValidationAssetSource } from "@/lib/validation/validation-assets";
-import { detectDuplicateCandidates, validateDocumentBuffer, validateImageBuffer } from "@/lib/validation/ml-validation";
+import { haversineMeters } from "@/lib/trust/compare";
+import { selectDuplicateMatches } from "@/lib/trust/matches";
+import { readTrustFile, resolveTrustReaderUrl } from "@/lib/trust/client";
+import { photoHashesCollide } from "@/lib/trust/hash";
+import { loadDuplicateCandidates } from "@/lib/trust/candidates";
+import { mediaMissingHash, persistablePhotoHashes, storedHashes } from "@/lib/trust/photo-store";
+import { propertiesWithinRadius } from "@/lib/geo/properties-within-radius";
+import { decideTrust, readerUnavailableDecision } from "@/lib/trust/policy";
+import { DUPLICATE_CANDIDATE_STATUSES, DUPLICATE_RADIUS_METERS, EXIF_PIN_TOLERANCE_METERS, type DocumentFact, type ImageFact } from "@/lib/trust/types";
 
 type ValidationJobKind = "document" | "image" | "duplicate" | "property";
 
@@ -63,11 +71,12 @@ type ValidationJobContext = {
     latitude: number | string | null;
     longitude: number | string | null;
     price: number | string | null;
+    status: string;
   }>;
 };
 
 type ValidationSummary = {
-  finalStatus: "pending_vetting" | "rejected" | "pending_ml_validation";
+  finalStatus: "pending_vetting" | "rejected" | "pending_ml_validation" | "pending_duplicate_review" | null;
   confidence: number;
   decision: "pass" | "review" | "reject";
   reason: string;
@@ -104,34 +113,32 @@ export type ValidationJobPayload =
       propertyId: string;
     };
 
-function clampScore(value: number): number {
-  return Math.max(0, Math.min(1, value));
-}
-
-function normalizeText(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
-}
-
-function tokenize(value: string): Set<string> {
-  return new Set(normalizeText(value).split(" ").filter((word) => word.length > 2));
-}
-
-function jaccardScore(left: string, right: string): number {
-  const leftTokens = tokenize(left);
-  const rightTokens = tokenize(right);
-  if (leftTokens.size === 0 || rightTokens.size === 0) {
-    return 0;
-  }
-
-  let intersection = 0;
-  for (const token of leftTokens) {
-    if (rightTokens.has(token)) {
-      intersection += 1;
-    }
-  }
-
-  const union = leftTokens.size + rightTokens.size - intersection;
-  return union === 0 ? 0 : intersection / union;
+function duplicateSignals(
+  address: string,
+  latitude: number | null,
+  longitude: number | null,
+  candidates: ValidationJobContext["candidates"],
+) {
+  const matches = selectDuplicateMatches({
+    address,
+    latitude,
+    longitude,
+    candidates: candidates.map((candidate) => ({
+      id: candidate.id,
+      address: candidate.address,
+      latitude: toNumber(candidate.latitude),
+      longitude: toNumber(candidate.longitude),
+      status: candidate.status,
+    })),
+  });
+  const meters = matches.flatMap((match) => (match.meters === null ? [] : [match.meters]));
+  const matchedPropertyIds = [...new Set(matches.map((match) => match.id))];
+  return {
+    exactAddressMatch: matches.some((match) => match.reason === "duplicate_address"),
+    nearestOtherListingMeters: meters.length === 0 ? null : Math.min(...meters),
+    nearbyIds: matchedPropertyIds,
+    matchedPropertyIds,
+  };
 }
 
 function toNumber(value: number | string | null): number | null {
@@ -143,79 +150,48 @@ function toNumber(value: number | string | null): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function haversineDistanceKm(leftLat: number, leftLng: number, rightLat: number, rightLng: number): number {
-  const earthRadiusKm = 6371;
-  const latDelta = ((rightLat - leftLat) * Math.PI) / 180;
-  const lngDelta = ((rightLng - leftLng) * Math.PI) / 180;
-  const a =
-    Math.sin(latDelta / 2) ** 2 +
-    Math.cos((leftLat * Math.PI) / 180) *
-      Math.cos((rightLat * Math.PI) / 180) *
-      Math.sin(lngDelta / 2) ** 2;
-  return 2 * earthRadiusKm * Math.asin(Math.sqrt(a));
-}
-
 async function fetchBytes(source: ValidationAssetSource): Promise<{ bytes: Buffer; mimeType: string }> {
   const resolved = await readValidationAsset(source);
   return { bytes: resolved.buffer, mimeType: resolved.mimeType };
 }
 
-function duplicateCandidateSummary(property: ValidationJobContext["property"], candidates: ValidationJobContext["candidates"]) {
-  const scoredMatches = candidates.map((candidate) => {
-    const titleScore = jaccardScore(property.title, candidate.title);
-    const addressScore = jaccardScore(property.address, candidate.address);
-    const descriptionScore = property.description && candidate.description ? jaccardScore(property.description, candidate.description) : 0;
-    const propertyTypeScore = normalizeText(property.property_type) === normalizeText(candidate.property_type) ? 1 : 0.35;
+const MEDIA_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-    let locationScore = 0;
-    const propertyLat = toNumber(property.latitude);
-    const propertyLng = toNumber(property.longitude);
-    const candidateLat = toNumber(candidate.latitude);
-    const candidateLng = toNumber(candidate.longitude);
+async function persistStoredPhotoHashes(facts: Array<{ mediaId: string; dHashHex: string | null | undefined }>) {
+  for (const fact of persistablePhotoHashes(facts)) {
+    if (!MEDIA_UUID.test(fact.mediaId)) continue;
+    await prisma.$executeRaw`
+      update public.property_media
+      set d_hash = ${fact.dHashHex}
+      where id = ${fact.mediaId}::uuid
+    `;
+  }
+}
 
-    if (propertyLat !== null && propertyLng !== null && candidateLat !== null && candidateLng !== null) {
-      const distanceKm = haversineDistanceKm(propertyLat, propertyLng, candidateLat, candidateLng);
-      locationScore = distanceKm < 0.25 ? 1 : distanceKm < 1 ? 0.9 : distanceKm < 3 ? 0.65 : distanceKm < 10 ? 0.35 : 0;
+async function photoHashesForProperties(propertyIds: string[]): Promise<string[]> {
+  const ids = [...new Set(propertyIds)].filter((id) => MEDIA_UUID.test(id));
+  if (ids.length === 0) return [];
+  const rows = await prisma.$queryRaw<Array<{ id: string; media_url: string; d_hash: string | null }>>(Prisma.sql`
+    select id::text as id, media_url, d_hash
+    from public.property_media
+    where property_id::text in (${Prisma.join(ids)})
+  `);
+  const known = storedHashes(rows.map((row) => ({ dHashHex: row.d_hash })));
+  const missing = mediaMissingHash(rows.map((row) => ({ id: row.id, media_url: row.media_url, dHashHex: row.d_hash })));
+  const read: string[] = [];
+  for (const media of missing) {
+    try {
+      const { bytes, mimeType } = await fetchBytes({ kind: "url", fileUrl: media.media_url });
+      const envelope = await readTrustFile({ kind: "image", mimeType, bytes });
+      const hash = envelope.image?.dHashHex ?? null;
+      if (!hash) continue;
+      read.push(hash);
+      await persistStoredPhotoHashes([{ mediaId: media.id, dHashHex: hash }]);
+    } catch {
+      continue;
     }
-
-    const priceLeft = toNumber(property.price);
-    const priceRight = toNumber(candidate.price);
-    const priceScore = priceLeft !== null && priceRight !== null ? clampScore(1 - Math.min(Math.abs(priceLeft - priceRight) / Math.max(priceLeft, priceRight, 1), 1)) : 0.5;
-
-    const confidence = clampScore(
-      titleScore * 0.26 +
-        addressScore * 0.24 +
-        descriptionScore * 0.14 +
-        locationScore * 0.2 +
-        priceScore * 0.08 +
-        propertyTypeScore * 0.08,
-    );
-
-    const matchType = confidence >= 0.8 ? "combined" : locationScore >= 0.7 ? "location" : addressScore >= titleScore ? "description" : "image";
-
-    return {
-      id: candidate.id,
-      title: candidate.title,
-      address: candidate.address,
-      similarityScore: Math.round(confidence * 100) / 100,
-      matchType,
-      details: `title=${titleScore.toFixed(2)}, address=${addressScore.toFixed(2)}, description=${descriptionScore.toFixed(2)}, location=${locationScore.toFixed(2)}`,
-    };
-  });
-
-  const matchedProperties = scoredMatches.filter((match) => match.similarityScore >= 0.8).sort((left, right) => right.similarityScore - left.similarityScore);
-
-  return {
-    isDuplicate: matchedProperties.length > 0,
-    confidence: matchedProperties[0]?.similarityScore ?? 0,
-    matchedProperties,
-    checks: {
-      titleSimilarity: Math.max(...scoredMatches.map((match) => match.similarityScore), 0),
-      locationProximity: matchedProperties[0]?.matchType === "location" ? matchedProperties[0].similarityScore : 0,
-      textSimilarity: matchedProperties[0]?.similarityScore ?? 0,
-      metadataSimilarity: matchedProperties[0]?.similarityScore ?? 0,
-    },
-  };
+  }
+  return [...known, ...read];
 }
 
 async function loadValidationContext(jobId: string): Promise<ValidationJobContext | null> {
@@ -278,22 +254,29 @@ async function loadValidationContext(jobId: string): Promise<ValidationJobContex
       where: { property_id: job.property_id },
       select: { id: true, media_type: true, media_url: true, file_name: true, display_order: true },
     }),
-    prisma.properties.findMany({
-      where: {
-        id: { not: job.property_id },
-        status: { in: ["live", "pending_vetting", "pending_ml_validation"] },
-      },
-      select: {
-        id: true,
-        title: true,
-        address: true,
-        property_type: true,
-        description: true,
-        latitude: true,
-        longitude: true,
-        price: true,
-      },
-      take: 50,
+    loadDuplicateCandidates({
+      propertyId: job.property_id,
+      latitude: property.latitude === null ? null : Number(property.latitude),
+      longitude: property.longitude === null ? null : Number(property.longitude),
+      withinRadius: propertiesWithinRadius,
+      loadByIds: (ids) =>
+        prisma.properties.findMany({
+          where: {
+            id: { in: ids },
+            status: { in: [...DUPLICATE_CANDIDATE_STATUSES] },
+          },
+          select: {
+            id: true,
+            title: true,
+            address: true,
+            property_type: true,
+            description: true,
+            latitude: true,
+            longitude: true,
+            price: true,
+            status: true,
+          },
+        }),
     }),
   ]);
 
@@ -324,148 +307,264 @@ async function loadValidationContext(jobId: string): Promise<ValidationJobContex
 }
 
 async function processDocumentJob(job: ValidationJobRow, payload: Extract<ValidationJobPayload, { kind: "document" }>) {
+  if (!resolveTrustReaderUrl()) {
+    const trust = readerUnavailableDecision();
+    return {
+      finalPropertyStatus: null,
+      result: { job_kind: job.job_kind, document_type: payload.documentType, source: payload.source, trust },
+      confidence: 0,
+      decision: trust.decision,
+      flags: trust.hardBlocks,
+    };
+  }
   const { bytes, mimeType } = await fetchBytes(payload.source);
-  const result = await validateDocumentBuffer(bytes, mimeType, payload.documentType);
+  const envelope = await readTrustFile({
+    kind: "document",
+    mimeType,
+    bytes,
+    claimedDocumentType: payload.documentType,
+  });
+  const fact = envelope.document ?? unreadDocument(payload.documentType, "unsupported_type");
+  const blocked = !fact.readable || !fact.typeMatch;
   return {
     finalPropertyStatus: null,
-    result: {
-      ...result,
-      job_kind: job.job_kind,
-      document_type: payload.documentType,
-      source: payload.source,
-    },
-    confidence: result.confidence,
-    decision: result.isValid ? "pass" : "reject",
-    flags: result.issues,
+    result: { job_kind: job.job_kind, document_type: payload.documentType, source: payload.source, fact, limitations: envelope.limitations },
+    confidence: blocked ? 0 : 1,
+    decision: blocked ? "reject" : "review",
+    flags: blocked ? [fact.readerError ? "document_unreadable" : "document_type_mismatch"] : [],
   };
 }
 
 async function processImageJob(job: ValidationJobRow, payload: Extract<ValidationJobPayload, { kind: "image" }>) {
+  if (!resolveTrustReaderUrl()) {
+    const trust = readerUnavailableDecision();
+    return {
+      finalPropertyStatus: null,
+      result: { job_kind: job.job_kind, property_type: payload.propertyType, source: payload.source, trust },
+      confidence: 0,
+      decision: trust.decision,
+      flags: trust.hardBlocks,
+    };
+  }
   const { bytes, mimeType } = await fetchBytes(payload.source);
-  const result = await validateImageBuffer(bytes, mimeType, payload.propertyType);
+  const envelope = await readTrustFile({ kind: "image", mimeType, bytes });
+  const fact = envelope.image ?? unreadImage("unsupported_type");
+  const flags: string[] = [];
+  if (!fact.readable || fact.readerError || !fact.dHashHex) flags.push("photo_unreadable");
+  else if (fact.propertyPhotoReason === "screenshot") flags.push("photo_screenshot");
+  else if (fact.propertyPhotoReason === "text_dense") flags.push("photo_not_property");
+  else flags.push("photo_classifier_unavailable");
+  const blocked = flags.some((flag) => flag !== "photo_classifier_unavailable");
   return {
     finalPropertyStatus: null,
-    result: {
-      ...result,
-      job_kind: job.job_kind,
-      property_type: payload.propertyType,
-      source: payload.source,
-    },
-    confidence: result.confidence,
-    decision: result.isValid ? "pass" : "reject",
-    flags: result.issues,
+    result: { job_kind: job.job_kind, property_type: payload.propertyType, source: payload.source, fact, limitations: envelope.limitations },
+    confidence: blocked ? 0 : 0.5,
+    decision: blocked ? "reject" : "review",
+    flags,
   };
 }
 
 async function processDuplicateJob(job: ValidationJobRow, payload: Extract<ValidationJobPayload, { kind: "duplicate" }>, property: ValidationJobContext["property"], candidates: ValidationJobContext["candidates"]) {
-  const duplicateResult = duplicateCandidateSummary(
-    property,
+  if (!resolveTrustReaderUrl()) {
+    const trust = readerUnavailableDecision();
+    return {
+      finalPropertyStatus: null,
+      result: { job_kind: job.job_kind, property_id: property.id, trust },
+      confidence: 0,
+      decision: trust.decision,
+      flags: trust.hardBlocks,
+    };
+  }
+  const propertyLat = toNumber(property.latitude);
+  const propertyLng = toNumber(property.longitude);
+  const pinLat = payload.location?.lat ?? propertyLat;
+  const pinLng = payload.location?.lng ?? propertyLng;
+  const { exactAddressMatch, nearestOtherListingMeters, nearbyIds, matchedPropertyIds } = duplicateSignals(
+    payload.address || property.address,
+    pinLat,
+    pinLng,
     candidates,
   );
-
+  const ownHashes: string[] = [];
+  for (const imageUrl of payload.images.slice(0, 8)) {
+    try {
+      const { bytes, mimeType } = await fetchBytes({ kind: "url", fileUrl: imageUrl });
+      const envelope = await readTrustFile({ kind: "image", mimeType, bytes });
+      if (envelope.image?.dHashHex) ownHashes.push(envelope.image.dHashHex);
+    } catch {
+      continue;
+    }
+  }
+  let photoHashCollision = false;
+  if (ownHashes.length > 0 && nearbyIds.length > 0) {
+    const otherHashes = await photoHashesForProperties(nearbyIds);
+    photoHashCollision = photoHashesCollide(ownHashes, otherHashes);
+  }
+  const duplicatePin = nearestOtherListingMeters !== null && nearestOtherListingMeters <= DUPLICATE_RADIUS_METERS;
+  const hardBlocks = [
+    exactAddressMatch ? "duplicate_address" : null,
+    duplicatePin ? "duplicate_pin" : null,
+    photoHashCollision ? "duplicate_photo" : null,
+  ].filter((block): block is string => Boolean(block));
   return {
-    finalPropertyStatus: duplicateResult.isDuplicate ? "rejected" : null,
+    finalPropertyStatus: hardBlocks.length > 0 ? "pending_duplicate_review" : null,
     result: {
-      ...duplicateResult,
       job_kind: job.job_kind,
       property_id: property.id,
+      exactAddressMatch,
+      nearestOtherListingMeters,
+      matchedPropertyIds,
       images: payload.images,
-      location: payload.location,
-      description: payload.description,
-      address: payload.address,
-      propertyType: payload.propertyType,
     },
-    confidence: duplicateResult.confidence,
-    decision: duplicateResult.isDuplicate ? "reject" : "pass",
-    flags: duplicateResult.isDuplicate ? ["duplicate-detected"] : [],
+    confidence: hardBlocks.length > 0 ? 0 : 1,
+    decision: hardBlocks.length > 0 ? "reject" : "review",
+    flags: hardBlocks,
+  };
+}
+
+function unreadDocument(claimedType: string, readerError: string): DocumentFact {
+  return {
+    detectedType: "unknown",
+    claimedType,
+    typeMatch: false,
+    fields: { holderName: null, plotOrTitleNumber: null, locationText: null, issueDate: null },
+    textExcerpt: "",
+    readable: false,
+    readerError,
+  };
+}
+
+function unreadImage(readerError: string): ImageFact {
+  return {
+    sha256: "",
+    dHashHex: null,
+    propertyPhoto: "unknown",
+    propertyPhotoReason: null,
+    exifGps: null,
+    width: null,
+    height: null,
+    readable: false,
+    readerError,
   };
 }
 
 async function processPropertyJob(job: ValidationJobRow, context: ValidationJobContext) {
+  if (!resolveTrustReaderUrl()) {
+    const trust = readerUnavailableDecision();
+    return {
+      finalStatus: null,
+      confidence: 0,
+      decision: trust.decision,
+      reason: "The trust reader is not configured, so this listing stays in ML review.",
+      documentResults: [],
+      imageResults: [],
+      duplicateResult: {},
+      flags: trust.hardBlocks,
+      trust,
+    };
+  }
+
+  const owner = await prisma.properties.findUnique({
+    where: { id: context.property.id },
+    select: { owners: { select: { profiles: { select: { full_name: true } } } } },
+  });
+  const documents: DocumentFact[] = [];
+  const images: ImageFact[] = [];
   const documentResults: Array<Record<string, unknown>> = [];
   const imageResults: Array<Record<string, unknown>> = [];
-  const flags: string[] = [];
 
   for (const document of context.documents) {
+    const claimedType = document.document_type || "title_deed";
     try {
-      const expectedType = document.document_type || "title_deed";
       const { bytes, mimeType } = await fetchBytes({ kind: "url", fileUrl: document.document_url });
-      const result = await validateDocumentBuffer(bytes, mimeType, expectedType);
-      documentResults.push({ document_id: document.id, ...result, expectedType });
-
-      if (!result.isValid) {
-        flags.push(`document:${document.file_name}`);
-      }
-    } catch (error) {
-      flags.push(`document_fetch:${document.file_name}`);
-      documentResults.push({
-        document_id: document.id,
-        isValid: false,
-        confidence: 0,
-        issues: [error instanceof Error ? error.message : "Failed to validate document"],
+      const envelope = await readTrustFile({
+        kind: "document",
+        mimeType,
+        bytes,
+        claimedDocumentType: claimedType,
       });
+      const fact = envelope.document ?? unreadDocument(claimedType, "unsupported_type");
+      documents.push(fact);
+      documentResults.push({ document_id: document.id, ...fact });
+    } catch (error) {
+      const fact = unreadDocument(claimedType, error instanceof Error ? error.message : "trust_reader_unavailable");
+      documents.push(fact);
+      documentResults.push({ document_id: document.id, ...fact });
     }
   }
 
   for (const media of context.media) {
     try {
       const { bytes, mimeType } = await fetchBytes({ kind: "url", fileUrl: media.media_url });
-      const result = await validateImageBuffer(bytes, mimeType, context.property.property_type);
-      imageResults.push({ media_id: media.id, ...result });
-
-      if (!result.isValid) {
-        flags.push(`image:${media.file_name}`);
-      }
-    } catch (error) {
-      flags.push(`image_fetch:${media.file_name}`);
-      imageResults.push({
-        media_id: media.id,
-        isValid: false,
-        confidence: 0,
-        issues: [error instanceof Error ? error.message : "Failed to validate image"],
+      const envelope = await readTrustFile({
+        kind: "image",
+        mimeType,
+        bytes,
       });
+      const fact = envelope.image ?? unreadImage("unsupported_type");
+      images.push(fact);
+      imageResults.push({ media_id: media.id, ...fact });
+    } catch (error) {
+      const fact = unreadImage(error instanceof Error ? error.message : "trust_reader_unavailable");
+      images.push(fact);
+      imageResults.push({ media_id: media.id, ...fact });
     }
   }
 
-  const duplicateResult = duplicateCandidateSummary(context.property, context.candidates);
-  const documentFailures = documentResults.filter((result) => result.isValid === false || Number(result.confidence ?? 0) < 0.7);
-  const imageFailures = imageResults.filter((result) => result.isValid === false || Number(result.confidence ?? 0) < 0.7);
-  const hardDuplicate = duplicateResult.isDuplicate && duplicateResult.confidence >= 0.8;
-  const hardValidationFailure = documentFailures.length > 0 || imageFailures.length > 0;
-
-  let finalStatus: ValidationSummary["finalStatus"] = "pending_vetting";
-  let decision: ValidationSummary["decision"] = "pass";
-  let reason = "Validation passed and property is ready for human vetting.";
-
-  if (hardDuplicate) {
-    finalStatus = "rejected";
-    decision = "reject";
-    reason = "High-confidence duplicate detected.";
-  } else if (hardValidationFailure) {
-    finalStatus = "rejected";
-    decision = "reject";
-    reason = "One or more documents or images failed validation.";
-  } else if (documentResults.length === 0 || imageResults.length === 0) {
-    finalStatus = "pending_vetting";
-    decision = "review";
-    reason = "Validation passed, but the listing has limited supporting evidence.";
-  }
-
-  const aggregateConfidence = clampScore(
-    (documentResults.reduce((acc, result) => acc + Number(result.confidence ?? 0), 0) / Math.max(documentResults.length, 1)) * 0.38 +
-      (imageResults.reduce((acc, result) => acc + Number(result.confidence ?? 0), 0) / Math.max(imageResults.length, 1)) * 0.32 +
-      (1 - Math.min(duplicateResult.confidence, 1)) * 0.3,
+  await persistStoredPhotoHashes(
+    imageResults.flatMap((result) => {
+      const mediaId = result.media_id;
+      const dHashHex = result.dHashHex;
+      if (typeof mediaId !== "string") return [];
+      return [{ mediaId, dHashHex: typeof dHashHex === "string" ? dHashHex : null }];
+    }),
   );
 
+  const propertyLat = toNumber(context.property.latitude);
+  const propertyLng = toNumber(context.property.longitude);
+  const { exactAddressMatch, nearestOtherListingMeters, nearbyIds, matchedPropertyIds } = duplicateSignals(
+    context.property.address,
+    propertyLat,
+    propertyLng,
+    context.candidates,
+  );
+
+  const ownHashes = images.flatMap((image) => (image.dHashHex ? [image.dHashHex] : []));
+  let photoHashCollision = false;
+  if (ownHashes.length > 0 && nearbyIds.length > 0) {
+    const otherHashes = await photoHashesForProperties(nearbyIds);
+    photoHashCollision = photoHashesCollide(ownHashes, otherHashes);
+  }
+
+  const exifFarFromPin = images.some((image) => {
+    if (!image.exifGps || propertyLat === null || propertyLng === null) return false;
+    return haversineMeters(propertyLat, propertyLng, image.exifGps.lat, image.exifGps.lng) > EXIF_PIN_TOLERANCE_METERS;
+  });
+
+  const trust = decideTrust({
+    listingType: context.property.listing_type,
+    propertyType: context.property.property_type,
+    accountName: owner?.owners?.profiles.full_name ?? null,
+    address: [context.property.address, context.property.city, context.property.state].filter(Boolean).join(", "),
+    documents,
+    images,
+    exactAddressMatch,
+    nearestOtherListingMeters,
+    photoHashCollision,
+    exifFarFromPin,
+  });
+
   return {
-    finalStatus,
-    confidence: Math.round(aggregateConfidence * 100) / 100,
-    decision,
-    reason,
+    finalStatus: trust.recommendedQueue === "pending_duplicate_review" ? "pending_duplicate_review" : null,
+    confidence: trust.decision === "pass" ? 1 : trust.decision === "review" ? 0.5 : 0,
+    decision: trust.decision,
+    reason: trust.hardBlocks[0] ?? trust.flags[0] ?? "Ready for a person to send this listing to physical vetting.",
     documentResults,
     imageResults,
-    duplicateResult,
-    flags,
+    duplicateResult: { exactAddressMatch, nearestOtherListingMeters, photoHashCollision, matchedPropertyIds },
+    flags: [...trust.hardBlocks, ...trust.flags],
+    trust,
+    jobId: job.id,
   };
 }
 
@@ -612,6 +711,16 @@ export async function processValidationJob(jobId: string) {
       },
       finalPropertyStatus: outcome.finalPropertyStatus,
     });
+
+    if ((payload.kind === "property" || payload.kind === "duplicate") && outcome.finalPropertyStatus === "pending_duplicate_review") {
+      await prisma.properties.updateMany({
+        where: {
+          id: context.property.id,
+          status: { in: ["pending_ml_validation", "pending_vetting"] },
+        },
+        data: { status: "pending_duplicate_review", updated_at: new Date() },
+      });
+    }
 
     return { ok: true, jobId, status: "completed" };
   } catch (error) {

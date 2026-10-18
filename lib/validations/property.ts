@@ -195,10 +195,17 @@ export const propertyDocumentSchema = z.object({
   property_id: z.string().uuid("Invalid property ID"),
   document_type: z.enum([
     "title_deed",
+    "certificate_of_occupancy",
+    "deed_of_assignment",
+    "survey",
+    "survey_plan",
+    "lease_agreement",
+    "power_of_attorney",
     "building_permit",
     "energy_certificate",
-    "survey",
     "inspection_report",
+    "allocation_letter",
+    "proof_of_payment",
     "other"
   ]),
   document_url: z.string().url("Invalid document URL"),

@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { enqueueTrustRead } from "@/lib/trust/enqueue";
 import { z } from "zod";
 import { propertyDocumentSchema } from "@/lib/validations/property";
 import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
@@ -214,7 +215,11 @@ export async function POST(
       },
     });
 
-    // TODO: Trigger ML validation service here
+    try {
+      await enqueueTrustRead(propertyId, user.id);
+    } catch (queueError) {
+      console.error("Trust read queue error:", queueError);
+    }
 
     return NextResponse.json(
       { document, message: "Document uploaded successfully. Validation in progress." },

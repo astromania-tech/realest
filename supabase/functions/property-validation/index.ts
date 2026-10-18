@@ -553,62 +553,8 @@ Deno.serve(async (request: Request) => {
     return json({ error: "Method not allowed" }, { status: 405 });
   }
 
-  try {
-    const payload = (await request.json()) as ValidationJobPayload;
-
-    if (!payload?.property_id || !payload?.job_id || !payload?.job_token) {
-      return json({ error: "Invalid payload" }, { status: 400 });
-    }
-
-    const { data: context, error: claimError } = await supabase.rpc("claim_property_validation_job", {
-      p_job_id: payload.job_id,
-      p_job_token: payload.job_token,
-    });
-
-    if (claimError) {
-      throw claimError;
-    }
-
-    if (!context) {
-      return json({ ok: true, skipped: true, reason: "Job already processed or token mismatch" });
-    }
-
-    const validationContext = context as ValidationJobContext;
-    const summary = await processValidation(validationContext);
-
-    const { error: persistError } = await supabase.rpc("persist_property_validation_result", {
-      p_job_id: payload.job_id,
-      p_job_token: payload.job_token,
-      p_final_property_status: summary.finalStatus,
-      p_result: {
-        confidence: summary.confidence,
-        decision: summary.decision,
-        reason: summary.reason,
-        document_results: summary.documentResults,
-        image_results: summary.imageResults,
-        duplicate_result: summary.duplicateResult,
-        flags: summary.flags,
-      },
-      p_error: null,
-    });
-
-    if (persistError) {
-      throw persistError;
-    }
-
-    return json({
-      ok: true,
-      property_id: payload.property_id,
-      job_id: payload.job_id,
-      final_status: summary.finalStatus,
-      confidence: summary.confidence,
-      decision: summary.decision,
-      reason: summary.reason,
-      flags: summary.flags,
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown validation error";
-    console.error("[property-validation] worker error", error);
-    return json({ error: message }, { status: 500 });
-  }
+  return json(
+    { error: "Listing checks run through the trust reader worker. This function does not score documents or move a listing." },
+    { status: 410 },
+  );
 });

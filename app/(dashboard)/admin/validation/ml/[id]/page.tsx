@@ -1,226 +1,142 @@
-import { createClient, getAuthUser } from "@/lib/supabase/server";
-import { redirect, notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import { requireAdminPage } from "@/lib/auth/require-admin-page";
+import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, XCircle, ArrowLeft, FileText, Image, MapPin } from "lucide-react";
+import { ArrowLeft, FileText } from "lucide-react";
 import Link from "next/link";
+import { readTrustDecision } from "@/lib/trust/gate";
+import { TrustReviewActions } from "@/components/realest/validation/TrustReviewActions";
 
 export default async function MLReviewDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await getAuthUser();
+  const { id } = await params;
+  await requireAdminPage();
 
-  if (!user) {
-    redirect("/login");
-  }
+  const property = await prisma.properties.findFirst({
+    where: { id, status: "pending_ml_validation" },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      price: true,
+      property_type: true,
+      address: true,
+      city: true,
+      state: true,
+      owners: { select: { profiles: { select: { full_name: true } } } },
+      property_documents: {
+        select: { id: true, document_type: true, file_name: true, document_url: true, created_at: true },
+      },
+    },
+  });
+  if (!property) notFound();
 
-  // Check if user is an admin
-  const { data: userRow } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (userRow?.role !== "admin") {
-    redirect("/");
-  }
-
-  // Fetch the specific property
-  const { data: property } = await supabase
-    .from("properties")
-    .select("*, owners(profiles(full_name, email, phone)), property_documents(*)")
-    .eq("id", (await params).id)
-    .eq("verification_status", "ml_review")
-    .single();
-
-  if (!property) {
-    notFound();
-  }
-
-  // Mock ML analysis data
-  const mlAnalysis = {
-    authenticityScore: 85,
-    duplicateRisk: "Low",
-    flaggedIssues: ["Document quality", "Location verification"],
-    recommendations: "Approve with physical vetting required"
-  };
+  const job = await prisma.property_validation_jobs.findFirst({
+    where: { property_id: id, job_kind: "property", source: "trust-reader", status: "completed" },
+    orderBy: { queued_at: "desc" },
+    select: { result: true },
+  });
+  const trust = readTrustDecision(job?.result);
 
   return (
-    <>
-      <div className="container mx-auto px-4">
-        <div className="mb-8">
-          <Link
-            href="/admin/validation/ml"
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to ML Review Queue
-          </Link>
-          <h1 className="text-3xl font-bold">ML Document Review</h1>
-          <p className="text-muted-foreground">
-            Review property details and ML analysis
-          </p>
+    <div className="container mx-auto px-4">
+      <div className="mb-8">
+        <Link href="/admin/validation/ml" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4">
+          <ArrowLeft className="w-4 h-4" />
+          Back to ML Review Queue
+        </Link>
+        <h1 className="text-3xl font-bold">Document gate</h1>
+        <p className="text-muted-foreground">The reader reports facts. A person sends the listing to the field visit.</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>{property.title}</CardTitle>
+              <Badge variant="secondary">Pending document gate</Badge>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Type</p>
+                  <p>{property.property_type}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Price</p>
+                  <p>₦{Number(property.price).toLocaleString("en-NG")}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Address</p>
+                  <p>{[property.address, property.city, property.state].filter(Boolean).join(", ")}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Owner</p>
+                  <p>{property.owners?.profiles.full_name}</p>
+                </div>
+              </div>
+              <p className="text-sm">{property.description}</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                Submitted documents
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {property.property_documents.length === 0 ? (
+                <p className="text-muted-foreground">No documents submitted</p>
+              ) : (
+                property.property_documents.map((document) => (
+                  <div key={document.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium">{document.document_type}</p>
+                      <p className="text-sm text-muted-foreground">{document.file_name}</p>
+                    </div>
+                    <Link href={document.document_url} target="_blank" rel="noopener noreferrer" className="text-sm underline">
+                      View
+                    </Link>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Property Details */}
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>{property.title}</CardTitle>
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary">ML Review</Badge>
-                  <Badge variant="outline">Authenticity: {mlAnalysis.authenticityScore}%</Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h3 className="font-semibold mb-2">Property Information</h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-muted-foreground">Type</p>
-                      <p>{property.property_type}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Price</p>
-                      <p>₦{property.price?.toLocaleString()}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Location</p>
-                      <p>{property.location}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Owner</p>
-                      <p>{property.owners?.profiles?.full_name}</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="font-semibold mb-2">Description</h3>
-                  <p className="text-sm">{property.description}</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Documents */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
-                  Submitted Documents
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {property.property_documents?.map((doc: any) => (
-                    <div key={doc.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        {doc.document_type === 'image' ? (
-                          <Image className="w-5 h-5 text-blue-600" />
-                        ) : (
-                          <FileText className="w-5 h-5 text-green-600" />
-                        )}
-                        <div>
-                          <p className="font-medium">{doc.document_type}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Uploaded {new Date(doc.created_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                      <Button variant="outline" size="sm">
-                        View
-                      </Button>
-                    </div>
-                  )) || (
-                    <p className="text-muted-foreground">No documents submitted</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-          {/* ML Analysis & Actions */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>ML Analysis</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Authenticity Score</p>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-green-600 h-2 rounded-full"
-                        style={{ width: `${mlAnalysis.authenticityScore}%` }}
-                      ></div>
-                    </div>
-                    <span className="text-sm font-medium">{mlAnalysis.authenticityScore}%</span>
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-sm text-muted-foreground">Duplicate Risk</p>
-                  <Badge variant={mlAnalysis.duplicateRisk === 'Low' ? 'default' : 'destructive'}>
-                    {mlAnalysis.duplicateRisk}
-                  </Badge>
-                </div>
-
-                <div>
-                  <p className="text-sm text-muted-foreground">Flagged Issues</p>
-                  <ul className="text-sm space-y-1">
-                    {mlAnalysis.flaggedIssues.map((issue, index) => (
-                      <li key={index} className="flex items-center gap-2">
-                        {issue}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div>
-                  <p className="text-sm text-muted-foreground">Recommendation</p>
-                  <p className="text-sm">{mlAnalysis.recommendations}</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Review Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Textarea
-                  placeholder="Add review notes..."
-                  className="min-h-20"
-                />
-
-                <div className="flex gap-2">
-                  <Button className="flex-1" variant="outline">
-                    <XCircle className="w-4 h-4 mr-2" />
-                    Reject
-                  </Button>
-                  <Button className="flex-1">
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Approve
-                  </Button>
-                </div>
-
-                <Button variant="secondary" className="w-full">
-                  Send to Physical Vetting
-                </Button>
-              </CardContent>
-            </Card>
-            </div>
-          </div>
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Reader result</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              {trust ? (
+                <>
+                  <p>Decision: {trust.decision}</p>
+                  <p>Hard blocks: {trust.hardBlocks.length ? trust.hardBlocks.join(", ") : "none"}</p>
+                  <p>Flags: {trust.flags.length ? trust.flags.join(", ") : "none"}</p>
+                </>
+              ) : (
+                <p>The trust reader has not finished this listing. Approve stays closed.</p>
+              )}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Review</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <TrustReviewActions propertyId={property.id} allowsVetting={trust?.allowsVetting === true} />
+            </CardContent>
+          </Card>
         </div>
       </div>
-    </>
+    </div>
   );
 }

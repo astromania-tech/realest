@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { propertyListingSchema } from '@/lib/validations/property'
+import { assertListingKyc } from '@/lib/kyc/store'
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata'
 
 const querySchema = z.object({
@@ -35,7 +36,7 @@ export const openApiGET: OpenApiMetadata = {
 export const openApiPOST: OpenApiMetadata = {
   method: 'post',
   summary: 'Create dashboard property',
-  description: 'Create a new property listing from the owner dashboard and queue it for validation.',
+  description: 'Create a new property listing from the owner dashboard. An owner or agent must already have Youverify identity approval.',
   tags: ['Dashboard'],
   security: [{ bearerAuth: [] }],
   requestBody: {
@@ -50,7 +51,7 @@ export const openApiPOST: OpenApiMetadata = {
     '201': { description: 'Property created successfully' },
     '400': { description: 'Invalid property data' },
     '401': { description: 'Unauthorized' },
-    '403': { description: 'Forbidden - Property owners only' },
+    '403': { description: 'Forbidden. Property owners and agents need an approved Youverify identity before a draft is saved.' },
   },
 }
 
@@ -183,6 +184,11 @@ export async function POST(request: Request) {
         { error: 'Forbidden' },
         { status: 403 }
       )
+    }
+
+    const kyc = await assertListingKyc(user.id, userRowPost.role)
+    if (!kyc.ok) {
+      return NextResponse.json({ error: kyc.error }, { status: kyc.status })
     }
 
     // Parse and validate request body

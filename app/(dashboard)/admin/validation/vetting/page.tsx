@@ -1,5 +1,5 @@
-import { createClient, getAuthUser } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import { requireAdminPage } from "@/lib/auth/require-admin-page";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,32 +8,20 @@ import { MapPin, ArrowLeft, CheckCircle } from "lucide-react";
 import Link from "next/link";
 
 export default async function VettingPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await getAuthUser();
+  await requireAdminPage();
 
-  if (!user) {
-    redirect("/login");
-  }
-
-  // Check if user is an admin
-  const { data: userRow } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (userRow?.role !== "admin") {
-    redirect("/");
-  }
-
-  // Fetch properties in physical vetting queue
-  const { data: vettingQueue } = await supabase
-    .from("properties")
-    .select("*, owners(profiles(full_name, email))")
-    .eq("verification_status", "vetting")
-    .order("created_at", { ascending: true });
+  const vettingQueue = await prisma.properties.findMany({
+    where: { status: "pending_vetting" },
+    orderBy: { created_at: "asc" },
+    select: {
+      id: true,
+      title: true,
+      address: true,
+      city: true,
+      created_at: true,
+      owners: { select: { profiles: { select: { full_name: true } } } },
+    },
+  });
 
   return (
     <>
@@ -55,7 +43,7 @@ export default async function VettingPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MapPin className="w-5 h-5 text-green-600" />
-              Physical Vetting Queue ({vettingQueue?.length || 0})
+              Physical Vetting Queue ({vettingQueue.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -71,12 +59,18 @@ export default async function VettingPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {vettingQueue?.map((property) => (
+                {vettingQueue.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                      No properties in physical vetting queue
+                    </TableCell>
+                  </TableRow>
+                ) : vettingQueue.map((property) => (
                   <TableRow key={property.id}>
                     <TableCell className="font-medium">{property.title}</TableCell>
                     <TableCell>{property.owners?.profiles?.full_name}</TableCell>
-                    <TableCell>{property.location}</TableCell>
-                    <TableCell>{new Date(property.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell>{[property.address, property.city].filter(Boolean).join(", ")}</TableCell>
+                    <TableCell>{property.created_at ? new Date(property.created_at).toLocaleDateString() : ""}</TableCell>
                     <TableCell>
                       <Badge variant="secondary">Vetting</Badge>
                     </TableCell>
@@ -89,13 +83,7 @@ export default async function VettingPage() {
                       </Button>
                     </TableCell>
                   </TableRow>
-                )) || (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground">
-                      No properties in physical vetting queue
-                    </TableCell>
-                  </TableRow>
-                )}
+                ))}
               </TableBody>
             </Table>
           </CardContent>

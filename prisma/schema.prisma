@@ -224,6 +224,8 @@ model properties {
   agent_id                 String?                    @db.Uuid
   listing_source           String?                    @default("owner")
   price_frequency          String?                    @default("sale")
+  vetting_officer_id       String?                    @db.Uuid
+  vetting_visit_on         DateTime?                  @db.Date
   inquiries                inquiries[]
   payments                 payments[]
   agents                   agents?                    @relation(fields: [agent_id], references: [id], onUpdate: NoAction)
@@ -297,6 +299,7 @@ model property_media {
   file_name     String
   display_order Int?       @default(0)
   is_featured   Boolean?   @default(false)
+  d_hash        String?
   created_at    DateTime?  @default(now()) @db.Timestamptz(6)
   properties    properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }

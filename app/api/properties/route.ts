@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { prisma, Prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { enqueueTrustRead } from "@/lib/trust/enqueue";
+import { assertListingKyc } from "@/lib/kyc/store";
 import { propertyListingSchema, propertyDraftSchema, propertyDetailsSchema } from "@/lib/validations/property";
 import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
 import { zodToSchema } from "@/lib/openapi/zod-to-schema";
@@ -253,7 +255,7 @@ export async function GET(request: NextRequest) {
 export const openApiPOST: OpenApiMetadata = {
   method: 'post',
   summary: 'Create new property listing',
-  description: 'Create a new property listing. Requires owner or agent role. Drafts stay editable; submitted listings are automatically queued for ML validation.',
+    description: 'Create a new property listing. Requires owner or agent role and an approved Youverify kyc_requests row. Drafts stay editable; submitted listings are automatically queued for ML validation.',
   tags: ['Properties'],
   security: [{ bearerAuth: [] }],
   requestBody: {
@@ -300,7 +302,7 @@ export const openApiPOST: OpenApiMetadata = {
       },
     },
     '403': {
-      description: 'Forbidden - user role insufficient',
+      description: 'Forbidden. The caller is not an owner or agent, or Youverify has not approved their identity.',
       content: {
         'application/json': {
           schema: { $ref: '#/components/schemas/Error' },
@@ -342,6 +344,11 @@ export async function POST(request: NextRequest) {
         { error: "Only agents and property owners can create listings" },
         { status: 403 },
       );
+    }
+
+    const kyc = await assertListingKyc(user.id, userRow.role);
+    if (!kyc.ok) {
+      return NextResponse.json({ error: kyc.error }, { status: kyc.status });
     }
 
     const body = await request.json();
@@ -453,6 +460,14 @@ export async function POST(request: NextRequest) {
       });
     } catch (detailsError) {
       console.error("Property details creation error:", detailsError);
+    }
+
+    if (!isDraft) {
+      try {
+        await enqueueTrustRead(property.id, user.id);
+      } catch (queueError) {
+        console.error("Trust read queue error:", queueError);
+      }
     }
 
     return NextResponse.json(

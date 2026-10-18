@@ -2,13 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
+import { badgeWriteAllowed, lagosToday, visitAssignmentAllowed } from '@/lib/trust/assignment'
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata'
 
 // Validation schema for vetting actions
 const vettingUpdateSchema = z.object({
-  action: z.enum(['approve', 'reject', 'schedule', 'flag_issue']),
+  action: z.enum(['approve', 'reject', 'schedule', 'flag_issue', 'assign']),
   notes: z.string().optional(),
-  scheduled_date: z.string().optional(), // ISO date string for scheduling
+  scheduled_date: z.string().optional(),
+  officer_id: z.string().optional(),
+  visit_day: z.string().optional(),
   rejection_reason: z.enum([
     'property_not_found',
     'documents_fraudulent',
@@ -36,9 +39,11 @@ export const openApiPOST: OpenApiMetadata = {
           type: 'object',
           required: ['action'],
           properties: {
-            action: { type: 'string', enum: ['approve', 'reject', 'schedule', 'flag_issue'] },
+            action: { type: 'string', enum: ['approve', 'reject', 'schedule', 'flag_issue', 'assign'] },
             notes: { type: 'string' },
             scheduled_date: { type: 'string' },
+            officer_id: { type: 'string' },
+            visit_day: { type: 'string' },
             rejection_reason: { type: 'string' },
             issue_details: { type: 'string' },
           },
@@ -95,9 +100,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    const { action, notes, scheduled_date, rejection_reason, issue_details } = validation.data
+    const { action, notes, scheduled_date, rejection_reason, issue_details, officer_id, visit_day } = validation.data
 
-    // Fetch current property
     const property = await prisma.properties.findFirst({
       where: { id, status: 'pending_vetting' },
       select: { id: true, status: true, owner_id: true, title: true },
@@ -108,6 +112,61 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         { error: 'Property not found or not eligible for vetting' },
         { status: 404 }
       )
+    }
+
+    if (action === 'assign') {
+      const current = await readVettingAssignment(id)
+      const decision = visitAssignmentAllowed({
+        currentOfficerId: current.officerId,
+        officerId: officer_id ?? '',
+        visitDay: visit_day ?? '',
+        today: lagosToday(),
+      })
+      if (!decision.ok) {
+        return NextResponse.json({ error: decision.error }, { status: decision.status })
+      }
+      const officerId = officer_id ?? ""
+      const visitDay = visit_day ?? ""
+      const officer = await prisma.users.findUnique({
+        where: { id: officerId },
+        select: { role: true, is_active: true },
+      })
+      if (!officer || officer.role !== 'admin' || !officer.is_active) {
+        return NextResponse.json({ error: 'Choose an officer.' }, { status: 400 })
+      }
+      const updated = await prisma.$queryRaw<Array<{ id: string }>>`
+        update public.properties
+        set vetting_officer_id = ${officerId}::uuid,
+            vetting_visit_on = ${visitDay}::date,
+            updated_at = now()
+        where id = ${id}::uuid
+          and status = 'pending_vetting'
+          and (vetting_officer_id is null or vetting_officer_id = ${officerId}::uuid)
+        returning id::text as id
+      `
+      if (updated.length === 0) {
+        return NextResponse.json({ error: 'This visit is already assigned.' }, { status: 409 })
+      }
+      await prisma.admin_audit_log.create({
+        data: {
+          actor_id: user.id,
+          action: 'assign_vetting_visit',
+          target_id: id,
+          metadata: { officer_id: officerId, visit_day: visitDay },
+        },
+      })
+      return NextResponse.json({
+        success: true,
+        data: { property: { id, status: 'pending_vetting' }, action_taken: 'assign' },
+      })
+    }
+
+    if (action === 'approve') {
+      const current = await readVettingAssignment(id)
+      const badge = badgeWriteAllowed(current)
+      if (!badge.ok) {
+        return NextResponse.json({ error: badge.error }, { status: 409 })
+      }
     }
 
     // Determine new status (only schema-valid fields: status + updated_at)
@@ -122,8 +181,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const updatedProperty = await prisma.properties.update({
       where: { id },
-      data: { status: finalStatus, updated_at: new Date() },
-      select: { id: true, status: true, title: true },
+      data: action === "approve"
+        ? { status: "live", verification_status: "verified", updated_at: new Date() }
+        : action === "reject"
+          ? { status: "rejected", verification_status: "rejected", updated_at: new Date() }
+          : { status: finalStatus, updated_at: new Date() },
+      select: { id: true, status: true, title: true, verification_status: true },
     })
 
     // Log admin action
@@ -155,7 +218,18 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-// Helper function to generate action-specific messages
+async function readVettingAssignment(propertyId: string): Promise<{ officerId: string | null; visitDay: string | null }> {
+  const rows = await prisma.$queryRaw<Array<{ officer_id: string | null; visit_day: string | null }>>`
+    select vetting_officer_id::text as officer_id, vetting_visit_on::text as visit_day
+    from public.properties
+    where id = ${propertyId}::uuid
+  `
+  return {
+    officerId: rows[0]?.officer_id ?? null,
+    visitDay: rows[0]?.visit_day ?? null,
+  }
+}
+
 function getActionMessage(action: string, propertyTitle: string): string {
   switch (action) {
     case 'approve':

@@ -126,6 +126,12 @@ const ROLE_NAVIGATION: Record<string, RoleNavigation> = {
             description: "Start a new listing flow",
             icon: Plus,
           },
+          {
+            href: "/owner/identity",
+            label: "Identity",
+            description: "Youverify NIN or BVN before a draft",
+            icon: Shield,
+          },
         ],
       },
       {
@@ -183,6 +189,12 @@ const ROLE_NAVIGATION: Record<string, RoleNavigation> = {
             label: "Add Property",
             description: "Create a new agent listing",
             icon: Plus,
+          },
+          {
+            href: "/agent/identity",
+            label: "Identity",
+            description: "Youverify CAC before a draft",
+            icon: Shield,
           },
         ],
       },

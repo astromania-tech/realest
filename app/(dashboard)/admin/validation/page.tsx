@@ -1,5 +1,5 @@
-import { createClient, getAuthUser } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import { requireAdminPage } from "@/lib/auth/require-admin-page";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,53 +15,23 @@ import { Eye, CheckCircle, XCircle, Clock } from "lucide-react";
 import Link from "next/link";
 
 export default async function ValidationPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await getAuthUser();
+  await requireAdminPage();
 
-  if (!user) {
-    redirect("/login");
-  }
-
-  // Check if user is an admin
-  const { data: userRow } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (userRow?.role !== "admin") {
-    redirect("/");
-  }
-
-  // Fetch pending properties for validation
-  const { data: pendingProperties } = await supabase
-    .from("properties")
-    .select("*, owners(profiles(full_name, email))")
-    .eq("verification_status", "pending")
-    .order("created_at", { ascending: true });
-
-  // Fetch properties in ML review queue
-  const { data: mlQueue } = await supabase
-    .from("properties")
-    .select("*, owners(profiles(full_name, email))")
-    .eq("verification_status", "ml_review")
-    .order("created_at", { ascending: true });
-
-  // Fetch properties in physical vetting
-  const { data: vettingQueue } = await supabase
-    .from("properties")
-    .select("*, owners(profiles(full_name, email))")
-    .eq("verification_status", "vetting")
-    .order("created_at", { ascending: true });
-
-  // Fetch potential duplicates
-  const { data: duplicates } = await supabase
-    .from("properties")
-    .select("*, owners(profiles(full_name, email))")
-    .eq("verification_status", "duplicate_check")
-    .order("created_at", { ascending: true });
+  const [documentGate, fieldVisit, duplicates, verifiedLive] = await Promise.all([
+    prisma.properties.findMany({
+      where: { status: "pending_ml_validation" },
+      orderBy: { created_at: "asc" },
+      select: {
+        id: true,
+        title: true,
+        created_at: true,
+        owners: { select: { profiles: { select: { full_name: true } } } },
+      },
+    }),
+    prisma.properties.count({ where: { status: "pending_vetting" } }),
+    prisma.properties.count({ where: { status: "pending_duplicate_review" } }),
+    prisma.properties.count({ where: { status: "live", verification_status: "verified" } }),
+  ]);
 
   return (
     <>
@@ -78,10 +48,8 @@ export default async function ValidationPage() {
             <div className="flex items-center gap-4">
               <Clock className="w-8 h-8 text-yellow-600" />
               <div>
-                <p className="text-2xl font-bold">
-                  {pendingProperties?.length || 0}
-                </p>
-                <p className="text-sm text-muted-foreground">Pending Review</p>
+                <p className="text-2xl font-bold">{documentGate.length}</p>
+                <p className="text-sm text-muted-foreground">Document gate</p>
               </div>
             </div>
           </CardContent>
@@ -92,24 +60,8 @@ export default async function ValidationPage() {
             <div className="flex items-center gap-4">
               <Eye className="w-8 h-8 text-blue-600" />
               <div>
-                <p className="text-2xl font-bold">{mlQueue?.length || 0}</p>
-                <p className="text-sm text-muted-foreground">ML Review</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <CheckCircle className="w-8 h-8 text-green-600" />
-              <div>
-                <p className="text-2xl font-bold">
-                  {vettingQueue?.length || 0}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Physical Vetting
-                </p>
+                <p className="text-2xl font-bold">{fieldVisit}</p>
+                <p className="text-sm text-muted-foreground">Field visit</p>
               </div>
             </div>
           </CardContent>
@@ -120,8 +72,20 @@ export default async function ValidationPage() {
             <div className="flex items-center gap-4">
               <XCircle className="w-8 h-8 text-red-600" />
               <div>
-                <p className="text-2xl font-bold">{duplicates?.length || 0}</p>
+                <p className="text-2xl font-bold">{duplicates}</p>
                 <p className="text-sm text-muted-foreground">Duplicates</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+              <div>
+                <p className="text-2xl font-bold">{verifiedLive}</p>
+                <p className="text-sm text-muted-foreground">RealEST Verified</p>
               </div>
             </div>
           </CardContent>
@@ -132,7 +96,7 @@ export default async function ValidationPage() {
         {/* Pending Properties */}
         <Card>
           <CardHeader>
-            <CardTitle>Pending Properties</CardTitle>
+            <CardTitle>Document gate</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
@@ -146,36 +110,27 @@ export default async function ValidationPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {pendingProperties?.map((property) => (
+                {documentGate.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground">
+                      No listings in the document gate
+                    </TableCell>
+                  </TableRow>
+                ) : documentGate.map((property) => (
                   <TableRow key={property.id}>
-                    <TableCell className="font-medium">
-                      {property.title}
-                    </TableCell>
+                    <TableCell className="font-medium">{property.title}</TableCell>
                     <TableCell>{property.owners?.profiles?.full_name}</TableCell>
+                    <TableCell>{property.created_at ? new Date(property.created_at).toLocaleDateString() : ""}</TableCell>
                     <TableCell>
-                      {new Date(property.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">Pending</Badge>
+                      <Badge variant="secondary">Document gate</Badge>
                     </TableCell>
                     <TableCell>
                       <Button asChild size="sm">
-                        <Link href={`/admin/validation/ml/${property.id}`}>
-                          Review
-                        </Link>
+                        <Link href={`/admin/validation/ml/${property.id}`}>Review</Link>
                       </Button>
                     </TableCell>
                   </TableRow>
-                )) || (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className="text-center text-muted-foreground"
-                    >
-                      No pending properties
-                    </TableCell>
-                  </TableRow>
-                )}
+                ))}
               </TableBody>
             </Table>
           </CardContent>

@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { enqueueTrustRead } from "@/lib/trust/enqueue";
 import { z } from "zod";
 import { propertyMediaSchema } from "@/lib/validations/property";
 import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
@@ -224,6 +225,12 @@ export async function POST(
         display_order: nextDisplayOrder,
       },
     });
+
+    try {
+      await enqueueTrustRead(propertyId, user.id);
+    } catch (queueError) {
+      console.error("Trust read queue error:", queueError);
+    }
 
     return NextResponse.json({ media, message: "Media uploaded successfully" }, { status: 201 });
   } catch (error) {

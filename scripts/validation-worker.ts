@@ -33,6 +33,13 @@ function isProcessBody(body: JsonBody): body is ValidationProcessBody {
 }
 
 async function main(): Promise<void> {
+  if (process.env.VALIDATION_WORKER_DIRECT === "1") {
+    const { runValidationWorkerOnce } = await import("../lib/validation/validation-job-worker.ts");
+    const results = await runValidationWorkerOnce();
+    console.log(JSON.stringify(results, null, 2));
+    return;
+  }
+
   const adminToken = await loadSupabaseAccessToken({
     label: "admin-worker",
     emailEnvNames: ["ADMIN_EMAIL", "SUPABASE_ADMIN_EMAIL", "REALEST_ADMIN_EMAIL"],

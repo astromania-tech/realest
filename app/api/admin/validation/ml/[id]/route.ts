@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
+import { adminApproveAllowed, readTrustDecision } from '@/lib/trust/gate'
 
 // Request body schema for ML validation update
 const mlValidationUpdateSchema = z.object({
@@ -66,6 +67,24 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       )
     }
 
+    if (action === "approve") {
+      const latestTrustJob = await prisma.property_validation_jobs.findFirst({
+        where: { property_id: propertyId, job_kind: "property", source: "trust-reader", status: "completed" },
+        orderBy: { queued_at: "desc" },
+        select: { result: true },
+      })
+      const gate = adminApproveAllowed({
+        trust: readTrustDecision(latestTrustJob?.result),
+        adminNotes: admin_notes,
+      })
+      if (!gate.ok) {
+        return NextResponse.json(
+          { error: gate.error, hardBlocks: gate.hardBlocks, flags: gate.flags },
+          { status: 409 },
+        )
+      }
+    }
+
     // Determine new status based on action (only schema-valid fields)
     let newStatus: string
     switch (action) {
@@ -77,7 +96,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const updatedProperty = await prisma.properties.update({
       where: { id: propertyId },
-      data: { status: newStatus, updated_at: new Date() },
+      data: {
+        status: newStatus,
+        verification_status: action === "reject" ? "rejected" : "pending",
+        updated_at: new Date(),
+      },
       select: { id: true, status: true, title: true },
     })
 

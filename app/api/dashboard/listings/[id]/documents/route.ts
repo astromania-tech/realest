@@ -1,5 +1,6 @@
 import { getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { enqueueTrustRead } from "@/lib/trust/enqueue";
 import { NextResponse } from "next/server";
 import { generateSignedUrl } from "@/lib/utils/upload-utils";
 import { z } from "zod";
@@ -206,6 +207,12 @@ export async function POST(request: Request, { params }: RouteParams) {
         verification_status: "pending",
       },
     });
+
+    try {
+      await enqueueTrustRead(propertyId, user.id);
+    } catch (queueError) {
+      console.error("Trust read queue error:", queueError);
+    }
 
     return NextResponse.json(
       { data: documentRecord, message: "Document uploaded successfully and submitted for verification" },

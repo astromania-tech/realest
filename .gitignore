@@ -67,3 +67,6 @@ supabase/.temp/cli-latest
 
 # Cursor project rules. Local only. Do not commit.
 .cursor/
+
+# Trust reader virtualenv. Weights and site-packages stay off git.
+services/trust-reader/.venv/
