@@ -1,6 +1,7 @@
+import { idImageMatchFromBody } from "@/lib/kyc/id-image";
+import { companyClaimDigest, extractRegistryRecord, personClaimDigest, type DetailMatch } from "@/lib/kyc/match";
 import { extractProviderFields, verdictFromProvider } from "@/lib/kyc/verdict";
-import type { KycStore } from "@/lib/kyc/types";
-import { YOUVERIFY_PROVIDER } from "@/lib/kyc/types";
+import { YOUVERIFY_PROVIDER, type KycRow, type KycStore } from "@/lib/kyc/types";
 
 const HANDLED_EVENTS = new Set([
   "identity.verification.completed",
@@ -28,6 +29,8 @@ export async function applyYouverifyWebhook(
     providerStatus: fields.providerStatus,
     companyStatus: fields.companyStatus,
     referenceId: fields.referenceId ?? row.referenceId,
+    detailMatch: detailMatchForPending(row, payload),
+    idImageMatch: idImageMatchFromBody(payload),
   });
   if (verdict.action === "unavailable" || verdict.action === "pending") return "ignored";
 
@@ -38,4 +41,23 @@ export async function applyYouverifyWebhook(
     companyStatus: verdict.action === "approved" ? (verdict.companyStatus ?? null) : row.companyStatus,
   });
   return "updated";
+}
+
+function detailMatchForPending(row: KycRow, payload: unknown): DetailMatch {
+  if (!row.claimDigest) return "incomplete";
+  const registry = extractRegistryRecord(payload);
+  const found =
+    row.idType === "cac"
+      ? registry.companyName
+        ? companyClaimDigest(registry.companyName)
+        : null
+      : registry.firstName && registry.lastName && registry.dateOfBirth
+        ? personClaimDigest({
+            firstName: registry.firstName,
+            lastName: registry.lastName,
+            dateOfBirth: registry.dateOfBirth,
+          })
+        : null;
+  if (!found) return "incomplete";
+  return found === row.claimDigest ? "match" : "mismatch";
 }

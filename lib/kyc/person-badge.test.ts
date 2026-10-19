@@ -19,6 +19,11 @@ test("a miss does not assign the person badge", () => {
   assert.equal(personKycReason("owner", [row("owner", "rejected", "youverify", "not_found")]), "not_found");
   assert.equal(personKycMessage("rejected", "not_found"), "Youverify did not find this record.");
   assert.equal(personKycMessage("rejected", "company_not_active"), "Youverify found the company, and it is not active.");
+  assert.equal(
+    personKycMessage("rejected", "details_mismatch"),
+    "The details you entered do not match the Youverify record.",
+  );
+  assert.equal(personKycMessage("rejected", "id_image_mismatch"), "The ID photo does not match the Youverify record.");
 });
 
 test("another provider and the other role do not assign this person's badge", () => {

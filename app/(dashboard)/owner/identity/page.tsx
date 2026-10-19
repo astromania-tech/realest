@@ -28,7 +28,7 @@ export default async function OwnerIdentityPage() {
     <div className="container mx-auto max-w-xl px-4 py-8">
       <h1 className="text-3xl font-bold">Identity</h1>
       <p className="mt-2 mb-6 text-muted-foreground">
-        Youverify checks a NIN or BVN. A draft stays blocked until that check is approved.
+        Enter the first name, last name, and date of birth on the NIN or BVN, and upload the face photo from that ID. Youverify must match both.
       </p>
       <YouverifyIdentityForm role="owner" initialBadge={badge} initialReason={reason} />
     </div>

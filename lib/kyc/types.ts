@@ -25,6 +25,8 @@ export type KycRow = {
   idLast4: string;
   companyStatus: string | null;
   rejectionReason: string | null;
+  claimDigest: string | null;
+  idImagePath: string | null;
 };
 
 export type KycStore = {
@@ -43,7 +45,7 @@ export type KycVerdict =
   | {
       action: "rejected";
       referenceId: string | null;
-      reason: "not_found" | "verification_failed" | "company_not_active";
+      reason: "not_found" | "verification_failed" | "company_not_active" | "details_mismatch" | "id_image_mismatch";
     }
   | { action: "pending"; referenceId: string }
   | { action: "unavailable" };

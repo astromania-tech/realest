@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { listingCreateAllowed } from "@/lib/kyc/gate";
+import { readKycIdImagePath } from "@/lib/kyc/id-image-store";
 import { isKycIdType, YOUVERIFY_PROVIDER } from "@/lib/kyc/types";
 import type { KycIdType, KycRow, KycStatus, KycStore, KycSubject } from "@/lib/kyc/types";
 
@@ -8,6 +9,8 @@ type DocumentRecord = {
   idLast4: string;
   requestId: string;
   companyStatus: string | null;
+  claimDigest: string | null;
+  idImagePath: string | null;
 };
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -22,6 +25,7 @@ export function readStoredDocuments(value: unknown): DocumentRecord | null {
   const idLast4 = record.idLast4;
   const requestId = record.requestId;
   const companyStatus = record.companyStatus;
+  const claimDigest = record.claimDigest;
   if (typeof idType !== "string" || !isKycIdType(idType)) return null;
   if (typeof idLast4 !== "string" || typeof requestId !== "string") return null;
   return {
@@ -29,15 +33,21 @@ export function readStoredDocuments(value: unknown): DocumentRecord | null {
     idLast4,
     requestId,
     companyStatus: typeof companyStatus === "string" ? companyStatus : null,
+    claimDigest: typeof claimDigest === "string" && /^[0-9a-f]{64}$/.test(claimDigest) ? claimDigest : null,
+    idImagePath: readKycIdImagePath(record.idImagePath),
   };
 }
 
-function documentsJson(row: Pick<KycRow, "idType" | "idLast4" | "requestId" | "companyStatus">) {
+export function kycDocumentsJson(
+  row: Pick<KycRow, "idType" | "idLast4" | "requestId" | "companyStatus" | "claimDigest" | "idImagePath">,
+) {
   return {
     idType: row.idType,
     idLast4: row.idLast4,
     requestId: row.requestId,
     ...(row.companyStatus ? { companyStatus: row.companyStatus } : {}),
+    ...(row.claimDigest ? { claimDigest: row.claimDigest } : {}),
+    ...(readKycIdImagePath(row.idImagePath) ? { idImagePath: row.idImagePath } : {}),
   };
 }
 
@@ -68,6 +78,8 @@ function toRow(record: {
     idLast4: documents.idLast4,
     companyStatus: documents.companyStatus,
     rejectionReason: record.rejection_reason,
+    claimDigest: documents.claimDigest,
+    idImagePath: documents.idImagePath,
   };
 }
 
@@ -102,7 +114,7 @@ export const prismaKycStore: KycStore = {
         status: row.status satisfies KycStatus,
         kyc_provider: YOUVERIFY_PROVIDER,
         kyc_reference_id: row.referenceId,
-        documents: documentsJson(row),
+        documents: kycDocumentsJson(row),
         rejection_reason: row.rejectionReason,
         submitted_at: now,
         approved_at: row.status === "approved" ? now : null,
@@ -138,7 +150,7 @@ export const prismaKycStore: KycStore = {
     const current = await prisma.kyc_requests.findUnique({ where: { id }, select: rowSelect });
     const mapped = current ? toRow(current) : null;
     if (!mapped) throw new Error("Youverify row was not found.");
-    const nextDocuments = documentsJson({
+    const nextDocuments = kycDocumentsJson({
       ...mapped,
       companyStatus: patch.companyStatus === undefined ? mapped.companyStatus : patch.companyStatus,
     });

@@ -23,4 +23,7 @@ test("the worker asks PostGIS for pin candidates and stores photo hashes", () =>
   assert.match(source, /propertiesWithinRadius/);
   assert.match(source, /persistStoredPhotoHashes/);
   assert.match(source, /photoHashesForProperties/);
+  assert.match(source, /for update skip locked/);
+  assert.match(source, /next_retry_at is not null/);
+  assert.equal(source.includes("status in ('queued', 'failed')"), false);
 });

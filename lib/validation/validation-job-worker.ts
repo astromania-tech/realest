@@ -9,6 +9,7 @@ import { loadDuplicateCandidates } from "@/lib/trust/candidates";
 import { mediaMissingHash, persistablePhotoHashes, storedHashes } from "@/lib/trust/photo-store";
 import { propertiesWithinRadius } from "@/lib/geo/properties-within-radius";
 import { decideTrust, readerUnavailableDecision } from "@/lib/trust/policy";
+import { VALIDATION_JOB_MAX_ATTEMPTS, VALIDATION_JOB_STALE_MINUTES } from "@/lib/validation/job-claim";
 import { DUPLICATE_CANDIDATE_STATUSES, DUPLICATE_RADIUS_METERS, EXIF_PIN_TOLERANCE_METERS, type DocumentFact, type ImageFact } from "@/lib/trust/types";
 
 type ValidationJobKind = "document" | "image" | "duplicate" | "property";
@@ -569,6 +570,28 @@ async function processPropertyJob(job: ValidationJobRow, context: ValidationJobC
 }
 
 async function persistJobOutcome(jobId: string, status: string, payload: { result: Record<string, unknown>; finalPropertyStatus: string | null; error?: string | null }) {
+  if (status === "failed") {
+    await prisma.$executeRaw`
+      update public.property_validation_jobs
+      set
+        status = 'failed',
+        result = ${JSON.stringify(payload.result)}::jsonb,
+        final_property_status = ${payload.finalPropertyStatus},
+        failure_reason = ${payload.error ?? null},
+        last_error = ${payload.error ?? null},
+        retry_count = retry_count + 1,
+        next_retry_at = case
+          when attempts >= ${VALIDATION_JOB_MAX_ATTEMPTS} then null
+          else now() + (least(30, power(2, greatest(attempts - 1, 0)))::int * interval '1 minute')
+        end,
+        finished_at = now(),
+        updated_at = now()
+      where id = ${jobId}::uuid
+        and status = 'processing'
+    `;
+    return;
+  }
+
   await prisma.$executeRaw`
     update public.property_validation_jobs
     set
@@ -577,23 +600,62 @@ async function persistJobOutcome(jobId: string, status: string, payload: { resul
       final_property_status = ${payload.finalPropertyStatus},
       failure_reason = ${payload.error ?? null},
       last_error = ${payload.error ?? null},
+      next_retry_at = null,
       finished_at = now(),
       updated_at = now()
     where id = ${jobId}::uuid
+      and status = 'processing'
   `;
 }
 
-async function markJobProcessing(jobId: string) {
+export async function claimValidationJobs(input: { limit: number; jobId?: string }): Promise<string[]> {
+  const idFilter = input.jobId ? Prisma.sql`and id = ${input.jobId}::uuid` : Prisma.empty;
+  const rows = await prisma.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+    with picked as (
+      select id
+      from public.property_validation_jobs
+      where attempts < ${VALIDATION_JOB_MAX_ATTEMPTS}
+        and (
+          (status = 'queued' and coalesce(next_retry_at, now()) <= now())
+          or (status = 'failed' and next_retry_at is not null and next_retry_at <= now())
+          or (
+            status = 'processing'
+            and updated_at <= now() - (${VALIDATION_JOB_STALE_MINUTES} * interval '1 minute')
+          )
+        )
+        ${idFilter}
+      order by queued_at asc
+      for update skip locked
+      limit ${input.limit}
+    )
+    update public.property_validation_jobs as job
+    set
+      status = 'processing',
+      attempts = job.attempts + 1,
+      started_at = coalesce(job.started_at, now()),
+      updated_at = now(),
+      last_error = null,
+      next_retry_at = null
+    from picked
+    where job.id = picked.id
+    returning job.id
+  `);
+  return rows.map((row) => row.id);
+}
+
+async function retireExhaustedJobs() {
   await prisma.$executeRaw`
     update public.property_validation_jobs
     set
-      status = 'processing',
-      attempts = attempts + 1,
-      started_at = coalesce(started_at, now()),
-      updated_at = now(),
-      last_error = null
-    where id = ${jobId}::uuid
-      and status in ('queued', 'failed')
+      status = 'failed',
+      failure_reason = coalesce(failure_reason, 'retry limit reached'),
+      last_error = coalesce(last_error, 'retry limit reached'),
+      next_retry_at = null,
+      finished_at = coalesce(finished_at, now()),
+      updated_at = now()
+    where status = 'processing'
+      and attempts >= ${VALIDATION_JOB_MAX_ATTEMPTS}
+      and updated_at <= now() - (${VALIDATION_JOB_STALE_MINUTES} * interval '1 minute')
   `;
 }
 
@@ -662,8 +724,14 @@ export async function getValidationJob(jobId: string) {
 }
 
 export async function processValidationJob(jobId: string) {
+  const claimed = await claimValidationJobs({ limit: 1, jobId });
+  if (claimed.length !== 1) return { ok: true, skipped: true };
+  return finishClaimedValidationJob(jobId);
+}
+
+export async function finishClaimedValidationJob(jobId: string) {
   const context = await loadValidationContext(jobId);
-  if (!context || context.job.status === "processing" || context.job.status === "completed") {
+  if (!context || context.job.status !== "processing") {
     return { ok: true, skipped: true };
   }
 
@@ -676,8 +744,6 @@ export async function processValidationJob(jobId: string) {
     });
     return { ok: false, error: "Missing validation payload" };
   }
-
-  await markJobProcessing(jobId);
 
   try {
     let outcome: { finalPropertyStatus: string | null; result: Record<string, unknown>; confidence: number; decision: string; flags: string[] };
@@ -735,19 +801,11 @@ export async function processValidationJob(jobId: string) {
 }
 
 export async function runValidationWorkerOnce() {
-  const queuedJobs = await prisma.$queryRaw<Array<{ id: string }>>(Prisma.sql`
-    select id
-    from public.property_validation_jobs
-    where status in ('queued', 'failed')
-      and coalesce(next_retry_at, now()) <= now()
-    order by queued_at asc
-    limit 10
-  `);
-
-  const results = [] as Array<{ id: string; result: Awaited<ReturnType<typeof processValidationJob>> }>;
-  for (const job of queuedJobs) {
-    results.push({ id: job.id, result: await processValidationJob(job.id) });
+  await retireExhaustedJobs();
+  const claimed = await claimValidationJobs({ limit: 10 });
+  const results = [] as Array<{ id: string; result: Awaited<ReturnType<typeof finishClaimedValidationJob>> }>;
+  for (const id of claimed) {
+    results.push({ id, result: await finishClaimedValidationJob(id) });
   }
-
   return results;
 }

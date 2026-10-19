@@ -1,3 +1,5 @@
+import { idImageMatchFromBody } from "@/lib/kyc/id-image";
+import { extractRegistryRecord, matchClaimToRegistry, type DetailMatch, type PersonClaim } from "@/lib/kyc/match";
 import type { KycIdType, KycVerdict } from "@/lib/kyc/types";
 
 export function normalizeIdentityNumber(idType: KycIdType, raw: string): string | null {
@@ -14,13 +16,16 @@ export function identityLast4(normalized: string): string {
 
 /**
  * Map a Youverify data.status onto a kyc_requests write.
- * Unknown, partial, and unpaid responses stay unavailable so nothing is approved.
+ * `found` is a registry hit. Approval also requires detailMatch `match`.
+ * A missing comparison stays unavailable so nothing is approved.
  */
 export function verdictFromProvider(input: {
   idType: KycIdType;
   providerStatus: string | null;
   companyStatus: string | null;
   referenceId: string | null;
+  detailMatch?: DetailMatch;
+  idImageMatch?: DetailMatch;
 }): KycVerdict {
   const status = input.providerStatus?.trim().toLowerCase() ?? "";
   const referenceId = input.referenceId?.trim() || null;
@@ -45,7 +50,28 @@ export function verdictFromProvider(input: {
     if (company !== "ACTIVE") {
       return { action: "rejected", referenceId, reason: "company_not_active" };
     }
-    return { action: "approved", referenceId, companyStatus: company };
+  }
+
+  if (input.detailMatch !== "match") {
+    if (input.detailMatch === "mismatch") {
+      return { action: "rejected", referenceId, reason: "details_mismatch" };
+    }
+    return { action: "unavailable" };
+  }
+
+  if (input.idType === "cac") {
+    return {
+      action: "approved",
+      referenceId,
+      companyStatus: input.companyStatus?.trim().toUpperCase(),
+    };
+  }
+
+  if (input.idImageMatch !== "match") {
+    if (input.idImageMatch === "mismatch") {
+      return { action: "rejected", referenceId, reason: "id_image_mismatch" };
+    }
+    return { action: "unavailable" };
   }
 
   return { action: "approved", referenceId };
@@ -85,13 +111,20 @@ export function extractProviderFields(body: unknown): ProviderFields {
   };
 }
 
-export function verdictFromHttp(idType: KycIdType, httpStatus: number, body: unknown): KycVerdict {
+export function verdictFromHttp(
+  idType: KycIdType,
+  httpStatus: number,
+  body: unknown,
+  claim: { person: PersonClaim | null; companyName: string | null },
+): KycVerdict {
   const fields = extractProviderFields(body);
   const verdict = verdictFromProvider({
     idType,
     providerStatus: fields.providerStatus,
     companyStatus: fields.companyStatus,
     referenceId: fields.referenceId,
+    detailMatch: matchClaimToRegistry(idType, claim, extractRegistryRecord(body)),
+    idImageMatch: idImageMatchFromBody(body),
   });
   const httpOk = httpStatus >= 200 && httpStatus < 300;
   if (!httpOk || fields.success === false) {

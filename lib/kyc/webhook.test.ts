@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { personClaimDigest } from "@/lib/kyc/match";
 import { memoryKycStore } from "@/lib/kyc/memory-store";
 import { youverifySignatureHex, youverifySignatureValid } from "@/lib/kyc/signature";
 import type { KycRow } from "@/lib/kyc/types";
@@ -20,6 +21,8 @@ function pendingRow(overrides: Partial<KycRow> = {}): KycRow {
     idLast4: "8901",
     companyStatus: null,
     rejectionReason: null,
+    claimDigest: null,
+    idImagePath: null,
     ...overrides,
   };
 }
@@ -35,8 +38,9 @@ test("the signature check fails closed", () => {
   assert.equal(youverifySignatureValid(`${raw} `, header, secret), false);
 });
 
-test("a completed identity webhook approves the pending row and does not insert", async () => {
-  const store = memoryKycStore([pendingRow()]);
+test("a completed identity webhook approves the pending row only when the stored claim matches", async () => {
+  const claimDigest = personClaimDigest({ firstName: "Sarah", lastName: "Doe", dateOfBirth: "1988-04-04" });
+  const store = memoryKycStore([pendingRow({ claimDigest })]);
   const originalInsert = store.insert;
   store.insert = async () => {
     throw new Error("webhook must not insert");
@@ -49,8 +53,11 @@ test("a completed identity webhook approves the pending row and does not insert"
         status: "found",
         type: "nin",
         firstName: "Sarah",
+        lastName: "Doe",
+        dateOfBirth: "1988-04-04",
         idNumber: "12345678901",
         metadata: { requestId: "req_pending" },
+        validations: { selfie: { selfieVerification: { match: true, confidenceLevel: 91, threshold: 80 } } },
       },
     },
     store,
@@ -59,6 +66,48 @@ test("a completed identity webhook approves the pending row and does not insert"
   assert.equal(store.rows[0]?.status, "approved");
   assert.equal(JSON.stringify(store.rows[0]).includes("12345678901"), false);
   store.insert = originalInsert;
+});
+
+test("a found webhook whose ID photo does not match rejects the pending row", async () => {
+  const claimDigest = personClaimDigest({ firstName: "Sarah", lastName: "Doe", dateOfBirth: "1988-04-04" });
+  const store = memoryKycStore([pendingRow({ claimDigest })]);
+  const outcome = await applyYouverifyWebhook(
+    {
+      event: "identity.verification.completed",
+      data: {
+        id: "yv_pending",
+        status: "found",
+        firstName: "Sarah",
+        lastName: "Doe",
+        dateOfBirth: "1988-04-04",
+        selfieValidation: true,
+        validations: { selfie: { selfieVerification: { match: false } } },
+      },
+    },
+    store,
+  );
+  assert.equal(outcome, "updated");
+  assert.equal(store.rows[0]?.status, "rejected");
+  assert.equal(store.rows[0]?.rejectionReason, "id_image_mismatch");
+});
+
+test("a found webhook without a stored claim does not approve", async () => {
+  const store = memoryKycStore([pendingRow()]);
+  const outcome = await applyYouverifyWebhook(
+    {
+      event: "identity.verification.completed",
+      data: {
+        id: "yv_pending",
+        status: "found",
+        firstName: "Sarah",
+        lastName: "Doe",
+        dateOfBirth: "1988-04-04",
+      },
+    },
+    store,
+  );
+  assert.equal(outcome, "ignored");
+  assert.equal(store.rows[0]?.status, "pending");
 });
 
 test("a webhook for an unknown reference writes nothing", async () => {

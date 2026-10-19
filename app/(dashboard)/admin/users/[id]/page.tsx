@@ -1,4 +1,7 @@
 import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
+import { readStoredDocuments } from "@/lib/kyc/store";
+import { YOUVERIFY_PROVIDER } from "@/lib/kyc/types";
 import { redirect, notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +48,13 @@ export default async function UserEditPage({
   if (!userProfile) {
     notFound();
   }
+
+  const latestKyc = await prisma.kyc_requests.findFirst({
+    where: { user_id: params.id, kyc_provider: YOUVERIFY_PROVIDER },
+    orderBy: { created_at: "desc" },
+    select: { id: true, documents: true },
+  });
+  const identityPhotoPath = latestKyc ? readStoredDocuments(latestKyc.documents)?.idImagePath : null;
 
   // Mock additional user data (in a real app, this might be in separate tables)
   const userStats = {
@@ -201,6 +211,20 @@ export default async function UserEditPage({
                     {userProfile.role}{!userProfile.is_active ? ' (Banned)' : ''}
                   </Badge>
                 </div>
+
+                {identityPhotoPath && latestKyc ? (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Identity photo</p>
+                    <a
+                      className="text-sm underline"
+                      href={`/api/admin/kyc/${latestKyc.id}/id-image`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Open the photo sent to Youverify
+                    </a>
+                  </div>
+                ) : null}
 
                 <div>
                   <p className="text-sm text-muted-foreground">Verification</p>

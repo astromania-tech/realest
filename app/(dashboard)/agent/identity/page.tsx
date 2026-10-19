@@ -28,7 +28,7 @@ export default async function AgentIdentityPage() {
     <div className="container mx-auto max-w-xl px-4 py-8">
       <h1 className="text-3xl font-bold">Identity</h1>
       <p className="mt-2 mb-6 text-muted-foreground">
-        Youverify checks the CAC registration. A draft stays blocked until that check is approved.
+        Enter the company name on the CAC record, with the registration number. Youverify must return that same name.
       </p>
       <YouverifyIdentityForm role="agent" initialBadge={badge} initialReason={reason} />
     </div>

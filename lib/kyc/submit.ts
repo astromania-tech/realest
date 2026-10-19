@@ -1,6 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { isKycIdType, isKycSubject, YOUVERIFY_PROVIDER, YOUVERIFY_PRODUCTION_URL, YOUVERIFY_SANDBOX_URL } from "@/lib/kyc/types";
 import type { KycIdType, KycRow, KycStore, KycSubject } from "@/lib/kyc/types";
+import { ID_IMAGE_ERROR, readIdImage } from "@/lib/kyc/id-image";
+import { kycIdImagePath, type IdImageSaver } from "@/lib/kyc/id-image-store";
+import { companyClaimDigest, normalizeDateOfBirth, personClaimDigest } from "@/lib/kyc/match";
 import { identityLast4, normalizeIdentityNumber, verdictFromHttp } from "@/lib/kyc/verdict";
 import { personBadgeFromKyc, type PersonBadge } from "@/lib/kyc/person-badge";
 
@@ -33,11 +36,34 @@ function endpoint(base: string, idType: KycIdType): string {
   return `${base}/v2/api/identity/ng/${idType}`;
 }
 
-function requestBody(idType: KycIdType, idNumber: string, requestId: string): Record<string, unknown> {
+export const PERSON_DETAILS_ERROR =
+  "Enter the first name, last name, and date of birth on the identity record.";
+export const COMPANY_DETAILS_ERROR = "Enter the registered company name.";
+export const ID_IMAGE_STORE_ERROR = "The identity photo could not be stored. Nothing was saved.";
+
+function requestBody(
+  idType: KycIdType,
+  idNumber: string,
+  requestId: string,
+  claim: { firstName?: string; lastName?: string; dateOfBirth?: string },
+  idImageBase64: string | null,
+): Record<string, unknown> {
   if (idType === "cac") {
     return { registrationNumber: idNumber, isConsent: true };
   }
-  return { id: idNumber, isSubjectConsent: true, metadata: { requestId } };
+  return {
+    id: idNumber,
+    isSubjectConsent: true,
+    metadata: { requestId },
+    validations: {
+      data: {
+        firstName: claim.firstName?.trim(),
+        lastName: claim.lastName?.trim(),
+        dateOfBirth: normalizeDateOfBirth(claim.dateOfBirth ?? "") ?? claim.dateOfBirth?.trim(),
+      },
+      selfie: { image: idImageBase64 },
+    },
+  };
 }
 
 export async function submitYouverifyIdentity(
@@ -47,12 +73,18 @@ export async function submitYouverifyIdentity(
     idType: string;
     idNumber: string;
     consent: boolean;
+    firstName?: string;
+    lastName?: string;
+    dateOfBirth?: string;
+    companyName?: string;
+    idImageBase64?: string;
   },
   deps: {
     store: KycStore;
     env: YouverifyEnv;
     fetchImpl?: typeof fetch;
     newId?: () => string;
+    saveIdImage?: IdImageSaver;
   },
 ): Promise<SubmitResult> {
   if (!isKycSubject(input.role)) {
@@ -87,6 +119,26 @@ export async function submitYouverifyIdentity(
   if (!idNumber) {
     return { ok: false, status: 400, error: "That identity number is not valid." };
   }
+  const person =
+    idType === "cac"
+      ? null
+      : {
+          firstName: input.firstName ?? "",
+          lastName: input.lastName ?? "",
+          dateOfBirth: input.dateOfBirth ?? "",
+        };
+  const claimDigest = person ? personClaimDigest(person) : companyClaimDigest(input.companyName ?? "");
+  if (!claimDigest) {
+    return {
+      ok: false,
+      status: 400,
+      error: person ? PERSON_DETAILS_ERROR : COMPANY_DETAILS_ERROR,
+    };
+  }
+  const idImage = person ? readIdImage(input.idImageBase64 ?? "") : null;
+  if (person && !idImage) {
+    return { ok: false, status: 400, error: ID_IMAGE_ERROR };
+  }
 
   const base = resolveYouverifyBaseUrl(deps.env);
   const secret = deps.env.YOUVERIFY_SECRET_KEY?.trim() ?? "";
@@ -105,7 +157,7 @@ export async function submitYouverifyIdentity(
         "Content-Type": "application/json",
         token: secret,
       },
-      body: JSON.stringify(requestBody(idType, idNumber, requestId)),
+      body: JSON.stringify(requestBody(idType, idNumber, requestId, input, idImage?.base64 ?? null)),
       signal: AbortSignal.timeout(20_000),
     });
     httpStatus = response.status;
@@ -114,9 +166,35 @@ export async function submitYouverifyIdentity(
     return { ok: false, status: 502, error: "Youverify is unavailable. Nothing was saved." };
   }
 
-  const verdict = verdictFromHttp(idType, httpStatus, json);
+  const verdict = verdictFromHttp(idType, httpStatus, json, {
+    person,
+    companyName: input.companyName ?? null,
+  });
   if (verdict.action === "unavailable") {
     return { ok: false, status: 502, error: "Youverify is unavailable. Nothing was saved." };
+  }
+
+  let idImagePath: string | null = null;
+  if (person && idImage) {
+    const path = kycIdImagePath(input.userId, requestId, idImage.extension);
+    if (!path || !deps.saveIdImage) {
+      return { ok: false, status: 503, error: ID_IMAGE_STORE_ERROR };
+    }
+    try {
+      const saved = await deps.saveIdImage.save({
+        userId: input.userId,
+        requestId,
+        bytes: idImage.bytes,
+        contentType: idImage.contentType,
+        extension: idImage.extension,
+      });
+      if (saved.path !== path) {
+        return { ok: false, status: 503, error: ID_IMAGE_STORE_ERROR };
+      }
+      idImagePath = saved.path;
+    } catch {
+      return { ok: false, status: 503, error: ID_IMAGE_STORE_ERROR };
+    }
   }
 
   const row = await deps.store.insert({
@@ -130,6 +208,8 @@ export async function submitYouverifyIdentity(
     idLast4: identityLast4(idNumber),
     companyStatus: verdict.action === "approved" ? (verdict.companyStatus ?? null) : null,
     rejectionReason: verdict.action === "rejected" ? verdict.reason : null,
+    claimDigest: verdict.action === "pending" ? claimDigest : null,
+    idImagePath,
   });
   const reason = verdict.action === "rejected" ? verdict.reason : null;
   return {

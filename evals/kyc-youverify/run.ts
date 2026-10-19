@@ -8,6 +8,7 @@ import { readFileSync } from "node:fs";
 import { listingCreateAllowed } from "../../lib/kyc/gate.ts";
 import { memoryKycStore } from "../../lib/kyc/memory-store.ts";
 import { personBadgeFromKyc } from "../../lib/kyc/person-badge.ts";
+import { kycIdImagePath } from "../../lib/kyc/id-image-store.ts";
 import { submitYouverifyIdentity } from "../../lib/kyc/submit.ts";
 import { verdictFromProvider } from "../../lib/kyc/verdict.ts";
 
@@ -57,10 +58,22 @@ const cases: Array<{ id: string; run: () => boolean | Promise<boolean> }> = [
       }).ok === false,
   },
   {
-    id: "found-person-approves",
+    id: "found-without-a-detail-match-does-not-approve",
     run: () =>
       verdictFromProvider({ idType: "bvn", providerStatus: "found", companyStatus: null, referenceId: "yv" }).action ===
-      "approved",
+      "unavailable",
+  },
+  {
+    id: "found-person-approves-when-details-match",
+    run: () =>
+      verdictFromProvider({
+        idType: "bvn",
+        providerStatus: "found",
+        companyStatus: null,
+        referenceId: "yv",
+        detailMatch: "match",
+        idImageMatch: "match",
+      }).action === "approved",
   },
   {
     id: "not-found-does-not-approve",
@@ -92,21 +105,57 @@ const cases: Array<{ id: string; run: () => boolean | Promise<boolean> }> = [
       const nin = "12345678901";
       const store = memoryKycStore();
       const result = await submitYouverifyIdentity(
-        { userId: "user_1", role: "owner", idType: "nin", idNumber: nin, consent: true },
+        {
+          userId: "user_1",
+          role: "owner",
+          idType: "nin",
+          idNumber: nin,
+          consent: true,
+          firstName: "Ada",
+          lastName: "Obi",
+          dateOfBirth: "1991-02-03",
+          idImageBase64:
+            "/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=",
+        },
         {
           store,
           env: { YOUVERIFY_SECRET_KEY: "sandbox-secret" },
+          newId: () => "req_eval",
+          saveIdImage: {
+            async save(input) {
+              const path = kycIdImagePath(input.userId, input.requestId, input.extension);
+              if (!path) throw new Error("bad path");
+              return { path };
+            },
+          },
           fetchImpl: async () =>
             new Response(
               JSON.stringify({
                 success: true,
-                data: { id: "yv_eval", status: "found", idNumber: nin, firstName: "Ada" },
+                data: {
+                  id: "yv_eval",
+                  status: "found",
+                  idNumber: nin,
+                  firstName: "ADA",
+                  lastName: "Obi",
+                  dateOfBirth: "1991-02-03",
+                  validations: { selfie: { selfieVerification: { match: true, confidenceLevel: 95, threshold: 80 } } },
+                },
               }),
               { status: 200 },
             ),
         },
       );
-      return result.ok === true && result.status === "approved" && !JSON.stringify(store.rows).includes(nin);
+      const saved = JSON.stringify(store.rows);
+      return (
+        result.ok === true &&
+        result.status === "approved" &&
+        store.rows[0]?.idImagePath === "user_1/req_eval.jpg" &&
+        !saved.includes(nin) &&
+        !saved.includes("Ada") &&
+        !saved.includes("Obi") &&
+        !saved.includes("/9j/")
+      );
     },
   },
   {
@@ -114,7 +163,18 @@ const cases: Array<{ id: string; run: () => boolean | Promise<boolean> }> = [
     run: async () => {
       const store = memoryKycStore();
       const result = await submitYouverifyIdentity(
-        { userId: "user_1", role: "owner", idType: "nin", idNumber: "12345678901", consent: true },
+        {
+          userId: "user_1",
+          role: "owner",
+          idType: "nin",
+          idNumber: "12345678901",
+          consent: true,
+          firstName: "Ada",
+          lastName: "Obi",
+          dateOfBirth: "1991-02-03",
+          idImageBase64:
+            "/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=",
+        },
         {
           store,
           env: { YOUVERIFY_SECRET_KEY: "sandbox-secret" },
