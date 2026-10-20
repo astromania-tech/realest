@@ -227,6 +227,8 @@
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Stop rubber-band drag from pulling sticky headers with the page. */
+    overscroll-behavior-y: none;
   }
 
   body {
@@ -237,6 +239,7 @@
       "rlig" 1,
       "calt" 1,
       "ss01" 1;
+    overscroll-behavior-y: none;
   }
 
   /* Typography Hierarchy */
