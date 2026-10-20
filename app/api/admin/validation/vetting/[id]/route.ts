@@ -2,16 +2,37 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
-import { badgeWriteAllowed, lagosToday, visitAssignmentAllowed } from '@/lib/trust/assignment'
+import { randomUUID } from 'node:crypto'
+import { createServiceClient } from '@/lib/supabase/service'
+import { haversineMeters } from '@/lib/trust/compare'
+import { lagosToday, visitAssignmentAllowed } from '@/lib/trust/assignment'
+import { badgeWriteAllowed, deviceCheckInAllowed, observationConflicts } from '@/lib/trust/visit'
+import { readVisitPhoto, VISIT_EVIDENCE_BUCKET, visitPhotoPath } from '@/lib/trust/visit-photo'
+import { claimsBlockBadge, documentClaimFields, reconcileClaims, type ClaimFinding } from '@/lib/trust/claims'
+import { writeJudgment } from '@/lib/trust/brief'
+import { nextCaseState } from '@/lib/trust/case'
+import { registryConfirmationAllowed } from '@/lib/trust/registry'
+import { appendEvidence, markCorrection, openDeskCase, readStoredVisit, saveCheckIn, saveRegistryConfirmation, setCaseState, setOpenIssue } from '@/lib/trust/visit-store'
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata'
 
 // Validation schema for vetting actions
 const vettingUpdateSchema = z.object({
-  action: z.enum(['approve', 'reject', 'schedule', 'flag_issue', 'assign']),
+  action: z.enum(['approve', 'reject', 'schedule', 'flag_issue', 'assign', 'check_in', 'request_correction', 'confirm_registry']),
   notes: z.string().optional(),
   scheduled_date: z.string().optional(),
   officer_id: z.string().optional(),
   visit_day: z.string().optional(),
+  document_id: z.string().uuid().optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
+  photo_base64: z.string().optional(),
+  saw_building: z.boolean().optional(),
+  address_matches: z.boolean().optional(),
+  document_matches: z.boolean().optional(),
+  location_source: z.string().optional(),
+  accuracy_meters: z.number().optional(),
+  registry_reference: z.string().optional(),
+  registry_matches: z.boolean().optional(),
   rejection_reason: z.enum([
     'property_not_found',
     'documents_fraudulent',
@@ -39,7 +60,7 @@ export const openApiPOST: OpenApiMetadata = {
           type: 'object',
           required: ['action'],
           properties: {
-            action: { type: 'string', enum: ['approve', 'reject', 'schedule', 'flag_issue', 'assign'] },
+            action: { type: 'string', enum: ['approve', 'reject', 'schedule', 'flag_issue', 'assign', 'check_in', 'request_correction', 'confirm_registry'] },
             notes: { type: 'string' },
             scheduled_date: { type: 'string' },
             officer_id: { type: 'string' },
@@ -100,11 +121,27 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    const { action, notes, scheduled_date, rejection_reason, issue_details, officer_id, visit_day } = validation.data
+    const {
+      action, notes, scheduled_date, rejection_reason, issue_details, officer_id, visit_day,
+      document_id, latitude, longitude, photo_base64, saw_building, address_matches, document_matches,
+      location_source, accuracy_meters, registry_reference, registry_matches,
+    } = validation.data
 
     const property = await prisma.properties.findFirst({
       where: { id, status: 'pending_vetting' },
-      select: { id: true, status: true, owner_id: true, title: true },
+      select: {
+        id: true,
+        status: true,
+        owner_id: true,
+        title: true,
+        latitude: true,
+        longitude: true,
+        address: true,
+        city: true,
+        state: true,
+        description: true,
+        owners: { select: { profiles: { select: { full_name: true } } } },
+      },
     })
 
     if (!property) {
@@ -147,12 +184,15 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       if (updated.length === 0) {
         return NextResponse.json({ error: 'This visit is already assigned.' }, { status: 409 })
       }
+      await openDeskCase(id)
+      const opened = await readStoredVisit(id)
+      await setCaseState(id, nextCaseState(opened.caseState, 'assign'))
       await prisma.admin_audit_log.create({
         data: {
           actor_id: user.id,
           action: 'assign_vetting_visit',
           target_id: id,
-          metadata: { officer_id: officerId, visit_day: visitDay },
+          metadata: { officer_id: officerId, visit_day: visitDay, case_state: 'field_in_progress' },
         },
       })
       return NextResponse.json({
@@ -161,12 +201,214 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       })
     }
 
+    if (action === 'check_in') {
+      const current = await readStoredVisit(id)
+      if (!current.officerId || current.officerId !== user.id) {
+        return NextResponse.json({ error: 'The assigned officer checks in at the pin.' }, { status: 403 })
+      }
+      const device = deviceCheckInAllowed({
+        locationSource: location_source ?? null,
+        accuracyMeters: accuracy_meters ?? null,
+      })
+      if (!device.ok) return NextResponse.json({ error: device.error }, { status: 400 })
+      const note = notes?.trim() ?? ''
+      if (!note || latitude === undefined || longitude === undefined || saw_building === undefined || address_matches === undefined || document_matches === undefined) {
+        return NextResponse.json({ error: 'Record the phone GPS, the photo, and what you saw.' }, { status: 400 })
+      }
+      const pinLat = property.latitude === null ? null : Number(property.latitude)
+      const pinLng = property.longitude === null ? null : Number(property.longitude)
+      if (pinLat === null || pinLng === null) {
+        return NextResponse.json({ error: 'This listing has no pin.' }, { status: 409 })
+      }
+      const photo = readVisitPhoto(photo_base64 ?? '')
+      if (!photo.ok) return NextResponse.json({ error: photo.error }, { status: 400 })
+      const photoPath = visitPhotoPath(id, randomUUID(), photo.extension)
+      if (!photoPath) return NextResponse.json({ error: 'The gate photo could not be stored.' }, { status: 400 })
+      const stored = await createServiceClient().storage.from(VISIT_EVIDENCE_BUCKET).upload(photoPath, photo.bytes, {
+        contentType: photo.contentType,
+        upsert: false,
+      })
+      if (stored.error) {
+        return NextResponse.json({ error: 'The gate photo could not be stored.' }, { status: 503 })
+      }
+      const distanceMeters = haversineMeters(pinLat, pinLng, latitude, longitude)
+      await saveCheckIn({
+        propertyId: id,
+        officerId: user.id,
+        checkedInAt: new Date().toISOString(),
+        latitude,
+        longitude,
+        distanceMeters,
+        photoPath,
+        sawBuilding: saw_building,
+        addressMatches: address_matches,
+        documentMatches: document_matches,
+        note,
+      })
+      const latestTrustJob = await prisma.property_validation_jobs.findFirst({
+        where: { property_id: id, job_kind: 'property', source: 'trust-reader', status: 'completed' },
+        orderBy: { queued_at: 'desc' },
+        select: { result: true },
+      })
+      const fields = documentClaimFields(latestTrustJob?.result)
+      const findings = reconcileClaims({
+        listingAddress: [property.address, property.city, property.state].filter(Boolean).join(', '),
+        accountName: property.owners?.profiles.full_name ?? null,
+        documentLocation: fields.location,
+        documentHolder: fields.holder,
+        officer: { note, addressMatches: address_matches, sawBuilding: saw_building, documentMatches: document_matches },
+        registry: { reference: current.registryReference, matches: current.registryMatches },
+      })
+      await appendEvidence({
+        propertyId: id,
+        layer: 'documentary',
+        body: {
+          addressDocument: findings.find((finding) => finding.point === 'address_document')?.status,
+          holder: findings.find((finding) => finding.point === 'holder')?.status,
+          title: findings.find((finding) => finding.point === 'title')?.status,
+        },
+      })
+      const blocked = claimsBlockBadge(findings)
+      const checked = nextCaseState(current.caseState, 'check_in')
+      const reconciled = nextCaseState(checked, 'reconcile')
+      const caseState = nextCaseState(reconciled, blocked ? 'claims_blocked' : 'claims_clear')
+      const judgment = writeJudgment({
+        title: property.title,
+        address: [property.address, property.city, property.state].filter(Boolean).join(', '),
+        description: property.description ?? '',
+        findings,
+      })
+      await setCaseState(id, caseState, findings, judgment)
+      const conflicts = observationConflicts({
+        sawBuilding: saw_building,
+        addressMatches: address_matches,
+        documentMatches: document_matches,
+        distanceMeters,
+      })
+      return NextResponse.json({
+        success: true,
+        data: { property: { id, status: 'pending_vetting' }, action_taken: 'check_in', conflicts, case_state: caseState, claims: findings },
+      })
+    }
+
+    if (action === 'flag_issue') {
+      const issue = issue_details?.trim() ?? ''
+      if (!issue) return NextResponse.json({ error: 'Describe the issue that blocks the badge.' }, { status: 400 })
+      await setOpenIssue(id, issue)
+      await prisma.admin_audit_log.create({
+        data: {
+          actor_id: user.id,
+          action: 'physical_vetting',
+          target_id: id,
+          metadata: { action, open_issue: issue },
+        },
+      })
+      return NextResponse.json({
+        success: true,
+        data: { property: { id, status: 'pending_vetting' }, action_taken: 'flag_issue', message: `The badge stays closed until "${property.title}" replaces the flagged file.` },
+      })
+    }
+
+    if (action === 'request_correction') {
+      if (!document_id) return NextResponse.json({ error: 'Choose the file to send back.' }, { status: 400 })
+      const document = await prisma.property_documents.findFirst({
+        where: { id: document_id, property_id: id },
+        select: { id: true, document_type: true },
+      })
+      if (!document) return NextResponse.json({ error: 'That file is not on this listing.' }, { status: 404 })
+      const issue = issue_details?.trim() || `Replace the ${document.document_type} file.`
+      await markCorrection({ propertyId: id, documentId: document.id, issue })
+      await setCaseState(id, nextCaseState(null, 'correct'))
+      await prisma.admin_audit_log.create({
+        data: {
+          actor_id: user.id,
+          action: 'physical_vetting',
+          target_id: id,
+          metadata: { action, document_id: document.id, open_issue: issue },
+        },
+      })
+      return NextResponse.json({
+        success: true,
+        data: {
+          property: { id, status: 'pending_correction' },
+          action_taken: 'request_correction',
+          message: `The ${document.document_type} file was sent back. The rest of the listing stays.`,
+        },
+      })
+    }
+
+    if (action === 'confirm_registry') {
+      const reference = registryConfirmationAllowed(registry_reference ?? '')
+      if (!reference.ok) return NextResponse.json({ error: reference.error }, { status: 400 })
+      if (registry_matches === undefined) {
+        return NextResponse.json({ error: 'Say whether the registry file matches this listing.' }, { status: 400 })
+      }
+      await openDeskCase(id)
+      await saveRegistryConfirmation({ propertyId: id, reference: reference.reference, matches: registry_matches })
+      const current = await readStoredVisit(id)
+      const latestTrustJob = await prisma.property_validation_jobs.findFirst({
+        where: { property_id: id, job_kind: 'property', source: 'trust-reader', status: 'completed' },
+        orderBy: { queued_at: 'desc' },
+        select: { result: true },
+      })
+      const fields = documentClaimFields(latestTrustJob?.result)
+      const findings: ClaimFinding[] = reconcileClaims({
+        listingAddress: [property.address, property.city, property.state].filter(Boolean).join(', '),
+        accountName: property.owners?.profiles.full_name ?? null,
+        documentLocation: fields.location,
+        documentHolder: fields.holder,
+        officer: current.checkedInAt ? {
+          note: current.visitNote,
+          addressMatches: current.addressMatches,
+          sawBuilding: current.sawBuilding,
+          documentMatches: current.documentMatches,
+        } : null,
+        registry: { reference: reference.reference, matches: registry_matches },
+      })
+      await appendEvidence({
+        propertyId: id,
+        layer: 'registry',
+        body: { reference: reference.reference, matches: registry_matches },
+      })
+      const blocked = claimsBlockBadge(findings)
+      const caseState = nextCaseState(current.caseState, blocked ? 'claims_blocked' : 'claims_clear')
+      const judgment = writeJudgment({
+        title: property.title,
+        address: [property.address, property.city, property.state].filter(Boolean).join(', '),
+        description: property.description ?? '',
+        findings,
+      })
+      await setCaseState(id, caseState, findings, judgment)
+      await prisma.admin_audit_log.create({
+        data: {
+          actor_id: user.id,
+          action: 'registry_confirmation',
+          target_id: id,
+          metadata: { reference: reference.reference, matches: registry_matches, case_state: caseState },
+        },
+      })
+      return NextResponse.json({
+        success: true,
+        data: {
+          property: { id, status: 'pending_vetting' },
+          action_taken: 'confirm_registry',
+          case_state: caseState,
+          message: findings.find((finding) => finding.point === 'title')?.evidence,
+        },
+      })
+    }
+
     if (action === 'approve') {
-      const current = await readVettingAssignment(id)
+      const current = await readStoredVisit(id)
       const badge = badgeWriteAllowed(current)
       if (!badge.ok) {
         return NextResponse.json({ error: badge.error }, { status: 409 })
       }
+      await setCaseState(id, nextCaseState(current.caseState, 'approve'))
+    }
+
+    if (action === 'reject') {
+      await setCaseState(id, nextCaseState(null, 'reject'))
     }
 
     // Determine new status (only schema-valid fields: status + updated_at)
@@ -175,7 +417,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       case 'approve': finalStatus = 'live'; break
       case 'reject': finalStatus = 'rejected'; break
       case 'schedule': finalStatus = 'pending_vetting'; break
-      case 'flag_issue': finalStatus = 'pending_vetting'; break
       default: return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
     }
 
@@ -219,15 +460,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 }
 
 async function readVettingAssignment(propertyId: string): Promise<{ officerId: string | null; visitDay: string | null }> {
-  const rows = await prisma.$queryRaw<Array<{ officer_id: string | null; visit_day: string | null }>>`
-    select vetting_officer_id::text as officer_id, vetting_visit_on::text as visit_day
-    from public.properties
-    where id = ${propertyId}::uuid
-  `
-  return {
-    officerId: rows[0]?.officer_id ?? null,
-    visitDay: rows[0]?.visit_day ?? null,
-  }
+  const visit = await readStoredVisit(propertyId)
+  return { officerId: visit.officerId, visitDay: visit.visitDay }
 }
 
 function getActionMessage(action: string, propertyTitle: string): string {

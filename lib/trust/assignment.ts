@@ -28,12 +28,4 @@ export function visitAssignmentAllowed(input: {
   return { ok: true };
 }
 
-export function badgeWriteAllowed(input: {
-  officerId: string | null;
-  visitDay: string | null;
-}): { ok: true } | { ok: false; error: string } {
-  if (!input.officerId || !input.visitDay) {
-    return { ok: false, error: "Assign one officer and a visit day before approving the visit." };
-  }
-  return { ok: true };
-}
+export { badgeWriteAllowed } from "@/lib/trust/visit";

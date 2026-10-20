@@ -1,6 +1,8 @@
 import { getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { enqueueTrustRead } from "@/lib/trust/enqueue";
+import { correctionReplacementAllowed } from "@/lib/trust/visit";
+import { readStoredVisit, resumeAfterCorrection } from "@/lib/trust/visit-store";
 import { NextResponse } from "next/server";
 import { generateSignedUrl } from "@/lib/utils/upload-utils";
 import { z } from "zod";
@@ -154,6 +156,19 @@ export async function POST(request: Request, { params }: RouteParams) {
     const formData = await request.formData();
     const file = formData.get("file") as File;
     const documentType = formData.get("document_type") as string;
+    const listing = await prisma.properties.findUnique({
+      where: { id: propertyId },
+      select: { status: true },
+    });
+    const visit = listing?.status === "pending_correction" ? await readStoredVisit(propertyId) : null;
+    const replacement = correctionReplacementAllowed({
+      status: listing?.status ?? "",
+      correctionDocumentType: visit?.correctionDocumentType ?? null,
+      uploadedType: documentType,
+    });
+    if (!replacement.ok) {
+      return NextResponse.json({ error: replacement.error }, { status: 400 });
+    }
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -207,6 +222,10 @@ export async function POST(request: Request, { params }: RouteParams) {
         verification_status: "pending",
       },
     });
+
+    if (listing?.status === "pending_correction") {
+      await resumeAfterCorrection(propertyId);
+    }
 
     try {
       await enqueueTrustRead(propertyId, user.id);

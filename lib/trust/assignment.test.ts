@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { badgeWriteAllowed, lagosToday, visitAssignmentAllowed } from "@/lib/trust/assignment";
+import { badgeWriteAllowed, type VisitGate } from "@/lib/trust/visit";
+import { lagosToday, visitAssignmentAllowed } from "@/lib/trust/assignment";
 
 const officerA = "11111111-1111-1111-1111-111111111111";
 const officerB = "22222222-2222-2222-2222-222222222222";
@@ -45,10 +46,27 @@ test("the same officer can move the visit day, and a past day is refused", () =>
   assert.equal(past.ok, false);
 });
 
-test("the verified badge stays closed until an officer and a day are stored", () => {
-  assert.equal(badgeWriteAllowed({ officerId: null, visitDay: null }).ok, false);
-  assert.equal(badgeWriteAllowed({ officerId: officerA, visitDay: null }).ok, false);
-  assert.equal(badgeWriteAllowed({ officerId: officerA, visitDay: "2026-10-20" }).ok, true);
+function readyVisit(overrides: Partial<VisitGate> = {}): VisitGate {
+  return {
+    officerId: officerA,
+    visitDay: "2026-10-20",
+    checkedInAt: "2026-10-20T10:00:00.000Z",
+    voidedAt: null,
+    photoPath: `${officerA}/${officerA}.jpg`,
+    distanceMeters: 12,
+    sawBuilding: true,
+    addressMatches: true,
+    documentMatches: true,
+    openIssue: null,
+    caseState: "human_review",
+    ...overrides,
+  };
+}
+
+test("the verified badge stays closed until the officer has checked in at the pin", () => {
+  assert.equal(badgeWriteAllowed(readyVisit({ officerId: null, visitDay: null, checkedInAt: null, photoPath: null })).ok, false);
+  assert.equal(badgeWriteAllowed(readyVisit({ checkedInAt: null, photoPath: null })).ok, false);
+  assert.equal(badgeWriteAllowed(readyVisit()).ok, true);
 });
 
 test("Lagos today is a calendar date", () => {

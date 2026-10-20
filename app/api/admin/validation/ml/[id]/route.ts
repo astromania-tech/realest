@@ -3,6 +3,7 @@ import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { adminApproveAllowed, readTrustDecision } from '@/lib/trust/gate'
+import { openDeskCase } from '@/lib/trust/visit-store'
 
 // Request body schema for ML validation update
 const mlValidationUpdateSchema = z.object({
@@ -92,6 +93,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       case 'reject': newStatus = 'rejected'; break
       case 'flag_duplicate': newStatus = 'pending_duplicate_review'; break
       default: return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+    }
+
+    if (action === 'approve') {
+      await openDeskCase(propertyId)
     }
 
     const updatedProperty = await prisma.properties.update({

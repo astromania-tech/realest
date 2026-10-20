@@ -55,15 +55,18 @@ model agents {
 model inquiries {
   id                                     String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   property_id                            String     @db.Uuid
-  sender_id                              String     @db.Uuid
+  sender_id                              String?    @db.Uuid
   owner_id                               String     @db.Uuid
+  guest_name                             String?
+  guest_email                            String?
+  guest_phone                            String?
   message                                String
   status                                 String     @default("new")
   created_at                             DateTime?  @default(now()) @db.Timestamptz(6)
   updated_at                             DateTime?  @default(now()) @db.Timestamptz(6)
   profiles_inquiries_owner_idToprofiles  profiles   @relation("inquiries_owner_idToprofiles", fields: [owner_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   properties                             properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  profiles_inquiries_sender_idToprofiles profiles   @relation("inquiries_sender_idToprofiles", fields: [sender_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  profiles_inquiries_sender_idToprofiles profiles?  @relation("inquiries_sender_idToprofiles", fields: [sender_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([owner_id], map: "idx_inquiries_owner_id")
 }
@@ -236,6 +239,9 @@ model properties {
   property_validation_jobs property_validation_jobs[]
   reviews                  reviews[]
   saved_properties         saved_properties[]
+  property_visit_checks    property_visit_checks?
+  property_verification_cases property_verification_cases?
+  property_verification_evidence property_verification_evidence[]
 
   @@index([agent_id], map: "idx_properties_agent")
   @@index([description(ops: raw("gin_trgm_ops"))], map: "idx_properties_description_trgm", type: Gin)
@@ -285,8 +291,54 @@ model property_documents {
   updated_at          DateTime?  @default(now()) @db.Timestamptz(6)
   properties          properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   profiles            profiles?  @relation(fields: [verified_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  property_visit_checks property_visit_checks[]
 
   @@index([verified_by], map: "idx_property_documents_verified_by")
+}
+
+model property_visit_checks {
+  property_id            String    @id @db.Uuid
+  officer_id             String?   @db.Uuid
+  checked_in_at          DateTime? @db.Timestamptz(6)
+  latitude               Float?
+  longitude              Float?
+  distance_meters        Float?
+  photo_path             String?
+  saw_building           Boolean?
+  address_matches        Boolean?
+  document_matches       Boolean?
+  note                   String?
+  open_issue             String?
+  correction_document_id String?   @db.Uuid
+  voided_at              DateTime? @db.Timestamptz(6)
+  properties             properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  property_documents     property_documents? @relation(fields: [correction_document_id], references: [id], onUpdate: NoAction)
+
+  @@index([correction_document_id], map: "idx_property_visit_checks_document")
+}
+
+model property_verification_cases {
+  property_id String   @id @db.Uuid
+  state       String
+  claims      Json     @default("[]")
+  opened_at   DateTime @default(now()) @db.Timestamptz(6)
+  registry_reference   String?
+  registry_matches     Boolean?
+  registry_confirmed_at DateTime? @db.Timestamptz(6)
+  judgment             String?
+  state_log            Json     @default("[]")
+  properties  properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model property_verification_evidence {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  property_id String   @db.Uuid
+  layer       String
+  recorded_at DateTime @default(now()) @db.Timestamptz(6)
+  body        Json
+  properties  properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([property_id, recorded_at], map: "idx_property_verification_evidence_property")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.

@@ -5,17 +5,34 @@
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { badgeWriteAllowed, visitAssignmentAllowed } from "../../lib/trust/assignment.ts";
+import { visitAssignmentAllowed } from "../../lib/trust/assignment.ts";
+import { badgeWriteAllowed, type VisitGate } from "../../lib/trust/visit.ts";
 import { DUPLICATE_RADIUS_KM } from "../../lib/trust/candidates.ts";
 import { persistablePhotoHashes } from "../../lib/trust/photo-store.ts";
 
 const officerA = "11111111-1111-1111-1111-111111111111";
 const officerB = "22222222-2222-2222-2222-222222222222";
 
+function checkedIn(): VisitGate {
+  return {
+    officerId: officerA,
+    visitDay: "2026-10-20",
+    checkedInAt: "2026-10-20T10:00:00.000Z",
+    voidedAt: null,
+    photoPath: `${officerA}/${officerA}.jpg`,
+    distanceMeters: 12,
+    sawBuilding: true,
+    addressMatches: true,
+    documentMatches: true,
+    openIssue: null,
+    caseState: "human_review",
+  };
+}
+
 const cases: Array<{ id: string; run: () => boolean }> = [
   {
     id: "unassigned-cannot-approve",
-    run: () => badgeWriteAllowed({ officerId: null, visitDay: null }).ok === false,
+    run: () => badgeWriteAllowed({ ...checkedIn(), officerId: null, visitDay: null }).ok === false,
   },
   {
     id: "second-officer-blocked",
@@ -28,8 +45,16 @@ const cases: Array<{ id: string; run: () => boolean }> = [
       }).ok === false,
   },
   {
-    id: "assigned-visit-can-be-approved",
-    run: () => badgeWriteAllowed({ officerId: officerA, visitDay: "2026-10-20" }).ok === true,
+    id: "assignment-alone-cannot-approve",
+    run: () => badgeWriteAllowed({ ...checkedIn(), checkedInAt: null, photoPath: null }).ok === false,
+  },
+  {
+    id: "check-in-at-the-pin-can-approve",
+    run: () => badgeWriteAllowed(checkedIn()).ok === true,
+  },
+  {
+    id: "open-issue-blocks-the-badge",
+    run: () => badgeWriteAllowed({ ...checkedIn(), openIssue: "Replace the survey." }).ok === false,
   },
   {
     id: "pin-radius-is-50-metres",
