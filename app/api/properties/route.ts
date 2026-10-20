@@ -5,6 +5,7 @@ import { prisma, Prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { enqueueTrustRead } from "@/lib/trust/enqueue";
 import { assertListingKyc } from "@/lib/kyc/store";
+import { publicListingWhere } from "@/lib/listings/public-listing";
 import { propertyListingSchema, propertyDraftSchema, propertyDetailsSchema } from "@/lib/validations/property";
 import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
 import { zodToSchema } from "@/lib/openapi/zod-to-schema";
@@ -193,8 +194,7 @@ export async function GET(request: NextRequest) {
     const validatedSearch = searchQuerySchema.parse(searchData);
     const skip = (validatedSearch.page - 1) * validatedSearch.limit;
 
-    // Build Prisma where clause — only status:live for public search
-    const where: Prisma.propertiesWhereInput = { status: "live" };
+    const where: Prisma.propertiesWhereInput = { ...publicListingWhere };
 
     if (validatedSearch.state) where.state = { contains: validatedSearch.state, mode: "insensitive" };
     if (validatedSearch.city) where.city = { contains: validatedSearch.city, mode: "insensitive" };
@@ -221,7 +221,7 @@ export async function GET(request: NextRequest) {
         include: {
           property_details: true,
           property_media: { take: 1 },
-          owners: { include: { profiles: { select: { full_name: true, avatar_url: true, phone: true } } } },
+          owners: { include: { profiles: { select: { full_name: true, avatar_url: true } } } },
         },
         orderBy: { created_at: "desc" },
         skip,

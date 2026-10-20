@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
+import { publicListingWhere, publicPersonCard } from "@/lib/listings/public-listing";
+import { publicVisitRecord } from "@/lib/trust/visit";
+import { readStoredVisit } from "@/lib/trust/visit-store";
 
 const propertyIdSchema = z.string().uuid("Invalid property ID");
 
@@ -85,7 +88,7 @@ export async function GET(
     const property = await prisma.properties.findFirst({
       where: {
         id: propertyId,
-        status: "live",
+        ...publicListingWhere,
         listing_source: isAgent ? "agent" : { not: "agent" },
       },
       include: {
@@ -106,7 +109,7 @@ export async function GET(
         owners: {
           include: {
             profiles: {
-              select: { id: true, full_name: true, email: true, avatar_url: true, phone: true },
+              select: { id: true, full_name: true, avatar_url: true },
             },
           },
         },
@@ -118,8 +121,8 @@ export async function GET(
             specialization: true,
             verified: true,
             rating: true,
-            profiles: {
-              select: { id: true, full_name: true, email: true, phone: true, avatar_url: true },
+              profiles: {
+              select: { id: true, full_name: true, avatar_url: true },
             },
           },
         },
@@ -144,6 +147,15 @@ export async function GET(
     };
     const normalisedListingType =
       listingTypeMap[property.listing_type as string] ?? property.listing_type;
+
+    const visit = await readStoredVisit(property.id);
+    const visitRecord = publicVisitRecord({
+      verified: property.verification_status === "verified",
+      checkedInAt: visit.checkedInAt,
+      voidedAt: visit.voidedAt,
+      photoPath: visit.photoPath,
+      distanceMeters: visit.distanceMeters,
+    });
 
     const formattedProperty = {
       id: property.id,
@@ -205,13 +217,7 @@ export async function GET(
 
       // Owner info (populated only for owner-source listings)
       owner: !isAgent && property.owners?.profiles
-        ? {
-            id: property.owners.profiles.id,
-            full_name: property.owners.profiles.full_name,
-            email: property.owners.profiles.email,
-            phone: property.owners.profiles.phone,
-            avatar_url: property.owners.profiles.avatar_url,
-          }
+        ? publicPersonCard(property.owners.profiles)
         : null,
 
       // Agent info (populated only for agent-source listings)
@@ -224,15 +230,10 @@ export async function GET(
               specialization: property.agents.specialization,
               verified: property.agents.verified ?? false,
               rating: property.agents.rating ? Number(property.agents.rating) : null,
-              agent_profile: {
-                id: property.agents.profiles.id,
-                full_name: property.agents.profiles.full_name,
-                email: property.agents.profiles.email,
-                phone: property.agents.profiles.phone,
-                avatar_url: property.agents.profiles.avatar_url,
-              },
+              agent_profile: publicPersonCard(property.agents.profiles),
             }
           : null,
+      visit_record: visitRecord,
     };
 
     return NextResponse.json({ data: formattedProperty });

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma, Prisma } from "@/lib/prisma";
 import { z } from "zod";
 import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
+import { publicListingWhere } from "@/lib/listings/public-listing";
 
 const searchSchema = z.object({
   query: z.string().optional(),
@@ -193,10 +194,7 @@ export async function GET(request: NextRequest) {
 
     const validatedSearch = searchSchema.parse(searchData);
 
-    const where: Prisma.propertiesWhereInput = {
-      verification_status: "verified",
-      status: "live",
-    };
+    const where: Prisma.propertiesWhereInput = { ...publicListingWhere };
 
     if (validatedSearch.state) {
       where.state = { contains: validatedSearch.state, mode: "insensitive" };

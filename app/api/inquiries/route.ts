@@ -4,6 +4,7 @@ import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
+import { publicListingWhere } from "@/lib/listings/public-listing";
 
 const createInquirySchema = z.object({
   property_id: z.string().uuid(),
@@ -294,7 +295,7 @@ export async function POST(request: NextRequest) {
 
     // Check if property exists and is live
     const property = await prisma.properties.findFirst({
-      where: { id: validatedData.property_id, status: "live" },
+      where: { id: validatedData.property_id, ...publicListingWhere },
       select: { id: true, owner_id: true, status: true, title: true },
     });
 

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { isPublicListing, propertyForViewer } from "@/lib/listings/public-listing";
 import { 
   propertyListingSchema, 
   propertyDetailsSchema 
@@ -18,7 +19,7 @@ const propertyIdSchema = z.string().uuid("Invalid property ID");
 export const openApiGET: OpenApiMetadata = {
   method: 'get',
   summary: 'Get property details',
-  description: 'Retrieve complete property details including media, documents, and inquiries. Live properties are publicly viewable.',
+  description: 'Public viewers receive a live, verified listing without documents, inquiries, email, or phone. The owner and an admin receive the full record.',
   tags: ['Properties'],
   parameters: [
     {
@@ -68,7 +69,6 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const supabase = await createClient();
     const { id } = await params;
     const propertyIdResult = propertyIdSchema.safeParse(id);
     if (!propertyIdResult.success) {
@@ -107,27 +107,27 @@ export async function GET(
       return NextResponse.json({ error: "Property not found" }, { status: 404 });
     }
 
-    // Visibility check — only live properties are public; owners can see their own
+    // Owners and admins see documents and inquiries. Everyone else needs a live verified listing.
     const { data: { user } } = await getAuthUser();
 
-    // Resolve owner record: properties.owner_id → owners.id (not profiles.id)
     let ownerRecord: { id: string } | null = null;
     if (user) {
       ownerRecord = await prisma.owners.findUnique({ where: { profile_id: user.id }, select: { id: true } });
     }
     const isOwner = ownerRecord !== null && property.owner_id === ownerRecord.id;
-    // Admin check via Prisma (only if user exists and property isn't live)
     let isAdmin = false;
-    if (user && property.status !== "live") {
+    if (user) {
       const userRow = await prisma.users.findUnique({ where: { id: user.id }, select: { role: true } });
       isAdmin = userRow?.role === "admin";
     }
 
-    if (!isOwner && !isAdmin && property.status !== "live") {
+    if (!isOwner && !isAdmin && !isPublicListing(property)) {
       return NextResponse.json({ error: "Property not available" }, { status: 404 });
     }
 
-    return NextResponse.json({ property });
+    return NextResponse.json({
+      property: propertyForViewer(property, isOwner || isAdmin ? "private" : "public"),
+    });
   } catch (error) {
     console.error("Property API error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
