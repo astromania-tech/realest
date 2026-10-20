@@ -1,15 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-
-function activeHref(currentPath: string, hrefs: string[]): string | undefined {
-  const matchesPath = (candidate: string) => {
-    if (candidate === "/agent" || candidate === "/owner" || candidate === "/profile") {
-      return currentPath === candidate;
-    }
-    return currentPath === candidate || currentPath.startsWith(`${candidate}/`);
-  };
-  return hrefs.filter(matchesPath).sort((a, b) => b.length - a.length)[0];
-}
+import { isDashboardNavActive, mobileMoreItems, mobilePrimaryItems } from "@/lib/layout/dashboard-nav";
 
 const agentHrefs = [
   "/agent",
@@ -21,16 +12,30 @@ const agentHrefs = [
 ];
 
 test("agent dashboard is only active on the workspace root", () => {
-  assert.equal(activeHref("/agent", agentHrefs), "/agent");
-  assert.equal(activeHref("/agent/properties", agentHrefs), "/agent/properties");
-  assert.notEqual(activeHref("/agent/properties/new", agentHrefs), "/agent");
+  assert.equal(isDashboardNavActive("/agent", "/agent", agentHrefs), true);
+  assert.equal(isDashboardNavActive("/agent/properties", "/agent", agentHrefs), false);
+  assert.equal(isDashboardNavActive("/agent/properties", "/agent/properties", agentHrefs), true);
 });
 
 test("add property wins over my listings on the new listing path", () => {
-  assert.equal(activeHref("/agent/properties/new", agentHrefs), "/agent/properties/new");
-  assert.notEqual(activeHref("/agent/properties/new", agentHrefs), "/agent/properties");
+  assert.equal(isDashboardNavActive("/agent/properties/new", "/agent/properties/new", agentHrefs), true);
+  assert.equal(isDashboardNavActive("/agent/properties/new", "/agent/properties", agentHrefs), false);
 });
 
 test("identity stays alone on the identity path", () => {
-  assert.equal(activeHref("/agent/identity", agentHrefs), "/agent/identity");
+  assert.equal(isDashboardNavActive("/agent/identity", "/agent/identity", agentHrefs), true);
+});
+
+test("small screens get primary bottom tabs and the rest under More", () => {
+  const primary = mobilePrimaryItems("agent").map((item) => item.href);
+  const more = mobileMoreItems("agent").map((item) => item.href);
+  assert.deepEqual(primary, [
+    "/agent",
+    "/agent/properties",
+    "/agent/properties/new",
+    "/agent/identity",
+  ]);
+  assert.ok(more.includes("/setting"));
+  assert.ok(more.includes("/setting/security"));
+  assert.equal(primary.some((href) => more.includes(href)), false);
 });
