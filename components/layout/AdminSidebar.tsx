@@ -174,7 +174,7 @@ export function AdminSidebar({
 
   return (
     <aside
-      className={`fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] overscroll-y-none border-r border-accent/20 bg-background ${
+      className={`fixed left-0 top-16 z-40 hidden h-[calc(100vh-4rem)] overscroll-y-none border-r border-accent/20 bg-background md:block ${
         shouldCollapse ? "w-15" : "w-65"
       } ${isAnimating ? (shouldCollapse ? "animate-sidebar-collapse" : "animate-sidebar-expand") : ""}`}
       onMouseEnter={handleMouseEnter}

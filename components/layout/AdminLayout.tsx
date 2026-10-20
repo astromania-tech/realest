@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { AdminHeader } from "./AdminHeader";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminFooter } from "./AdminFooter";
+import { DashboardMobileNav } from "./DashboardMobileNav";
 import { Card, Button } from "@heroui/react";
 import {
   Breadcrumb,
@@ -14,17 +15,12 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import {
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  Users,
-  Building,
-  BarChart3,
-  Shield,
-  Settings,
-} from "lucide-react";
+import { Shield } from "lucide-react";
 import { useUser } from "@/lib/hooks/useUser";
+import {
+  ADMIN_PAGE_PAD,
+  adminMainOffset,
+} from "@/lib/layout/dashboard-shell";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -34,22 +30,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
   const { role: userRole, isLoading } = useUser();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [systemStats] = useState({
-    totalUsers: 1250,
-    pendingVerifications: 23,
-    activeProperties: 456,
-    systemHealth: "healthy" as "healthy" | "warning" | "critical",
-  });
 
-  // Generate breadcrumbs based on current path
   const generateBreadcrumbs = () => {
     const pathSegments = pathname.split("/").filter(Boolean);
     const breadcrumbs = [{ label: "Admin Dashboard", href: "/admin" }];
 
     if (pathSegments.length > 1) {
       const currentPath = `/${pathSegments.join("/")}`;
-
-      // Map paths to breadcrumb labels
       const pathMap: Record<string, string> = {
         "/admin/validation": "Property Verification",
         "/admin/agents": "Agent Verification",
@@ -66,7 +53,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       if (label) {
         breadcrumbs.push({ label, href: currentPath });
       } else {
-        // For unknown paths, create a generic breadcrumb
         const lastSegment = pathSegments[pathSegments.length - 1];
         breadcrumbs.push({
           label:
@@ -84,9 +70,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
-          <Shield className="w-12 h-12 text-primary mx-auto mb-4 animate-pulse" />
+          <Shield className="mx-auto mb-4 h-12 w-12 animate-pulse text-primary" />
           <div className="text-muted-foreground">Loading admin panel...</div>
         </div>
       </div>
@@ -95,11 +81,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   if (!isLoading && userRole !== "admin") {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="p-8 text-center max-w-md">
-          <Shield className="w-16 h-16 text-danger mx-auto mb-4" />
-          <h2 className="text-xl font-bold mb-2">Access Denied</h2>
-          <p className="text-muted-foreground mb-4">
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Card className="max-w-md p-8 text-center">
+          <Shield className="mx-auto mb-4 h-16 w-16 text-danger" />
+          <h2 className="mb-2 text-xl font-bold">Access Denied</h2>
+          <p className="mb-4 text-muted-foreground">
             You don't have permission to access the admin panel.
           </p>
           <Button>
@@ -111,7 +97,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen overflow-x-hidden bg-background">
       <AdminHeader />
 
       <div className="flex">
@@ -121,15 +107,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           onToggle={setIsCollapsed}
         />
 
-        {/* Main content */}
-        <main
-          className={`flex-1 transition-all duration-300 ease-out ${
-            isCollapsed ? "ml-15" : "ml-65"
-          }`}
-        >
+        <main className={adminMainOffset(isCollapsed)}>
           <div className="min-h-screen">
-            {/* Breadcrumbs */}
-            <div className="bg-background border-b border-accent/20 px-6 py-3">
+            <div className="border-b border-accent/20 bg-background px-4 py-3 sm:px-6">
               <Breadcrumb>
                 <BreadcrumbList>
                   {breadcrumbs.map((item, index) => (
@@ -149,12 +129,17 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 </BreadcrumbList>
               </Breadcrumb>
             </div>
-            {/* Page Content */}
-            <div className="p-6">{children}</div>
+            <div className={ADMIN_PAGE_PAD} data-dashboard-main>
+              {children}
+            </div>
           </div>
-          <AdminFooter />
+          <div className="hidden md:block">
+            <AdminFooter />
+          </div>
         </main>
       </div>
+
+      <DashboardMobileNav userRole="admin" />
     </div>
   );
 }
