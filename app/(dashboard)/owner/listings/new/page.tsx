@@ -122,7 +122,7 @@ export default function NewListingPage() {
         <div className="absolute inset-0 bg-linear-to-br from-secondary/10 via-primary/5 to-secondary/20" />
         <div className="absolute inset-0 bg-linear-to-t from-background via-background/50 to-transparent" />
 
-        <div className="relative z-10 container mx-auto px-4">
+        <div className="relative z-10 w-full max-w-7xl mx-auto">
           <div className="flex items-center gap-4 mb-8">
             <Link href="/owner/listings">
               <Button variant="ghost" size="sm">
@@ -142,11 +142,11 @@ export default function NewListingPage() {
         </div>
       </section>
 
-      <div className="container mx-auto px-4 pb-16">
+      <div className="w-full max-w-7xl mx-auto pb-16">
         <div className="max-w-6xl mx-auto">
           {/* Progress Steps */}
           <div className="mb-12">
-            <div className="flex items-center justify-between mb-8">
+            <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
               {steps.map((step, index) => (
                 <div key={step.id} className="flex items-center flex-1">
                   <div className="flex flex-col items-center">

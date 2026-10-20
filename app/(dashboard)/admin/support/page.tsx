@@ -104,7 +104,7 @@ export default async function SupportPage() {
         </div>
 
         {/* Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 mb-6 sm:mb-8">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
@@ -173,7 +173,8 @@ export default async function SupportPage() {
                 <CardTitle>Open Support Tickets</CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
+                <div className="w-full min-w-0 overflow-x-auto">
+                  <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Subject</TableHead>
@@ -224,7 +225,8 @@ export default async function SupportPage() {
                     ))}
                   </TableBody>
                 </Table>
-              </CardContent>
+            </div>
+          </CardContent>
             </Card>
           </TabsContent>
 
@@ -234,7 +236,8 @@ export default async function SupportPage() {
                 <CardTitle>Resolved Support Tickets</CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
+                <div className="w-full min-w-0 overflow-x-auto">
+                  <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Subject</TableHead>
@@ -279,7 +282,8 @@ export default async function SupportPage() {
                     ))}
                   </TableBody>
                 </Table>
-              </CardContent>
+            </div>
+          </CardContent>
             </Card>
           </TabsContent>
         </Tabs>

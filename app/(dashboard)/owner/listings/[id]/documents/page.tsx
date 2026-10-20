@@ -141,7 +141,7 @@ export default function ListingDocumentsPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full max-w-7xl mx-auto py-4 sm:py-6">
         <div className="max-w-6xl mx-auto">
           <div className="animate-pulse">
             <div className="h-8 bg-muted rounded-lg mb-6"></div>
@@ -157,10 +157,10 @@ export default function ListingDocumentsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="w-full max-w-7xl mx-auto py-4 sm:py-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           <div className="flex items-center gap-4">
             <Link href={`/owner/listings/${propertyId}`}>
               <Button variant="ghost" size="icon-sm" >

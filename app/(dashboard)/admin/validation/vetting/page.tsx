@@ -47,7 +47,8 @@ export default async function VettingPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
+            <div className="w-full min-w-0 overflow-x-auto">
+              <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Property</TableHead>
@@ -86,6 +87,7 @@ export default async function VettingPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
     </>

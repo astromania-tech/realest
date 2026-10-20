@@ -82,7 +82,7 @@ export default async function BillingPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6 mb-8">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -151,7 +151,8 @@ export default async function BillingPage() {
             <CardTitle>Billing History</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
+            <div className="w-full min-w-0 overflow-x-auto">
+              <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Date</TableHead>
@@ -185,6 +186,7 @@ export default async function BillingPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
 

@@ -42,7 +42,7 @@ export default async function ValidationPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 mb-6 sm:mb-8">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
@@ -99,7 +99,8 @@ export default async function ValidationPage() {
             <CardTitle>Document gate</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
+            <div className="w-full min-w-0 overflow-x-auto">
+              <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Property</TableHead>
@@ -133,6 +134,7 @@ export default async function ValidationPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
 

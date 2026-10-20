@@ -85,7 +85,7 @@ export default async function CMSUsersPage() {
         </div>
 
         {/* Statistics Overview */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-8">
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:mb-8 sm:gap-4 lg:grid-cols-4 xl:grid-cols-7">
           <Card>
             <CardContent className="pt-4">
               <div className="text-center">
@@ -216,7 +216,8 @@ export default async function CMSUsersPage() {
                 <CardTitle>All Users</CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
+                <div className="w-full min-w-0 overflow-x-auto">
+                  <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>User</TableHead>
@@ -302,7 +303,8 @@ export default async function CMSUsersPage() {
                     )}
                   </TableBody>
                 </Table>
-              </CardContent>
+            </div>
+          </CardContent>
             </Card>
           </TabsContent>
 

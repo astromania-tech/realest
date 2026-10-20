@@ -55,7 +55,8 @@ export default async function MLReviewPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
+            <div className="w-full min-w-0 overflow-x-auto">
+              <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Property</TableHead>
@@ -92,6 +93,7 @@ export default async function MLReviewPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
     </>

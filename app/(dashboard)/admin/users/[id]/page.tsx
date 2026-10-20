@@ -67,7 +67,7 @@ export default async function UserEditPage({
 
   return (
     <>
-      <div className="container mx-auto px-4">
+      <div className="w-full max-w-7xl mx-auto">
         <div className="mb-8">
           <Link
             href="/admin/users"
@@ -82,7 +82,7 @@ export default async function UserEditPage({
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6">
           {/* User Profile */}
           <div className="lg:col-span-2 space-y-6">
             <Card>
@@ -174,7 +174,7 @@ export default async function UserEditPage({
                 <CardTitle>User Statistics</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="text-center">
                     <p className="text-2xl font-bold">{userStats.totalProperties}</p>
                     <p className="text-sm text-muted-foreground">Properties</p>

@@ -156,7 +156,8 @@ export default async function MonetizationPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
+              <div className="w-full min-w-0 overflow-x-auto">
+                <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Method</TableHead>
@@ -182,7 +183,8 @@ export default async function MonetizationPage() {
                   ))}
                 </TableBody>
               </Table>
-            </CardContent>
+            </div>
+          </CardContent>
           </Card>
 
           {/* Save Button */}

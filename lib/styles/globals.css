@@ -242,6 +242,23 @@
     overscroll-behavior-y: none;
   }
 
+  /* Authenticated shell: keep cards/tables inside the content column. */
+  [data-dashboard-main] {
+    max-width: 100%;
+  }
+
+  [data-dashboard-main] img,
+  [data-dashboard-main] video,
+  [data-dashboard-main] canvas,
+  [data-dashboard-main] svg {
+    max-width: 100%;
+  }
+
+  [data-dashboard-main] pre {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
   /* Typography Hierarchy */
   h1,
   h2,

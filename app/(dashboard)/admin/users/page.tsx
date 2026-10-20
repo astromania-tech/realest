@@ -52,7 +52,7 @@ export default async function UsersPage() {
       </div>
 
       {/* User Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 mb-6 sm:mb-8">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
@@ -105,14 +105,14 @@ export default async function UsersPage() {
       {/* Search and Filters */}
       <Card className="mb-6">
         <CardContent className="pt-6">
-          <div className="flex gap-4">
-            <div className="flex-1">
+          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+            <div className="min-w-0 flex-1">
               <Input
                 placeholder="Search users by name or email..."
-                className="max-w-sm"
+                className="w-full max-w-sm"
               />
             </div>
-            <Button variant="outline">
+            <Button variant="outline" className="w-full shrink-0 sm:w-auto">
               <Search className="w-4 h-4 mr-2" />
               Search
             </Button>
@@ -126,7 +126,8 @@ export default async function UsersPage() {
           <CardTitle>All Users</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
+          <div className="w-full min-w-0 overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
@@ -178,7 +179,8 @@ export default async function UsersPage() {
               )}
             </TableBody>
           </Table>
-        </CardContent>
+            </div>
+          </CardContent>
       </Card>
     </>
   );

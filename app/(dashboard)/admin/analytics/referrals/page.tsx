@@ -83,7 +83,7 @@ export default async function ReferralsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Total Referrals Made', value: stats.totalReferrals, icon: GitBranch },
           { label: 'Active Referrers', value: stats.totalReferrers, icon: Award },
@@ -117,46 +117,48 @@ export default async function ReferralsPage() {
           {!data?.topReferrers?.length ? (
             <p className="text-sm text-muted-foreground py-6 text-center">No referrals recorded yet.</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>#</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Code</TableHead>
-                  <TableHead className="text-right">Referrals</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Joined</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.topReferrers.map((r, i) => (
-                  <TableRow key={r.id}>
-                    <TableCell className="text-muted-foreground">{i + 1}</TableCell>
-                    <TableCell className="font-medium">{r.name || '—'}</TableCell>
-                    <TableCell className="text-muted-foreground">{r.email}</TableCell>
-                    <TableCell>
-                      {r.referralCode ? (
-                        <code className="text-xs bg-accent/20 px-2 py-0.5 rounded font-mono">
-                          {r.referralCode}
-                        </code>
-                      ) : '—'}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Badge variant="default" className="bg-[#ADF434] text-[#07402F] font-bold">
-                        {r.referralCount}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={r.status === 'active' ? 'outline' : 'secondary'} className="capitalize text-xs">
-                        {r.status ?? '—'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">{fmt(r.joinedAt)}</TableCell>
+            <div className="w-full min-w-0 overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>#</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Code</TableHead>
+                    <TableHead className="text-right">Referrals</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Joined</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {data.topReferrers.map((r, i) => (
+                    <TableRow key={r.id}>
+                      <TableCell className="text-muted-foreground">{i + 1}</TableCell>
+                      <TableCell className="font-medium">{r.name || '—'}</TableCell>
+                      <TableCell className="text-muted-foreground">{r.email}</TableCell>
+                      <TableCell>
+                        {r.referralCode ? (
+                          <code className="text-xs bg-accent/20 px-2 py-0.5 rounded font-mono">
+                            {r.referralCode}
+                          </code>
+                        ) : '—'}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant="default" className="bg-[#ADF434] text-[#07402F] font-bold">
+                          {r.referralCount}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={r.status === 'active' ? 'outline' : 'secondary'} className="capitalize text-xs">
+                          {r.status ?? '—'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-sm">{fmt(r.joinedAt)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -176,6 +178,7 @@ export default async function ReferralsPage() {
           {!data?.referred?.length ? (
             <p className="text-sm text-muted-foreground py-6 text-center">No referred signups yet.</p>
           ) : (
+            <div className="w-full min-w-0 overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -219,6 +222,7 @@ export default async function ReferralsPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

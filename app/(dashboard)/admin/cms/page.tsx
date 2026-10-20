@@ -109,7 +109,7 @@ export default async function CMSDashboardPage() {
       </div>
 
       {/* Statistics Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 mb-6 sm:mb-8">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">

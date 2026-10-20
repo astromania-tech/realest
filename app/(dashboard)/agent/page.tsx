@@ -203,16 +203,16 @@ export default function AgentDashboardPage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="bg-primary-dark">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-4xl font-bold mb-2">Welcome, {agent?.full_name}!</h1>
-              <p className="text-accent text-lg">
+        <div className="w-full max-w-7xl mx-auto py-4 sm:py-6">
+          <div className="mb-0 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold mb-2 sm:text-4xl">Welcome, {agent?.full_name}!</h1>
+              <p className="text-accent text-sm sm:text-lg break-words">
                 {agent?.agency_name} • License: {agent?.license_number}
               </p>
             </div>
-            <Link href="/agent/list-property">
-              <Button variant="accent" className="font-semibold">
+            <Link href="/agent/list-property" className="shrink-0">
+              <Button variant="accent" className="font-semibold w-full sm:w-auto">
                 <Plus className="w-5 h-5" />
                 List Property
               </Button>
@@ -222,10 +222,10 @@ export default function AgentDashboardPage() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full max-w-7xl mx-auto py-4 sm:py-6">
         {/* Stats Grid */}
         {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 mb-6 sm:mb-8">
             {/* Total Properties */}
             <Card className="rounded-xl shadow-md">
               <CardContent className="py-6">
@@ -239,7 +239,7 @@ export default function AgentDashboardPage() {
                       {stats.activeListings} active
                     </p>
                   </div>
-                  <Home className="w-10 h-10 text-primary-accent opacity-50" />
+                  <Home className="hidden h-8 w-8 shrink-0 text-primary-accent opacity-50 sm:block sm:h-10 sm:w-10" />
                 </div>
               </CardContent>
             </Card>
@@ -257,7 +257,7 @@ export default function AgentDashboardPage() {
                       Total received
                     </p>
                   </div>
-                  <MessageSquare className="w-10 h-10 text-primary-accent opacity-50" />
+                  <MessageSquare className="hidden h-8 w-8 shrink-0 text-primary-accent opacity-50 sm:block sm:h-10 sm:w-10" />
                 </div>
               </CardContent>
             </Card>
@@ -275,7 +275,7 @@ export default function AgentDashboardPage() {
                       Great response time!
                     </p>
                   </div>
-                  <TrendingUp className="w-10 h-10 text-primary-accent opacity-50" />
+                  <TrendingUp className="hidden h-8 w-8 shrink-0 text-primary-accent opacity-50 sm:block sm:h-10 sm:w-10" />
                 </div>
               </CardContent>
             </Card>
@@ -329,9 +329,9 @@ export default function AgentDashboardPage() {
                       key={property.id}
                       className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-lg">{property.title}</h4>
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-semibold text-lg break-words">{property.title}</h4>
                           <p className="text-sm text-muted-foreground mt-1">
                             Property ID: {property.id.substring(0, 8)}...
                           </p>
@@ -370,21 +370,21 @@ export default function AgentDashboardPage() {
                         key={inquiry.id}
                         className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
                       >
-                        <div className="flex items-start justify-between">
-                          <div>
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="min-w-0">
                             <h4 className="font-semibold">{inquiry.sender?.full_name || "Anonymous User"}</h4>
-                            <p className="text-sm text-primary-accent font-medium mt-1">
+                            <p className="text-sm text-primary-accent font-medium mt-1 break-words">
                               Re: {inquiry.property?.title || "Unknown Property"}
                             </p>
                             <p className="text-sm text-muted-foreground mt-2 line-clamp-2 italic">
                               "{inquiry.message}"
                             </p>
                           </div>
-                          <div className="text-right">
+                          <div className="shrink-0 sm:text-right">
                             <p className="text-xs text-muted-foreground">
                               {new Date(inquiry.created_at).toLocaleDateString()}
                             </p>
-                            <Button size="sm" variant="outline" className="mt-2">View</Button>
+                            <Button size="sm" variant="outline" className="mt-2 w-full sm:w-auto">View</Button>
                           </div>
                         </div>
                       </div>

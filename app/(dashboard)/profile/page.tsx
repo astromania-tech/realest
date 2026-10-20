@@ -386,10 +386,10 @@ export default function UserDashboardPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8">
+        <div className="w-full max-w-7xl mx-auto py-4 sm:py-6">
           <div className="animate-pulse space-y-8">
             <div className="h-8 bg-muted rounded w-1/3" />
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="h-32 bg-muted rounded-lg" />
               ))}
@@ -407,7 +407,7 @@ export default function UserDashboardPage() {
   if (authError) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8">
+        <div className="w-full max-w-7xl mx-auto py-4 sm:py-6">
           <Card className="max-w-2xl mx-auto">
             <CardContent className="py-12 text-center">
               <AlertCircle className="w-16 h-16 text-danger mx-auto mb-6" />
@@ -436,16 +436,16 @@ export default function UserDashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full max-w-7xl mx-auto py-4 sm:py-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">My Dashboard</h1>
+        <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold sm:text-3xl">My Dashboard</h1>
             <p className="text-muted-foreground">
               Track your property searches and saved listings.
             </p>
           </div>
-          <Button asChild variant="default">
+          <Button asChild variant="default" className="w-full shrink-0 sm:w-auto">
             <Link href="/search">
               <Search className="w-4 h-4 mr-2" />
               Search Properties
@@ -456,9 +456,9 @@ export default function UserDashboardPage() {
         {/* Profile Card */}
         {userProfile && (
           <Card className="mb-8">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-4">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex min-w-0 items-center gap-4">
                   <div className="w-auto h-auto border border-accent rounded-full p-0.5 flex items-center justify-center">
                     <Avatar className="size-15">
                       {avatarUrl ? (
@@ -502,7 +502,7 @@ export default function UserDashboardPage() {
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 mb-6 sm:mb-8">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">

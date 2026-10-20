@@ -58,7 +58,7 @@ export default async function VettingReportPage({
       });
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="w-full max-w-7xl mx-auto py-4 sm:py-6">
       <div className="mb-8">
         <Link href="/admin/validation/vetting" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4">
           <ArrowLeft className="w-4 h-4" />
@@ -70,7 +70,7 @@ export default async function VettingReportPage({
         {claims.length > 0 ? <p className="mt-2 text-sm">{claimsBrief(claims)}</p> : null}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6">
         <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardHeader>

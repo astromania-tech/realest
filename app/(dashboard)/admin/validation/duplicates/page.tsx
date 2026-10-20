@@ -42,7 +42,8 @@ export default async function DuplicatesPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
+          <div className="w-full min-w-0 overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Property</TableHead>
@@ -79,7 +80,8 @@ export default async function DuplicatesPage() {
               )}
             </TableBody>
           </Table>
-        </CardContent>
+            </div>
+          </CardContent>
       </Card>
     </div>
   );
