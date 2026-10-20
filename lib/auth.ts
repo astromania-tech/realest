@@ -9,6 +9,7 @@ export interface AuthResponse {
   success: boolean;
   user?: User;
   error?: string;
+  localConfirmed?: boolean;
 }
 
 // const createClient = createServiceClient;
@@ -162,7 +163,7 @@ export async function signUpWithPassword(
       return { success: false, error: result.error || "Signup failed" };
     }
 
-    return { success: true, user: result.user };
+    return { success: true, user: result.user, localConfirmed: result.localConfirmed === true };
   } catch (err) {
     return { success: false, error: "An unexpected error occurred" };
   }
@@ -346,14 +347,14 @@ export async function verifyEmail(
  */
 export async function resendEmailVerification(
   email: string,
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; localConfirmed?: boolean }> {
   try {
     const response = await fetch(
       `/api/auth/signup?email=${encodeURIComponent(email.trim().toLowerCase())}`,
     );
     const data = await response.json();
     if (!response.ok) return { success: false, error: data.error || 'Failed to resend' };
-    return { success: true };
+    return { success: true, localConfirmed: data.localConfirmed === true };
   } catch {
     return { success: false, error: 'Failed to resend verification email' };
   }

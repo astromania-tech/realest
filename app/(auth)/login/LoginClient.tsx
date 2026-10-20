@@ -34,7 +34,13 @@ function LoginForm() {
     const verified = searchParams.get("verified");
     const reset = searchParams.get("reset");
 
-    if (verified === "true") {
+    const emailParam = searchParams.get("email");
+    if (emailParam) {
+      setFormData((prev) => ({ ...prev, email: decodeURIComponent(emailParam) }));
+    }
+    if (searchParams.get("local") === "1") {
+      setSuccessMessage("This PC confirmed the email. Sign in with the password you just set.");
+    } else if (verified === "true") {
       setSuccessMessage("Email verification complete! Sign in to continue.");
     } else if (reset === "true") {
       setSuccessMessage(

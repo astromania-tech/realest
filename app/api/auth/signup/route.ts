@@ -3,6 +3,29 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { renderCampaignTemplate } from '@/lib/emailBulkSender';
 import { Resend } from 'resend';
 import { sendVerificationEmail } from '@/lib/emailService';
+import { alreadyRegisteredEmail, localEmailConfirmAllowed } from '@/lib/auth/local-email-confirm';
+import type { User } from '@supabase/supabase-js';
+
+async function confirmLocalAuthUser(email: string, password?: string): Promise<User | null> {
+  if (!localEmailConfirmAllowed()) return null;
+  const admin = createServiceClient();
+  const target = email.trim().toLowerCase();
+  for (let page = 1; page <= 5; page += 1) {
+    const listed = await admin.auth.admin.listUsers({ page, perPage: 200 });
+    if (listed.error || !listed.data?.users) return null;
+    const found = listed.data.users.find((user) => (user.email || "").toLowerCase() === target);
+    if (found) {
+      const updated = await admin.auth.admin.updateUserById(found.id, {
+        email_confirm: true,
+        ...(password ? { password } : {}),
+      });
+      if (updated.error || !updated.data.user) return null;
+      return updated.data.user;
+    }
+    if (listed.data.users.length < 200) break;
+  }
+  return null;
+}
 
 function mailClient(): Resend | null {
   const key = process.env.RESEND_API_KEY;
@@ -15,9 +38,8 @@ function mailClient(): Resend | null {
  * 
  * Custom signup flow that:
  * 1. Creates user via Supabase Auth Admin API (service_role)
- * 2. Sets email_confirm: false to prevent Supabase's default email
- * 3. Generates a verification link
- * 4. Sends a branded React Email template via Resend
+ * 2. Leaves email unconfirmed, then sends the branded link via Resend
+ * On this PC, against local Supabase only, the address is confirmed and no mail is sent.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -28,12 +50,12 @@ export async function POST(request: NextRequest) {
     }
 
     const supabaseAdmin = createServiceClient();
+    const confirmLocally = localEmailConfirmAllowed();
 
-    // 1. Create user with email_confirm: false
     const { data: userData, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: false,
+      email_confirm: confirmLocally,
       user_metadata: {
         full_name: fullName || '',
         user_type: userType || 'user',
@@ -41,10 +63,20 @@ export async function POST(request: NextRequest) {
     });
 
     if (createError) {
+      if (confirmLocally && alreadyRegisteredEmail(createError.message)) {
+        const confirmed = await confirmLocalAuthUser(email, password);
+        if (confirmed) {
+          return NextResponse.json({ success: true, user: confirmed, localConfirmed: true });
+        }
+      }
       return NextResponse.json({ error: createError.message }, { status: createError.status || 400 });
     }
 
-    // 2. Generate verification link
+    if (confirmLocally) {
+      return NextResponse.json({ success: true, user: userData.user, localConfirmed: true });
+    }
+
+    // Generate verification link and send it. Production always takes this path.
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'signup',
       email,
@@ -97,6 +129,12 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   const email = request.nextUrl.searchParams.get('email');
   if (!email) return NextResponse.json({ error: 'Email required' }, { status: 400 });
+
+  if (localEmailConfirmAllowed()) {
+    const confirmed = await confirmLocalAuthUser(email);
+    if (!confirmed) return NextResponse.json({ error: 'Local account was not found' }, { status: 404 });
+    return NextResponse.json({ success: true, localConfirmed: true });
+  }
 
   const supabaseAdmin = createServiceClient();
 

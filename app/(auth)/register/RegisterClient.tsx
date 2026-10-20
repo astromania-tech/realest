@@ -123,7 +123,12 @@ export default function SignUpPage() {
           }).catch(() => {});
           sessionStorage.removeItem('referralCode');
         }
-        router.push(`/success?email=${encodeURIComponent(formData.email)}`);
+        const emailQuery = encodeURIComponent(formData.email);
+        if (response.localConfirmed) {
+          router.push(`/login?local=1&email=${emailQuery}`);
+        } else {
+          router.push(`/success?email=${emailQuery}`);
+        }
       }
     } catch (err) {
       setError("An unexpected error occurred");

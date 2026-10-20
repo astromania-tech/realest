@@ -20,6 +20,7 @@ function SignUpSuccessContent() {
   const [isResending, setIsResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
   const [resendError, setResendError] = useState("");
+  const [localConfirmed, setLocalConfirmed] = useState(false);
   const [cooldown, setCooldown] = useState(0);
 
   useEffect(() => {
@@ -45,6 +46,7 @@ function SignUpSuccessContent() {
       const result = await resendEmailVerification(email);
       if (result.success) {
         setResendSuccess(true);
+        setLocalConfirmed(result.localConfirmed === true);
         setCooldown(60);
       } else {
         setResendError(result.error || "Failed to resend. Please try again.");
@@ -92,8 +94,9 @@ function SignUpSuccessContent() {
             {resendSuccess && (
               <div className="flex items-center gap-2 text-sm text-success bg-success/10 border border-success/20 rounded-md p-3">
                 <CheckCircle className="w-4 h-4 shrink-0" />
-                Activation email resent. Please check your inbox and spam
-                folder.
+                {localConfirmed
+                  ? "This PC confirmed the email. Sign in with your password. No mail was sent."
+                  : "Activation email resent. Please check your inbox and spam folder."}
               </div>
             )}
             {resendError && (
