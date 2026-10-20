@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata'
+import { requireAdmin } from '@/lib/auth/require-admin'
+import { publicHealthBody } from '@/lib/system/health-body'
 
 export const openApiGET: OpenApiMetadata = {
   method: 'get',
@@ -14,96 +16,45 @@ export const openApiGET: OpenApiMetadata = {
 }
 
 // GET /api/system/health - System health check
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
+  let databaseUp = false
   try {
-    const startTime = Date.now()
-
-    // Check database connectivity via Prisma
-    let dbStatus = 'healthy'
-    let dbError: string | null = null
-    try {
-      await prisma.$queryRaw`SELECT 1`
-    } catch (err: any) {
-      dbStatus = 'error'
-      dbError = err.message
-    }
-
-    const dbResponseTime = Date.now() - startTime
-
-    // Get system statistics
-    const stats: any = {
-      database: {
-        status: dbStatus,
-        response_time_ms: dbResponseTime,
-        error: dbError
-      }
-    }
-
-    // Get application metrics (if available)
-    try {
-      const [totalProperties, liveProperties, totalUsers, pendingVetting, pendingML] = await Promise.all([
-        prisma.properties.count(),
-        prisma.properties.count({ where: { status: 'live' } }),
-        prisma.profiles.count(),
-        prisma.properties.count({ where: { status: 'pending_vetting' } }),
-        prisma.properties.count({ where: { status: 'pending_ml_validation' } }),
-      ])
-
-      stats.metrics = {
-        total_properties: totalProperties,
-        live_properties: liveProperties,
-        total_users: totalUsers,
-        pending_vetting: pendingVetting,
-        pending_ml_validation: pendingML,
-        vetting_queue_size: pendingVetting + pendingML
-      }
-    } catch (metricsError: any) {
-      stats.metrics = {
-        error: 'Failed to fetch metrics',
-        details: metricsError.message
-      }
-    }
-
-    // Determine overall health status
-    const overallStatus = dbStatus === 'healthy' ? 'healthy' : 'unhealthy'
-
-    // Check for critical issues
-    const issues = []
-    if (dbStatus !== 'healthy') {
-      issues.push('Database connection failed')
-    }
-
-    if (stats.metrics && typeof stats.metrics === 'object' && 'vetting_queue_size' in stats.metrics) {
-      const queueSize = stats.metrics.vetting_queue_size as number
-      if (queueSize > 100) {
-        issues.push(`Large vetting queue: ${queueSize} properties pending`)
-      }
-    }
-
-    const response = {
-      status: overallStatus,
-      timestamp: new Date().toISOString(),
-      version: process.env.npm_package_version || '1.0.0',
-      environment: process.env.NODE_ENV || 'development',
-      uptime: process.uptime(),
-      stats,
-      issues: issues.length > 0 ? issues : null
-    }
-
-    // Return appropriate HTTP status
-    const httpStatus = overallStatus === 'healthy' ? 200 : 503
-
-    return NextResponse.json(response, { status: httpStatus })
-
+    await prisma.$queryRaw`SELECT 1`
+    databaseUp = true
   } catch (error) {
-    console.error('Health check error:', error)
-
-    return NextResponse.json({
-      status: 'unhealthy',
-      timestamp: new Date().toISOString(),
-      error: 'Health check failed',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 503 })
+    console.error('Health check database error:', error)
   }
+
+  const admin = await requireAdmin()
+  if (!admin.ok) {
+    const body = publicHealthBody(databaseUp)
+    return NextResponse.json(body, { status: databaseUp ? 200 : 503 })
+  }
+
+  const started = Date.now()
+  const counts = await Promise.all([
+    prisma.properties.count(),
+    prisma.properties.count({ where: { status: 'live' } }),
+    prisma.profiles.count(),
+    prisma.properties.count({ where: { status: 'pending_vetting' } }),
+    prisma.properties.count({ where: { status: 'pending_ml_validation' } }),
+  ]).catch((error: unknown) => {
+    console.error('Health metrics error:', error)
+    return null
+  })
+
+  return NextResponse.json({
+    ...publicHealthBody(databaseUp),
+    response_time_ms: Date.now() - started,
+    metrics: counts
+      ? {
+          total_properties: counts[0],
+          live_properties: counts[1],
+          total_users: counts[2],
+          pending_vetting: counts[3],
+          pending_ml_validation: counts[4],
+        }
+      : null,
+  }, { status: databaseUp ? 200 : 503 })
 }
 

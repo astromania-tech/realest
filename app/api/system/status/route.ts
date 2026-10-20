@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata'
+import { requireAdmin } from '@/lib/auth/require-admin'
+import { publicHealthBody } from '@/lib/system/health-body'
 
 export const openApiGET: OpenApiMetadata = {
   method: 'get',
@@ -14,7 +16,20 @@ export const openApiGET: OpenApiMetadata = {
 }
 
 // GET /api/system/status - System status information
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
+  const admin = await requireAdmin()
+  if (!admin.ok) {
+    let databaseUp = false
+    try {
+      await prisma.$queryRaw`SELECT 1`
+      databaseUp = true
+    } catch (error) {
+      console.error('Status database error:', error)
+    }
+    const body = publicHealthBody(databaseUp)
+    return NextResponse.json(body, { status: databaseUp ? 200 : 503 })
+  }
+
   try {
     const appMode = process.env.NEXT_PUBLIC_APP_MODE || 'development'
 
@@ -72,10 +87,10 @@ export async function GET(request: NextRequest) {
           inquiries_last_30_days: recentInquiries
         }
       }
-    } catch (statsError: any) {
+    } catch (statsError: unknown) {
+      console.error('Status statistics error:', statsError)
       stats.database = {
         error: 'Failed to fetch database statistics',
-        details: statsError.message
       }
     }
 
