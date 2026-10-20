@@ -6,6 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, FileText } from "lucide-react";
 import Link from "next/link";
 import { VettingDecisionActions } from "@/components/realest/validation/VettingDecisionActions";
+import { badgeWriteAllowed, observationConflicts } from "@/lib/trust/visit";
+import { readPublicCase, readStoredVisit } from "@/lib/trust/visit-store";
+import { caseStateLabel } from "@/lib/trust/case";
+import { claimsBrief, type ClaimFinding } from "@/lib/trust/claims";
 
 export default async function VettingReportPage({
   params,
@@ -33,18 +37,25 @@ export default async function VettingReportPage({
   });
   if (!property) notFound();
 
-  const [officers, assignment] = await Promise.all([
+  const [officers, visit] = await Promise.all([
     prisma.users.findMany({
       where: { role: "admin", is_active: true, deleted_at: null },
       select: { id: true, full_name: true },
       orderBy: { full_name: "asc" },
     }),
-    prisma.$queryRaw<Array<{ officer_id: string | null; visit_day: string | null }>>`
-      select vetting_officer_id::text as officer_id, vetting_visit_on::text as visit_day
-      from public.properties
-      where id = ${property.id}::uuid
-    `,
+    readStoredVisit(property.id),
   ]);
+  const record = await readPublicCase(property.id);
+  const claims = Array.isArray(record.claims) ? record.claims as ClaimFinding[] : [];
+  const badge = badgeWriteAllowed(visit);
+  const conflicts = visit.sawBuilding === null || visit.addressMatches === null || visit.documentMatches === null || visit.distanceMeters === null
+    ? []
+    : observationConflicts({
+        sawBuilding: visit.sawBuilding,
+        addressMatches: visit.addressMatches,
+        documentMatches: visit.documentMatches,
+        distanceMeters: visit.distanceMeters,
+      });
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -53,8 +64,10 @@ export default async function VettingReportPage({
           <ArrowLeft className="w-4 h-4" />
           Back to Vetting Queue
         </Link>
-        <h1 className="text-3xl font-bold">Physical vetting</h1>
-        <p className="text-muted-foreground">Approve only after a person has stood at the pin.</p>
+        <h1 className="font-heading text-3xl text-[#07402F]">Physical vetting</h1>
+        <p className="text-muted-foreground">Approve only after a person has stood at the pin. Case: {caseStateLabel(visit.caseState)}.</p>
+        {record.judgment ? <p className="mt-2 max-w-3xl text-sm">{record.judgment}</p> : null}
+        {claims.length > 0 ? <p className="mt-2 text-sm">{claimsBrief(claims)}</p> : null}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -118,10 +131,18 @@ export default async function VettingReportPage({
           </CardHeader>
           <CardContent>
             <VettingDecisionActions
+              key={visit.registryReference ?? "no-registry-file"}
               propertyId={property.id}
               officers={officers}
-              assignedOfficerId={assignment[0]?.officer_id ?? null}
-              visitDay={assignment[0]?.visit_day ?? null}
+              assignedOfficerId={visit.officerId}
+              visitDay={visit.visitDay}
+              documents={property.property_documents}
+              canApprove={badge.ok}
+              blockReason={badge.ok ? null : badge.error}
+              conflicts={conflicts}
+              openIssue={visit.openIssue}
+              registryReference={visit.registryReference}
+              registryMatches={visit.registryMatches}
             />
           </CardContent>
         </Card>

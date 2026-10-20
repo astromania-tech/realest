@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, FileText } from "lucide-react";
 import Link from "next/link";
 import { readTrustDecision } from "@/lib/trust/gate";
+import { fraudStatusLabel, fraudSummary, readFraudFindings } from "@/lib/trust/fraud";
 import { TrustReviewActions } from "@/components/realest/validation/TrustReviewActions";
 
 export default async function MLReviewDetailPage({
@@ -41,6 +42,7 @@ export default async function MLReviewDetailPage({
     select: { result: true },
   });
   const trust = readTrustDecision(job?.result);
+  const fraud = readFraudFindings(job?.result, trust);
 
   return (
     <div className="container mx-auto px-4">
@@ -49,7 +51,7 @@ export default async function MLReviewDetailPage({
           <ArrowLeft className="w-4 h-4" />
           Back to ML Review Queue
         </Link>
-        <h1 className="text-3xl font-bold">Document gate</h1>
+        <h1 className="font-heading text-3xl text-[#07402F]">Document gate</h1>
         <p className="text-muted-foreground">The reader reports facts. A person sends the listing to the field visit.</p>
       </div>
 
@@ -118,9 +120,16 @@ export default async function MLReviewDetailPage({
             <CardContent className="space-y-3 text-sm">
               {trust ? (
                 <>
-                  <p>Decision: {trust.decision}</p>
-                  <p>Hard blocks: {trust.hardBlocks.length ? trust.hardBlocks.join(", ") : "none"}</p>
-                  <p>Flags: {trust.flags.length ? trust.flags.join(", ") : "none"}</p>
+                  <p>{fraudSummary(fraud)}</p>
+                  <ul className="space-y-3">
+                    {fraud.map((finding) => (
+                      <li key={finding.code} className="border rounded-lg p-3">
+                        <p className="font-heading text-[#07402F]">{fraudStatusLabel(finding.status)} · {finding.claim}</p>
+                        <p className="text-muted-foreground">{finding.evidence}</p>
+                        <p>{finding.explanation}</p>
+                      </li>
+                    ))}
+                  </ul>
                 </>
               ) : (
                 <p>The trust reader has not finished this listing. Approve stays closed.</p>

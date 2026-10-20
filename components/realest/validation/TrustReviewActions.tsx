@@ -45,7 +45,7 @@ export function TrustReviewActions({
         placeholder="Note for the field visit. Required when the reader raised a flag."
         className="min-h-20"
       />
-      {error ? <p className="text-sm text-red-700">{error}</p> : null}
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <div className="flex gap-2">
         <Button className="flex-1" variant="outline" disabled={pending} onClick={() => send("reject")}>
           <XCircle className="w-4 h-4 mr-2" />
@@ -55,7 +55,7 @@ export function TrustReviewActions({
           Flag duplicate
         </Button>
       </div>
-      <Button className="w-full" disabled={pending || !allowsVetting} onClick={() => send("approve")}>
+      <Button className="w-full bg-brand-accent text-[#07402F] hover:bg-brand-accent/90" disabled={pending || !allowsVetting} onClick={() => send("approve")}>
         <CheckCircle className="w-4 h-4 mr-2" />
         Send to physical vetting
       </Button>

@@ -32,6 +32,8 @@ export default function PropertyDocuments({ documents }: PropertyDocumentsProps)
         return <Badge className="bg-green-600">Verified</Badge>
       case "rejected":
         return <Badge className="bg-red-600">Rejected</Badge>
+      case "correction_required":
+        return <Badge className="border border-[#07402F] bg-[#F8F9F7] text-[#07402F]">Replace this file</Badge>
       default:
         return <Badge className="bg-yellow-600">Pending</Badge>
     }

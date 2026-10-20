@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/lib/prisma/client";
+import { caseStateLabel } from "@/lib/trust/case";
 import { requireAdminPage } from "@/lib/auth/require-admin-page";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +22,14 @@ export default async function MLReviewPage() {
       owners: { select: { profiles: { select: { full_name: true } } } },
     },
   });
+  const caseStates = mlQueue.length === 0
+    ? []
+    : await prisma.$queryRaw<Array<{ property_id: string; state: string }>>`
+        select property_id::text as property_id, state
+        from public.property_verification_cases
+        where property_id::text in (${Prisma.join(mlQueue.map((property) => property.id))})
+      `;
+  const stateByProperty = new Map(caseStates.map((row) => [row.property_id, row.state]));
 
   return (
     <>
@@ -31,7 +41,7 @@ export default async function MLReviewPage() {
             <ArrowLeft className="w-4 h-4" />
             Back to Validation Queue
           </Link>
-          <h1 className="text-3xl font-bold">ML Review Queue</h1>
+          <h1 className="font-heading text-3xl text-[#07402F]">ML Review Queue</h1>
           <p className="text-muted-foreground">
             Properties flagged by ML for manual review
           </p>
@@ -50,7 +60,7 @@ export default async function MLReviewPage() {
                 <TableRow>
                   <TableHead>Property</TableHead>
                   <TableHead>Owner</TableHead>
-                  <TableHead>Gate</TableHead>
+                  <TableHead>Case</TableHead>
                   <TableHead>Submitted</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -67,9 +77,9 @@ export default async function MLReviewPage() {
                     <TableCell className="font-medium">{property.title}</TableCell>
                     <TableCell>{property.owners?.profiles?.full_name}</TableCell>
                     <TableCell>
-                      <Badge variant="secondary">Document gate</Badge>
+                      <Badge variant="secondary">{caseStateLabel(stateByProperty.get(property.id) ?? null)}</Badge>
                     </TableCell>
-                    <TableCell>{property.created_at ? new Date(property.created_at).toLocaleDateString() : ""}</TableCell>
+                    <TableCell>{property.created_at ? new Date(property.created_at).toLocaleDateString("en-NG", { timeZone: "Africa/Lagos" }) : ""}</TableCell>
                     <TableCell>
                       <Button asChild size="sm">
                         <Link href={`/admin/validation/ml/${property.id}`}>
