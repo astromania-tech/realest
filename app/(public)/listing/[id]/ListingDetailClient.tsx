@@ -18,6 +18,7 @@ import {
   Textarea,
   Separator,
 } from "@/components/ui";
+import { VisitRecordNote } from "@/components/realest/VisitRecordNote";
 import {
   MapPin,
   Bed,
@@ -95,6 +96,7 @@ interface AgentListing {
   price_frequency: string | null;
   status: string;
   verification_status: "pending" | "verified" | "rejected";
+  visit_record?: { visitedAt: string | null; checked: string[]; statement: string } | null;
   created_at: string;
   // Nigerian market fields (to be added to schema)
   nepa_status?: "stable" | "intermittent" | "poor" | "none" | "generator_only";
@@ -337,6 +339,7 @@ export default function ListingDetailsPage() {
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h1 className="text-3xl font-bold mb-2">{property.title}</h1>
+                    <VisitRecordNote propertyId={property.id} record={property.visit_record} />
                     <div className="flex items-center gap-2 text-muted-foreground mb-2">
                       <MapPin className="w-4 h-4" />
                       <span>
