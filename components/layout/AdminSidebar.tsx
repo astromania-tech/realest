@@ -174,13 +174,13 @@ export function AdminSidebar({
 
   return (
     <aside
-      className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-background border-r border-accent/20 z-40 ${
+      className={`fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] overscroll-y-none border-r border-accent/20 bg-background ${
         shouldCollapse ? "w-15" : "w-65"
       } ${isAnimating ? (shouldCollapse ? "animate-sidebar-collapse" : "animate-sidebar-expand") : ""}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <div className="flex flex-col h-full">
+      <div className="flex h-full flex-col overscroll-y-none">
         {/* Header */}
         <div
           className={`p-4 -mb-2 border-b border-accent/20 ${!shouldCollapse ? "animate-content-fade-in" : ""}`}
@@ -215,7 +215,7 @@ export function AdminSidebar({
 
         {/* Navigation */}
         <nav
-          className={`flex-1 px-2 my-4 space-y-2 sidebar-nav overflow-y-auto ${!shouldCollapse ? "animate-content-stagger-1" : ""}`}
+          className={`sidebar-nav my-4 flex-1 space-y-2 overflow-y-auto overscroll-y-none px-2 ${!shouldCollapse ? "animate-content-stagger-1" : ""}`}
         >
           {navigationItems.map((item, index) => {
             const Icon = item.icon;
@@ -338,6 +338,7 @@ export function AdminSidebar({
         }
         .sidebar-nav {
           scrollbar-width: none;
+          overscroll-behavior-y: none;
         }
       `}</style>
     </aside>

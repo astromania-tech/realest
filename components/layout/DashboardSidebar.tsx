@@ -228,32 +228,43 @@ export function DashboardSidebar({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const navigation = ROLE_NAVIGATION[userRole || "user"] || DEFAULT_NAVIGATION;
 
-  const isActive = (href: string) => {
-    if (href === "/") {
-      return currentPath === "/";
-    }
+  const allHrefs = navigation.sections.flatMap((section) =>
+    section.items.map((item) => item.href),
+  );
 
-    return currentPath === href || currentPath.startsWith(`${href}/`);
+  /**
+   * Same rule as AdminSidebar: workspace roots are exact only.
+   * Otherwise the longest matching nav href wins, so /agent/properties
+   * does not stay lit on /agent/properties/new.
+   */
+  const isActive = (href: string) => {
+    const matchesPath = (candidate: string) => {
+      if (candidate === "/agent" || candidate === "/owner" || candidate === "/profile") {
+        return currentPath === candidate;
+      }
+      return currentPath === candidate || currentPath.startsWith(`${candidate}/`);
+    };
+    const longest = allHrefs
+      .filter(matchesPath)
+      .sort((a, b) => b.length - a.length)[0];
+    return longest === href;
   };
 
   return (
     <aside
-      className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-background/95 backdrop-blur border-r border-border/70 transition-all duration-300 z-40 ${
+      className={`fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] overscroll-y-none border-r border-accent/20 bg-background transition-all duration-300 ${
         isCollapsed ? "w-16" : "w-64"
       }`}
     >
-      <div className="flex flex-col h-full">
-        <div className="p-4 border-b border-border/70">
-          <div className="flex items-start justify-between gap-3">
+      <div className="flex h-full flex-col overscroll-y-none">
+        <div className="p-4 -mb-2 border-b border-accent/20">
+          <div className="flex items-center justify-between">
             {!isCollapsed && (
               <div className="min-w-0">
-                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
-                  {navigation.title}
-                </p>
-                <h2 className="mt-1 text-lg font-semibold text-foreground">
-                  RealEST
+                <h2 className="text-lg font-semibold">
+                  {userRole === "agent" ? "Agent Panel" : userRole === "owner" ? "Owner Panel" : "User Panel"}
                 </h2>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {navigation.subtitle}
                 </p>
               </div>
@@ -273,7 +284,7 @@ export function DashboardSidebar({
           </div>
         </div>
 
-        <nav className="flex-1 overflow-y-auto p-3 space-y-5">
+        <nav className="my-4 flex-1 space-y-4 overflow-y-auto overscroll-y-none px-2">
           {navigation.sections.map((section) => (
             <div key={section.title} className="space-y-2">
               {!isCollapsed && (
@@ -284,33 +295,38 @@ export function DashboardSidebar({
                 </div>
               )}
 
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {section.items.map((item) => {
                   const Icon = item.icon;
                   const active = isActive(item.href);
 
                   return (
-                    <Link key={item.href} href={item.href}>
-                      <Button
-                        variant={active ? "primary" : "ghost"}
-                        className={`w-full h-auto min-h-11 justify-start gap-3 rounded-md px-3 py-2 text-left transition-all ${
-                          active
-                            ? "bg-primary text-primary-foreground shadow-sm"
-                            : "hover:bg-muted/70"
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`mt-0.5 flex w-full items-center gap-2 rounded-md p-2 text-left transition-colors hover:cursor-pointer hover:bg-popover-foreground/20 ${
+                        isCollapsed ? "justify-center p-3" : "justify-start"
+                      } ${
+                        active
+                          ? "bg-primary text-primary-foreground hover:bg-primary"
+                          : "text-muted-foreground"
+                      }`}
+                    >
+                      <Icon
+                        className={`h-5 w-5 shrink-0 ${
+                          active ? "text-primary-foreground" : ""
                         }`}
-                      >
-                        <Icon className={`w-4 h-4 shrink-0 ${active ? "text-primary-foreground" : ""}`} />
-                        {!isCollapsed && (
-                          <div className="flex min-w-0 flex-1 flex-col items-start">
-                            <span className="truncate text-sm font-medium">
-                              {item.label}
-                            </span>
-                            <span className={`truncate text-xs ${active ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
-                              {item.description}
-                            </span>
-                          </div>
-                        )}
-                      </Button>
+                      />
+                      {!isCollapsed && (
+                        <div className="flex min-w-0 flex-1 flex-col items-start">
+                          <span className={`truncate text-sm font-medium ${active ? "text-primary-foreground" : "text-muted-foreground"}`}>
+                            {item.label}
+                          </span>
+                          <span className={`truncate text-xs ${active ? "text-primary-foreground/80" : "text-muted-foreground/80"}`}>
+                            {item.description}
+                          </span>
+                        </div>
+                      )}
                     </Link>
                   );
                 })}
@@ -319,17 +335,19 @@ export function DashboardSidebar({
           ))}
         </nav>
 
-        <div className="border-t border-border/70 p-4">
-          <Link href="/setting">
-            <Button
-              variant="ghost"
-              className={`w-full justify-start gap-3 h-11 rounded-md px-3 ${
-                isCollapsed ? "justify-center px-2" : ""
-              }`}
-            >
-              <Settings className="w-4 h-4 shrink-0" />
-              {!isCollapsed && <span>Account Settings</span>}
-            </Button>
+        <div className="border-t border-accent/20 p-4">
+          <Link
+            href="/setting"
+            className={`flex h-11 w-full items-center gap-3 rounded-md px-3 text-muted-foreground transition-colors hover:bg-popover-foreground/20 hover:cursor-pointer ${
+              isCollapsed ? "justify-center px-2" : "justify-start"
+            } ${
+              isActive("/setting")
+                ? "bg-primary text-primary-foreground hover:bg-primary"
+                : ""
+            }`}
+          >
+            <Settings className="h-4 w-4 shrink-0" />
+            {!isCollapsed && <span className="text-sm font-medium">Account Settings</span>}
           </Link>
         </div>
       </div>
