@@ -27,6 +27,7 @@ import {
 } from '@/lib/referral-system';
 import { REFERRAL_CREDIT_EVENT_TYPES, referralAlreadyCredited } from '@/lib/referral-credit';
 import prisma from '@/lib/prisma'; // ← replaces createServiceClient
+import { clientAddress, consumeRateLimit } from '@/lib/http/rate-limit';
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
 
 export const openApiPOST: OpenApiMetadata = {
@@ -61,31 +62,15 @@ export const openApiPOST: OpenApiMetadata = {
   },
 };
 
-// Rate limiting store (in production, use Redis or database)
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const limit = rateLimitStore.get(ip);
-  if (!limit || now > limit.resetTime) {
-    rateLimitStore.set(ip, { count: 1, resetTime: now + 60000 });
-    return false;
-  }
-  if (limit.count >= 5) return true;
-  limit.count += 1;
-  return false;
-}
+// Shared Postgres limiter. Five posts per address per minute.
 
 export async function POST(request: NextRequest) {
   try {
     console.log('🚀 Waitlist API POST called');
 
-    const ip =
-      request.headers.get('x-forwarded-for') ||
-      request.headers.get('x-real-ip') ||
-      'unknown';
+    const ip = clientAddress(request.headers);
 
-    if (isRateLimited(ip)) {
+    if (!(await consumeRateLimit({ bucket: "waitlist", subject: ip })).allowed) {
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
         { status: 429 },

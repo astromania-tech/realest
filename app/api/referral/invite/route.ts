@@ -3,6 +3,7 @@ import { sendReferralInviteEmail } from '@/lib/emailService';
 import { recordReferralEvent } from '@/lib/reward-engine';
 import { buildReferralShareUrl, getCurrentMilestone, getNextMilestone } from '@/lib/referral-system';
 import prisma from '@/lib/prisma';
+import { clientAddress, consumeRateLimit } from '@/lib/http/rate-limit';
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
 
 export const openApiPOST: OpenApiMetadata = {
@@ -34,28 +35,9 @@ export const openApiPOST: OpenApiMetadata = {
   },
 }
 
-const inviteRateLimitStore = new Map<string, { count: number; resetTime: number }>();
-
-function isInviteRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const current = inviteRateLimitStore.get(ip);
-
-  if (!current || now > current.resetTime) {
-    inviteRateLimitStore.set(ip, { count: 1, resetTime: now + 60_000 });
-    return false;
-  }
-
-  if (current.count >= 5) {
-    return true;
-  }
-
-  current.count += 1;
-  return false;
-}
-
 export async function POST(request: NextRequest) {
-  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
-  if (isInviteRateLimited(ip)) {
+  const ip = clientAddress(request.headers);
+  if (!(await consumeRateLimit({ bucket: "referral-invite", subject: ip })).allowed) {
     return NextResponse.json({ ok: false, error: 'Too many invites. Try again later.' }, { status: 429 });
   }
 
