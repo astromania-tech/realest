@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { shouldShowDemoPages } from "@/lib/appMode";
+import { PrototypeHold } from "@/components/realest/PrototypeHold";
 import { Card, Button } from "@heroui/react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -224,6 +226,8 @@ export default function SecurityPage() {
         return <AlertTriangle className="w-4 h-4" />;
     }
   };
+
+  if (!shouldShowDemoPages()) return <PrototypeHold />;
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
