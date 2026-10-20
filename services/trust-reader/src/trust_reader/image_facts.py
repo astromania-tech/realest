@@ -7,6 +7,8 @@ import io
 
 from PIL import Image
 
+from trust_reader.photo_classifier import classify_scene
+
 SCREENSHOT_MARKERS = ("screenshot", "screen shot", "snipping tool", "screencapture")
 TEXT_DENSE_WORD_COUNT = 80
 
@@ -61,7 +63,7 @@ def exif_gps(image: Image.Image) -> dict[str, float] | None:
 
 
 def classify_image_text(text: str) -> tuple[str, str | None]:
-    """Return propertyPhoto and a reason. yes is never returned in v1."""
+    """Text rules that beat the scene check. None means the pixels decide."""
     normalized = " ".join(text.lower().split())
     if any(marker in normalized for marker in SCREENSHOT_MARKERS):
         return "no", "screenshot"
@@ -78,6 +80,9 @@ def image_fact(data: bytes, text: str, reader_error: str | None) -> dict:
             width, height = image.size
             digest = dhash_hex(image)
             gps = exif_gps(image)
+            photo, reason = ("unknown", None) if reader_error else classify_image_text(text)
+            if photo == "unknown":
+                photo, reason = classify_scene(image)
     except Exception:
         return {
             "sha256": sha256_hex(data) if data else "",
@@ -90,7 +95,6 @@ def image_fact(data: bytes, text: str, reader_error: str | None) -> dict:
             "readable": False,
             "readerError": reader_error or "unsupported_type",
         }
-    photo, reason = ("unknown", None) if reader_error else classify_image_text(text)
     return {
         "sha256": sha256_hex(data),
         "dHashHex": digest,
@@ -99,6 +103,6 @@ def image_fact(data: bytes, text: str, reader_error: str | None) -> dict:
         "exifGps": gps,
         "width": width,
         "height": height,
-        "readable": reader_error is None,
-        "readerError": reader_error,
+        "readable": True,
+        "readerError": None,
     }

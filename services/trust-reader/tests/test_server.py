@@ -55,8 +55,14 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(body["kind"], "image")
         self.assertNotIn("status", body)
         self.assertNotIn("decision", body)
-        self.assertTrue(all(slot["affectsDecision"] is False for slot in body["expansions"]))
-        self.assertTrue(all(slot["status"] == "unavailable" for slot in body["expansions"]))
+        classifier = next(slot for slot in body["expansions"] if slot["id"] == "property_photo_classifier")
+        others = [slot for slot in body["expansions"] if slot["id"] != "property_photo_classifier"]
+        self.assertEqual(classifier["status"], "on")
+        self.assertTrue(classifier["affectsDecision"])
+        self.assertTrue(all(slot["affectsDecision"] is False for slot in others))
+        self.assertTrue(all(slot["status"] == "unavailable" for slot in others))
+        self.assertEqual(body["image"]["propertyPhoto"], "no")
+        self.assertEqual(body["image"]["propertyPhotoReason"], "flat")
         self.assertIsNotNone(body["image"]["dHashHex"])
 
     def test_read_requires_the_token_when_one_is_configured(self):

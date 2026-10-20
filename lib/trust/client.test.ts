@@ -9,7 +9,7 @@ test("the client sends the production token", async () => {
     authorization = headers.get("authorization") ?? "";
     return new Response(JSON.stringify({
       reader: "realest-trust-reader",
-      contractVersion: "1.0.0",
+      contractVersion: "1.1.0",
       kind: "image",
       document: null,
       image: null,

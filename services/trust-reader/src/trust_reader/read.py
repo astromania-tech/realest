@@ -25,7 +25,7 @@ def envelope(kind: str, document: dict | None, image: dict | None) -> dict:
         "limitations": [
             "Cannot certify a Nigerian land-registry original.",
             "Pass is not a field this reader returns.",
-            "propertyPhoto yes is reserved for the classifier slot, which is off.",
+            "scene-1 can reject a non-scene. It cannot certify the building at the pin.",
         ],
     }
 

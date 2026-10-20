@@ -8,7 +8,8 @@ import { photoHashesCollide } from "@/lib/trust/hash";
 import { loadDuplicateCandidates } from "@/lib/trust/candidates";
 import { mediaMissingHash, persistablePhotoHashes, storedHashes } from "@/lib/trust/photo-store";
 import { propertiesWithinRadius } from "@/lib/geo/properties-within-radius";
-import { decideTrust, readerUnavailableDecision } from "@/lib/trust/policy";
+import { decideTrust, photoChecks, readerUnavailableDecision } from "@/lib/trust/policy";
+import { explainFraud } from "@/lib/trust/fraud";
 import { VALIDATION_JOB_MAX_ATTEMPTS, VALIDATION_JOB_STALE_MINUTES } from "@/lib/validation/job-claim";
 import { DUPLICATE_CANDIDATE_STATUSES, DUPLICATE_RADIUS_METERS, EXIF_PIN_TOLERANCE_METERS, type DocumentFact, type ImageFact } from "@/lib/trust/types";
 
@@ -350,12 +351,9 @@ async function processImageJob(job: ValidationJobRow, payload: Extract<Validatio
   const { bytes, mimeType } = await fetchBytes(payload.source);
   const envelope = await readTrustFile({ kind: "image", mimeType, bytes });
   const fact = envelope.image ?? unreadImage("unsupported_type");
-  const flags: string[] = [];
-  if (!fact.readable || fact.readerError || !fact.dHashHex) flags.push("photo_unreadable");
-  else if (fact.propertyPhotoReason === "screenshot") flags.push("photo_screenshot");
-  else if (fact.propertyPhotoReason === "text_dense") flags.push("photo_not_property");
-  else flags.push("photo_classifier_unavailable");
-  const blocked = flags.some((flag) => flag !== "photo_classifier_unavailable");
+  const photo = fact.readable && !fact.readerError && fact.dHashHex ? photoChecks(fact) : { hardBlocks: ["photo_unreadable"], flags: [] };
+  const flags = [...photo.hardBlocks, ...photo.flags];
+  const blocked = photo.hardBlocks.length > 0;
   return {
     finalPropertyStatus: null,
     result: { job_kind: job.job_kind, property_type: payload.propertyType, source: payload.source, fact, limitations: envelope.limitations },
@@ -554,16 +552,18 @@ async function processPropertyJob(job: ValidationJobRow, context: ValidationJobC
     photoHashCollision,
     exifFarFromPin,
   });
+  const fraud = explainFraud(trust);
 
   return {
     finalStatus: trust.recommendedQueue === "pending_duplicate_review" ? "pending_duplicate_review" : null,
     confidence: trust.decision === "pass" ? 1 : trust.decision === "review" ? 0.5 : 0,
     decision: trust.decision,
-    reason: trust.hardBlocks[0] ?? trust.flags[0] ?? "Ready for a person to send this listing to physical vetting.",
+    reason: fraud.find((finding) => finding.blocksVetting)?.explanation ?? fraud[0]?.explanation ?? "No conflict was found in the files. A person at the pin still writes RealEST Verified.",
     documentResults,
     imageResults,
     duplicateResult: { exactAddressMatch, nearestOtherListingMeters, photoHashCollision, matchedPropertyIds },
     flags: [...trust.hardBlocks, ...trust.flags],
+    fraud,
     trust,
     jobId: job.id,
   };

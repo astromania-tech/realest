@@ -12,7 +12,7 @@ import {
 const LIMITATIONS = [
   "The reader does not certify a land-registry original.",
   "RealEST Verified is written only when a person approves the field visit.",
-  "A photo is not treated as proof of the building until the classifier slot is on.",
+  "scene-1 can reject a non-scene. It cannot certify the building at the pin.",
 ];
 
 export type TrustListingInput = {
@@ -27,6 +27,19 @@ export type TrustListingInput = {
   photoHashCollision: boolean;
   exifFarFromPin: boolean;
 };
+
+const NOT_A_PROPERTY = new Set(["text_dense", "flat", "document_page", "not_a_scene"]);
+
+export function photoChecks(image: ImageFact): { hardBlocks: string[]; flags: string[] } {
+  if (image.propertyPhotoReason === "screenshot") return { hardBlocks: ["photo_screenshot"], flags: [] };
+  if (image.propertyPhoto === "no" && image.propertyPhotoReason && NOT_A_PROPERTY.has(image.propertyPhotoReason)) {
+    return { hardBlocks: ["photo_not_property"], flags: [] };
+  }
+  if (image.propertyPhoto === "yes") {
+    return image.exifGps ? { hardBlocks: [], flags: [] } : { hardBlocks: [], flags: ["photo_not_tied_to_pin"] };
+  }
+  return { hardBlocks: ["photo_classifier_unavailable"], flags: [] };
+}
 
 function isRent(listingType: string): boolean {
   return listingType === "for_rent" || listingType === "for_lease" || listingType === "short_let";
@@ -74,15 +87,9 @@ export function decideTrust(input: TrustListingInput): TrustDecision {
       hardBlocks.push("photo_unreadable");
       continue;
     }
-    if (image.propertyPhotoReason === "screenshot") {
-      hardBlocks.push("photo_screenshot");
-      continue;
-    }
-    if (image.propertyPhotoReason === "text_dense") {
-      hardBlocks.push("photo_not_property");
-      continue;
-    }
-    flags.push("photo_classifier_unavailable");
+    const photo = photoChecks(image);
+    hardBlocks.push(...photo.hardBlocks);
+    flags.push(...photo.flags);
   }
   if (input.exifFarFromPin) flags.push("exif_far_from_pin");
 

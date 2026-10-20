@@ -5,7 +5,7 @@ EXPANSIONS = [
         "id": "registry_crosscheck",
         "status": "unavailable",
         "affectsDecision": False,
-        "note": "No state land-registry API is selected. A later contract can add one without changing who writes the badge.",
+        "note": "This version stores a person's registry file confirmation. LAND_REGISTRY_URL is not called until a later connection.",
     },
     {
         "id": "identity_match",
@@ -15,9 +15,9 @@ EXPANSIONS = [
     },
     {
         "id": "property_photo_classifier",
-        "status": "unavailable",
-        "affectsDecision": False,
-        "note": "The field visit confirms the building. This slot stays off until a pinned local model exists.",
+        "status": "on",
+        "affectsDecision": True,
+        "note": "scene-1 rejects a blank, a document page, and a file with no scene. A building or plot label is not the building at the pin.",
     },
     {
         "id": "premium_recheck",

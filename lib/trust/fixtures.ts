@@ -23,8 +23,8 @@ export function imageFact(overrides: Partial<ImageFact> = {}): ImageFact {
   return {
     sha256: "abc",
     dHashHex: "0000000000000000",
-    propertyPhoto: "unknown",
-    propertyPhotoReason: null,
+    propertyPhoto: "yes",
+    propertyPhotoReason: "building",
     exifGps: null,
     width: 800,
     height: 600,

@@ -24,7 +24,7 @@ npm run test:trust-reader
 | Piece | Role |
 |---|---|
 | This container | The production reader. OCR binaries are inside the image. |
-| Pillow | Image open, dHash, EXIF. Pinned in `requirements.txt`. |
+| Pillow | Image open, dHash, EXIF, scene-1. Pinned in `requirements.txt`. |
 | Tesseract English data | Installed by the image. |
 | Poppler `pdftotext` | Installed by the image. |
 | Postgres and PostGIS | Already in RealEST. This service does not connect. |
@@ -34,11 +34,10 @@ A hosted vision API is not used. Title files stay on this service.
 
 ## Premium slots
 
-Each slot is `unavailable` and `affectsDecision: false`.
+`property_photo_classifier` is on. Contract `1.1.0`. The check is `scene-1` in `photo_classifier.py`: a blank, a document page, and a file with no scene are `no`. A facade is `building`. A green plot is `land`. The label is not the building at the pin. A file with no GPS stays a flag for the visit.
+
+These stay `unavailable` and `affectsDecision: false`:
 
 - `registry_crosscheck`
 - `identity_match`
-- `property_photo_classifier`
 - `premium_recheck`
-
-Turning one on is a contract version bump and a rule change in `lib/trust/policy.ts`.

@@ -1,4 +1,4 @@
-export const TRUST_CONTRACT_VERSION = "1.0.0";
+export const TRUST_CONTRACT_VERSION = "1.1.0";
 export const DUPLICATE_RADIUS_METERS = 50;
 export const EXIF_PIN_TOLERANCE_METERS = 500;
 export const PHOTO_HASH_HAMMING_MAX = 8;
@@ -46,8 +46,16 @@ export type DocumentFact = {
 export type ImageFact = {
   sha256: string;
   dHashHex: string | null;
-  propertyPhoto: "unknown" | "no";
-  propertyPhotoReason: "screenshot" | "text_dense" | null;
+  propertyPhoto: "unknown" | "no" | "yes";
+  propertyPhotoReason:
+    | "screenshot"
+    | "text_dense"
+    | "flat"
+    | "document_page"
+    | "not_a_scene"
+    | "building"
+    | "land"
+    | null;
   exifGps: { lat: number; lng: number } | null;
   width: number | null;
   height: number | null;
@@ -57,8 +65,8 @@ export type ImageFact = {
 
 export type TrustExpansion = {
   id: string;
-  status: "unavailable";
-  affectsDecision: false;
+  status: "unavailable" | "on";
+  affectsDecision: boolean;
   note: string;
 };
 
