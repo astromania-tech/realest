@@ -147,7 +147,7 @@ export async function GET(
 
     const where = { property_id: propertyId };
 
-    const [reviews, total] = await Promise.all([
+    const [reviews, total, ratingAgg] = await Promise.all([
       prisma.reviews.findMany({
         where,
         select: {
@@ -169,13 +169,12 @@ export async function GET(
         take: perPage,
       }),
       prisma.reviews.count({ where }),
+      prisma.reviews.aggregate({
+        where,
+        _avg: { rating: true },
+      }),
     ]);
 
-    // Calculate average rating
-    const ratingAgg = await prisma.reviews.aggregate({
-      where,
-      _avg: { rating: true },
-    });
     const averageRating = ratingAgg._avg.rating ?? 0;
 
     const totalPages = Math.ceil(total / perPage);
