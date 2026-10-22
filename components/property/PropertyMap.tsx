@@ -678,7 +678,7 @@ export function PropertyMap({
     if (property?.property_media?.length > 0) {
       const currentMedia = property.property_media[currentImageIndex];
       if (currentMedia?.media_type === "image") {
-        return currentMedia.file_url;
+        return currentMedia.media_url || currentMedia.file_url;
       }
     }
     return "/placeholder-property.jpg";

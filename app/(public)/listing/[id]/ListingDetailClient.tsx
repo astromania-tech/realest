@@ -34,9 +34,20 @@ import {
   Star,
   Award,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { Header, Footer } from "@/components/layout";
-import { PropertyMap } from "@/components/property/PropertyMap";
 import { formatPrice, formatListingType } from "@/lib/utils/propertyUtils";
+
+const PropertyMap = dynamic(
+  () =>
+    import("@/components/property/PropertyMap").then((mod) => mod.PropertyMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-[320px] animate-pulse rounded-xl bg-muted" />
+    ),
+  },
+);
 import {
   StatusBadge,
   VerifiedBadge,

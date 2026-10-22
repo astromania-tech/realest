@@ -1,13 +1,24 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
+import dynamic from "next/dynamic";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { RealEstButton } from "@/components/heroui/RealEstButton";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { AdvancedSearchForm } from "@/components/patterns/forms";
-import { PropertyMap } from "@/components/property/PropertyMap";
 import { Chip } from "@heroui/react";
+
+const PropertyMap = dynamic(
+  () =>
+    import("@/components/property/PropertyMap").then((mod) => mod.PropertyMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-full min-h-[400px] animate-pulse bg-muted" />
+    ),
+  },
+);
 import { 
   Card, 
   Input, 
