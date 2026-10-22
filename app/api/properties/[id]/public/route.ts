@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
 import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
-import { publicListingWhere, publicPersonCard } from "@/lib/listings/public-listing";
-import { publicVisitRecord } from "@/lib/trust/visit";
-import { readStoredVisit } from "@/lib/trust/visit-store";
+import {
+  loadPublicPropertyDetail,
+  type PublicListingSource,
+} from "@/lib/listings/load-public-property";
 
 const propertyIdSchema = z.string().uuid("Invalid property ID");
 
@@ -82,192 +82,13 @@ export async function GET(
     }
     const propertyId = propertyIdResult.data;
     const url = new URL(request.url);
-    const source = url.searchParams.get("source") ?? "owner";
-    const isAgent = source === "agent";
+    const sourceParam = url.searchParams.get("source") ?? "owner";
+    const source: PublicListingSource = sourceParam === "agent" ? "agent" : "owner";
 
-    const property = await prisma.properties.findFirst({
-      where: {
-        id: propertyId,
-        ...publicListingWhere,
-        listing_source: isAgent ? "agent" : { not: "agent" },
-      },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        price: true,
-        price_frequency: true,
-        listing_type: true,
-        listing_source: true,
-        property_type: true,
-        address: true,
-        city: true,
-        state: true,
-        country: true,
-        latitude: true,
-        longitude: true,
-        bedrooms: true,
-        bathrooms: true,
-        square_feet: true,
-        year_built: true,
-        status: true,
-        verification_status: true,
-        created_at: true,
-        updated_at: true,
-        owner_id: true,
-        agent_id: true,
-        property_details: {
-          select: {
-            metadata: true,
-            features: true,
-            amenities: true,
-            parking_spaces: true,
-            has_pool: true,
-          },
-          take: 1,
-        },
-        property_media: {
-          select: {
-            id: true,
-            media_type: true,
-            media_url: true,
-            file_name: true,
-            display_order: true,
-            is_featured: true,
-          },
-          orderBy: { display_order: "asc" },
-          take: 24,
-        },
-        owners: {
-          select: {
-            id: true,
-            profiles: {
-              select: { id: true, full_name: true, avatar_url: true },
-            },
-          },
-        },
-        agents: {
-          select: {
-            id: true,
-            license_number: true,
-            agency_name: true,
-            specialization: true,
-            verified: true,
-            rating: true,
-            profiles: {
-              select: { id: true, full_name: true, avatar_url: true },
-            },
-          },
-        },
-      },
-    });
-
-    if (!property) {
+    const formattedProperty = await loadPublicPropertyDetail(propertyId, source);
+    if (!formattedProperty) {
       return NextResponse.json({ error: "Property not found" }, { status: 404 });
     }
-
-    // property_details is an array (one-to-many relation)
-    const details = property.property_details?.[0] ?? null;
-    const meta = (details?.metadata as Record<string, unknown>) ?? {};
-    const features = (details?.features as Record<string, unknown>) ?? {};
-    const amenitiesRaw = details?.amenities;
-
-    // Normalise listing_type values (DB stores "for_rent", pages expect "rent" etc.)
-    const listingTypeMap: Record<string, string> = {
-      for_rent: "rent",
-      for_sale: "sale",
-      for_lease: "lease",
-    };
-    const normalisedListingType =
-      listingTypeMap[property.listing_type as string] ?? property.listing_type;
-
-    const visit = await readStoredVisit(property.id);
-    const visitRecord = publicVisitRecord({
-      verified: property.verification_status === "verified",
-      checkedInAt: visit.checkedInAt,
-      voidedAt: visit.voidedAt,
-      photoPath: visit.photoPath,
-      distanceMeters: visit.distanceMeters,
-    });
-
-    const formattedProperty = {
-      id: property.id,
-      title: property.title,
-      description: property.description,
-      price: property.price ? Number(property.price) : 0,
-      price_frequency: property.price_frequency,
-      listing_type: normalisedListingType,
-      listing_source: property.listing_source,
-      address: property.address,
-      city: property.city,
-      state: property.state,
-      country: property.country,
-      latitude: property.latitude ? Number(property.latitude) : null,
-      longitude: property.longitude ? Number(property.longitude) : null,
-      property_type: property.property_type,
-      status: property.status,
-      verification_status: property.verification_status,
-      created_at: property.created_at,
-
-      // Nigerian market fields — stored in property_details.metadata
-      nepa_status: (meta.nepa_status as string) ?? null,
-      water_source: (meta.water_source as string) ?? null,
-      internet_type: (meta.internet_type as string) ?? null,
-      security_type: (meta.security_type as string[]) ?? [],
-      has_bq: (meta.has_bq as boolean) ?? false,
-
-      // Flattened property_details matching the page's expected shape
-      property_details: details
-        ? {
-            bedrooms: property.bedrooms,
-            bathrooms: property.bathrooms ? Number(property.bathrooms) : null,
-            square_feet: property.square_feet ? Number(property.square_feet) : null,
-            lot_size: (meta.lot_size as number) ?? null,
-            year_built: property.year_built,
-            parking_spaces: details.parking_spaces,
-            furnished: (features.furnished as boolean) ?? null,
-            pets_allowed: (features.pets_allowed as boolean) ?? null,
-            amenities: Array.isArray(amenitiesRaw)
-              ? (amenitiesRaw as string[])
-              : amenitiesRaw && typeof amenitiesRaw === "object"
-              ? Object.keys(amenitiesRaw as object)
-              : null,
-            utilities_included: (meta.utilities_included as string[]) ?? null,
-            has_generator: (meta.has_generator as boolean) ?? false,
-            has_pool: details.has_pool ?? false,
-            has_gym: (meta.has_gym as boolean) ?? false,
-          }
-        : null,
-
-      // Media — mapped to field names expected by both pages
-      property_media: property.property_media.map((m: { id: string; media_type: string; media_url: string; file_name: string; display_order: number | null; is_featured: boolean | null }) => ({
-        id: m.id,
-        media_type: m.media_type,
-        file_url: m.media_url,       // pages expect file_url
-        file_name: m.file_name,
-        is_primary: m.is_featured ?? false, // pages expect is_primary
-      })),
-
-      // Owner info (populated only for owner-source listings)
-      owner: !isAgent && property.owners?.profiles
-        ? publicPersonCard(property.owners.profiles)
-        : null,
-
-      // Agent info (populated only for agent-source listings)
-      agent:
-        isAgent && property.agents
-          ? {
-              id: property.agents.id,
-              license_number: property.agents.license_number,
-              agency_name: property.agents.agency_name ?? "",
-              specialization: property.agents.specialization,
-              verified: property.agents.verified ?? false,
-              rating: property.agents.rating ? Number(property.agents.rating) : null,
-              agent_profile: publicPersonCard(property.agents.profiles),
-            }
-          : null,
-      visit_record: visitRecord,
-    };
 
     return NextResponse.json({ data: formattedProperty });
   } catch (error) {

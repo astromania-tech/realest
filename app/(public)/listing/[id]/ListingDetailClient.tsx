@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useState } from "react";
 import Link from "next/link";
+import type { PublicPropertyDetail } from "@/lib/listings/load-public-property";
 import {
   Chip,
   Avatar,
@@ -143,11 +143,18 @@ interface AgentListing {
   };
 }
 
-export default function ListingDetailsPage() {
-  const params = useParams();
-  const propertyId = params.id as string;
-  const [property, setProperty] = useState<AgentListing | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+type ListingDetailsPageProps = {
+  initialProperty: PublicPropertyDetail | null;
+  propertyId: string;
+};
+
+export default function ListingDetailsPage({
+  initialProperty,
+  propertyId,
+}: ListingDetailsPageProps) {
+  const [property] = useState<AgentListing | null>(
+    () => (initialProperty as AgentListing | null) ?? null,
+  );
   const [selectedImage, setSelectedImage] = useState(0);
   const [inquiryForm, setInquiryForm] = useState({
     name: "",
@@ -158,27 +165,6 @@ export default function ListingDetailsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [inquirySent, setInquirySent] = useState(false);
   const [inquiryError, setInquiryError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchProperty = async () => {
-      setIsLoading(true);
-      try {
-        const res = await fetch(`/api/properties/${propertyId}/public?source=agent`);
-        if (res.ok) {
-          const json = await res.json();
-          if (json.data) setProperty(json.data as AgentListing);
-        }
-      } catch (err) {
-        console.error("Failed to fetch listing:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (propertyId) {
-      fetchProperty();
-    }
-  }, [propertyId]);
 
   const handleInquirySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -214,30 +200,6 @@ export default function ListingDetailsPage() {
       setIsSubmitting(false);
     }
   };
-
-  if (isLoading) {
-    return (
-      <>
-        <Header />
-        <div className="min-h-screen bg-background">
-          <div className="container mx-auto px-4 py-8">
-            <div className="animate-pulse space-y-8">
-              <div className="h-96 bg-muted rounded-lg" />
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 space-y-6">
-                  <div className="h-8 bg-muted rounded" />
-                  <div className="h-4 bg-muted rounded w-3/4" />
-                  <div className="h-32 bg-muted rounded" />
-                </div>
-                <div className="h-96 bg-muted rounded" />
-              </div>
-            </div>
-          </div>
-        </div>
-        <Footer />
-      </>
-    );
-  }
 
   if (!property) {
     return (

@@ -19,13 +19,11 @@ test("search properties uses narrow select not include:true", () => {
   assert.doesNotMatch(source, /property_details:\s*true/);
 });
 
-test("public property API caps media and selects details columns", () => {
-  const source = readFileSync(
-    "app/api/properties/[id]/public/route.ts",
-    "utf8",
-  );
+test("public property loader caps media and selects details columns", () => {
+  const source = readFileSync("lib/listings/load-public-property.ts", "utf8");
   assert.match(source, /take:\s*24/);
   assert.doesNotMatch(source, /property_details:\s*true/);
+  assert.match(source, /cache\(/);
 });
 
 test("case detail and my-visits queries are bounded", () => {

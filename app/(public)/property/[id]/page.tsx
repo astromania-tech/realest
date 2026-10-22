@@ -1,49 +1,31 @@
 /**
  * Property Detail Page — Server Component wrapper
  *
- * Exports `generateMetadata` for dynamic per-property SEO/OG metadata,
- * then delegates all interactive rendering to the Client Component.
- *
- * Data source: Prisma (same client used by /api/properties/[id]/public)
- * Mirrors the owner-side public route — listing_source: { not: "agent" }
+ * Loads the public payload once (shared with generateMetadata via React.cache)
+ * and passes it into the client island so the browser does not re-fetch.
  */
 import type { Metadata } from "next";
-import { prisma } from "@/lib/prisma";
+import {
+  loadPublicPropertyDetail,
+  publicPropertyMetadataFields,
+} from "@/lib/listings/load-public-property";
 import PropertyDetailsPage from "./PropertyDetailClient";
 
 type PageProps = { params: Promise<{ id: string }> };
 
 const LISTING_TYPE_LABEL: Record<string, string> = {
   for_sale: "For Sale",
+  sale: "For Sale",
   for_rent: "For Rent",
+  rent: "For Rent",
   for_lease: "For Lease",
+  lease: "For Lease",
   short_let: "Short Let",
 };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
-
-  const property = await prisma.properties
-    .findFirst({
-      where: { id, status: "live", listing_source: { not: "agent" } },
-      select: {
-        title: true,
-        description: true,
-        city: true,
-        state: true,
-        property_type: true,
-        listing_type: true,
-        bedrooms: true,
-        bathrooms: true,
-        property_media: {
-          where: { is_featured: true },
-          orderBy: { display_order: "asc" },
-          take: 1,
-          select: { media_url: true },
-        },
-      },
-    })
-    .catch(() => null);
+  const property = await loadPublicPropertyDetail(id, "owner");
 
   if (!property) {
     return {
@@ -53,14 +35,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   }
 
-  const location = [property.city, property.state].filter(Boolean).join(", ");
+  const fields = publicPropertyMetadataFields(property);
+  const location = [fields.city, fields.state].filter(Boolean).join(", ");
 
-  const typeLabel = (property.property_type ?? "Property")
+  const typeLabel = (fields.property_type ?? "Property")
     .replace(/_/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
 
-  const beds = property.bedrooms;
-  const baths = property.bathrooms ? Number(property.bathrooms) : null;
+  const beds = fields.bedrooms;
+  const baths = fields.bathrooms ? Number(fields.bathrooms) : null;
   const specParts = [
     beds ? `${beds}-Bed` : null,
     baths ? `${baths}-Bath` : null,
@@ -69,16 +52,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     .filter(Boolean)
     .join(" ");
 
-  const listingLabel = LISTING_TYPE_LABEL[property.listing_type ?? ""] ?? "";
+  const listingLabel = LISTING_TYPE_LABEL[fields.listing_type ?? ""] ?? "";
   const baseTitle =
-    property.title ?? `${specParts}${location ? " in " + location : ""}`;
+    fields.title ?? `${specParts}${location ? " in " + location : ""}`;
   const title = `${baseTitle}${listingLabel ? " · " + listingLabel : ""} | RealEST`;
 
-  const description = property.description
-    ? property.description.slice(0, 155)
+  const description = fields.description
+    ? fields.description.slice(0, 155)
     : `Verified ${specParts.toLowerCase()}${location ? " in " + location : ""} on RealEST. View photos, pricing and contact the owner directly.`;
 
-  const ogImageUrl = property.property_media?.[0]?.media_url ?? undefined;
+  const ogImageUrl = fields.ogImageUrl;
 
   return {
     title,
@@ -103,6 +86,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default function PropertyPage() {
-  return <PropertyDetailsPage />;
+export default async function PropertyPage({ params }: PageProps) {
+  const { id } = await params;
+  const initialProperty = await loadPublicPropertyDetail(id, "owner");
+  return <PropertyDetailsPage initialProperty={initialProperty} propertyId={id} />;
 }
