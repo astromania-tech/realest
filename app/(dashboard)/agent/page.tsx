@@ -11,11 +11,7 @@ import {
   Button, 
   Spinner 
 } from "@/components/ui";
-import {
-  getCurrentUser,
-  getUserProfile,
-  resendEmailVerification,
-} from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/client";
 import { BarChart3, Home, MessageSquare, TrendingUp, Eye, Plus } from "lucide-react";
 
@@ -60,7 +56,6 @@ export default function AgentDashboardPage() {
       try {
         const supabase = await createClient();
 
-        // Get current user
         const { user, error: authError } = await getCurrentUser();
 
         if (authError || !user) {
@@ -68,101 +63,93 @@ export default function AgentDashboardPage() {
           return;
         }
 
-        // Get agent profile
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single();
-
-        // if (!profile || user.app_metadata?.role !== "agent") {
-        //   router.push("/");
-        //   return;
-        // }
-
-        // Get agent details
-        const { data: agentData } = await supabase
-          .from("agents")
-          .select("*")
-          .eq("profile_id", user.id)
-          .single();
+        const [{ data: profile }, { data: agentData }] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select("id, full_name, avatar_url, email, phone")
+            .eq("id", user.id)
+            .single(),
+          supabase
+            .from("agents")
+            .select(
+              "id, agency_name, license_number, verified, verification_date, profile_id",
+            )
+            .eq("profile_id", user.id)
+            .single(),
+        ]);
 
         setAgent({ ...profile, ...agentData });
 
-        // Look up agent's id using the current user's profile id
-        const { data: agentRow } = await supabase
-          .from("agents")
-          .select("id")
-          .eq("profile_id", user.id)
-          .single();
+        const agentId = agentData?.id ?? null;
 
-        let properties: PropertyPreview[] = [];
-        let totalProperties = 0;
-        let activeListings = 0;
-        if (agentRow) {
-          // Get agent's properties
-          const { data: props } = await supabase
-            .from("properties")
-            .select("id, title, price, status")
-            .eq("agent_id", agentRow.id)
-            .order("created_at", { ascending: false })
-            .limit(5);
-          properties = props || [];
-
-          // Calculate stats
-          const { count: totalCount } = await supabase
-            .from("properties")
-            .select("*", { count: "exact", head: true })
-            .eq("agent_id", agentRow.id);
-          totalProperties = totalCount || 0;
-
-          const { count: activeCount } = await supabase
-            .from("properties")
-            .select("*", { count: "exact", head: true })
-            .eq("agent_id", agentRow.id)
-            .eq("status", "live");
-          activeListings = activeCount || 0;
-        }
-
-        setRecentProperties(properties);
-
-        // Inquiries
-        const { count: totalInquiries } = await supabase
-          .from("inquiries")
-          .select("*", { count: "exact", head: true })
-          .eq("receiver_id", user.id);
-
-        setStats({
-          totalProperties,
-          activeListings,
-          totalInquiries: totalInquiries || 0,
-          avgResponseTime: "2.5 hrs",
-        });
-
-        // Get recent inquiries
-        const { data: inquiries } = await supabase
-          .from("inquiries")
-          .select(
-            `
+        const [
+          propsResult,
+          totalCountResult,
+          activeCountResult,
+          inquiryCountResult,
+          inquiriesResult,
+        ] = await Promise.all([
+          agentId
+            ? supabase
+                .from("properties")
+                .select("id, title, price, status")
+                .eq("agent_id", agentId)
+                .order("created_at", { ascending: false })
+                .limit(5)
+            : Promise.resolve({ data: [] as PropertyPreview[] }),
+          agentId
+            ? supabase
+                .from("properties")
+                .select("id", { count: "exact", head: true })
+                .eq("agent_id", agentId)
+            : Promise.resolve({ count: 0 }),
+          agentId
+            ? supabase
+                .from("properties")
+                .select("id", { count: "exact", head: true })
+                .eq("agent_id", agentId)
+                .eq("status", "live")
+            : Promise.resolve({ count: 0 }),
+          supabase
+            .from("inquiries")
+            .select("id", { count: "exact", head: true })
+            .eq("receiver_id", user.id),
+          supabase
+            .from("inquiries")
+            .select(
+              `
             id,
             message,
             created_at,
             sender:sender_id(full_name),
             property:property_id(title)
-          `
-          )
-          .eq("receiver_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(5);
+          `,
+            )
+            .eq("receiver_id", user.id)
+            .order("created_at", { ascending: false })
+            .limit(5),
+        ]);
 
-        if (inquiries) {
-          const formattedInquiries: InquiryData[] = inquiries.map((inq) => ({
-            id: inq.id,
-            message: inq.message,
-            created_at: inq.created_at ?? "",
-            sender: Array.isArray(inq.sender) ? inq.sender[0] : inq.sender,
-            property: Array.isArray(inq.property) ? inq.property[0] : inq.property,
-          }));
+        setRecentProperties(propsResult.data || []);
+        setStats({
+          totalProperties: totalCountResult.count || 0,
+          activeListings: activeCountResult.count || 0,
+          totalInquiries: inquiryCountResult.count || 0,
+          avgResponseTime: "2.5 hrs",
+        });
+
+        if (inquiriesResult.data) {
+          const formattedInquiries: InquiryData[] = inquiriesResult.data.map(
+            (inq) => ({
+              id: inq.id,
+              message: inq.message,
+              created_at: inq.created_at ?? "",
+              sender: Array.isArray(inq.sender) ? inq.sender[0] : inq.sender,
+              property: Array.isArray(inq.property)
+                ? inq.property[0]
+                : inq.property,
+            }),
+          );
           setRecentInquiries(formattedInquiries);
         }
       } catch (err) {
