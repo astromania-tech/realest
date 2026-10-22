@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import type { PublicPropertyDetail } from "@/lib/listings/load-public-property";
 import {
   Chip,
@@ -249,14 +250,17 @@ export default function ListingDetailsPage({
           {/* Image Gallery */}
           <div className="mb-8">
             <div className="relative h-96 lg:h-[500px] rounded-lg overflow-hidden mb-4">
-              <img
+              <Image
                 src={
                   galleryImages[selectedImage]?.file_url ||
                   primaryImage?.file_url ||
                   "/placeholder.jpg"
                 }
                 alt={property.title}
-                className="w-full h-full object-cover"
+                fill
+                sizes="(max-width: 1024px) 100vw, 66vw"
+                className="object-cover"
+                priority
               />
               {property.verification_status === "verified" && (
                 <div className="absolute top-4 left-4">
@@ -293,9 +297,12 @@ export default function ListingDetailsPage({
                         : "border-transparent"
                     }`}
                   >
-                    <img
+                    <Image
                       src={image.file_url}
                       alt={`Property view ${index + 1}`}
+                      width={80}
+                      height={80}
+                      sizes="80px"
                       className="w-full h-full object-cover"
                     />
                   </button>
