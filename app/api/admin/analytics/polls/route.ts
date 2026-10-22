@@ -1,7 +1,7 @@
 /**
  * GET /api/admin/analytics/polls
  *
- * Returns aggregated poll_responses data:
+ * Returns aggregated poll_responses data via SQL groupBy:
  *   - total votes per answer (across all campaigns)
  *   - breakdown by campaign ref tag
  *
@@ -41,44 +41,44 @@ export async function GET() {
   const admin = await requireAdmin();
   if (!admin.ok) return NextResponse.json({ error: admin.error }, { status: admin.status });
 
-  const responses = await prisma.poll_responses.findMany({
-    select: { question_key: true, answer: true, ref: true, created_at: true },
-    orderBy: { created_at: 'desc' },
-  });
+  const [grouped, total] = await Promise.all([
+    prisma.poll_responses.groupBy({
+      by: ['question_key', 'answer', 'ref'],
+      _count: { _all: true },
+    }),
+    prisma.poll_responses.count(),
+  ]);
 
-  // Group by question_key then answer
   const byQuestion: Record<
     string,
     { answer: string; total: number; byRef: Record<string, number> }[]
   > = {};
+  const refTagSet = new Set<string>();
 
-  for (const row of responses) {
-    const qk = row.question_key ?? 'unknown';
-    const ans = (row.answer ?? '').toLowerCase();
-    const ref = row.ref ?? 'direct';
+  for (const row of grouped) {
+    const qk = row.question_key || 'unknown';
+    const ans = (row.answer || '').toLowerCase();
+    const ref = row.ref || 'direct';
+    const n = row._count._all;
+    refTagSet.add(ref);
 
     if (!byQuestion[qk]) byQuestion[qk] = [];
-
     let entry = byQuestion[qk].find((e) => e.answer === ans);
     if (!entry) {
       entry = { answer: ans, total: 0, byRef: {} };
       byQuestion[qk].push(entry);
     }
-    entry.total += 1;
-    entry.byRef[ref] = (entry.byRef[ref] ?? 0) + 1;
+    entry.total += n;
+    entry.byRef[ref] = (entry.byRef[ref] ?? 0) + n;
   }
 
-  // Sort each question's answers by total votes descending
   for (const qk of Object.keys(byQuestion)) {
     byQuestion[qk].sort((a, b) => b.total - a.total);
   }
 
-  // Collect unique ref tags
-  const refTags = [...new Set(responses.map((r) => r.ref ?? 'direct'))].sort();
-
   return NextResponse.json({
-    total: responses.length,
+    total,
     questions: byQuestion,
-    refTags,
+    refTags: [...refTagSet].sort(),
   });
 }

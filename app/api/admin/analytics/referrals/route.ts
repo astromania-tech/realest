@@ -3,7 +3,7 @@
  *
  * Returns referral summary data from the waitlist table:
  *   - Top referrers (sorted by referral_count desc)
- *   - All referred entries with their referrer info
+ *   - Recent referred entries with their referrer info
  *
  * Admin-only.
  */
@@ -27,34 +27,94 @@ export async function GET() {
   const admin = await requireAdmin();
   if (!admin.ok) return NextResponse.json({ error: admin.error }, { status: admin.status });
 
-  const all = await prisma.waitlist.findMany({
-    select: {
-      id: true,
-      email: true,
-      first_name: true,
-      last_name: true,
-      referral_code: true,
-      referred_by: true,
-      referral_count: true,
-      status: true,
-      subscribed_at: true,
-    },
-    orderBy: { referral_count: 'desc' },
+  const [totalWaitlist, totalReferrers, totalReferred, referralSum, topReferrers, referredRows] =
+    await Promise.all([
+      prisma.waitlist.count(),
+      prisma.waitlist.count({ where: { referral_count: { gt: 0 } } }),
+      prisma.waitlist.count({ where: { referred_by: { not: null } } }),
+      prisma.waitlist.aggregate({ _sum: { referral_count: true } }),
+      prisma.waitlist.findMany({
+        where: { referral_count: { gt: 0 } },
+        select: {
+          id: true,
+          email: true,
+          first_name: true,
+          last_name: true,
+          referral_code: true,
+          referral_count: true,
+          status: true,
+          subscribed_at: true,
+        },
+        orderBy: { referral_count: 'desc' },
+        take: 50,
+      }),
+      prisma.waitlist.findMany({
+        where: { referred_by: { not: null } },
+        select: {
+          id: true,
+          email: true,
+          first_name: true,
+          last_name: true,
+          referral_code: true,
+          referred_by: true,
+          subscribed_at: true,
+        },
+        orderBy: { subscribed_at: 'desc' },
+        take: 100,
+      }),
+    ]);
+
+  const referrerIds = [
+    ...new Set(
+      referredRows
+        .map((r) => r.referred_by)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+
+  const referrers =
+    referrerIds.length > 0
+      ? await prisma.waitlist.findMany({
+          where: { id: { in: referrerIds } },
+          select: {
+            id: true,
+            email: true,
+            first_name: true,
+            last_name: true,
+            referral_code: true,
+          },
+        })
+      : [];
+
+  const byId = Object.fromEntries(referrers.map((r) => [r.id, r]));
+
+  const referred = referredRows.map((r) => {
+    const referrer = r.referred_by ? byId[r.referred_by] : null;
+    return {
+      id: r.id,
+      email: r.email,
+      name: [r.first_name, r.last_name].filter(Boolean).join(' '),
+      referralCode: r.referral_code,
+      joinedAt: r.subscribed_at,
+      referredBy: referrer
+        ? {
+            id: referrer.id,
+            email: referrer.email,
+            name: [referrer.first_name, referrer.last_name].filter(Boolean).join(' '),
+            referralCode: referrer.referral_code,
+          }
+        : null,
+    };
   });
 
-  // Build a lookup map: id → entry
-  const byId: Record<string, typeof all[0]> = {};
-  for (const r of all) byId[r.id] = r;
-
-  const totalReferrals   = all.reduce((s, r) => s + (r.referral_count ?? 0), 0);
-  const totalReferrers   = all.filter((r) => (r.referral_count ?? 0) > 0).length;
-  const totalReferred    = all.filter((r) => r.referred_by !== null).length;
-
-  // Top referrers (cap at 50 for payload size)
-  const topReferrers = all
-    .filter((r) => (r.referral_count ?? 0) > 0)
-    .slice(0, 50)
-    .map((r) => ({
+  return NextResponse.json({
+    stats: {
+      totalReferrals: referralSum._sum.referral_count ?? 0,
+      totalReferrers,
+      totalReferred,
+      totalWaitlist,
+    },
+    topReferrers: topReferrers.map((r) => ({
       id: r.id,
       email: r.email,
       name: [r.first_name, r.last_name].filter(Boolean).join(' '),
@@ -62,33 +122,7 @@ export async function GET() {
       referralCount: r.referral_count ?? 0,
       status: r.status,
       joinedAt: r.subscribed_at,
-    }));
-
-  // All referred entries with their referrer's name/email
-  const referred = all
-    .filter((r) => r.referred_by !== null)
-    .map((r) => {
-      const referrer = r.referred_by ? byId[r.referred_by] : null;
-      return {
-        id: r.id,
-        email: r.email,
-        name: [r.first_name, r.last_name].filter(Boolean).join(' '),
-        referralCode: r.referral_code,
-        joinedAt: r.subscribed_at,
-        referredBy: referrer
-          ? {
-              id: referrer.id,
-              email: referrer.email,
-              name: [referrer.first_name, referrer.last_name].filter(Boolean).join(' '),
-              referralCode: referrer.referral_code,
-            }
-          : null,
-      };
-    });
-
-  return NextResponse.json({
-    stats: { totalReferrals, totalReferrers, totalReferred, totalWaitlist: all.length },
-    topReferrers,
+    })),
     referred,
   });
 }
