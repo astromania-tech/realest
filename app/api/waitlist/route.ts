@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse, after } from 'next/server';
 import {
-  checkEmailWithPosition,
   getWaitlistStats,
   getWaitlistPosition,
   createWaitlistEntry,
@@ -26,7 +25,7 @@ import {
   isWaitlistPersona,
 } from '@/lib/referral-system';
 import { REFERRAL_CREDIT_EVENT_TYPES, referralAlreadyCredited } from '@/lib/referral-credit';
-import prisma from '@/lib/prisma'; // ← replaces createServiceClient
+import prisma from '@/lib/prisma';
 import { clientAddress, consumeRateLimit } from '@/lib/http/rate-limit';
 import { verifyTurnstileToken } from '@/lib/http/turnstile';
 import {
@@ -144,21 +143,25 @@ export async function POST(request: NextRequest) {
 
     console.log(`New waitlist subscriber: ${subscriptionData.email} (${subscriptionData.firstName} ${subscriptionData.lastName || ''})`);
 
+    // Rank/reward recompute is O(n) over the waitlist — do not block join.
     if (result.data) {
-      await applyWaitlistJoinRewards(
-        {
-          id: result.data.id,
-          email: result.data.email,
-          first_name: result.data.first_name,
-          referral_code: result.data.referral_code,
-          referral_count: result.data.referral_count,
-          persona: result.data.persona,
-          poll_completion_count: result.data.poll_completion_count,
-          subscribed_at: result.data.subscribed_at
-            ? String(result.data.subscribed_at)
-            : null,
-        },
-        { ensureWaitlistCohortReward, recomputeWaitlistRankings },
+      const joinRecord = {
+        id: result.data.id,
+        email: result.data.email,
+        first_name: result.data.first_name,
+        referral_code: result.data.referral_code,
+        referral_count: result.data.referral_count,
+        persona: result.data.persona,
+        poll_completion_count: result.data.poll_completion_count,
+        subscribed_at: result.data.subscribed_at
+          ? String(result.data.subscribed_at)
+          : null,
+      };
+      after(() =>
+        applyWaitlistJoinRewards(joinRecord, {
+          ensureWaitlistCohortReward,
+          recomputeWaitlistRankings,
+        }),
       );
     }
 
@@ -342,13 +345,16 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      const emailCheck = await checkEmailWithPosition(email);
+      const entry = await prisma.waitlist.findUnique({
+        where: { email: email.trim().toLowerCase() },
+        select: { status: true },
+      });
 
-      // Boolean + status only. Role/name/referral stay server-side (signup lookup).
+      // Boolean + status only — one indexed lookup, no position counts.
       return NextResponse.json(
         publicWaitlistLookupProjection({
-          exists: emailCheck.exists,
-          status: emailCheck.status,
+          exists: Boolean(entry),
+          status: entry?.status,
         }),
       );
     }
