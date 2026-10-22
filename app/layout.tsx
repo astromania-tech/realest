@@ -76,17 +76,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Preload critical RealEST fonts for performance */}
+        {/* Preload only critical above-the-fold faces; others load via @font-face */}
         <link
           rel="preload"
           href="/fonts/space-grotesk/SpaceGrotesk-Regular.ttf"
-          as="font"
-          type="font/ttf"
-          crossOrigin="anonymous"
-        />
-        <link
-          rel="preload"
-          href="/fonts/space-grotesk/SpaceGrotesk-Medium.ttf"
           as="font"
           type="font/ttf"
           crossOrigin="anonymous"
@@ -97,22 +90,6 @@ export default function RootLayout({
           as="font"
           type="font/otf"
           crossOrigin="anonymous"
-        />
-        <link
-          rel="preload"
-          href="/fonts/lufga/LufgaRegular.ttf"
-          as="font"
-          type="font/ttf"
-          crossOrigin="anonymous"
-          media="(min-width: 768px)"
-        />
-        <link
-          rel="preload"
-          href="/fonts/jetbrains-mono/JetBrainsMono-Regular.ttf"
-          as="font"
-          type="font/ttf"
-          crossOrigin="anonymous"
-          media="(min-width: 768px)"
         />
 
         {/* DNS prefetch for external resources */}
