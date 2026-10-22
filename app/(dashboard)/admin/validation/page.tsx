@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { Building, CheckCircle, Eye, Filter, MapPin, Search, XCircle } from "lucide-react";
+import { Building, CheckCircle, Eye, MapPin, Search, Users2, XCircle } from "lucide-react";
 
 const FILTERS: { id: CaseQueueFilter; label: string }[] = [
   { id: "all", label: "All" },
@@ -40,7 +40,9 @@ export default async function ValidationPage({
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
             Verification
           </p>
-          <h1 className="mt-1 font-heading text-3xl text-[#07402F]">Case queue</h1>
+          <h1 className="mt-1 font-heading text-3xl text-[#07402F] dark:text-foreground">
+            Case queue
+          </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Monitor work by evidence state, operational priority, and reviewer readiness.
           </p>
@@ -93,6 +95,34 @@ export default async function ValidationPage({
         })}
       </div>
 
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <Users2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                  Assign field teams
+                </p>
+                <p className="mt-1 text-sm font-semibold">
+                  Team leaders are assigned on Field ops, not this list
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Only listings in pending vetting appear there. Open a case → Field visit, or use
+                  Field ops for bulk assign.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/admin/validation/field"
+              className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90"
+            >
+              Open Field ops
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+
       {myVisits.length > 0 ? (
         <Card className="mb-6">
           <CardContent className="pt-6">
@@ -132,39 +162,61 @@ export default async function ValidationPage({
           <span>Coverage</span>
           <span />
         </div>
-        {items.map((item) => (
-          <Link
-            key={item.id}
-            href={`/admin/validation/cases/${item.id}`}
-            className="grid gap-3 border-b border-border px-5 py-4 transition-colors last:border-b-0 hover:bg-secondary/40 md:grid-cols-[1.15fr_1.1fr_0.85fr_0.7fr_auto] md:items-center md:gap-4"
-          >
-            <div>
-              <p className="font-mono text-xs text-muted-foreground">{item.id.slice(0, 8)}…</p>
-              <p className="mt-1 text-sm font-semibold">{item.title}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{item.priority} priority</p>
-            </div>
-            <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <MapPin className="h-4 w-4" />
-              {item.address}
-            </p>
-            <div>
-              <Badge variant="secondary">{item.caseStateLabel}</Badge>
-              <p className="mt-1 text-xs text-muted-foreground">{item.risk} risk</p>
-            </div>
-            <div>
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Evidence</span>
-                <span>{item.evidenceCoverage}%</span>
+        {items.map((item) => {
+          const needsFieldAssign = item.listingStatus === "pending_vetting" && !item.officerName;
+          return (
+            <Link
+              key={item.id}
+              href={
+                needsFieldAssign
+                  ? `/admin/validation/cases/${item.id}?tab=Field+visit`
+                  : `/admin/validation/cases/${item.id}`
+              }
+              className="grid gap-3 border-b border-border px-5 py-4 transition-colors last:border-b-0 hover:bg-secondary/40 md:grid-cols-[1.15fr_1.1fr_0.85fr_0.7fr_auto] md:items-center md:gap-4"
+            >
+              <div>
+                <p className="font-mono text-xs text-muted-foreground">{item.id.slice(0, 8)}…</p>
+                <p className="mt-1 text-sm font-semibold">{item.title}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{item.priority} priority</p>
               </div>
-              <Progress value={item.evidenceCoverage} className="mt-2 h-1.5" />
-            </div>
-            <Filter className="hidden h-4 w-4 text-muted-foreground md:block" />
-          </Link>
-        ))}
+              <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <MapPin className="h-4 w-4" />
+                {item.address}
+              </p>
+              <div>
+                <Badge variant="secondary">{item.caseStateLabel}</Badge>
+                <p className="mt-1 text-xs text-muted-foreground">{item.risk} risk</p>
+              </div>
+              <div>
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Evidence</span>
+                  <span>{item.evidenceCoverage}%</span>
+                </div>
+                <Progress value={item.evidenceCoverage} className="mt-2 h-1.5" />
+              </div>
+              <span className="hidden text-xs font-semibold text-primary md:inline">
+                {needsFieldAssign ? "Assign team →" : null}
+              </span>
+            </Link>
+          );
+        })}
         {items.length === 0 ? (
           <div className="flex flex-col items-center gap-2 p-12 text-center text-sm text-muted-foreground">
             <Building className="h-6 w-6" />
-            No cases match this queue view.
+            {filter === "field" ? (
+              <>
+                <p>No pending vetting cases yet.</p>
+                <p className="max-w-sm">
+                  Field assign only appears after a listing clears desk review into pending vetting.
+                  Use Field ops once those cases exist.
+                </p>
+                <Link href="/admin/validation/field" className="mt-2 font-semibold text-primary hover:underline">
+                  Open Field ops
+                </Link>
+              </>
+            ) : (
+              <p>No cases match this queue view.</p>
+            )}
           </div>
         ) : null}
       </div>

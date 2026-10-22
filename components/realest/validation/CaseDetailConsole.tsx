@@ -17,20 +17,29 @@ import type { CaseDetailView } from "@/lib/trust/case-view";
 
 type Officer = { id: string; full_name: string | null };
 
+const CASE_TABS = ["Overview", "Claims", "Evidence", "Field visit", "Timeline", "Decision"] as const;
+
+function initialCaseTab(requested: string | null | undefined): string {
+  if (requested && (CASE_TABS as readonly string[]).includes(requested)) return requested;
+  return "Overview";
+}
+
 export function CaseDetailConsole({
   detail,
   officers,
   canApprove,
   blockReason,
   conflicts,
+  initialTab,
 }: {
   detail: CaseDetailView;
   officers: Officer[];
   canApprove: boolean;
   blockReason: string | null;
   conflicts: string[];
+  initialTab?: string | null;
 }) {
-  const [tab, setTab] = useState("Overview");
+  const [tab, setTab] = useState(() => initialCaseTab(initialTab));
   const [teamModalOpen, setTeamModalOpen] = useState(false);
   const tone =
     detail.listingStatus === "live" || detail.caseState === "verified"
@@ -61,7 +70,9 @@ export function CaseDetailConsole({
               <span className="font-mono text-xs text-muted-foreground">{detail.id.slice(0, 8)}…</span>
               <Badge variant="outline">{detail.priority} priority</Badge>
             </div>
-            <h1 className="mt-3 break-words font-heading text-2xl text-[#07402F] sm:text-3xl">{detail.title}</h1>
+            <h1 className="mt-3 break-words font-heading text-2xl text-[#07402F] dark:text-foreground sm:text-3xl">
+              {detail.title}
+            </h1>
             <p className="mt-1 flex items-start gap-1.5 text-sm text-muted-foreground">
               <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
               <span className="break-words">
@@ -115,7 +126,7 @@ export function CaseDetailConsole({
       <Tabs value={tab} onValueChange={setTab} className="mt-7">
         <div className="overflow-x-auto">
           <TabsList className="h-auto min-w-max gap-1 bg-transparent p-0">
-            {["Overview", "Claims", "Evidence", "Field visit", "Timeline", "Decision"].map((label) => (
+            {CASE_TABS.map((label) => (
               <TabsTrigger
                 key={label}
                 value={label}
@@ -128,6 +139,34 @@ export function CaseDetailConsole({
         </div>
 
         <TabsContent value="Overview" className="mt-6">
+          {detail.listingStatus === "pending_vetting" ? (
+            <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+              <div className="flex items-start gap-3">
+                <Users2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                <div>
+                  <p className="text-sm font-semibold">
+                    {detail.officerName ? "Field team in progress" : "Needs a team leader"}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Assign a team leader on the Field visit tab (or from Field ops). The leader
+                    confirms members and the check-in officer.
+                  </p>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant={detail.officerName ? "outline" : "default"}
+                className="w-full sm:w-auto"
+                onClick={() => {
+                  setTab("Field visit");
+                  if (!detail.officerName) setTeamModalOpen(true);
+                }}
+              >
+                <Users2 className="mr-1.5 h-3.5 w-3.5" />
+                {detail.officerName ? "Open Field visit" : "Assign team leader"}
+              </Button>
+            </div>
+          ) : null}
           <div className="grid gap-6 xl:grid-cols-[1.6fr_0.8fr]">
             <section className="rounded-2xl border border-border bg-card p-5">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
@@ -248,12 +287,6 @@ export function CaseDetailConsole({
               </section>
             ) : null}
           </div>
-          <FieldTeamManageModal
-            isOpen={teamModalOpen}
-            onClose={() => setTeamModalOpen(false)}
-            propertyId={detail.id}
-            propertyTitle={detail.title}
-          />
         </TabsContent>
 
         <TabsContent value="Timeline" className="mt-6">
@@ -316,6 +349,13 @@ export function CaseDetailConsole({
           </section>
         </TabsContent>
       </Tabs>
+
+      <FieldTeamManageModal
+        isOpen={teamModalOpen}
+        onClose={() => setTeamModalOpen(false)}
+        propertyId={detail.id}
+        propertyTitle={detail.title}
+      />
     </div>
   );
 }

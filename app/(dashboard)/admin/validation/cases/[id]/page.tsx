@@ -8,10 +8,13 @@ import { CaseDetailConsole } from "@/components/realest/validation/CaseDetailCon
 
 export default async function VerificationCasePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const { id } = await params;
+  const { tab } = await searchParams;
   await requireStaffPage();
 
   const detail = await loadCaseDetail(id);
@@ -51,6 +54,7 @@ export default async function VerificationCasePage({
       canApprove={badge.ok}
       blockReason={badge.ok ? null : badge.error}
       conflicts={conflicts}
+      initialTab={tab ?? null}
     />
   );
 }
