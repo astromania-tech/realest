@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { Button, Input, Separator } from "../ui";
 import {
@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { XIcon, FacebookIcon, InstagramIcon, LinkedInIcon, YouTubeIcon } from "@/lib/utils/icon";
 import { FooterLogo } from "@/components/ui/RealEstLogo";
+import { TurnstileWidget } from "@/components/shared/TurnstileWidget";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -24,10 +25,18 @@ export default function Footer() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [subscribeError, setSubscribeError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const onTurnstileToken = useCallback((token: string | null) => {
+    setTurnstileToken(token);
+  }, []);
 
   const handleSubscribe = async () => {
     if (!email || !email.includes("@")) {
       setSubscribeError("Please enter a valid email address.");
+      return;
+    }
+    if (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !turnstileToken) {
+      setSubscribeError("Complete the bot check and try again.");
       return;
     }
     // Derive a first name from the email local part so the API is satisfied
@@ -45,7 +54,9 @@ export default function Footer() {
         body: JSON.stringify({
           email: email.trim().toLowerCase(),
           firstName: capitalized,
+          persona: "buyer_renter",
           source: "footer_newsletter",
+          turnstileToken: turnstileToken || undefined,
         }),
       });
       const json = await res.json();
@@ -128,10 +139,17 @@ export default function Footer() {
                     variant="default"
                     className="cursor-pointer rounded-md"
                     onClick={handleSubscribe}
-                    disabled={loading}
+                    disabled={
+                      loading ||
+                      (Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) &&
+                        !turnstileToken)
+                    }
                   >
                     {loading ? "Subscribing…" : "Subscribe"}
                   </Button>
+                </div>
+                <div className="mt-3 flex justify-center">
+                  <TurnstileWidget onToken={onTurnstileToken} />
                 </div>
                 {subscribeError && (
                   <p className="text-sm text-destructive mt-2">{subscribeError}</p>

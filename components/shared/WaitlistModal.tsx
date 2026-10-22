@@ -13,10 +13,11 @@
  */
 "use client";
 
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useEmailValidation, formatWaitlistMessage } from '@/lib/hooks/useEmailValidation';
 import { useLocationSearch, formatLocationName } from '@/lib/hooks/useLocationSearch';
 import { WAITLIST_INTENT_OPTIONS, type WaitlistPersona } from '@/lib/referral-system';
+import { TurnstileWidget } from '@/components/shared/TurnstileWidget';
 import {
   Mail,
   CheckCircle,
@@ -77,6 +78,10 @@ const WaitlistModal: React.FC<WaitlistModalProps> = ({ isOpen, onClose, onSucces
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedData, setSubmittedData] = useState<SubmittedData | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const onTurnstileToken = useCallback((token: string | null) => {
+    setTurnstileToken(token);
+  }, []);
 
   // Real-time email validation (silent)
   const emailValidation = useEmailValidation(email, {
@@ -223,6 +228,7 @@ const WaitlistModal: React.FC<WaitlistModalProps> = ({ isOpen, onClose, onSucces
           interests: selectedIntentMeta ? [selectedIntentMeta.id] : undefined,
           locationPreference: location || undefined,
           ref: referralCode ?? undefined,
+          turnstileToken: turnstileToken || undefined,
         }),
       });
 
@@ -691,56 +697,68 @@ const WaitlistModal: React.FC<WaitlistModalProps> = ({ isOpen, onClose, onSucces
             </div>
           )}
           {currentStage < 3 ? (
-            <div className="flex flex-col sm:flex-row w-full gap-3">
-              {/* Button Container */}
-              <div className={`flex ${currentStage === 1 ? 'w-full' : 'w-full sm:w-auto sm:flex-1 justify-between'} gap-3`}>
-                {/* Back Button (only for stage 2) */}
-                {currentStage > 1 && (
-                  <Button 
-                    onClick={handleBack} 
-                    variant="outline" 
-                    size="lg" 
-                    className="flex items-center justify-center gap-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  >
-                    <ChevronLeft className="w-4.5 h-4.5" />
-                    Back
-                  </Button>
-                )}
-                {/* Main Action Button */}
-                {currentStage === 1 ? (
-                  <Button 
-                    onClick={handleNext} 
-                    disabled={!firstName.trim() || !email.trim() || !emailValidation.isValid || !emailValidation.isAvailable}
-                    variant="neon" 
-                    size="lg" 
-                    className="flex w-full items-center justify-center gap-2 btn-glow-accent transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:bg-muted disabled:cursor-not-allowed"
-                  >
-                    Continue
-                    <ChevronRight className="w-4.5 h-4.5" />
-                  </Button>
-                ) : (
-                  <Button 
-                    onClick={handleEmailSubmit} 
-                    disabled={isSubmitting || !selectedIntentMeta}
-                    variant="neon" 
-                    size="lg" 
-                    className="flex-1 w-full items-center justify-center gap-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:bg-muted"
-                  >
-                  {isSubmitting ? (
-                    <>
-                      <div className="w-4.5 h-4.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Joining...
-                    </>
-                  ) : (
-                    <>
-                      Join Waitlist
-                      <CheckCircle className="w-4.5 h-4.5" />
-                    </>
+            <>
+              {currentStage === 2 ? (
+                <div className="mb-3 flex w-full justify-center">
+                  <TurnstileWidget onToken={onTurnstileToken} />
+                </div>
+              ) : null}
+              <div className="flex flex-col sm:flex-row w-full gap-3">
+                {/* Button Container */}
+                <div className={`flex ${currentStage === 1 ? 'w-full' : 'w-full sm:w-auto sm:flex-1 justify-between'} gap-3`}>
+                  {/* Back Button (only for stage 2) */}
+                  {currentStage > 1 && (
+                    <Button 
+                      onClick={handleBack} 
+                      variant="outline" 
+                      size="lg" 
+                      className="flex items-center justify-center gap-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    >
+                      <ChevronLeft className="w-4.5 h-4.5" />
+                      Back
+                    </Button>
                   )}
-                  </Button>
-                )}
+                  {/* Main Action Button */}
+                  {currentStage === 1 ? (
+                    <Button 
+                      onClick={handleNext} 
+                      disabled={!firstName.trim() || !email.trim() || !emailValidation.isValid || !emailValidation.isAvailable}
+                      variant="neon" 
+                      size="lg" 
+                      className="flex w-full items-center justify-center gap-2 btn-glow-accent transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:bg-muted disabled:cursor-not-allowed"
+                    >
+                      Continue
+                      <ChevronRight className="w-4.5 h-4.5" />
+                    </Button>
+                  ) : (
+                    <Button 
+                      onClick={handleEmailSubmit} 
+                      disabled={
+                        isSubmitting ||
+                        !selectedIntentMeta ||
+                        (Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) &&
+                          !turnstileToken)
+                      }
+                      variant="neon" 
+                      size="lg" 
+                      className="flex-1 w-full items-center justify-center gap-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:bg-muted"
+                    >
+                    {isSubmitting ? (
+                      <>
+                        <div className="w-4.5 h-4.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Joining...
+                      </>
+                    ) : (
+                      <>
+                        Join Waitlist
+                        <CheckCircle className="w-4.5 h-4.5" />
+                      </>
+                    )}
+                    </Button>
+                  )}
+                </div>
               </div>
-            </div>
+            </>
           ) : (
             <Button variant="neon" size="default" onClick={handleModalClose} className="w-full bg-green-600 hover:bg-green-700 text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500">Perfect, Thanks!</Button>
           )}
