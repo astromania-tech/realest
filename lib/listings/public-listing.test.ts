@@ -48,4 +48,18 @@ test("public routes share the live and verified rule", () => {
   }
   assert.equal(pub.includes("email: property.owners"), false);
   assert.equal(list.includes("phone: true"), false);
+  assert.equal(search.includes("phone: true"), false);
+  assert.doesNotMatch(search, /phone:\s*p\.owners/);
+});
+
+test("public agent APIs do not select or return email or phone", () => {
+  const list = readFileSync("app/api/agents/route.ts", "utf8");
+  const detail = readFileSync("app/api/agents/[id]/route.ts", "utf8");
+  for (const source of [list, detail]) {
+    assert.match(source, /publicPersonCard/);
+    assert.doesNotMatch(source, /email:\s*true/);
+    assert.doesNotMatch(source, /phone:\s*true/);
+  }
+  assert.doesNotMatch(detail, /email:\s*agentRow\.profiles\.email/);
+  assert.doesNotMatch(detail, /phone:\s*agentRow\.profiles\.phone/);
 });

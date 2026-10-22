@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { publicPersonCard } from "@/lib/listings/public-listing";
 
 // GET /api/agents/[id] - Get agent details
 export async function GET(
@@ -8,7 +8,6 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const supabase = await createClient();
     const { id } = await params;
     const agentId = id;
 
@@ -17,7 +16,7 @@ export async function GET(
       where: { profile_id: agentId },
       include: {
         profiles: {
-          select: { id: true, full_name: true, email: true, phone: true, avatar_url: true, created_at: true },
+          select: { id: true, full_name: true, avatar_url: true, created_at: true },
         },
       },
     });
@@ -99,13 +98,13 @@ export async function GET(
       };
     }
 
-    // Format response
+    const card = publicPersonCard(agentRow.profiles);
+
+    // Format response — public card: name + avatar only (no email/phone)
     const agentProfile = {
-      id: agentRow.profiles.id,
-      name: agentRow.profiles.full_name,
-      email: agentRow.profiles.email,
-      phone: agentRow.profiles.phone,
-      avatar_url: agentRow.profiles.avatar_url,
+      id: card?.id ?? agentRow.profiles.id,
+      name: card?.full_name ?? agentRow.profiles.full_name,
+      avatar_url: card?.avatar_url ?? agentRow.profiles.avatar_url,
       verified: agentRow.verified,
       verified_at: agentRow.verification_date,
       member_since: agentRow.profiles.created_at,
