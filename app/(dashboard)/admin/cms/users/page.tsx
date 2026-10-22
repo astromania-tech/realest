@@ -1,5 +1,6 @@
-import { createClient, getAuthUser} from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,20 +12,16 @@ import {
   Users,
   UserCheck,
   UserX,
-  Search,
   Filter,
   Eye,
   Edit,
-  Ban,
   CheckCircle,
   Home,
   MessageSquare,
-  TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
 
 export default async function CMSUsersPage() {
-  const supabase = await createClient();
   const {
     data: { user },
   } = await getAuthUser();
@@ -33,38 +30,50 @@ export default async function CMSUsersPage() {
     redirect("/login");
   }
 
-  // Check if user is an admin
-  const { data: userData } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  const userData = await prisma.users.findUnique({
+    where: { id: user.id },
+    select: { role: true },
+  });
 
   if (userData?.role !== "admin") {
     redirect("/");
   }
 
-  // Fetch all users with their activity data
-  const { data: users } = await supabase
-    .from("users")
-    .select(`
-      *,
-      profiles(
-        inquiries_inquiries_owner_idToprofiles(count),
-        reviews(count)
-      )
-    `)
-    .order("created_at", { ascending: false });
+  const [users, totalUsers, activeUsers, bannedUsers, roleGroups] =
+    await Promise.all([
+      prisma.users.findMany({
+        select: {
+          id: true,
+          email: true,
+          full_name: true,
+          role: true,
+          is_active: true,
+          deleted_at: true,
+          created_at: true,
+        },
+        orderBy: { created_at: "desc" },
+        take: 50,
+      }),
+      prisma.users.count(),
+      prisma.users.count({ where: { is_active: true } }),
+      prisma.users.count({ where: { is_active: false } }),
+      prisma.users.groupBy({
+        by: ["role"],
+        _count: { _all: true },
+      }),
+    ]);
 
-  // User statistics derived from the users table
+  const roleCount = (role: string) =>
+    roleGroups.find((row) => row.role === role)?._count._all ?? 0;
+
   const userStats = {
-    totalUsers: users?.length || 0,
-    activeUsers: users?.filter(u => u.is_active).length || 0,
-    verifiedUsers: users?.filter(u => u.is_active && !u.deleted_at).length || 0,
-    bannedUsers: users?.filter(u => !u.is_active).length || 0,
-    owners: users?.filter(u => u.role === 'owner').length || 0,
-    agents: users?.filter(u => u.role === 'agent').length || 0,
-    regularUsers: users?.filter(u => u.role === 'user').length || 0,
+    totalUsers,
+    activeUsers,
+    verifiedUsers: activeUsers,
+    bannedUsers,
+    owners: roleCount("owner"),
+    agents: roleCount("agent"),
+    regularUsers: roleCount("user"),
   };
 
   return (
@@ -231,75 +240,74 @@ export default async function CMSUsersPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {users?.map((userProfile) => (
-                      <TableRow key={userProfile.id}>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">
-                              {userProfile.full_name || "N/A"}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {userProfile.email}
-                            </p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{userProfile.user_type}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            {userProfile.is_verified && (
-                              <Badge variant="default" className="text-xs">
-                                Verified
-                              </Badge>
-                            )}
-                            {userProfile.user_type === 'banned' && (
-                              <Badge variant="destructive" className="text-xs">
-                                Banned
-                              </Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            <p>Last login: {userProfile.last_login_at ? new Date(userProfile.last_login_at).toLocaleDateString() : 'Never'}</p>
-                            <p>Reviews: {userProfile.reviews?.[0]?.count || 0}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {userProfile.properties?.[0]?.count || 0}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {userProfile.inquiries?.[0]?.count || 0}
-                        </TableCell>
-                        <TableCell>
-                          {new Date(userProfile.created_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button asChild size="sm" variant="outline">
-                              <Link href={`/admin/cms/users/${userProfile.id}`}>
-                                <Eye className="w-4 h-4" />
-                              </Link>
-                            </Button>
-                            <Button size="sm" variant="outline">
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant={userProfile.user_type === 'banned' ? 'default' : 'destructive'}
-                            >
-                              {userProfile.user_type === 'banned' ? 'Unban' : 'Ban'}
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )) || (
+                    {users.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={8} className="text-center text-muted-foreground">
                           No users found
                         </TableCell>
                       </TableRow>
+                    ) : (
+                      users.map((userProfile) => (
+                        <TableRow key={userProfile.id}>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">
+                                {userProfile.full_name || "N/A"}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {userProfile.email}
+                              </p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{userProfile.role}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              {userProfile.is_active && (
+                                <Badge variant="default" className="text-xs">
+                                  Active
+                                </Badge>
+                              )}
+                              {!userProfile.is_active && (
+                                <Badge variant="destructive" className="text-xs">
+                                  Banned
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm text-muted-foreground">
+                              Preview list (max 50)
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">—</TableCell>
+                          <TableCell className="text-center">—</TableCell>
+                          <TableCell>
+                            {userProfile.created_at
+                              ? new Date(userProfile.created_at).toLocaleDateString()
+                              : "N/A"}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button asChild size="sm" variant="outline">
+                                <Link href={`/admin/users/${userProfile.id}`}>
+                                  <Eye className="w-4 h-4" />
+                                </Link>
+                              </Button>
+                              <Button size="sm" variant="outline">
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={userProfile.is_active ? "destructive" : "default"}
+                              >
+                                {userProfile.is_active ? "Ban" : "Unban"}
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
                     )}
                   </TableBody>
                 </Table>

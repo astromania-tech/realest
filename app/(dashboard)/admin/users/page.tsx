@@ -1,5 +1,6 @@
-import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,6 @@ import { Users, Search, UserCheck, UserX, Edit } from "lucide-react";
 import Link from "next/link";
 
 export default async function UsersPage() {
-  const supabase = await createClient();
   const {
     data: { user },
   } = await getAuthUser();
@@ -18,28 +18,38 @@ export default async function UsersPage() {
     redirect("/login");
   }
 
-  // Check if user is an admin
-  const { data: userRow } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  const userRow = await prisma.users.findUnique({
+    where: { id: user.id },
+    select: { role: true },
+  });
 
   if (userRow?.role !== "admin") {
     redirect("/");
   }
 
-  // Fetch all users — query users table (role + is_active live here)
-  const { data: users } = await supabase
-    .from("users")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const [users, totalUsers, activeUsers, bannedUsers] = await Promise.all([
+    prisma.users.findMany({
+      select: {
+        id: true,
+        email: true,
+        full_name: true,
+        role: true,
+        is_active: true,
+        created_at: true,
+      },
+      orderBy: { created_at: "desc" },
+      take: 50,
+    }),
+    prisma.users.count(),
+    prisma.users.count({ where: { is_active: true } }),
+    prisma.users.count({ where: { is_active: false } }),
+  ]);
 
   const userStats = {
-    totalUsers: users?.length || 0,
-    verifiedUsers: users?.filter(u => u.is_active).length || 0,
-    activeUsers: users?.filter(u => u.is_active).length || 0,
-    bannedUsers: users?.filter(u => !u.is_active).length || 0,
+    totalUsers,
+    verifiedUsers: activeUsers,
+    activeUsers,
+    bannedUsers,
   };
 
   return (
@@ -51,7 +61,6 @@ export default async function UsersPage() {
         </p>
       </div>
 
-      {/* User Statistics */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 mb-6 sm:mb-8">
         <Card>
           <CardContent className="pt-6">
@@ -65,18 +74,6 @@ export default async function UsersPage() {
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-4">
-            <UserCheck className="w-8 h-8 text-green-600" />
-            <div>
-              <p className="text-2xl font-bold">{userStats.verifiedUsers}</p>
-              <p className="text-sm text-muted-foreground">Verified</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       <Card>
         <CardContent className="pt-6">
@@ -102,7 +99,6 @@ export default async function UsersPage() {
         </CardContent>
       </Card>
 
-      {/* Search and Filters */}
       <Card className="mb-6">
         <CardContent className="pt-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
@@ -120,7 +116,6 @@ export default async function UsersPage() {
         </CardContent>
       </Card>
 
-      {/* Users Table */}
       <Card>
         <CardHeader>
           <CardTitle>All Users</CardTitle>
@@ -139,43 +134,47 @@ export default async function UsersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users?.map((userProfile) => (
-                <TableRow key={userProfile.id}>
-                  <TableCell className="font-medium">
-                    {userProfile.full_name || "N/A"}
-                  </TableCell>
-                  <TableCell>{userProfile.email || "N/A"}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{userProfile.role}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={userProfile.is_active ? "default" : "secondary"}>
-                      {userProfile.is_active ? "Active" : "Inactive"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {new Date(userProfile.created_at).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button asChild size="sm" variant="outline">
-                        <Link href={`/admin/users/${userProfile.id}`}>
-                          <Edit className="w-4 h-4 mr-1" />
-                          Edit
-                        </Link>
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        {userProfile.is_active ? 'Ban' : 'Unban'}
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )) || (
+              {users.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center text-muted-foreground">
                     No users found
                   </TableCell>
                 </TableRow>
+              ) : (
+                users.map((userProfile) => (
+                  <TableRow key={userProfile.id}>
+                    <TableCell className="font-medium">
+                      {userProfile.full_name || "N/A"}
+                    </TableCell>
+                    <TableCell>{userProfile.email || "N/A"}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{userProfile.role}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={userProfile.is_active ? "default" : "secondary"}>
+                        {userProfile.is_active ? "Active" : "Inactive"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {userProfile.created_at
+                        ? new Date(userProfile.created_at).toLocaleDateString()
+                        : "N/A"}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button asChild size="sm" variant="outline">
+                          <Link href={`/admin/users/${userProfile.id}`}>
+                            <Edit className="w-4 h-4 mr-1" />
+                            Edit
+                          </Link>
+                        </Button>
+                        <Button size="sm" variant="outline">
+                          {userProfile.is_active ? "Ban" : "Unban"}
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
             </TableBody>
           </Table>
