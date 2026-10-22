@@ -1,10 +1,11 @@
-import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Header, Footer } from "@/components/layout";
+import { prisma } from "@/lib/prisma";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 import OwnerInquiriesPage from "@/components/dashboard/OwnerInquiriesPage";
 
 export default async function InquiriesPage() {
-  const supabase = await createClient();
   const {
     data: { user },
   } = await getAuthUser();
@@ -13,28 +14,52 @@ export default async function InquiriesPage() {
     redirect("/login");
   }
 
-  // Check if user is a property owner
-  const { data: userRow } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  const userRow = await prisma.users.findUnique({
+    where: { id: user.id },
+    select: { role: true },
+  });
 
   if (userRow?.role !== "owner") {
     redirect("/");
   }
 
-  // Fetch all inquiries for owner's properties
-  const { data: inquiries } = await supabase
-    .from("inquiries")
-    .select("*, properties(id, title), profiles(full_name, email, phone)")
-    .eq("owner_id", user.id)
-    .order("created_at", { ascending: false });
+  const rows = await prisma.inquiries.findMany({
+    where: { owner_id: user.id },
+    select: {
+      id: true,
+      message: true,
+      status: true,
+      created_at: true,
+      property_id: true,
+      properties: { select: { id: true, title: true } },
+      profiles_inquiries_sender_idToprofiles: {
+        select: { full_name: true, email: true, phone: true },
+      },
+    },
+    orderBy: { created_at: "desc" },
+    take: 50,
+  });
+
+  const inquiries = rows.map((row) => {
+    const sender = row.profiles_inquiries_sender_idToprofiles;
+    return {
+      id: row.id,
+      message: row.message,
+      status: row.status,
+      created_at: row.created_at?.toISOString() ?? "",
+      properties: row.properties ?? { id: "", title: "" },
+      profiles: {
+        full_name: sender?.full_name ?? "",
+        email: sender?.email ?? "",
+        phone: sender?.phone ?? "",
+      },
+    };
+  });
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <OwnerInquiriesPage inquiries={inquiries || []} />
+      <OwnerInquiriesPage inquiries={inquiries} />
       <Footer />
     </div>
   );
