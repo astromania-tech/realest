@@ -6,6 +6,11 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle, XCircle } from "lucide-react";
+import { StaffPermissionModal } from "@/components/realest/validation/StaffPermissionModal";
+import {
+  isStaffPermissionDenied,
+  staffPermissionDeniedMessage,
+} from "@/lib/auth/staff-permission-ui";
 
 type Officer = { id: string; full_name: string | null };
 type ListingFile = { id: string; document_type: string; file_name: string };
@@ -39,6 +44,8 @@ export function VettingDecisionActions({
   const [notes, setNotes] = useState("");
   const [issue, setIssue] = useState("");
   const [error, setError] = useState("");
+  const [permissionOpen, setPermissionOpen] = useState(false);
+  const [permissionMessage, setPermissionMessage] = useState("");
   const [pending, setPending] = useState(false);
   const [officerId, setOfficerId] = useState(assignedOfficerId ?? "");
   const [day, setDay] = useState(visitDay ?? "");
@@ -76,6 +83,11 @@ export function VettingDecisionActions({
     const body = await response.json().catch(() => ({}));
     setPending(false);
     if (!response.ok) {
+      if (isStaffPermissionDenied(response.status)) {
+        setPermissionMessage(staffPermissionDeniedMessage(body));
+        setPermissionOpen(true);
+        return;
+      }
       setError(body.error || "The vetting action was refused.");
       return;
     }
@@ -201,6 +213,11 @@ export function VettingDecisionActions({
           ? "Approve is the only action that sets the listing live and RealEST Verified. The visit does not prove title."
           : blockReason || "Assign one officer and a visit day. Approve stays closed until the check-in is saved."}
       </p>
+      <StaffPermissionModal
+        open={permissionOpen}
+        onClose={() => setPermissionOpen(false)}
+        message={permissionMessage}
+      />
     </div>
   );
 }

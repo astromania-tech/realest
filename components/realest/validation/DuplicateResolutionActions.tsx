@@ -5,11 +5,18 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { XCircle } from "lucide-react";
+import { StaffPermissionModal } from "@/components/realest/validation/StaffPermissionModal";
+import {
+  isStaffPermissionDenied,
+  staffPermissionDeniedMessage,
+} from "@/lib/auth/staff-permission-ui";
 
 export function DuplicateResolutionActions({ propertyId }: { propertyId: string }) {
   const router = useRouter();
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
+  const [permissionOpen, setPermissionOpen] = useState(false);
+  const [permissionMessage, setPermissionMessage] = useState("");
   const [pending, setPending] = useState(false);
 
   async function reject() {
@@ -23,6 +30,11 @@ export function DuplicateResolutionActions({ propertyId }: { propertyId: string 
     const body = await response.json().catch(() => ({}));
     setPending(false);
     if (!response.ok) {
+      if (isStaffPermissionDenied(response.status)) {
+        setPermissionMessage(staffPermissionDeniedMessage(body));
+        setPermissionOpen(true);
+        return;
+      }
       setError(body.error || "The duplicate gate refused this action.");
       return;
     }
@@ -53,6 +65,11 @@ export function DuplicateResolutionActions({ propertyId }: { propertyId: string 
         Owner and agent get a safe notice and email; your full note stays in the audit log. Detector
         names are stripped from what they see.
       </p>
+      <StaffPermissionModal
+        open={permissionOpen}
+        onClose={() => setPermissionOpen(false)}
+        message={permissionMessage}
+      />
     </div>
   );
 }

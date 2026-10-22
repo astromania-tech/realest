@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle, XCircle } from "lucide-react";
+import { StaffPermissionModal } from "@/components/realest/validation/StaffPermissionModal";
+import {
+  isStaffPermissionDenied,
+  staffPermissionDeniedMessage,
+} from "@/lib/auth/staff-permission-ui";
 
 export function TrustReviewActions({
   propertyId,
@@ -16,6 +21,8 @@ export function TrustReviewActions({
   const router = useRouter();
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
+  const [permissionOpen, setPermissionOpen] = useState(false);
+  const [permissionMessage, setPermissionMessage] = useState("");
   const [pending, setPending] = useState(false);
 
   async function send(action: "approve" | "reject" | "flag_duplicate") {
@@ -33,6 +40,11 @@ export function TrustReviewActions({
     const body = await response.json().catch(() => ({}));
     setPending(false);
     if (!response.ok) {
+      if (isStaffPermissionDenied(response.status)) {
+        setPermissionMessage(staffPermissionDeniedMessage(body));
+        setPermissionOpen(true);
+        return;
+      }
       const blocks = Array.isArray(body.hardBlocks) ? body.hardBlocks.join(", ") : "";
       setError(blocks ? `${body.error} ${blocks}` : body.error || "The gate refused this action.");
       return;
@@ -68,6 +80,11 @@ export function TrustReviewActions({
         <CheckCircle className="w-4 h-4 mr-2" />
         Send to physical vetting
       </Button>
+      <StaffPermissionModal
+        open={permissionOpen}
+        onClose={() => setPermissionOpen(false)}
+        message={permissionMessage}
+      />
     </div>
   );
 }
