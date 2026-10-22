@@ -123,6 +123,70 @@ export function staffHomePath(role: StaffRole): string {
   }
 }
 
+/**
+ * Where to send someone after login (DB role, not JWT metadata).
+ * Connect staff must not land on the marketplace /profile "User Panel".
+ */
+export function postLoginHomePath(role: string | null | undefined): string {
+  if (isStaffRole(role)) return staffHomePath(role);
+  if (role === "owner") return "/owner";
+  if (role === "agent") return "/agent";
+  return "/profile";
+}
+
+/** Header badge label — uppercase role name for Connect staff. */
+export function staffRoleBadgeLabel(role: string | null | undefined): string {
+  switch (role) {
+    case "admin":
+      return "ADMINISTRATOR";
+    case "reviewer":
+      return "REVIEWER";
+    case "supervisor":
+      return "SUPERVISOR";
+    case "team_leader":
+      return "TEAM LEAD";
+    case "team_member":
+      return "TEAM MEMBER";
+    default:
+      return "STAFF";
+  }
+}
+
+/** Sidebar / footer panel title for the signed-in staff role. */
+export function staffRolePanelTitle(role: string | null | undefined): string {
+  switch (role) {
+    case "admin":
+      return "Admin Panel";
+    case "reviewer":
+      return "Reviewer Panel";
+    case "supervisor":
+      return "Supervisor Panel";
+    case "team_leader":
+      return "Team Lead Panel";
+    case "team_member":
+      return "Team Member Panel";
+    default:
+      return "Staff Panel";
+  }
+}
+
+export function staffRolePanelSubtitle(role: string | null | undefined): string {
+  switch (role) {
+    case "admin":
+      return "System Management";
+    case "reviewer":
+      return "Case verification";
+    case "supervisor":
+      return "Field operations";
+    case "team_leader":
+      return "Field team coordination";
+    case "team_member":
+      return "Assigned visits";
+    default:
+      return "Verification";
+  }
+}
+
 export const REVIEWER_HIDDEN_PROFILE_FIELDS = ["email", "phone"] as const;
 
 export const SENSITIVE_ADMIN_CAPABILITIES = [

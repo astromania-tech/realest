@@ -6,7 +6,16 @@ import type { User } from "@supabase/supabase-js";
 import { useAuth } from "@/components/providers/AuthProvider";
 
 // Base user types
-export type UserRole = "user" | "owner" | "agent" | "admin" | "reviewer" | "system_owner";
+export type UserRole =
+  | "user"
+  | "owner"
+  | "agent"
+  | "admin"
+  | "reviewer"
+  | "supervisor"
+  | "team_leader"
+  | "team_member"
+  | "system_owner";
 
 export interface BaseUserProfile {
   id: string;
@@ -73,6 +82,18 @@ export interface ReviewerProfile extends BaseUserProfile {
   user_type: "reviewer";
 }
 
+export interface SupervisorProfile extends BaseUserProfile {
+  user_type: "supervisor";
+}
+
+export interface TeamLeaderProfile extends BaseUserProfile {
+  user_type: "team_leader";
+}
+
+export interface TeamMemberProfile extends BaseUserProfile {
+  user_type: "team_member";
+}
+
 export interface SystemOwnerProfile extends BaseUserProfile {
   user_type: "system_owner";
   system_owner_details: {
@@ -93,6 +114,9 @@ export type UserProfile =
   | AgentProfile
   | AdminProfile
   | ReviewerProfile
+  | SupervisorProfile
+  | TeamLeaderProfile
+  | TeamMemberProfile
   | SystemOwnerProfile;
 
 // Hook return type
@@ -278,19 +302,28 @@ export function useUser(): UseUserReturn {
   const fetchCompleteProfile = useCallback(
     async (userId: string): Promise<UserProfile | null> => {
       try {
-        // Check cache first
-        const cached = userCache.get(userId);
-        if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-          return cached.data;
+        // Always re-read role. Cache can outlive an admin invite/promote
+        // (marketplace "user" → reviewer) and would keep the wrong shell.
+        const userRole = await fetchUserRole(userId);
+        if (!userRole) {
+          return null;
         }
 
-        // Fetch basic data
-        const [userRole, basicProfile] = await Promise.all([
-          fetchUserRole(userId),
-          fetchBasicProfile(userId),
-        ]);
+        const cached = userCache.get(userId);
+        if (
+          cached &&
+          Date.now() - cached.timestamp < CACHE_DURATION &&
+          cached.data.user_type === userRole
+        ) {
+          return cached.data;
+        }
+        if (cached && cached.data.user_type !== userRole) {
+          userCache.delete(userId);
+        }
 
-        if (!userRole || !basicProfile) {
+        const basicProfile = await fetchBasicProfile(userId);
+
+        if (!basicProfile) {
           return null;
         }
 
@@ -350,6 +383,21 @@ export function useUser(): UseUserReturn {
             ...basicProfile,
             user_type: "reviewer",
           } as ReviewerProfile;
+        } else if (userRole === "supervisor") {
+          completeProfile = {
+            ...basicProfile,
+            user_type: "supervisor",
+          } as SupervisorProfile;
+        } else if (userRole === "team_leader") {
+          completeProfile = {
+            ...basicProfile,
+            user_type: "team_leader",
+          } as TeamLeaderProfile;
+        } else if (userRole === "team_member") {
+          completeProfile = {
+            ...basicProfile,
+            user_type: "team_member",
+          } as TeamMemberProfile;
         } else if (userRole === "system_owner") {
           completeProfile = {
             ...basicProfile,

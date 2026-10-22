@@ -9,6 +9,8 @@ import {
   type InvitableStaffRole,
 } from "@/lib/auth/staff-invite";
 import { StaffLocationFields } from "@/components/admin/StaffLocationFields";
+import { Input } from "@/components/ui/input";
+import { CONNECT_CONTROL_CLASS, CONNECT_INPUT_CLASS } from "@/lib/styles/connect-form";
 
 export function StaffInviteForm() {
   const router = useRouter();
@@ -20,12 +22,14 @@ export function StaffInviteForm() {
   const [lga, setLga] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [setupLink, setSetupLink] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError("");
     setSuccess("");
+    setSetupLink("");
 
     try {
       const res = await fetch("/api/admin/staff-invites", {
@@ -48,6 +52,9 @@ export function StaffInviteForm() {
       setSuccess(
         `${fullName} was ${modeLabel} as ${STAFF_ROLE_LABELS[role]} in ${lga}, ${state}.`,
       );
+      if (typeof data.setup_link === "string" && data.setup_link) {
+        setSetupLink(data.setup_link);
+      }
       setEmail("");
       setFullName("");
       setRole("team_member");
@@ -64,13 +71,13 @@ export function StaffInviteForm() {
   return (
     <Card className="p-4 sm:p-6">
       <form onSubmit={handleSubmit} className="min-w-0 space-y-4">
-        <div className="min-w-0">
-          <label className="mb-1 block text-sm font-medium" htmlFor="staff-full-name">
+        <div className="min-w-0 space-y-2">
+          <label className="block text-sm font-medium" htmlFor="staff-full-name">
             Full name
           </label>
-          <input
+          <Input
             id="staff-full-name"
-            className="w-full min-w-0 rounded-md border border-[var(--border)] bg-background px-3 py-2.5 text-base sm:py-2 sm:text-sm"
+            className={CONNECT_INPUT_CLASS}
             value={fullName}
             onChange={(e: ChangeEvent<HTMLInputElement>) => setFullName(e.target.value)}
             placeholder="Chioma Adeyemi"
@@ -79,14 +86,14 @@ export function StaffInviteForm() {
           />
         </div>
 
-        <div className="min-w-0">
-          <label className="mb-1 block text-sm font-medium" htmlFor="staff-email">
+        <div className="min-w-0 space-y-2">
+          <label className="block text-sm font-medium" htmlFor="staff-email">
             Email
           </label>
-          <input
+          <Input
             id="staff-email"
-            className="w-full min-w-0 rounded-md border border-[var(--border)] bg-background px-3 py-2.5 text-base sm:py-2 sm:text-sm"
             type="email"
+            className={CONNECT_INPUT_CLASS}
             value={email}
             onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
             placeholder="chioma@example.ng"
@@ -96,13 +103,13 @@ export function StaffInviteForm() {
           />
         </div>
 
-        <div className="min-w-0">
-          <label className="mb-1 block text-sm font-medium" htmlFor="staff-role">
+        <div className="min-w-0 space-y-2">
+          <label className="block text-sm font-medium" htmlFor="staff-role">
             Role
           </label>
           <select
             id="staff-role"
-            className="w-full min-w-0 rounded-md border border-[var(--border)] bg-background px-3 py-2.5 text-base sm:py-2 sm:text-sm"
+            className={CONNECT_CONTROL_CLASS}
             value={role}
             onChange={(e) => setRole(e.target.value as InvitableStaffRole)}
             required
@@ -132,6 +139,22 @@ export function StaffInviteForm() {
         {success ? (
           <div className="break-words rounded-md border border-success-200 bg-success-50 p-3 text-sm text-success">
             {success}
+          </div>
+        ) : null}
+
+        {setupLink ? (
+          <div className="space-y-2 rounded-md border border-border bg-muted/40 p-3 text-sm">
+            <p className="font-medium text-foreground">
+              Local setup link (email skipped — open this to set their password)
+            </p>
+            <a
+              href={setupLink}
+              className="block break-all text-primary underline-offset-2 hover:underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {setupLink}
+            </a>
           </div>
         ) : null}
 

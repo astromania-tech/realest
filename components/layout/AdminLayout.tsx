@@ -173,7 +173,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             </div>
           </div>
           <div className="hidden md:block">
-            <AdminFooter />
+            <AdminFooter userRole={staffRole ?? "admin"} />
           </div>
         </main>
       </div>

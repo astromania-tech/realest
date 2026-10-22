@@ -10,7 +10,10 @@ import {
   isReviewerAllowedPath,
   isStaffAllowedPath,
   isStaffRole,
+  postLoginHomePath,
   staffHomePath,
+  staffRoleBadgeLabel,
+  staffRolePanelTitle,
 } from "./roles.ts";
 
 test("[A-01] requireStaff returns 401 when there is no session user", async () => {
@@ -116,4 +119,19 @@ test("[A-01] reviewer path rules hide sensitive admin surfaces", () => {
   assert.equal(isStaffRole("supervisor"), true);
   assert.equal(isStaffRole("team_leader"), true);
   assert.equal(isStaffRole("team_member"), true);
+  assert.equal(staffRoleBadgeLabel("admin"), "ADMINISTRATOR");
+  assert.equal(staffRoleBadgeLabel("reviewer"), "REVIEWER");
+  assert.equal(staffRoleBadgeLabel("supervisor"), "SUPERVISOR");
+  assert.equal(staffRoleBadgeLabel("team_leader"), "TEAM LEAD");
+  assert.equal(staffRoleBadgeLabel("team_member"), "TEAM MEMBER");
+  assert.equal(staffRolePanelTitle("admin"), "Admin Panel");
+  assert.equal(staffRolePanelTitle("reviewer"), "Reviewer Panel");
+  assert.equal(staffRolePanelTitle("team_leader"), "Team Lead Panel");
+  assert.equal(postLoginHomePath("reviewer"), "/admin/validation");
+  assert.equal(postLoginHomePath("admin"), "/admin");
+  assert.equal(postLoginHomePath("user"), "/profile");
+  assert.equal(postLoginHomePath("owner"), "/owner");
 });
+
+
+

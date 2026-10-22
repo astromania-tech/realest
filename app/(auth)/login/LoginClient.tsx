@@ -16,6 +16,7 @@ import {
   signInWithPassword,
   formatAuthError,
 } from "@/lib/auth";
+import { isStaffRole, postLoginHomePath, staffHomePath } from "@/lib/auth/roles";
 import { Eye, EyeOff, Mail, Lock, CheckCircle, AlertCircle } from "lucide-react";
 
 function LoginForm() {
@@ -74,13 +75,27 @@ function LoginForm() {
       }
 
       if (response.user) {
-        const userType =
-          response.user.app_metadata?.role || response.user.user_metadata?.user_type;
+        const supabase = (await import("@/lib/supabase/client")).createClient();
+        // public.users.role is source of truth (JWT metadata can lag after invite).
+        const { data: roleRow } = await supabase
+          .from("users")
+          .select("role")
+          .eq("id", response.user.id)
+          .single();
+        const role =
+          roleRow?.role ??
+          response.user.app_metadata?.role ??
+          response.user.user_metadata?.user_type ??
+          "user";
 
-        if (userType === "owner" || userType === "agent") {
-          const supabase = (await import("@/lib/supabase/client")).createClient();
-          const tableName = userType === "owner" ? "owners" : "agents";
+        if (isStaffRole(role)) {
+          router.push(staffHomePath(role));
+          router.refresh();
+          return;
+        }
 
+        if (role === "owner" || role === "agent") {
+          const tableName = role === "owner" ? "owners" : "agents";
           const { data: onboardingComplete } = await supabase
             .from(tableName)
             .select("id")
@@ -94,15 +109,7 @@ function LoginForm() {
           }
         }
 
-        if (userType === "owner") {
-          router.push("/owner");
-        } else if (userType === "admin") {
-          router.push("/admin");
-        } else if (userType === "agent") {
-          router.push("/agent");
-        } else {
-          router.push("/profile");
-        }
+        router.push(postLoginHomePath(role));
         router.refresh();
       }
     } catch (err) {

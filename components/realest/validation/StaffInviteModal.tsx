@@ -3,6 +3,7 @@
 import { useState, type ChangeEvent } from "react";
 import { UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { BrandModalShell } from "@/components/realest/BrandModalShell";
 import { StaffLocationFields } from "@/components/admin/StaffLocationFields";
 import {
@@ -10,6 +11,7 @@ import {
   STAFF_ROLE_LABELS,
   type InvitableStaffRole,
 } from "@/lib/auth/staff-invite";
+import { CONNECT_CONTROL_CLASS, CONNECT_INPUT_CLASS } from "@/lib/styles/connect-form";
 
 export function StaffInviteModal({
   isOpen,
@@ -28,15 +30,14 @@ export function StaffInviteModal({
   const [lga, setLga] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
-  const controlClass =
-    "w-full min-w-0 rounded-md border border-border/50 bg-background px-3 py-2.5 text-base sm:py-2 sm:text-sm";
+  const [setupLink, setSetupLink] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError("");
     setSuccess("");
+    setSetupLink("");
     try {
       const res = await fetch("/api/admin/staff-invites", {
         method: "POST",
@@ -55,6 +56,9 @@ export function StaffInviteModal({
       setSuccess(
         `${fullName} was ${modeLabel} as ${STAFF_ROLE_LABELS[role]} in ${lga}, ${state}.`,
       );
+      if (typeof data.setup_link === "string" && data.setup_link) {
+        setSetupLink(data.setup_link);
+      }
       setEmail("");
       setFullName("");
       setRole("team_member");
@@ -94,27 +98,27 @@ export function StaffInviteModal({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium" htmlFor="modal-staff-name">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium" htmlFor="modal-staff-name">
               Full name
             </label>
-            <input
+            <Input
               id="modal-staff-name"
-              className={controlClass}
+              className={CONNECT_INPUT_CLASS}
               value={fullName}
               onChange={(e: ChangeEvent<HTMLInputElement>) => setFullName(e.target.value)}
               required
               autoComplete="name"
             />
           </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium" htmlFor="modal-staff-email">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium" htmlFor="modal-staff-email">
               Email
             </label>
-            <input
+            <Input
               id="modal-staff-email"
               type="email"
-              className={controlClass}
+              className={CONNECT_INPUT_CLASS}
               value={email}
               onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
               required
@@ -122,13 +126,13 @@ export function StaffInviteModal({
               inputMode="email"
             />
           </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium" htmlFor="modal-staff-role">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium" htmlFor="modal-staff-role">
               Role
             </label>
             <select
               id="modal-staff-role"
-              className={controlClass}
+              className={CONNECT_CONTROL_CLASS}
               value={role}
               onChange={(e) => setRole(e.target.value as InvitableStaffRole)}
               required
@@ -158,6 +162,19 @@ export function StaffInviteModal({
             <p className="break-words rounded-lg border border-success/30 bg-success/10 p-3 text-sm text-foreground">
               {success}
             </p>
+          ) : null}
+          {setupLink ? (
+            <div className="space-y-2 rounded-lg border border-border bg-muted/40 p-3 text-sm">
+              <p className="font-medium">Local setup link (email skipped)</p>
+              <a
+                href={setupLink}
+                className="block break-all text-primary underline-offset-2 hover:underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {setupLink}
+              </a>
+            </div>
           ) : null}
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

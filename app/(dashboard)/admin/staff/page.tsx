@@ -31,7 +31,9 @@ export default async function StaffInvitesPage() {
         <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
           Admin only
         </p>
-        <h1 className="mt-1 font-heading text-2xl text-[#07402F] sm:text-3xl">Staff invites</h1>
+        <h1 className="mt-1 font-heading text-2xl text-[#07402F] dark:text-foreground sm:text-3xl">
+          Staff invites
+        </h1>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
           Invite reviewers and field officers with operating state and LGA. Assignment prefers free
           officers in the same state as the property.

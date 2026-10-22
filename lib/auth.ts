@@ -430,6 +430,34 @@ export function isValidEmail(email: string): boolean {
 }
 
 /**
+ * Merge query + hash auth params. Supabase recovery links often put
+ * access_token / refresh_token in the URL fragment (#...), which
+ * useSearchParams() does not see.
+ */
+export function authParamsFromUrl(
+  searchParams: URLSearchParams,
+  hash = "",
+): URLSearchParams {
+  const merged = new URLSearchParams(searchParams.toString());
+  const raw = hash.replace(/^#/, "");
+  if (!raw) return merged;
+  const hashParams = new URLSearchParams(raw);
+  for (const key of [
+    "access_token",
+    "refresh_token",
+    "code",
+    "error",
+    "error_description",
+    "type",
+    "token_hash",
+  ]) {
+    const value = hashParams.get(key);
+    if (value && !merged.get(key)) merged.set(key, value);
+  }
+  return merged;
+}
+
+/**
  * Handle password reset session initialization from URL parameters
  */
 export async function handlePasswordResetSession(
@@ -441,17 +469,20 @@ export async function handlePasswordResetSession(
   redirectDelay?: number;
 }> {
   try {
-    const accessToken = searchParams.get("access_token");
-    const refreshToken = searchParams.get("refresh_token");
-    const code = searchParams.get("code");
-    const error = searchParams.get("error");
-    const errorDescription = searchParams.get("error_description");
+    const hash = typeof window !== "undefined" ? window.location.hash : "";
+    const params = authParamsFromUrl(searchParams, hash);
+    const accessToken = params.get("access_token");
+    const refreshToken = params.get("refresh_token");
+    const code = params.get("code");
+    const error = params.get("error");
+    const errorDescription = params.get("error_description");
 
     console.log("Reset password params:", {
-      accessToken,
-      refreshToken,
-      code,
+      accessToken: accessToken ? "[present]" : null,
+      refreshToken: refreshToken ? "[present]" : null,
+      code: code ? "[present]" : null,
       error,
+      fromHash: Boolean(hash),
     });
 
     // Handle error responses from Supabase

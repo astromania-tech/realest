@@ -139,5 +139,7 @@ export async function POST(request: Request) {
     success: true,
     user_id: result.userId,
     mode: result.mode,
+    // Only present when Resend is skipped locally — never relied on in production email flow.
+    ...(result.setupLink ? { setup_link: result.setupLink } : {}),
   });
 }

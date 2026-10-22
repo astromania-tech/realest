@@ -6,10 +6,13 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   isInvitableStaffRole,
+  localStaffSetupLink,
   staffInviteExistingDecision,
   staffInviteHomePath,
   staffInviteInputAllowed,
+  staffInviteRedirectTo,
 } from "./staff-invite.ts";
+import { resolveResendAction } from "../resend-key.ts";
 
 test("only Connect staff roles are invitable (not admin)", () => {
   assert.equal(isInvitableStaffRole("reviewer"), true);
@@ -103,3 +106,36 @@ test("staffInviteHomePath matches Connect shells", () => {
   assert.equal(staffInviteHomePath("team_leader"), "/admin/validation/field");
   assert.equal(staffInviteHomePath("team_member"), "/admin/validation/my-visits");
 });
+
+test("localStaffSetupLink only returns the link when Resend is skipped locally", () => {
+  const link = "http://127.0.0.1:54321/auth/v1/verify?token=local-test";
+  const previous = process.env.RESEND_API_KEY;
+  const previousVercel = process.env.VERCEL_ENV;
+  try {
+    delete process.env.RESEND_API_KEY;
+    delete process.env.VERCEL_ENV;
+    assert.equal(resolveResendAction(), "skip-local");
+    assert.equal(localStaffSetupLink(link), link);
+
+    process.env.RESEND_API_KEY = "re_test_key";
+    assert.equal(resolveResendAction(), "send");
+    assert.equal(localStaffSetupLink(link), undefined);
+  } finally {
+    if (previous === undefined) delete process.env.RESEND_API_KEY;
+    else process.env.RESEND_API_KEY = previous;
+    if (previousVercel === undefined) delete process.env.VERCEL_ENV;
+    else process.env.VERCEL_ENV = previousVercel;
+  }
+});
+
+test("staffInviteRedirectTo lands on setup-password", () => {
+  assert.equal(
+    staffInviteRedirectTo({ NEXT_PUBLIC_SITE_URL: "http://localhost:3000" }),
+    "http://127.0.0.1:3000/setup-password",
+  );
+  assert.equal(
+    staffInviteRedirectTo({ NEXT_PUBLIC_APP_URL: "https://realest.ng/" }),
+    "https://realest.ng/setup-password",
+  );
+});
+

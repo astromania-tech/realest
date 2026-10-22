@@ -58,3 +58,36 @@ test("team member primary tabs are my visits and inbox", () => {
   const primary = mobilePrimaryItems("team_member").map((item) => item.href);
   assert.deepEqual(primary, ["/admin/validation/my-visits", "/admin/validation/inbox"]);
 });
+
+test("case queue is not sticky over field ops, my visits, or inbox", () => {
+  const adminHrefs = [
+    "/admin",
+    "/admin/validation",
+    "/admin/validation/field",
+    "/admin/validation/my-visits",
+    "/admin/validation/inbox",
+    "/admin/staff",
+  ];
+  assert.equal(isDashboardNavActive("/admin/validation", "/admin/validation", adminHrefs), true);
+  assert.equal(
+    isDashboardNavActive("/admin/validation/field", "/admin/validation", adminHrefs),
+    false,
+  );
+  assert.equal(
+    isDashboardNavActive("/admin/validation/field", "/admin/validation/field", adminHrefs),
+    true,
+  );
+  assert.equal(
+    isDashboardNavActive("/admin/validation/my-visits", "/admin/validation", adminHrefs),
+    false,
+  );
+  assert.equal(
+    isDashboardNavActive("/admin/validation/inbox", "/admin/validation", adminHrefs),
+    false,
+  );
+  assert.equal(
+    isDashboardNavActive("/admin/validation/cases/abc", "/admin/validation", adminHrefs),
+    true,
+  );
+});
+

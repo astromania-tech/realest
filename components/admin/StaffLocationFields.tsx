@@ -2,9 +2,8 @@
 
 import { useMemo } from "react";
 import { NIGERIAN_STATES, getStateByName, getLGAsByState } from "@/lib/utils/nigerianLocations";
-
-const controlClass =
-  "w-full min-w-0 rounded-md border border-[var(--border)] bg-background px-3 py-2.5 text-base sm:py-2 sm:text-sm";
+import { Input } from "@/components/ui/input";
+import { CONNECT_CONTROL_CLASS, CONNECT_INPUT_CLASS } from "@/lib/styles/connect-form";
 
 export function StaffLocationFields({
   state,
@@ -27,13 +26,13 @@ export function StaffLocationFields({
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      <div className="min-w-0">
-        <label className="mb-1 block text-sm font-medium" htmlFor={`${idPrefix}-state`}>
+      <div className="min-w-0 space-y-2">
+        <label className="block text-sm font-medium" htmlFor={`${idPrefix}-state`}>
           Operating state
         </label>
         <select
           id={`${idPrefix}-state`}
-          className={controlClass}
+          className={CONNECT_CONTROL_CLASS}
           value={state}
           onChange={(event) => {
             onStateChange(event.target.value);
@@ -49,14 +48,14 @@ export function StaffLocationFields({
           ))}
         </select>
       </div>
-      <div className="min-w-0">
-        <label className="mb-1 block text-sm font-medium" htmlFor={`${idPrefix}-lga`}>
+      <div className="min-w-0 space-y-2">
+        <label className="block text-sm font-medium" htmlFor={`${idPrefix}-lga`}>
           Operating LGA
         </label>
         {lgas.length > 0 ? (
           <select
             id={`${idPrefix}-lga`}
-            className={controlClass}
+            className={CONNECT_CONTROL_CLASS}
             value={lga}
             onChange={(event) => onLgaChange(event.target.value)}
             required
@@ -69,16 +68,16 @@ export function StaffLocationFields({
             ))}
           </select>
         ) : (
-          <input
+          <Input
             id={`${idPrefix}-lga`}
-            className={controlClass}
+            className={CONNECT_INPUT_CLASS}
             value={lga}
             onChange={(event) => onLgaChange(event.target.value)}
             placeholder="e.g. Ikeja"
             required
           />
         )}
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           Used to match officers to properties in the same state (and prefer same LGA).
         </p>
       </div>

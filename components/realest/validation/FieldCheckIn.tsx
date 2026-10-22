@@ -67,7 +67,9 @@ export function FieldCheckIn({ propertyId, address }: { propertyId: string; addr
 
   return (
     <div className="mx-auto flex min-h-[100dvh] max-w-md flex-col gap-4 px-4 py-8">
-      <h1 className="font-heading text-2xl text-[#07402F]">Check in at the pin</h1>
+      <h1 className="font-heading text-2xl text-[#07402F] dark:text-foreground">
+        Check in at the pin
+      </h1>
       <p className="text-sm text-muted-foreground">{address}</p>
       <p className="text-sm">
         Use this phone&apos;s GPS and rear camera. There is no place to type a coordinate. Safari and

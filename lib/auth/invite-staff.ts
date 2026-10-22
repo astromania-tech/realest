@@ -9,10 +9,50 @@ import {
   staffInviteInputAllowed,
   type InvitableStaffRole,
 } from "@/lib/auth/staff-invite";
+import { resolveResendAction } from "@/lib/resend-key";
 import { NIGERIAN_STATES, getStateByName, getLGAsByState } from "@/lib/utils/nigerianLocations";
+import { localStaffSetupLink, staffInviteRedirectTo } from "@/lib/auth/staff-invite";
+import { inviteSetupPendingPatch } from "@/lib/auth/invite-setup";
 
 export function knownNigerianStateNames(): string[] {
   return NIGERIAN_STATES.map((state) => state.name);
+}
+
+async function markInviteSetupPending(
+  service: ReturnType<typeof createServiceClient>,
+  userId: string,
+): Promise<void> {
+  const { data: authUser, error: getError } = await service.auth.admin.getUserById(userId);
+  if (getError || !authUser.user) {
+    console.error("[staff-invite] Could not load auth user to mark invite pending:", getError);
+    return;
+  }
+  const { error } = await service.auth.admin.updateUserById(userId, {
+    user_metadata: {
+      ...(authUser.user.user_metadata ?? {}),
+      ...inviteSetupPendingPatch(),
+    },
+  });
+  if (error) {
+    console.error("[staff-invite] Could not mark invite pending:", error);
+  }
+}
+
+async function generateStaffSetupLink(
+  service: ReturnType<typeof createServiceClient>,
+  email: string,
+  userId: string,
+): Promise<{ ok: true; actionLink: string } | { ok: false; error: string }> {
+  await markInviteSetupPending(service, userId);
+  const { data, error } = await service.auth.admin.generateLink({
+    type: "recovery",
+    email,
+    options: { redirectTo: staffInviteRedirectTo() },
+  });
+  if (error || !data.properties?.action_link) {
+    return { ok: false, error: error?.message ?? "Invite link could not be generated." };
+  }
+  return { ok: true, actionLink: data.properties.action_link };
 }
 
 export function lgasForStateName(stateName: string): string[] {
@@ -69,7 +109,7 @@ export async function persistStaffInviteRecords(params: {
 }
 
 export type InviteStaffResult =
-  | { ok: true; userId: string; mode: "created" | "promoted" }
+  | { ok: true; userId: string; mode: "created" | "promoted"; setupLink?: string }
   | { ok: false; error: string; status: 400 | 409 | 500 };
 
 export async function inviteStaff(input: {
@@ -105,6 +145,21 @@ export async function inviteStaff(input: {
       existingRole: existing.role,
       requestedRole: parsed.role,
     });
+
+    // Same role: production refuses. Locally regenerate the setup link so testing can continue.
+    if (decision.action === "noop" && resolveResendAction() === "skip-local") {
+      const link = await generateStaffSetupLink(service, parsed.email, existing.id);
+      if (!link.ok) {
+        return { ok: false, error: "Could not regenerate the local setup link.", status: 500 };
+      }
+      return {
+        ok: true,
+        userId: existing.id,
+        mode: "promoted",
+        setupLink: localStaffSetupLink(link.actionLink),
+      };
+    }
+
     if (decision.action !== "promote") {
       return { ok: false, error: decision.error, status: decision.status };
     }
@@ -118,11 +173,8 @@ export async function inviteStaff(input: {
       lga: parsed.lga,
     });
 
-    const { data: resetData, error: resetError } = await service.auth.admin.generateLink({
-      type: "recovery",
-      email: parsed.email,
-    });
-    if (resetError || !resetData.properties?.action_link) {
+    const link = await generateStaffSetupLink(service, parsed.email, existing.id);
+    if (!link.ok) {
       return { ok: false, error: "Role updated, but the invite link could not be generated.", status: 500 };
     }
 
@@ -130,7 +182,7 @@ export async function inviteStaff(input: {
       email: parsed.email,
       full_name: parsed.fullName,
       inviter_name: input.actorName,
-      reset_link: resetData.properties.action_link,
+      reset_link: link.actionLink,
       role: parsed.role,
       mode: "promoted",
     });
@@ -150,7 +202,12 @@ export async function inviteStaff(input: {
       },
     });
 
-    return { ok: true, userId: existing.id, mode: "promoted" };
+    return {
+      ok: true,
+      userId: existing.id,
+      mode: "promoted",
+      setupLink: localStaffSetupLink(link.actionLink),
+    };
   }
 
   const securePassword = randomBytes(32).toString("hex");
@@ -199,11 +256,8 @@ export async function inviteStaff(input: {
     return { ok: false, error: message, status: 500 };
   }
 
-  const { data: resetData, error: resetError } = await service.auth.admin.generateLink({
-    type: "recovery",
-    email: parsed.email,
-  });
-  if (resetError || !resetData.properties?.action_link) {
+  const link = await generateStaffSetupLink(service, parsed.email, provisioned.userId);
+  if (!link.ok) {
     return { ok: false, error: "Staff created, but the invite link could not be generated.", status: 500 };
   }
 
@@ -211,7 +265,7 @@ export async function inviteStaff(input: {
     email: parsed.email,
     full_name: parsed.fullName,
     inviter_name: input.actorName,
-    reset_link: resetData.properties.action_link,
+    reset_link: link.actionLink,
     role: parsed.role,
     mode: "created",
   });
@@ -230,7 +284,12 @@ export async function inviteStaff(input: {
     },
   });
 
-  return { ok: true, userId: provisioned.userId, mode: "created" };
+  return {
+    ok: true,
+    userId: provisioned.userId,
+    mode: "created",
+    setupLink: localStaffSetupLink(link.actionLink),
+  };
 }
 
 export async function listInvitedStaff() {

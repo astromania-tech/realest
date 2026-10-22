@@ -3,6 +3,27 @@
  * Super-admin stays on /admin/subadmins.
  */
 
+import { resolveResendAction } from "@/lib/resend-key";
+
+/** Production always emails. Locally (no RESEND_API_KEY) surface the link for testing. */
+export function localStaffSetupLink(actionLink: string): string | undefined {
+  if (resolveResendAction() !== "skip-local") return undefined;
+  console.info(`[staff-invite] Local setup link (email skipped):\n${actionLink}`);
+  return actionLink;
+}
+
+/** Where recovery links land after Supabase verify (invite password setup). */
+export function staffInviteRedirectTo(
+  env: { NEXT_PUBLIC_SITE_URL?: string; NEXT_PUBLIC_APP_URL?: string } = process.env,
+): string {
+  let base =
+    env.NEXT_PUBLIC_SITE_URL ?? env.NEXT_PUBLIC_APP_URL ?? "http://127.0.0.1:3000";
+  base = base.replace(/\/$/, "");
+  // Local Supabase site_url is 127.0.0.1 — keep redirect host aligned.
+  base = base.replace("://localhost:", "://127.0.0.1:");
+  return `${base}/setup-password`;
+}
+
 export const INVITABLE_STAFF_ROLES = [
   "reviewer",
   "supervisor",

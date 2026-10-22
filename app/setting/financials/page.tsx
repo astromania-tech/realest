@@ -566,8 +566,11 @@ export default function FinancialsPage() {
                     3-Month Revenue Projection
                   </h4>
                   <div className="space-y-2">
-                    {data.forecasts.projections.map((projection, index) => (
-                      <div className="flex items-center justify-between p-2 bg-gray-800/30 rounded">
+                    {data.forecasts.projections.map((projection) => (
+                      <div
+                        key={projection.month}
+                        className="flex items-center justify-between p-2 bg-gray-800/30 rounded"
+                      >
                         <span className="text-sm font-medium">
                           {projection.month}
                         </span>

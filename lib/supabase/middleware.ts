@@ -6,6 +6,7 @@ import {
   isRouteAccessible,
   shouldEnableAuthentication,
 } from "@/lib/appMode";
+import { isStaffRole, staffHomePath } from "@/lib/auth/roles";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -86,16 +87,12 @@ export async function updateSession(request: NextRequest) {
 
     const role = roleData?.role ?? "user";
     const url = request.nextUrl.clone();
-    switch (role) {
-      case "owner":
-      case "agent":
-        url.pathname = "/onboarding";
-        break;
-      case "admin":
-        url.pathname = "/admin";
-        break;
-      default:
-        url.pathname = "/profile";
+    if (isStaffRole(role)) {
+      url.pathname = staffHomePath(role);
+    } else if (role === "owner" || role === "agent") {
+      url.pathname = "/onboarding";
+    } else {
+      url.pathname = "/profile";
     }
     return NextResponse.redirect(url);
   }
@@ -153,6 +150,16 @@ export async function updateSession(request: NextRequest) {
       .single();
 
     const role = userData?.role;
+
+    // Connect staff belong in the verification shell, not marketplace /profile.
+    if (
+      isStaffRole(role) &&
+      (pathname === "/profile" || pathname.startsWith("/profile/"))
+    ) {
+      const url = request.nextUrl.clone();
+      url.pathname = staffHomePath(role);
+      return NextResponse.redirect(url);
+    }
 
     if (role === "owner" || role === "agent") {
       const table = role === "owner" ? "owners" : "agents";

@@ -11,12 +11,14 @@ import { useUser } from "@/lib/hooks/useUser";
 import { ProfileDropdown } from "@/components/realest";
 import { useLogoutModal } from "@/components/providers/LogoutModalProvider";
 import { MobileAccountOverlay } from "@/components/layout/MobileAccountOverlay";
+import { staffRoleBadgeLabel } from "@/lib/auth/roles";
 
 export function AdminHeader() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user, profile } = useUser();
+  const { user, profile, role } = useUser();
   const router = useRouter();
   const { openLogoutModal } = useLogoutModal();
+  const roleBadge = staffRoleBadgeLabel(role);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-accent/20 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 shadow-sm">
@@ -32,9 +34,9 @@ export function AdminHeader() {
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
             {/* Admin Badge */}
-            <div className="flex items-center gap-2 px-3 py-1 bg-error/10 text-error border border-error/20 shadow-sm rounded-full text-sm font-medium">
+            <div className="flex items-center gap-2 px-3 py-1 bg-error/10 text-error border border-error/20 shadow-sm rounded-full text-sm font-medium uppercase tracking-wide">
               <Shield className="w-4 h-4" />
-              Administrator
+              {roleBadge}
             </div>
             
             <ThemeToggleCompact />
@@ -72,7 +74,7 @@ export function AdminHeader() {
         <div className="space-y-4">
           <div className="flex items-center gap-2 rounded-lg bg-danger/10 px-3 py-2 text-danger">
             <Shield className="h-4 w-4" />
-            <span className="text-sm font-medium">Administrator</span>
+            <span className="text-sm font-medium uppercase tracking-wide">{roleBadge}</span>
           </div>
 
           <div className="flex items-center gap-3 rounded-lg border p-3">

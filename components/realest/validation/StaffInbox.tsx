@@ -74,7 +74,9 @@ export function StaffInbox() {
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
             Staff inbox
           </p>
-          <h1 className="mt-1 font-heading text-2xl text-[#07402F] sm:text-3xl">Notifications</h1>
+          <h1 className="mt-1 font-heading text-2xl text-[#07402F] dark:text-foreground sm:text-3xl">
+            Notifications
+          </h1>
           <p className="mt-2 max-w-xl text-sm text-muted-foreground">
             Case-scoped alerts when you are assigned as leader, put on a team, or named check-in officer.
           </p>

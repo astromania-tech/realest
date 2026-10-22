@@ -26,7 +26,8 @@ import {
   Megaphone,
 } from "lucide-react";
 
-import { staffNavItems } from "@/lib/layout/dashboard-nav";
+import { isDashboardNavActive, staffNavItems } from "@/lib/layout/dashboard-nav";
+import { staffRolePanelSubtitle, staffRolePanelTitle } from "@/lib/auth/roles";
 
 interface AdminSidebarProps {
   currentPath: string;
@@ -60,13 +61,12 @@ export function AdminSidebar({
   }, []);
 
   const navigationItems = staffNavItems(userRole);
+  const navigationHrefs = navigationItems.map((item) => item.href);
+  const panelTitle = staffRolePanelTitle(userRole);
+  const panelSubtitle = staffRolePanelSubtitle(userRole);
 
-  const isActive = (href: string) => {
-    if (href === "/admin" && currentPath === "/admin") return true;
-    if (href === "/admin") return false;
-    // Exact match or starts with href followed by / (prevents /admin/emails matching /admin/emails/campaigns)
-    return currentPath === href || currentPath.startsWith(href + "/");
-  };
+  const isActive = (href: string) =>
+    isDashboardNavActive(currentPath, href, navigationHrefs);
 
   // Handle mouse enter - expand immediately
   const handleMouseEnter = () => {
@@ -113,10 +113,8 @@ export function AdminSidebar({
           <div className="flex px-0 items-center justify-between">
             {!shouldCollapse && (
               <div className="animate-text-slide-in">
-                <h2 className="text-lg font-semibold">Admin Panel</h2>
-                <p className="text-xs text-muted-foreground">
-                  System Management
-                </p>
+                <h2 className="text-lg font-semibold">{panelTitle}</h2>
+                <p className="text-xs text-muted-foreground">{panelSubtitle}</p>
               </div>
             )}
             <Button
@@ -167,7 +165,7 @@ export function AdminSidebar({
                         className={`font-medium animate-text-slide-in ${
                           active
                             ? "text-primary-foreground"
-                            : "text-muted-foreground"
+                            : "text-foreground"
                         }
                         `}
                       >

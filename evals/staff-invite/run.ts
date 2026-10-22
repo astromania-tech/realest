@@ -80,10 +80,39 @@ const cases: Array<{ id: string; run: () => boolean }> = [
         invite.includes("sendStaffInvitationEmail") &&
         invite.includes('action: "invite_staff"') &&
         invite.includes("ops_state") &&
-        invite.includes("ops_lga")
+        invite.includes("ops_lga") &&
+        invite.includes("localStaffSetupLink") &&
+        route.includes("setup_link")
       );
     },
   },
+  {
+    id: "local-setup-link-only-when-resend-skipped",
+    run: () => {
+      const source = readFileSync("lib/auth/staff-invite.ts", "utf8");
+      return (
+        source.includes("localStaffSetupLink") &&
+        source.includes('resolveResendAction() !== "skip-local"')
+      );
+    },
+  },
+  {
+    id: "invite-link-is-one-shot-after-password",
+    run: () => {
+      const setup = readFileSync("lib/auth/invite-setup.ts", "utf8");
+      const page = readFileSync("app/(auth)/setup-password/SetupPasswordClient.tsx", "utf8");
+      const invite = readFileSync("lib/auth/invite-staff.ts", "utf8");
+      return (
+        setup.includes("inviteSetupBlocked") &&
+        setup.includes('"completed"') &&
+        page.includes("inviteSetupCompletedPatch") &&
+        page.includes("inviteSetupBlocked") &&
+        invite.includes("markInviteSetupPending")
+      );
+    },
+  },
+
+
   {
     id: "ops-location-is-column-backed",
     run: () => {

@@ -62,7 +62,9 @@ export default async function MyVisitsPage() {
       <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
         Field workspace
       </p>
-      <h1 className="mt-1 font-heading text-2xl text-[#07402F] sm:text-3xl">My visits</h1>
+      <h1 className="mt-1 font-heading text-2xl text-[#07402F] dark:text-foreground sm:text-3xl">
+        My visits
+      </h1>
       <p className="mt-2 text-sm text-muted-foreground">
         Cases where you lead, join, or check in. Only the check-in officer can write GPS at the pin.
       </p>

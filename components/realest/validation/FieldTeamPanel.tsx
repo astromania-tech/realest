@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { CONNECT_CONTROL_CLASS, CONNECT_INPUT_CLASS } from "@/lib/styles/connect-form";
 
 type Candidate = {
   id: string;
@@ -168,8 +171,7 @@ export function FieldTeamPanel({
       memberIds.includes(person.id) ||
       person.id === checkInOfficerId,
   );
-  const controlClass =
-    "w-full min-w-0 rounded-md border bg-background px-3 py-2.5 text-base sm:py-2 sm:text-sm";
+  const controlClass = CONNECT_CONTROL_CLASS;
 
   return (
     <div className="min-w-0 space-y-5">
@@ -188,7 +190,9 @@ export function FieldTeamPanel({
 
       {data.recommendedLeaderIds.length > 0 ? (
         <div className="rounded-xl border border-brand-accent/30 bg-brand-accent/10 p-3 text-sm">
-          <p className="font-semibold text-[#07402F]">Recommended free leaders</p>
+          <p className="font-semibold text-[#07402F] dark:text-foreground">
+            Recommended free leaders
+          </p>
           <ul className="mt-2 space-y-1 text-muted-foreground">
             {data.leaders
               .filter((person) => data.recommendedLeaderIds.includes(person.id))
@@ -253,19 +257,19 @@ export function FieldTeamPanel({
           <label className="block text-sm" htmlFor="field-day">
             Visit day
           </label>
-          <input
+          <Input
             id="field-day"
             type="date"
-            className={controlClass}
+            className={CONNECT_INPUT_CLASS}
             value={visitDay}
             onChange={(event) => setVisitDay(event.target.value)}
           />
           <label className="block text-sm" htmlFor="field-brief">
             Brief (optional)
           </label>
-          <textarea
+          <Textarea
             id="field-brief"
-            className={`min-h-20 ${controlClass}`}
+            className={`min-h-20 ${CONNECT_INPUT_CLASS}`}
             value={brief}
             onChange={(event) => setBrief(event.target.value)}
             placeholder="What the team should verify on site"
@@ -294,7 +298,7 @@ export function FieldTeamPanel({
             Same-state officers with fewer open visits appear first. Designate who checks in at the pin.
           </p>
           {data.recommendedMemberIds.length > 0 ? (
-            <p className="text-xs text-[#07402F]">
+            <p className="text-xs text-[#07402F] dark:text-foreground">
               Suggested:{" "}
               {data.members
                 .filter((person) => data.recommendedMemberIds.includes(person.id))
@@ -302,7 +306,7 @@ export function FieldTeamPanel({
                 .join(", ")}
             </p>
           ) : null}
-          <div className="max-h-56 space-y-2 overflow-y-auto rounded-md border p-2">
+          <div className="max-h-56 space-y-2 overflow-y-auto rounded-md border border-muted-foreground/35 bg-transparent p-2 shadow-xs dark:border-muted-foreground/40 dark:bg-input/30">
             {memberRoster.map((person) => (
               <label key={person.id} className="flex min-w-0 items-start gap-2 text-sm">
                 <input
