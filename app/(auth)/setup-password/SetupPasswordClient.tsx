@@ -12,10 +12,9 @@ import {
   CardContent,
 } from "@/components/ui";
 import { Input } from "@/components/ui/input";
-import { getCurrentUser, resetPassword, signOut } from "@/lib/auth";
+import { signOut } from "@/lib/auth";
 import {
   inviteSetupBlocked,
-  inviteSetupCompletedPatch,
   INVITE_SETUP_USED_MESSAGE,
   readInviteSetupStatus,
 } from "@/lib/auth/invite-setup";
@@ -113,23 +112,19 @@ function SetupPasswordContent() {
     }
 
     try {
-      const userResponse = await getCurrentUser();
-      if (!userResponse.success || !userResponse.user) {
-        setFormError("Session expired. Please request a new invite link.");
-        setIsLoading(false);
-        return;
-      }
+      const response = await fetch("/api/auth/invite-setup-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: formData.password }),
+      });
+      const result = (await response.json()) as { error?: string };
 
-      const result = await resetPassword(formData.password);
-      if (!result.success) {
+      if (!response.ok) {
         setFormError(result.error ?? "Failed to set password. Please try again.");
         setIsLoading(false);
         return;
       }
 
-      // Consume the invite so the same recovery URL cannot set the password again.
-      const supabase = createClient();
-      await supabase.auth.updateUser({ data: inviteSetupCompletedPatch() });
       if (typeof window !== "undefined") {
         window.history.replaceState({}, "", "/setup-password");
       }

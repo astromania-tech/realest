@@ -101,12 +101,15 @@ const cases: Array<{ id: string; run: () => boolean }> = [
     run: () => {
       const setup = readFileSync("lib/auth/invite-setup.ts", "utf8");
       const page = readFileSync("app/(auth)/setup-password/SetupPasswordClient.tsx", "utf8");
+      const route = readFileSync("app/api/auth/invite-setup-password/route.ts", "utf8");
       const invite = readFileSync("lib/auth/invite-staff.ts", "utf8");
       return (
         setup.includes("inviteSetupBlocked") &&
         setup.includes('"completed"') &&
-        page.includes("inviteSetupCompletedPatch") &&
+        page.includes("/api/auth/invite-setup-password") &&
         page.includes("inviteSetupBlocked") &&
+        route.includes("completeInviteSetupAllowed") &&
+        route.includes("updateUserById") &&
         invite.includes("markInviteSetupPending")
       );
     },

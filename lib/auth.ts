@@ -14,13 +14,8 @@ export interface AuthResponse {
 
 // const createClient = createServiceClient;
 
-export interface PasswordValidation {
-  minLength: boolean;
-  hasUppercase: boolean;
-  hasLowercase: boolean;
-  hasNumber: boolean;
-  hasSpecialChar: boolean;
-}
+export type { PasswordValidation } from "@/lib/auth/password-rules";
+export { isPasswordValid, validatePassword } from "@/lib/auth/password-rules";
 
 export interface UserProfile {
   id: string;
@@ -30,27 +25,6 @@ export interface UserProfile {
   email: string;
   phone?: string;
   avatar_url?: string;
-}
-
-/**
- * Validate password strength
- */
-export function validatePassword(password: string): PasswordValidation {
-  return {
-    minLength: password.length >= 8,
-    hasUppercase: /[A-Z]/.test(password),
-    hasLowercase: /[a-z]/.test(password),
-    hasNumber: /\d/.test(password),
-    hasSpecialChar: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
-  };
-}
-
-/**
- * Check if password meets all requirements
- */
-export function isPasswordValid(password: string): boolean {
-  const validation = validatePassword(password);
-  return Object.values(validation).every(Boolean);
 }
 
 /**
