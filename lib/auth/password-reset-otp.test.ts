@@ -44,10 +44,24 @@ test("verify-reset-otp route calls recoveryVerifyOtpParams / token_hash", () => 
   assert.doesNotMatch(source, /email:\s*""/);
 });
 
-test("forgot-password normalizes email before profile lookup", () => {
+test("forgot-password normalizes email and coalesces duplicate sends", () => {
   const source = readFileSync(
     new URL("../../app/api/auth/forgot-password/route.ts", import.meta.url),
     "utf8",
   );
   assert.match(source, /normalizeResetEmail/);
+  assert.match(source, /coalesceForgotPasswordSend/);
+  assert.match(source, /isForgotPasswordSendOnCooldown/);
+  assert.match(source, /verificationType:\s*"reset"/);
+});
+
+test("forgot-password client guards double submit with a ref", () => {
+  const source = readFileSync(
+    new URL(
+      "../../app/(auth)/forgot-password/ForgotPasswordClient.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(source, /submitLockRef/);
 });
