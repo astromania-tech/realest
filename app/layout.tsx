@@ -4,7 +4,6 @@ import { Analytics } from "@vercel/analytics/next";
 import { RealEstThemeProvider } from "@/components/providers/RealEstThemeProvider";
 import { LogoutModalProvider } from "@/components/providers/LogoutModalProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
-import { UserProvider } from "@/lib/hooks/useUser";
 import { CookieBanner } from "@/components/shared";
 import "@/lib/styles/globals.css";
 
@@ -152,65 +151,26 @@ export default function RootLayout({
         <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120.png" />
         <link rel="apple-touch-icon-precomposed" sizes="120x120" href="/apple-touch-icon-120x120-precomposed.png" />
         <link rel="manifest" href="/manifest.json" />
-        
-        {/* HubSpot Tracking Code */}
-        {/*<!-- Start of HubSpot Embed Code -->*/}
-        <script type="text/javascript" id="hs-script-loader" async defer src="//js-eu1.hs-scripts.com/147628032.js"></script>
-        {/*<!-- End of HubSpot Embed Code -->*/}
-        
-        {/* <!-- Meta Pixel Code --> */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              !function(f,b,e,v,n,t,s)
-              {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-              n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-              if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-              n.queue=[];t=b.createElement(e);t.async=!0;
-              t.src=v;s=b.getElementsByTagName(e)[0];
-              s.parentNode.insertBefore(t,s)}(window, document,'script',
-              'https://connect.facebook.net/en_US/fbevents.js');
-              fbq('init', '930986666494169');
-              fbq('track', 'PageView');
-            `,
-          }}
-        />
-        <noscript>
-          <img
-            height="1"
-            width="1"
-            style={{ display: "none" }}
-            src="https://www.facebook.com/tr?id=930986666494169&ev=PageView&noscript=1"
-            alt=""
-          />
-        </noscript>
-        {/* <!-- End Meta Pixel Code --> */}
-
-        {/* <!-- Start of realestconnecthelp Zendesk Widget script --> */}
-        <script id="ze-snippet" src="https://static.zdassets.com/ekr/snippet.js?key=16241a82-2e89-4760-a55a-eebed2ba144a"></script>
-        {/* <!-- End of realestconnecthelp Zendesk Widget script --> */}
       </head>
       <body className="font-body antialiased">
         <RealEstThemeProvider defaultTheme="system" enableSystem={true}>
           <AuthProvider>
-            <UserProvider>
-              <LogoutModalProvider>
-                <noscript>
-                  <div className="fixed inset-0 bg-background flex items-center justify-center z-50">
-                    <div className="text-center p-8">
-                      <h1 className="text-h1 mb-4">JavaScript Required</h1>
-                      <p className="text-body-m text-muted-foreground">
-                        RealEST requires JavaScript to function properly. Please enable
-                        JavaScript in your browser.
-                      </p>
-                    </div>
+            <LogoutModalProvider>
+              <noscript>
+                <div className="fixed inset-0 bg-background flex items-center justify-center z-50">
+                  <div className="text-center p-8">
+                    <h1 className="text-h1 mb-4">JavaScript Required</h1>
+                    <p className="text-body-m text-muted-foreground">
+                      RealEST requires JavaScript to function properly. Please enable
+                      JavaScript in your browser.
+                    </p>
                   </div>
-                </noscript>
-                {children}
-                <CookieBanner />
-                <Analytics />
-              </LogoutModalProvider>
-            </UserProvider>
+                </div>
+              </noscript>
+              {children}
+              <CookieBanner />
+              <Analytics />
+            </LogoutModalProvider>
           </AuthProvider>
         </RealEstThemeProvider>
       </body>

@@ -12,11 +12,21 @@ import {
   BarChart3,
 } from "lucide-react";
 import { Avatar, Dropdown, Label } from "@heroui/react";
-import { useUser } from "@/lib/hooks/useUser";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { useOptionalUser, type UserRole } from "@/lib/hooks/useUser";
 import { useLogoutModal } from "@/components/providers/LogoutModalProvider";
 
-export function ProfileDropdown() {
-  const { user, profile, role } = useUser();
+type ProfileDropdownProps = {
+  /** Role from Header when UserProvider is not mounted (public pages). */
+  fallbackRole?: string | null;
+};
+
+export function ProfileDropdown({ fallbackRole = null }: ProfileDropdownProps) {
+  const userCtx = useOptionalUser();
+  const { user: authUser } = useAuth();
+  const user = userCtx?.user ?? authUser;
+  const profile = userCtx?.profile ?? null;
+  const role = (userCtx?.role ?? fallbackRole) as UserRole | null;
   const router = useRouter();
   const { openLogoutModal } = useLogoutModal();
 

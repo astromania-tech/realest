@@ -194,7 +194,9 @@ function useUserState(): UseUserReturn {
       try {
         const { data: profileData, error } = await supabase
           .from("profiles")
-          .select("*")
+          .select(
+            "id, email, full_name, phone, bio, avatar_url, created_at, updated_at",
+          )
           .eq("id", userId)
           .single();
 
@@ -228,7 +230,9 @@ function useUserState(): UseUserReturn {
       try {
         const { data: ownerData, error: ownerError } = await supabase
           .from("owners")
-          .select("*")
+          .select(
+            "id, business_name, property_types, verified, verification_date, years_experience, rating, total_properties, whatsapp",
+          )
           .eq("profile_id", userId)
           .single();
 
@@ -274,7 +278,9 @@ function useUserState(): UseUserReturn {
       try {
         const { data: agentData, error: agentError } = await supabase
           .from("agents")
-          .select("*")
+          .select(
+            "id, license_number, agency_name, specialization, verified, verification_date, years_experience, rating, total_sales, total_listings, whatsapp",
+          )
           .eq("profile_id", userId)
           .single();
 
@@ -645,6 +651,11 @@ export function useUser(): UseUserReturn {
     throw new Error("useUser must be used within UserProvider");
   }
   return ctx;
+}
+
+/** Safe on public pages where UserProvider is not mounted. */
+export function useOptionalUser(): UseUserReturn | null {
+  return useContext(UserContext);
 }
 
 // Utility hooks for specific user types

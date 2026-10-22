@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { AgentOnboarding, OwnerOnboarding } from "@/components/onboarding";
+import { UserSessionBoundary } from "@/components/providers/UserSessionBoundary";
 
 export const metadata: Metadata = {
   title: "Complete Your Profile | RealEST",
@@ -60,9 +61,11 @@ export default async function OnboardingLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {userType === "agent" && <AgentOnboarding />}
-      {userType === "owner" && <OwnerOnboarding />}
-    </div>
+    <UserSessionBoundary>
+      <div className="min-h-screen bg-background">
+        {userType === "agent" && <AgentOnboarding />}
+        {userType === "owner" && <OwnerOnboarding />}
+      </div>
+    </UserSessionBoundary>
   );
 }

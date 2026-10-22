@@ -91,13 +91,21 @@ test("dashboard segments expose instant loading UI", () => {
   assert.match(adminLoading, /DashboardPageSkeleton/);
 });
 
-test("user state is a shared provider so layouts do not each cold-boot", () => {
+test("user state is a shared provider under authenticated shells only", () => {
   const userHook = readFileSync("lib/hooks/useUser.tsx", "utf8");
   const root = readFileSync("app/layout.tsx", "utf8");
+  const dashboard = readFileSync("app/(dashboard)/layout.tsx", "utf8");
+  const analytics = readFileSync("app/analytics/layout.tsx", "utf8");
+  const onboarding = readFileSync("app/onboarding/layout.tsx", "utf8");
   assert.match(userHook, /export function UserProvider/);
+  assert.match(userHook, /export function useOptionalUser/);
   assert.match(userHook, /UserContext/);
   assert.match(userHook, /hydratedUserId/);
-  assert.match(root, /UserProvider/);
+  assert.match(root, /AuthProvider/);
+  assert.doesNotMatch(root, /UserProvider/);
+  assert.match(dashboard, /UserSessionBoundary/);
+  assert.match(analytics, /UserSessionBoundary/);
+  assert.match(onboarding, /UserSessionBoundary/);
 });
 
 test("admin sidebar uses plain Link nav without nested Button", () => {
