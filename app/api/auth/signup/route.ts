@@ -4,6 +4,7 @@ import { renderCampaignTemplate } from '@/lib/emailBulkSender';
 import { Resend } from 'resend';
 import { sendVerificationEmail } from '@/lib/emailService';
 import { alreadyRegisteredEmail, localEmailConfirmAllowed } from '@/lib/auth/local-email-confirm';
+import { marketplaceSignupRole } from '@/lib/auth/marketplace-signup-role';
 import type { User } from '@supabase/supabase-js';
 
 async function confirmLocalAuthUser(email: string, password?: string): Promise<User | null> {
@@ -49,6 +50,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
+    // Never accept staff/admin from the client — invite/promote only.
+    const signupRole = marketplaceSignupRole(userType);
+
     const supabaseAdmin = createServiceClient();
     const confirmLocally = localEmailConfirmAllowed();
 
@@ -58,7 +62,7 @@ export async function POST(request: NextRequest) {
       email_confirm: confirmLocally,
       user_metadata: {
         full_name: fullName || '',
-        user_type: userType || 'user',
+        user_type: signupRole,
       },
     });
 
