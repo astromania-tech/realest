@@ -66,7 +66,8 @@ export default function FavoritesPage() {
           `,
           )
           .eq("user_id", user.user.id)
-          .order("created_at", { ascending: false });
+          .order("created_at", { ascending: false })
+          .limit(50);
 
         if (!error && data) {
           setSavedProperties(

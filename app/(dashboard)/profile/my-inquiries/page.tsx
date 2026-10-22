@@ -50,7 +50,8 @@ export default function MyInquiriesPage() {
         `,
         )
         .eq("sender_id", user.user.id)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(50);
 
       if (!error && data) {
         setInquiries(
