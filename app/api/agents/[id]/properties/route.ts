@@ -50,7 +50,7 @@ export async function GET(
 
     const skip = (page - 1) * perPage;
 
-    const [properties, count] = await Promise.all([
+    const [properties, count, statusGroups] = await Promise.all([
       prisma.properties.findMany({
         where,
         select: {
@@ -71,40 +71,39 @@ export async function GET(
           updated_at: true,
           property_media: {
             select: { id: true, media_url: true, is_featured: true, display_order: true },
-            orderBy: { display_order: 'asc' },
+            orderBy: [{ is_featured: "desc" }, { display_order: "asc" }],
+            take: 1,
           },
+          _count: { select: { property_media: true } },
         },
         orderBy,
         skip,
         take: perPage,
       }),
       prisma.properties.count({ where }),
+      prisma.properties.groupBy({
+        by: ["status"],
+        where: { agent_id: agentRow.id },
+        _count: { _all: true },
+      }),
     ]);
 
-    // Process properties to include featured image
-    const processedProperties =
-      properties.map((property: any) => ({
-        ...property,
-        primary_image:
-          property.property_media?.find((m: any) => m.is_featured)?.media_url ||
-          property.property_media?.[0]?.media_url ||
-          null,
-        images_count: property.property_media?.length || 0,
-      }));
+    const processedProperties = properties.map(({ _count, ...property }) => ({
+      ...property,
+      primary_image: property.property_media?.[0]?.media_url || null,
+      images_count: _count.property_media,
+    }));
 
-    // Get property statistics for this agent
-    const allStatuses = await prisma.properties.findMany({
-      where: { agent_id: agentRow.id },
-      select: { status: true },
-    });
+    const countFor = (...statuses: string[]) =>
+      statusGroups
+        .filter((row) => statuses.includes(row.status ?? ""))
+        .reduce((sum, row) => sum + row._count._all, 0);
 
     const propertyStats = {
-      total: allStatuses.length,
-      live: allStatuses.filter((p: any) => p.status === "live").length,
-      pending: allStatuses.filter((p: any) =>
-        ["pending_ml_validation", "pending_vetting"].includes(p.status),
-      ).length,
-      sold: allStatuses.filter((p: any) => p.status === "sold").length,
+      total: statusGroups.reduce((sum, row) => sum + row._count._all, 0),
+      live: countFor("live"),
+      pending: countFor("pending_ml_validation", "pending_vetting"),
+      sold: countFor("sold"),
     };
 
     const totalPages = Math.ceil(count / perPage);
