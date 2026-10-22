@@ -1,6 +1,6 @@
 import { Header, Footer } from "@/components/layout"
 import { HeroSection, ComingSoonHero, MarketingTrackingScripts } from "@/components/marketing"
-import { FeaturedProperties } from "@/components/property"
+import FeaturedProperties from "@/components/property/FeaturedProperties"
 import { shouldShowFullSite } from "@/lib/appMode"
 
 export default async function HomePage() {
