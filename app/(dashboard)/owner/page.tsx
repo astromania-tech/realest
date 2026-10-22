@@ -23,27 +23,44 @@ export default async function OwnerDashboardPage() {
     redirect("/");
   }
 
-  // Fetch owner's properties
-  const { data: properties } = await supabase
-    .from("properties")
-    .select("*")
-    .eq("owner_id", user.id)
-    .order("created_at", { ascending: false });
+  const [{ data: properties }, { data: inquiries }] = await Promise.all([
+    supabase
+      .from("properties")
+      .select(
+        "id, title, price, address, city, status, verification_status, created_at",
+      )
+      .eq("owner_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(50),
+    supabase
+      .from("inquiries")
+      .select(
+        "id, status, message, created_at, properties(title), profiles(full_name, email)",
+      )
+      .eq("owner_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(10),
+  ]);
 
-  // Fetch inquiries for owner's properties
-  const { data: inquiries } = await supabase
-    .from("inquiries")
-    .select("*, properties(title), profiles(full_name, email)")
-    .eq("owner_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(10);
+  const inquiryRows = (inquiries ?? []).map((row) => ({
+    id: row.id,
+    message: row.message,
+    status: row.status,
+    created_at: row.created_at,
+    properties: Array.isArray(row.properties)
+      ? row.properties[0] ?? { title: "" }
+      : row.properties ?? { title: "" },
+    profiles: Array.isArray(row.profiles)
+      ? row.profiles[0] ?? { full_name: "", email: "" }
+      : row.profiles ?? { full_name: "", email: "" },
+  }));
 
   return (
     <div className="min-h-screen bg-background">
       <OwnerDashboardContent
         user={user}
         properties={properties || []}
-        inquiries={inquiries || []}
+        inquiries={inquiryRows}
       />
     </div>
   );
