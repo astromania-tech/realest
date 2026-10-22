@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { adminApproveAllowed, readTrustDecision } from '@/lib/trust/gate'
 import { openDeskCase } from '@/lib/trust/visit-store'
 import { requireStaff } from "@/lib/auth/require-staff"
+import { canMakeDeskDecision } from "@/lib/auth/staff-action-gate"
 import {
   buildListingRejectFeedback,
   deliverListingRejectFeedback,
@@ -37,6 +38,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const staff = await requireStaff()
     if (!staff.ok) {
       return NextResponse.json({ error: staff.error }, { status: staff.status })
+    }
+    if (!canMakeDeskDecision(staff.role)) {
+      return NextResponse.json(
+        { error: "Desk reviewers or admins make this decision." },
+        { status: 403 },
+      )
     }
     const user = { id: staff.userId }
 

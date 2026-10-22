@@ -16,6 +16,7 @@ import { appendEvidence, markCorrection, openDeskCase, readStoredVisit, saveChec
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata'
 import { requireStaff } from "@/lib/auth/require-staff"
 import { isAssignableOfficerRole } from "@/lib/auth/roles"
+import { vettingActionAllowed } from "@/lib/auth/staff-action-gate"
 import {
   buildListingRejectFeedback,
   deliverListingRejectFeedback,
@@ -126,6 +127,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       document_id, latitude, longitude, photo_base64, saw_building, address_matches, document_matches,
       location_source, accuracy_meters, registry_reference, registry_matches,
     } = validation.data
+
+    if (!vettingActionAllowed(staff.role, action)) {
+      return NextResponse.json(
+        { error: "Your role cannot run this vetting action." },
+        { status: 403 },
+      )
+    }
 
     const property = await prisma.properties.findFirst({
       where: { id, status: 'pending_vetting' },
