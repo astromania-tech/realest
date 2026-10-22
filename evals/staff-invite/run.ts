@@ -154,6 +154,19 @@ const cases: Array<{ id: string; run: () => boolean }> = [
       return source.includes("STAFF_ROLE_CAPABILITIES") && source.includes("Set Your Password");
     },
   },
+
+  {
+    id: "email-template-is-congratulatory-invite",
+    run: () => {
+      const source = readFileSync("emails/templates/platform/StaffInvitationEmail.tsx", "utf8");
+      return (
+        source.includes("Congratulations") &&
+        source.includes("you're invited") &&
+        !source.includes("Your verification role was updated") &&
+        !source.includes("Your RealEST role is now")
+      );
+    },
+  },
 ];
 
 let failed = 0;

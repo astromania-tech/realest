@@ -88,10 +88,11 @@ export function StaffInvitationEmail({
   const firstName = full_name?.split(" ")[0] ?? "";
   const roleLabel = STAFF_ROLE_LABELS[role];
   const capabilities = STAFF_ROLE_CAPABILITIES[role];
+  const greeting = firstName ? `, ${firstName}` : "";
   const preview =
     mode === "promoted"
-      ? `${inviter_name} updated your RealEST verification role to ${roleLabel}.`
-      : `${inviter_name} invited you to RealEST verification as ${roleLabel}.`;
+      ? `Congratulations — you are invited to continue on RealEST as ${roleLabel}.`
+      : `Congratulations — you are invited to join RealEST as ${roleLabel}.`;
 
   return (
     <EmailLayout preview={preview}>
@@ -99,17 +100,26 @@ export function StaffInvitationEmail({
 
       <EmailSection>
         <Text style={styles.heading}>
-          {mode === "promoted" ? "Your verification role was updated" : "You're invited to verification"},{" "}
-          {firstName}
+          Congratulations{greeting} — you&apos;re invited
         </Text>
 
         <Text style={styles.paragraph}>
-          <strong>{inviter_name}</strong>{" "}
-          {mode === "promoted"
-            ? "set your RealEST staff role to"
-            : "invited you to join RealEST verification as"}{" "}
-          <strong>{roleLabel}</strong>. You will be able to:
+          {mode === "promoted" ? (
+            <>
+              Great news. <strong>{inviter_name}</strong> has invited you to step
+              into the <strong>{roleLabel}</strong> role on RealEST verification.
+              Welcome to the next chapter of keeping Nigerian listings honest.
+            </>
+          ) : (
+            <>
+              Great news. <strong>{inviter_name}</strong> has invited you to join
+              RealEST verification as a <strong>{roleLabel}</strong>. We are glad
+              to have you on the team that keeps Nigerian listings honest.
+            </>
+          )}
         </Text>
+
+        <Text style={styles.paragraph}>In this role you will be able to:</Text>
 
         <Section style={{ marginBottom: spacing["4"] }}>
           {capabilities.map((cap) => (
@@ -120,7 +130,7 @@ export function StaffInvitationEmail({
         </Section>
 
         <Text style={styles.paragraph}>
-          Click below to set your password and open your staff workspace:
+          To get started, set your password and open your staff workspace:
         </Text>
 
         <Section style={{ textAlign: "center", marginBottom: spacing["6"] }}>
@@ -137,7 +147,7 @@ export function StaffInvitationEmail({
         <Section style={styles.warningSection}>
           <Text style={styles.warningText}>This invitation link expires in 24 hours.</Text>
           <Text style={styles.warningSubText}>
-            If you didn&apos;t expect this, you can ignore this email.
+            If you didn&apos;t expect this invitation, you can ignore this email.
           </Text>
         </Section>
       </EmailSection>
@@ -149,8 +159,8 @@ export function StaffInvitationEmail({
 
 StaffInvitationEmail.subject = (data: StaffInvitationData) =>
   data.mode === "promoted"
-    ? `Your RealEST role is now ${STAFF_ROLE_LABELS[data.role]}`
-    : `You're invited to RealEST verification (${STAFF_ROLE_LABELS[data.role]})`;
+    ? `Congratulations — you're invited as ${STAFF_ROLE_LABELS[data.role]} on RealEST`
+    : `You're invited to RealEST as ${STAFF_ROLE_LABELS[data.role]}`;
 
 export const previewProps: StaffInvitationData = {
   email: "chioma@example.ng",
