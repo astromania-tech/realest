@@ -1,5 +1,6 @@
-import { createClient, getAuthUser} from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,6 @@ import { WaitlistRowActions } from "@/components/admin/WaitlistRowActions";
 import Link from "next/link";
 
 export default async function WaitlistManagementPage() {
-  const supabase = await createClient();
   const {
     data: { user },
   } = await getAuthUser();
@@ -19,33 +19,41 @@ export default async function WaitlistManagementPage() {
     redirect("/login");
   }
 
-  // Check if user is an admin
-  const { data: userRow } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  const userRow = await prisma.users.findUnique({
+    where: { id: user.id },
+    select: { role: true },
+  });
 
   if (userRow?.role !== "admin") {
     redirect("/");
   }
 
-  // Fetch waitlist data from Supabase
-  const { data: waitlistData } = await supabase
-    .from("waitlist")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 7);
 
-  // Mock waitlist stats (in a real app, this would come from the API)
+  const [waitlistData, totalSubscribers, newThisWeek] = await Promise.all([
+    prisma.waitlist.findMany({
+      select: {
+        id: true,
+        email: true,
+        first_name: true,
+        last_name: true,
+        phone: true,
+        source: true,
+        created_at: true,
+      },
+      orderBy: { created_at: "desc" },
+      take: 100,
+    }),
+    prisma.waitlist.count(),
+    prisma.waitlist.count({ where: { created_at: { gte: weekAgo } } }),
+  ]);
+
   const waitlistStats = {
-    totalSubscribers: waitlistData?.length || 0,
-    newThisWeek: waitlistData?.filter(item => {
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
-      return new Date(item.created_at) > weekAgo;
-    }).length || 0,
-    conversionRate: 12.5, // percentage
-    averagePosition: Math.floor((waitlistData?.length || 0) / 2),
+    totalSubscribers,
+    newThisWeek,
+    conversionRate: 12.5,
+    averagePosition: Math.floor(totalSubscribers / 2),
   };
 
   return (
@@ -172,39 +180,43 @@ export default async function WaitlistManagementPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {waitlistData?.map((subscriber, index) => (
-                  <TableRow key={subscriber.id}>
-                    <TableCell className="font-medium">
-                      #{index + 1}
-                    </TableCell>
-                    <TableCell>
-                      {subscriber.first_name} {subscriber.last_name || ""}
-                    </TableCell>
-                    <TableCell>{subscriber.email}</TableCell>
-                    <TableCell>{subscriber.phone || "N/A"}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{subscriber.source || "website"}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(subscriber.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <WaitlistRowActions
-                        subscriber={{
-                          id: subscriber.id,
-                          email: subscriber.email,
-                          first_name: subscriber.first_name,
-                          last_name: subscriber.last_name,
-                        }}
-                      />
-                    </TableCell>
-                  </TableRow>
-                )) || (
+                {waitlistData.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center text-muted-foreground">
                       No waitlist subscribers found
                     </TableCell>
                   </TableRow>
+                ) : (
+                  waitlistData.map((subscriber, index) => (
+                    <TableRow key={subscriber.id}>
+                      <TableCell className="font-medium">
+                        #{index + 1}
+                      </TableCell>
+                      <TableCell>
+                        {subscriber.first_name} {subscriber.last_name || ""}
+                      </TableCell>
+                      <TableCell>{subscriber.email}</TableCell>
+                      <TableCell>{subscriber.phone || "N/A"}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{subscriber.source || "website"}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        {subscriber.created_at
+                          ? new Date(subscriber.created_at).toLocaleDateString()
+                          : "N/A"}
+                      </TableCell>
+                      <TableCell>
+                        <WaitlistRowActions
+                          subscriber={{
+                            id: subscriber.id,
+                            email: subscriber.email,
+                            first_name: subscriber.first_name,
+                            last_name: subscriber.last_name,
+                          }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))
                 )}
               </TableBody>
             </Table>
