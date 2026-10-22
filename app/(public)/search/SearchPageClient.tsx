@@ -7,7 +7,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { RealEstButton } from "@/components/heroui/RealEstButton";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { AdvancedSearchForm } from "@/components/patterns/forms";
+import { AdvancedSearchForm } from "@/components/patterns/forms/AdvancedSearchForm";
 import { Chip } from "@heroui/react";
 
 const PropertyMap = dynamic(
@@ -25,7 +25,8 @@ import {
   Input, 
   Button 
 } from "@/components/ui";
-import { Header, Footer } from "@/components/layout";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 import {
   MapPin,
   Bed,

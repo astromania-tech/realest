@@ -19,7 +19,7 @@ import {
   PropertyStatusChip,
   AmenityBadgeGroup,
   createAmenityBadges,
-} from "@/components/realest";
+} from "@/components/realest/badges";
 
 interface Property {
   id: string;

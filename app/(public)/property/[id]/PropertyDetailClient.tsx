@@ -33,7 +33,8 @@ import {
   CheckCircle,
 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { Header, Footer } from "@/components/layout";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 import { formatPrice, formatListingType } from "@/lib/utils/propertyUtils";
 
 const PropertyMap = dynamic(
