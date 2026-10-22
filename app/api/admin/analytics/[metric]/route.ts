@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, getAuthUser } from "@/lib/supabase/server"
+import { getAuthUser } from "@/lib/supabase/server"
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@/lib/prisma/client'
 
-// Query parameters schema
 const metricQuerySchema = z.object({
   period: z.enum(['7d', '30d', '90d', '1y', 'all']).optional().default('30d'),
   group_by: z.enum(['day', 'week', 'month']).optional().default('day'),
@@ -15,6 +15,8 @@ type RouteParams = {
     metric: string
   }>
 }
+
+type TruncUnit = 'day' | 'week' | 'month'
 
 export const openApiGET = {
   method: 'get',
@@ -37,28 +39,18 @@ export const openApiGET = {
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const supabase = await createClient()
     const { metric } = await params
 
-    // Verify admin authentication
     const { data: { user }, error: authError } = await getAuthUser()
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Verify user is admin
     const adminRow = await prisma.users.findUnique({ where: { id: user.id }, select: { role: true } })
     if (!adminRow || adminRow.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 
-    // Parse query parameters
     const { searchParams } = new URL(request.url)
     const queryValidation = metricQuerySchema.safeParse({
       period: searchParams.get('period'),
@@ -69,14 +61,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     if (!queryValidation.success) {
       return NextResponse.json(
         { error: 'Invalid query parameters', details: queryValidation.error.issues },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
     const { period, group_by, include_comparison } = queryValidation.data
     const includeComparison = include_comparison === 'true'
 
-    // Calculate date range
     const now = new Date()
     let startDate: Date
 
@@ -101,51 +92,50 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     const startDateStr = startDate.toISOString()
+    const endDate = now
 
-    // Generate metric data based on requested metric
-    let metricData: any = null
-    let comparisonData: any = null
+    let metricData: unknown = null
+    let comparisonData: unknown = null
 
     switch (metric) {
       case 'users':
-        metricData = await getUserMetrics(startDateStr, group_by)
+        metricData = await getUserMetrics(startDate, endDate, group_by)
         if (includeComparison) {
-          comparisonData = await getUserMetricsComparison(startDate, period, group_by)
+          const prev = new Date(startDate.getTime() - getPeriodLength(period))
+          comparisonData = await getUserMetrics(prev, startDate, group_by)
         }
         break
-
       case 'properties':
-        metricData = await getPropertyMetrics(startDateStr, group_by)
+        metricData = await getPropertyMetrics(startDate, endDate, group_by)
         if (includeComparison) {
-          comparisonData = await getPropertyMetricsComparison(startDate, period, group_by)
+          const prev = new Date(startDate.getTime() - getPeriodLength(period))
+          comparisonData = await getPropertyMetrics(prev, startDate, group_by)
         }
         break
-
       case 'inquiries':
-        metricData = await getInquiryMetrics(startDateStr, group_by)
+        metricData = await getInquiryMetrics(startDate, endDate, group_by)
         if (includeComparison) {
-          comparisonData = await getInquiryMetricsComparison(startDate, period, group_by)
+          const prev = new Date(startDate.getTime() - getPeriodLength(period))
+          comparisonData = await getInquiryMetrics(prev, startDate, group_by)
         }
         break
-
       case 'revenue':
-        metricData = await getRevenueMetrics(startDateStr, group_by)
+        metricData = await getRevenueMetrics(startDateStr)
         if (includeComparison) {
-          comparisonData = await getRevenueMetricsComparison(startDate, period, group_by)
+          comparisonData = await getRevenueMetricsComparison()
         }
         break
-
       case 'performance':
-        metricData = await getPerformanceMetrics(startDateStr, group_by)
+        metricData = await getPerformanceMetrics(startDate, endDate, group_by)
         if (includeComparison) {
-          comparisonData = await getPerformanceMetricsComparison(startDate, period, group_by)
+          const prev = new Date(startDate.getTime() - getPeriodLength(period))
+          comparisonData = await getPerformanceMetrics(prev, startDate, group_by)
         }
         break
-
       default:
         return NextResponse.json(
           { error: 'Invalid metric. Supported metrics: users, properties, inquiries, revenue, performance' },
-          { status: 400 }
+          { status: 400 },
         )
     }
 
@@ -161,33 +151,16 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       comparison: includeComparison ? comparisonData : null,
       metadata: {
         total_period: Math.ceil((now.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000)),
-        data_points: metricData?.length || 0,
+        data_points: Array.isArray(metricData) ? metricData.length : 0,
         has_comparison: includeComparison && comparisonData !== null,
-      }
+      },
     })
-
   } catch (error) {
     console.error('Unexpected error in metric analytics:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-
-// Helper: group a date into a period string
-function groupDate(date: Date, groupBy: string): string {
-  if (groupBy === 'month') return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-  if (groupBy === 'week') {
-    const weekStart = new Date(date)
-    weekStart.setDate(date.getDate() - date.getDay())
-    return weekStart.toISOString().split('T')[0]
-  }
-  return date.toISOString().split('T')[0]
-}
-
-// Helper: period length in ms
 function getPeriodLength(period: string): number {
   switch (period) {
     case '7d': return 7 * 24 * 60 * 60 * 1000
@@ -199,175 +172,229 @@ function getPeriodLength(period: string): number {
   }
 }
 
-// User metrics
-async function getUserMetrics(startDateStr: string, groupBy: string) {
-  const data = await prisma.profiles.findMany({
-    where: { created_at: { gte: new Date(startDateStr) } },
-    select: { created_at: true, users: { select: { role: true } } },
-    orderBy: { created_at: 'asc' },
-  })
-  const grouped: Record<string, { period: string; total_users: number; regular_users: number; property_owners: number; admins: number }> = {}
-  data.forEach((u: { created_at: Date | null; users: { role: string } | null }) => {
-    const p = groupDate(new Date(u.created_at!), groupBy)
-    const role = u.users?.role ?? 'user'
-    if (!grouped[p]) grouped[p] = { period: p, total_users: 0, regular_users: 0, property_owners: 0, admins: 0 }
-    grouped[p].total_users++
-    if (role === 'user') grouped[p].regular_users++
-    if (role === 'owner') grouped[p].property_owners++
-    if (role === 'admin') grouped[p].admins++
-  })
+function truncUnit(groupBy: string): TruncUnit {
+  if (groupBy === 'week') return 'week'
+  if (groupBy === 'month') return 'month'
+  return 'day'
+}
+
+/** Whitelisted date_trunc literal — never interpolate user input into SQL. */
+function dateTrunc(columnSql: 'created_at' | 'p.created_at', groupBy: string): Prisma.Sql {
+  const unit = truncUnit(groupBy)
+  return Prisma.raw(`date_trunc('${unit}', ${columnSql})`)
+}
+
+function periodKey(d: Date, groupBy: string): string {
+  if (groupBy === 'month') {
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
+  }
+  return d.toISOString().slice(0, 10)
+}
+
+async function getUserMetrics(start: Date, end: Date, groupBy: string) {
+  const trunc = dateTrunc('p.created_at', groupBy)
+  const rows = await prisma.$queryRaw<
+    Array<{ period: Date; role: string | null; n: bigint }>
+  >(Prisma.sql`
+    select ${trunc} as period,
+           coalesce(u.role::text, 'user') as role,
+           count(*)::bigint as n
+    from public.profiles p
+    left join public.users u on u.id = p.id
+    where p.created_at >= ${start} and p.created_at < ${end}
+    group by 1, 2
+    order by 1
+  `)
+
+  const grouped: Record<
+    string,
+    { period: string; total_users: number; regular_users: number; property_owners: number; admins: number }
+  > = {}
+  for (const row of rows) {
+    const key = periodKey(new Date(row.period), groupBy)
+    if (!grouped[key]) {
+      grouped[key] = {
+        period: key,
+        total_users: 0,
+        regular_users: 0,
+        property_owners: 0,
+        admins: 0,
+      }
+    }
+    const n = Number(row.n)
+    grouped[key].total_users += n
+    if (row.role === 'user') grouped[key].regular_users += n
+    if (row.role === 'owner') grouped[key].property_owners += n
+    if (row.role === 'admin') grouped[key].admins += n
+  }
   return Object.values(grouped).sort((a, b) => a.period.localeCompare(b.period))
 }
 
-async function getUserMetricsComparison(startDate: Date, period: string, groupBy: string) {
-  const prev = new Date(startDate.getTime() - getPeriodLength(period))
-  const data = await prisma.profiles.findMany({
-    where: { created_at: { gte: prev, lt: startDate } },
-    select: { created_at: true, users: { select: { role: true } } },
-    orderBy: { created_at: 'asc' },
-  })
-  const grouped: Record<string, { period: string; total_users: number; regular_users: number; property_owners: number; admins: number }> = {}
-  data.forEach((u: { created_at: Date | null; users: { role: string } | null }) => {
-    const p = groupDate(new Date(u.created_at!), groupBy)
-    const role = u.users?.role ?? 'user'
-    if (!grouped[p]) grouped[p] = { period: p, total_users: 0, regular_users: 0, property_owners: 0, admins: 0 }
-    grouped[p].total_users++
-    if (role === 'user') grouped[p].regular_users++
-    if (role === 'owner') grouped[p].property_owners++
-    if (role === 'admin') grouped[p].admins++
-  })
+async function getPropertyMetrics(start: Date, end: Date, groupBy: string) {
+  const trunc = dateTrunc('created_at', groupBy)
+  const rows = await prisma.$queryRaw<
+    Array<{ period: Date; status: string | null; n: bigint }>
+  >(Prisma.sql`
+    select ${trunc} as period, status, count(*)::bigint as n
+    from public.properties
+    where created_at >= ${start} and created_at < ${end}
+    group by 1, 2
+    order by 1
+  `)
+
+  const grouped: Record<
+    string,
+    {
+      period: string
+      total_properties: number
+      live_properties: number
+      pending_ml: number
+      pending_vetting: number
+      rejected_properties: number
+    }
+  > = {}
+  for (const row of rows) {
+    const key = periodKey(new Date(row.period), groupBy)
+    if (!grouped[key]) {
+      grouped[key] = {
+        period: key,
+        total_properties: 0,
+        live_properties: 0,
+        pending_ml: 0,
+        pending_vetting: 0,
+        rejected_properties: 0,
+      }
+    }
+    const n = Number(row.n)
+    grouped[key].total_properties += n
+    if (row.status === 'live') grouped[key].live_properties += n
+    if (row.status === 'pending_ml_validation') grouped[key].pending_ml += n
+    if (row.status === 'pending_vetting') grouped[key].pending_vetting += n
+    if (row.status === 'rejected') grouped[key].rejected_properties += n
+  }
   return Object.values(grouped).sort((a, b) => a.period.localeCompare(b.period))
 }
 
-// Property metrics
-async function getPropertyMetrics(startDateStr: string, groupBy: string) {
-  const data = await prisma.properties.findMany({
-    where: { created_at: { gte: new Date(startDateStr) } },
-    select: { status: true, created_at: true },
-    orderBy: { created_at: 'asc' },
-  })
-  const grouped: Record<string, { period: string; total_properties: number; live_properties: number; pending_ml: number; pending_vetting: number; rejected_properties: number }> = {}
-  data.forEach((prop: { created_at: Date | null; status: string | null }) => {
-    const p = groupDate(new Date(prop.created_at!), groupBy)
-    if (!grouped[p]) grouped[p] = { period: p, total_properties: 0, live_properties: 0, pending_ml: 0, pending_vetting: 0, rejected_properties: 0 }
-    grouped[p].total_properties++
-    if (prop.status === 'live') grouped[p].live_properties++
-    if (prop.status === 'pending_ml_validation') grouped[p].pending_ml++
-    if (prop.status === 'pending_vetting') grouped[p].pending_vetting++
-    if (prop.status === 'rejected') grouped[p].rejected_properties++
-  })
+async function getInquiryMetrics(start: Date, end: Date, groupBy: string) {
+  const trunc = dateTrunc('created_at', groupBy)
+  const rows = await prisma.$queryRaw<
+    Array<{ period: Date; status: string | null; n: bigint }>
+  >(Prisma.sql`
+    select ${trunc} as period, status, count(*)::bigint as n
+    from public.inquiries
+    where created_at >= ${start} and created_at < ${end}
+    group by 1, 2
+    order by 1
+  `)
+
+  const grouped: Record<
+    string,
+    {
+      period: string
+      total_inquiries: number
+      responded_inquiries: number
+      closed_inquiries: number
+      new_inquiries: number
+    }
+  > = {}
+  for (const row of rows) {
+    const key = periodKey(new Date(row.period), groupBy)
+    if (!grouped[key]) {
+      grouped[key] = {
+        period: key,
+        total_inquiries: 0,
+        responded_inquiries: 0,
+        closed_inquiries: 0,
+        new_inquiries: 0,
+      }
+    }
+    const n = Number(row.n)
+    grouped[key].total_inquiries += n
+    if (row.status === 'responded') grouped[key].responded_inquiries += n
+    if (row.status === 'closed') grouped[key].closed_inquiries += n
+    if (row.status === 'new') grouped[key].new_inquiries += n
+  }
   return Object.values(grouped).sort((a, b) => a.period.localeCompare(b.period))
 }
 
-async function getPropertyMetricsComparison(startDate: Date, period: string, groupBy: string) {
-  const prev = new Date(startDate.getTime() - getPeriodLength(period))
-  const data = await prisma.properties.findMany({
-    where: { created_at: { gte: prev, lt: startDate } },
-    select: { status: true, created_at: true },
-    orderBy: { created_at: 'asc' },
-  })
-  const grouped: Record<string, { period: string; total_properties: number; live_properties: number; pending_ml: number; pending_vetting: number; rejected_properties: number }> = {}
-  data.forEach((prop: { created_at: Date | null; status: string | null }) => {
-    const p = groupDate(new Date(prop.created_at!), groupBy)
-    if (!grouped[p]) grouped[p] = { period: p, total_properties: 0, live_properties: 0, pending_ml: 0, pending_vetting: 0, rejected_properties: 0 }
-    grouped[p].total_properties++
-    if (prop.status === 'live') grouped[p].live_properties++
-    if (prop.status === 'pending_ml_validation') grouped[p].pending_ml++
-    if (prop.status === 'pending_vetting') grouped[p].pending_vetting++
-    if (prop.status === 'rejected') grouped[p].rejected_properties++
-  })
-  return Object.values(grouped).sort((a, b) => a.period.localeCompare(b.period))
-}
-
-// Inquiry metrics
-async function getInquiryMetrics(startDateStr: string, groupBy: string) {
-  const data = await prisma.inquiries.findMany({
-    where: { created_at: { gte: new Date(startDateStr) } },
-    select: { status: true, created_at: true },
-    orderBy: { created_at: 'asc' },
-  })
-  const grouped: Record<string, { period: string; total_inquiries: number; responded_inquiries: number; closed_inquiries: number; new_inquiries: number }> = {}
-  data.forEach((inq: { created_at: Date | null; status: string | null }) => {
-    const p = groupDate(new Date(inq.created_at!), groupBy)
-    if (!grouped[p]) grouped[p] = { period: p, total_inquiries: 0, responded_inquiries: 0, closed_inquiries: 0, new_inquiries: 0 }
-    grouped[p].total_inquiries++
-    if (inq.status === 'responded') grouped[p].responded_inquiries++
-    if (inq.status === 'closed') grouped[p].closed_inquiries++
-    if (inq.status === 'new') grouped[p].new_inquiries++
-  })
-  return Object.values(grouped).sort((a, b) => a.period.localeCompare(b.period))
-}
-
-async function getInquiryMetricsComparison(startDate: Date, period: string, groupBy: string) {
-  const prev = new Date(startDate.getTime() - getPeriodLength(period))
-  const data = await prisma.inquiries.findMany({
-    where: { created_at: { gte: prev, lt: startDate } },
-    select: { status: true, created_at: true },
-    orderBy: { created_at: 'asc' },
-  })
-  const grouped: Record<string, { period: string; total_inquiries: number; responded_inquiries: number; closed_inquiries: number; new_inquiries: number }> = {}
-  data.forEach((inq: { created_at: Date | null; status: string | null }) => {
-    const p = groupDate(new Date(inq.created_at!), groupBy)
-    if (!grouped[p]) grouped[p] = { period: p, total_inquiries: 0, responded_inquiries: 0, closed_inquiries: 0, new_inquiries: 0 }
-    grouped[p].total_inquiries++
-    if (inq.status === 'responded') grouped[p].responded_inquiries++
-    if (inq.status === 'closed') grouped[p].closed_inquiries++
-    if (inq.status === 'new') grouped[p].new_inquiries++
-  })
-  return Object.values(grouped).sort((a, b) => a.period.localeCompare(b.period))
-}
-
-// Revenue metrics (placeholder - no transaction table yet)
-async function getRevenueMetrics(startDateStr: string, _groupBy: string) {
+async function getRevenueMetrics(startDateStr: string) {
   return [{ period: startDateStr.split('T')[0], revenue: 0, transactions: 0, average_transaction: 0 }]
 }
 
-async function getRevenueMetricsComparison(_startDate: Date, _period: string, _groupBy: string) {
+async function getRevenueMetricsComparison() {
   return []
 }
 
-// Performance metrics
-async function getPerformanceMetrics(startDateStr: string, groupBy: string) {
-  const [props, inqs, profs] = await Promise.all([
-    prisma.properties.findMany({ where: { created_at: { gte: new Date(startDateStr) } }, select: { created_at: true, status: true } }),
-    prisma.inquiries.findMany({ where: { created_at: { gte: new Date(startDateStr) } }, select: { created_at: true, status: true } }),
-    prisma.profiles.findMany({ where: { created_at: { gte: new Date(startDateStr) } }, select: { created_at: true } }),
+async function getPerformanceMetrics(start: Date, end: Date, groupBy: string) {
+  const trunc = dateTrunc('created_at', groupBy)
+  const [propRows, inqRows, profileRows] = await Promise.all([
+    prisma.$queryRaw<
+      Array<{ period: Date; status: string | null; n: bigint }>
+    >(Prisma.sql`
+      select ${trunc} as period, status, count(*)::bigint as n
+      from public.properties
+      where created_at >= ${start} and created_at < ${end}
+      group by 1, 2
+      order by 1
+    `),
+    prisma.$queryRaw<
+      Array<{ period: Date; status: string | null; n: bigint }>
+    >(Prisma.sql`
+      select ${trunc} as period, status, count(*)::bigint as n
+      from public.inquiries
+      where created_at >= ${start} and created_at < ${end}
+      group by 1, 2
+      order by 1
+    `),
+    prisma.$queryRaw<
+      Array<{ period: Date; n: bigint }>
+    >(Prisma.sql`
+      select ${trunc} as period, count(*)::bigint as n
+      from public.profiles
+      where created_at >= ${start} and created_at < ${end}
+      group by 1
+      order by 1
+    `),
   ])
-  const ops = [
-    ...props.map((x: { created_at: Date | null; status: string | null }) => ({ created_at: x.created_at!, status: x.status })),
-    ...inqs.map((x: { created_at: Date | null; status: string | null }) => ({ created_at: x.created_at!, status: x.status })),
-    ...profs.map((x: { created_at: Date | null }) => ({ created_at: x.created_at!, status: 'success' })),
-  ]
-  const grouped: Record<string, { period: string; total_requests: number; successful_operations: number; failed_operations: number }> = {}
-  ops.forEach((op) => {
-    const p = groupDate(new Date(op.created_at), groupBy)
-    if (!grouped[p]) grouped[p] = { period: p, total_requests: 0, successful_operations: 0, failed_operations: 0 }
-    grouped[p].total_requests++
-    if (['live', 'success', 'responded', 'closed'].includes(op.status ?? '')) grouped[p].successful_operations++
-    else if (['rejected', 'failed'].includes(op.status ?? '')) grouped[p].failed_operations++
-  })
-  return Object.values(grouped).sort((a, b) => a.period.localeCompare(b.period))
-}
 
-async function getPerformanceMetricsComparison(startDate: Date, period: string, groupBy: string) {
-  const prev = new Date(startDate.getTime() - getPeriodLength(period))
-  const [props, inqs, profs] = await Promise.all([
-    prisma.properties.findMany({ where: { created_at: { gte: prev, lt: startDate } }, select: { created_at: true, status: true } }),
-    prisma.inquiries.findMany({ where: { created_at: { gte: prev, lt: startDate } }, select: { created_at: true, status: true } }),
-    prisma.profiles.findMany({ where: { created_at: { gte: prev, lt: startDate } }, select: { created_at: true } }),
-  ])
-  const ops = [
-    ...props.map((x: { created_at: Date | null; status: string | null }) => ({ created_at: x.created_at!, status: x.status })),
-    ...inqs.map((x: { created_at: Date | null; status: string | null }) => ({ created_at: x.created_at!, status: x.status })),
-    ...profs.map((x: { created_at: Date | null }) => ({ created_at: x.created_at!, status: 'success' })),
-  ]
-  const grouped: Record<string, { period: string; total_requests: number; successful_operations: number; failed_operations: number }> = {}
-  ops.forEach((op) => {
-    const p = groupDate(new Date(op.created_at), groupBy)
-    if (!grouped[p]) grouped[p] = { period: p, total_requests: 0, successful_operations: 0, failed_operations: 0 }
-    grouped[p].total_requests++
-    if (['live', 'success', 'responded', 'closed'].includes(op.status ?? '')) grouped[p].successful_operations++
-    else if (['rejected', 'failed'].includes(op.status ?? '')) grouped[p].failed_operations++
-  })
+  const grouped: Record<
+    string,
+    { period: string; total_requests: number; successful_operations: number; failed_operations: number }
+  > = {}
+
+  const bump = (key: string, total: number, success = 0, failed = 0) => {
+    if (!grouped[key]) {
+      grouped[key] = {
+        period: key,
+        total_requests: 0,
+        successful_operations: 0,
+        failed_operations: 0,
+      }
+    }
+    grouped[key].total_requests += total
+    grouped[key].successful_operations += success
+    grouped[key].failed_operations += failed
+  }
+
+  for (const row of propRows) {
+    const key = periodKey(new Date(row.period), groupBy)
+    const n = Number(row.n)
+    const success = row.status === 'live' ? n : 0
+    const failed = row.status === 'rejected' ? n : 0
+    bump(key, n, success, failed)
+  }
+  for (const row of inqRows) {
+    const key = periodKey(new Date(row.period), groupBy)
+    const n = Number(row.n)
+    const success =
+      row.status === 'responded' || row.status === 'closed' ? n : 0
+    bump(key, n, success, 0)
+  }
+  for (const row of profileRows) {
+    const key = periodKey(new Date(row.period), groupBy)
+    const n = Number(row.n)
+    bump(key, n, n, 0)
+  }
+
   return Object.values(grouped).sort((a, b) => a.period.localeCompare(b.period))
 }
