@@ -97,7 +97,8 @@ export async function GET(request: Request) {
       )
     }
 
-    const { page, limit, status, sort } = queryResult.data
+    const { page, status, sort } = queryResult.data
+    const limit = Math.min(50, Math.max(1, queryResult.data.limit || 10))
     const skip = (page - 1) * limit
 
     const where: Record<string, unknown> = {}
@@ -126,9 +127,31 @@ export async function GET(request: Request) {
     const [properties, total] = await Promise.all([
       prisma.properties.findMany({
         where,
-        include: {
-          property_media: true,
-          inquiries: { select: { id: true } },
+        select: {
+          id: true,
+          title: true,
+          price: true,
+          status: true,
+          verification_status: true,
+          property_type: true,
+          listing_type: true,
+          city: true,
+          state: true,
+          bedrooms: true,
+          bathrooms: true,
+          created_at: true,
+          updated_at: true,
+          property_media: {
+            select: {
+              id: true,
+              media_url: true,
+              is_featured: true,
+              display_order: true,
+            },
+            orderBy: { display_order: 'asc' },
+            take: 1,
+          },
+          _count: { select: { inquiries: true } },
         },
         orderBy,
         skip,
@@ -140,7 +163,10 @@ export async function GET(request: Request) {
     const totalPages = Math.ceil(total / limit)
 
     return NextResponse.json({
-      data: properties,
+      data: properties.map((p) => ({
+        ...p,
+        inquiry_count: p._count.inquiries,
+      })),
       pagination: {
         page,
         limit,
