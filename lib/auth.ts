@@ -572,27 +572,25 @@ export async function handlePasswordResetSession(
       }
     }
 
-    // No URL tokens — check if there is already an active session (e.g. the
-    // user arrived here after entering their OTP code, which sets session
-    // cookies server-side without adding tokens to the URL).
+    // No URL tokens — user likely arrived after OTP verify, which sets session
+    // cookies on the API response. The browser client may not have hydrated
+    // those cookies yet; /api/auth/complete-password-reset reads them from the
+    // request. Allow the form; the server rejects if the recovery session is gone.
     try {
       const supabase = createClient();
       const { data: sessionData } = await supabase.auth.getSession();
       if (sessionData?.session) {
         console.log("handlePasswordResetSession: existing session found, allowing reset");
-        return { success: true };
+      } else {
+        console.log(
+          "handlePasswordResetSession: no client session yet; deferring to server cookie check",
+        );
       }
     } catch {
-      // fall through to the error below
+      // ignore — server route is authoritative
     }
 
-    return {
-      success: false,
-      error:
-        "No reset token found. Please check your email link or request a new password reset.",
-      redirectTo: "/forgot-password",
-      redirectDelay: 3000,
-    };
+    return { success: true };
   } catch (err) {
     console.error("Unexpected error in handlePasswordResetSession:", err);
     return {

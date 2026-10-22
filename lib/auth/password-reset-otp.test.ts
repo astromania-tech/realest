@@ -40,7 +40,10 @@ test("verify-reset-otp route calls recoveryVerifyOtpParams / token_hash", () => 
   );
   assert.match(source, /recoveryVerifyOtpParams/);
   assert.match(source, /token_hash/);
-  assert.doesNotMatch(source, /token:\s*storedHash/);
+  assert.doesNotMatch(
+    source,
+    /token:\s*storedHash/,
+  );
   assert.doesNotMatch(source, /email:\s*""/);
 });
 
@@ -53,6 +56,31 @@ test("forgot-password normalizes email and coalesces duplicate sends", () => {
   assert.match(source, /coalesceForgotPasswordSend/);
   assert.match(source, /isForgotPasswordSendOnCooldown/);
   assert.match(source, /verificationType:\s*"reset"/);
+});
+
+test("complete-password-reset updates password on the server", () => {
+  const source = readFileSync(
+    new URL(
+      "../../app/api/auth/complete-password-reset/route.ts",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(source, /updateUser\(\{\s*password/);
+  assert.match(source, /createServerClient/);
+  assert.match(source, /signOut/);
+});
+
+test("reset-password client posts to complete-password-reset", () => {
+  const source = readFileSync(
+    new URL(
+      "../../app/(auth)/reset-password/ResetPasswordClient.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(source, /\/api\/auth\/complete-password-reset/);
+  assert.doesNotMatch(source, /resetPassword\(/);
 });
 
 test("forgot-password client guards double submit with a ref", () => {
