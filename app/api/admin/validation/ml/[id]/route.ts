@@ -5,7 +5,13 @@ import { prisma } from '@/lib/prisma'
 import { adminApproveAllowed, readTrustDecision } from '@/lib/trust/gate'
 import { openDeskCase } from '@/lib/trust/visit-store'
 import { requireStaff } from "@/lib/auth/require-staff"
-import { authDeniedResponse } from "@/lib/auth/staff-api"
+import {
+  buildListingRejectFeedback,
+  deliverListingRejectFeedback,
+  listingRejectRecipientSelect,
+  listingRejectSiteOrigin,
+  resolveListingRejectRecipients,
+} from "@/lib/trust/listing-reject-feedback"
 
 // Request body schema for ML validation update
 const mlValidationUpdateSchema = z.object({
@@ -49,7 +55,16 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Verify property exists and is in correct status
     const property = await prisma.properties.findFirst({
       where: { id: propertyId, status: 'pending_ml_validation' },
-      select: { id: true, status: true, owner_id: true, title: true },
+      select: {
+        id: true,
+        status: true,
+        owner_id: true,
+        title: true,
+        address: true,
+        city: true,
+        state: true,
+        ...listingRejectRecipientSelect,
+      },
     })
 
     if (!property) {
@@ -100,13 +115,48 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       select: { id: true, status: true, title: true },
     })
 
+    let rejectAudit: Record<string, unknown> | null = null
+    if (action === "reject") {
+      const recipients = resolveListingRejectRecipients(property)
+      if (recipients.length > 0) {
+        const feedback = buildListingRejectFeedback({
+          propertyId: property.id,
+          propertyTitle: property.title,
+          propertyAddress: property.address,
+          city: property.city,
+          state: property.state,
+          reason: "other",
+          staffNotes: admin_notes ?? ml_validation_notes ?? null,
+          recipients,
+          siteOrigin: listingRejectSiteOrigin(),
+        })
+        const delivery = await deliverListingRejectFeedback(feedback)
+        rejectAudit = {
+          ...feedback.audit,
+          owner_notified: delivery.notified > 0,
+          emails_sent: delivery.emailsSent,
+        }
+        if (delivery.emailErrors.length > 0) {
+          console.error("[validation] ML reject email failed:", delivery.emailErrors)
+        }
+      }
+    }
+
     // Log admin action
     await prisma.admin_audit_log.create({
       data: {
         actor_id: user.id,
         action: 'ml_validation_update',
         target_id: propertyId,
-        metadata: { action, previous_status: 'pending_ml_validation', new_status: newStatus, ml_confidence_score, ml_validation_notes, admin_notes },
+        metadata: {
+          action,
+          previous_status: 'pending_ml_validation',
+          new_status: newStatus,
+          ml_confidence_score,
+          ml_validation_notes,
+          admin_notes,
+          ...(rejectAudit ?? {}),
+        },
       },
     })
 

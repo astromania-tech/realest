@@ -15,8 +15,15 @@ import { registryConfirmationAllowed } from '@/lib/trust/registry'
 import { appendEvidence, markCorrection, openDeskCase, readStoredVisit, saveCheckIn, saveRegistryConfirmation, setCaseState, setOpenIssue } from '@/lib/trust/visit-store'
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata'
 import { requireStaff } from "@/lib/auth/require-staff"
-import { authDeniedResponse } from "@/lib/auth/staff-api"
 import { isAssignableOfficerRole } from "@/lib/auth/roles"
+import {
+  buildListingRejectFeedback,
+  deliverListingRejectFeedback,
+  listingRejectRecipientSelect,
+  listingRejectSiteOrigin,
+  mapVettingRejectionReason,
+  resolveListingRejectRecipients,
+} from "@/lib/trust/listing-reject-feedback"
 
 // Validation schema for vetting actions
 const vettingUpdateSchema = z.object({
@@ -132,7 +139,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         city: true,
         state: true,
         description: true,
-        owners: { select: { profiles: { select: { full_name: true } } } },
+        ...listingRejectRecipientSelect,
       },
     })
 
@@ -422,13 +429,50 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       select: { id: true, status: true, title: true, verification_status: true },
     })
 
+    let rejectAudit: Record<string, unknown> | null = null
+    if (action === "reject") {
+      const recipients = resolveListingRejectRecipients(property)
+      if (recipients.length > 0) {
+        const feedback = buildListingRejectFeedback({
+          propertyId: property.id,
+          propertyTitle: property.title,
+          propertyAddress: property.address,
+          city: property.city,
+          state: property.state,
+          reason: mapVettingRejectionReason(rejection_reason),
+          staffNotes: notes ?? issue_details ?? null,
+          recipients,
+          siteOrigin: listingRejectSiteOrigin(),
+        })
+        const delivery = await deliverListingRejectFeedback(feedback)
+        rejectAudit = {
+          ...feedback.audit,
+          vetting_rejection_reason: rejection_reason ?? null,
+          owner_notified: delivery.notified > 0,
+          emails_sent: delivery.emailsSent,
+        }
+        if (delivery.emailErrors.length > 0) {
+          console.error("[validation] Vetting reject email failed:", delivery.emailErrors)
+        }
+      }
+    }
+
     // Log admin action
     await prisma.admin_audit_log.create({
       data: {
         actor_id: user.id,
         action: 'physical_vetting',
         target_id: id,
-        metadata: { action, previous_status: 'pending_vetting', new_status: finalStatus, notes, scheduled_date, rejection_reason, issue_details },
+        metadata: {
+          action,
+          previous_status: 'pending_vetting',
+          new_status: finalStatus,
+          notes,
+          scheduled_date,
+          rejection_reason,
+          issue_details,
+          ...(rejectAudit ?? {}),
+        },
       },
     })
 

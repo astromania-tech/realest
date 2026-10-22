@@ -45,6 +45,8 @@ export function DuplicateResolutionActions({ propertyId }: { propertyId: string 
       </Button>
       <p className="text-sm text-muted-foreground">
         This does not set RealEST Verified. A hard duplicate block cannot be sent to a field visit.
+        Owner and agent get a safe notice and email; your full note stays in the audit log. Detector
+        names are stripped from what they see.
       </p>
     </div>
   );

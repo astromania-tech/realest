@@ -9,6 +9,15 @@ import { publicListingWhere } from "@/lib/listings/public-listing";
 import { propertyListingSchema, propertyDraftSchema, propertyDetailsSchema } from "@/lib/validations/property";
 import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
 import { zodToSchema } from "@/lib/openapi/zod-to-schema";
+import { consumeRateLimit } from "@/lib/http/rate-limit";
+import {
+  LISTING_SUBMIT_BUCKET,
+  LISTING_SUBMIT_LIMIT,
+  LISTING_SUBMIT_WINDOW_MS,
+  listingRejectCooldownAllows,
+  listingSubmitRateMessage,
+  rejectCooldownSince,
+} from "@/lib/trust/listing-resubmit-limit";
 
 const searchQuerySchema = z.object({
   query: z.string().optional(),
@@ -355,6 +364,52 @@ export async function POST(request: NextRequest) {
     const isDraft = body.status === "draft";
     const validatedData = isDraft ? propertyDraftSchema.parse(body) : propertyListingSchema.parse(body);
     const nextStatus = isDraft ? "draft" : "pending_ml_validation";
+
+    // Non-draft submits: cooldown after repeated rejects + submit rate limit
+    if (!isDraft) {
+      const ownerRec = await prisma.owners.findUnique({
+        where: { profile_id: user.id },
+        select: { id: true },
+      });
+      const agentRec = await prisma.agents.findUnique({
+        where: { profile_id: user.id },
+        select: { id: true },
+      });
+      const ownershipFilters = [
+        ...(ownerRec ? [{ owner_id: ownerRec.id }] : []),
+        ...(agentRec ? [{ agent_id: agentRec.id }] : []),
+      ];
+      const rejectedInWindow =
+        ownershipFilters.length === 0
+          ? 0
+          : await prisma.properties.count({
+              where: {
+                status: "rejected",
+                updated_at: { gte: rejectCooldownSince() },
+                OR: ownershipFilters,
+              },
+            });
+      const cooldown = listingRejectCooldownAllows(rejectedInWindow);
+      if (!cooldown.ok) {
+        return NextResponse.json(
+          { error: cooldown.error, code: cooldown.code },
+          { status: 429 },
+        );
+      }
+
+      const rate = await consumeRateLimit({
+        bucket: LISTING_SUBMIT_BUCKET,
+        subject: user.id,
+        limit: LISTING_SUBMIT_LIMIT,
+        windowMs: LISTING_SUBMIT_WINDOW_MS,
+      });
+      if (!rate.allowed) {
+        return NextResponse.json(
+          { error: listingSubmitRateMessage(), code: "submit_rate" },
+          { status: 429 },
+        );
+      }
+    }
 
     // Duplicate check (skip for drafts)
     if (!isDraft) {
