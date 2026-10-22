@@ -6,6 +6,7 @@ import {
   publicRejectionDetail,
   resolveListingRejectRecipients,
 } from "@/lib/trust/listing-reject-feedback";
+import { listingRejectNoteAllowed } from "@/lib/trust/listing-reject-note";
 import { listingRejectCooldownAllows } from "@/lib/trust/listing-resubmit-limit";
 
 test("public rejection detail strips internal detector tokens", () => {
@@ -71,4 +72,13 @@ test("vetting reason maps to email-safe codes", () => {
 test("reject cooldown blocks after the max rejected listings in window", () => {
   assert.equal(listingRejectCooldownAllows(2).ok, true);
   assert.equal(listingRejectCooldownAllows(3).ok, false);
+});
+
+test("reject note is required and must be long enough for the owner", () => {
+  assert.equal(listingRejectNoteAllowed("").ok, false);
+  assert.equal(listingRejectNoteAllowed("   ").ok, false);
+  assert.equal(listingRejectNoteAllowed("too short").ok, false);
+  const ok = listingRejectNoteAllowed("Address already listed on RealEST nearby.");
+  assert.equal(ok.ok, true);
+  if (ok.ok) assert.match(ok.note, /Address already listed/);
 });

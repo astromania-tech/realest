@@ -4,13 +4,23 @@ import {
   publicRejectionDetail,
   resolveListingRejectRecipients,
 } from "../../lib/trust/listing-reject-feedback.ts";
+import { listingRejectNoteAllowed } from "../../lib/trust/listing-reject-note.ts";
 import { listingRejectCooldownAllows } from "../../lib/trust/listing-resubmit-limit.ts";
 import { duplicateRejectAllowed } from "../../lib/trust/matches.ts";
 
 const cases = [
   {
     id: "duplicate-reject-requires-note",
-    ok: () => duplicateRejectAllowed("").ok === false && duplicateRejectAllowed("Same address as live listing.").ok,
+    ok: () =>
+      duplicateRejectAllowed("").ok === false &&
+      duplicateRejectAllowed("Same address as live listing.").ok === true,
+  },
+  {
+    id: "desk-and-field-reject-require-note",
+    ok: () =>
+      listingRejectNoteAllowed("").ok === false &&
+      listingRejectNoteAllowed("short").ok === false &&
+      listingRejectNoteAllowed("Documents did not match the visit.").ok === true,
   },
   {
     id: "owner-and-agent-both-notified",

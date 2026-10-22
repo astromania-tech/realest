@@ -5,6 +5,11 @@ import { Prisma } from "@/lib/prisma/client";
 
 export type ListingRejectReasonCode = RejectionReason;
 
+export {
+  LISTING_REJECT_NOTE_MIN,
+  listingRejectNoteAllowed,
+} from "@/lib/trust/listing-reject-note";
+
 export type ListingRejectRecipient = {
   profileId: string;
   email: string;

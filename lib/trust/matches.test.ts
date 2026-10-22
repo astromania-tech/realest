@@ -38,5 +38,6 @@ test("stored match ids are read from the job result", () => {
 
 test("rejecting a duplicate requires a note", () => {
   assert.equal(duplicateRejectAllowed("  ").ok, false);
+  assert.equal(duplicateRejectAllowed("too short").ok, false);
   assert.equal(duplicateRejectAllowed("Same photo as the live Lekki listing.").ok, true);
 });

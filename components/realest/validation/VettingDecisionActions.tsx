@@ -50,6 +50,13 @@ export function VettingDecisionActions({
     action: "approve" | "reject" | "assign" | "flag_issue" | "request_correction" | "confirm_registry",
     extra: Record<string, unknown> = {},
   ) {
+    if (action === "reject") {
+      const rejectNote = [notes, issue].filter((part) => part.trim()).join(" ").trim();
+      if (rejectNote.length < 12) {
+        setError("Write a short note (at least 12 characters) explaining the reject. The owner will see a safe version.");
+        return;
+      }
+    }
     setPending(true);
     setError("");
     const response = await fetch(`/api/admin/validation/vetting/${propertyId}`, {
@@ -151,7 +158,7 @@ export function VettingDecisionActions({
       <Textarea
         value={notes}
         onChange={(event) => setNotes(event.target.value)}
-        placeholder="What the visit confirmed."
+        placeholder="Visit notes. Required to reject: short reason the owner can understand."
         className="min-h-20"
       />
       <Textarea
@@ -175,7 +182,12 @@ export function VettingDecisionActions({
       </Button>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <div className="flex gap-2">
-        <Button className="flex-1" variant="outline" disabled={pending} onClick={() => send("reject")}>
+        <Button
+          className="flex-1"
+          variant="outline"
+          disabled={pending || [notes, issue].filter((part) => part.trim()).join(" ").trim().length < 12}
+          onClick={() => send("reject")}
+        >
           <XCircle className="w-4 h-4 mr-2" />
           Reject listing
         </Button>

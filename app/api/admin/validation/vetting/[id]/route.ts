@@ -24,6 +24,7 @@ import {
   mapVettingRejectionReason,
   resolveListingRejectRecipients,
 } from "@/lib/trust/listing-reject-feedback"
+import { listingRejectNoteAllowed } from "@/lib/trust/listing-reject-note"
 
 // Validation schema for vetting actions
 const vettingUpdateSchema = z.object({
@@ -407,6 +408,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     if (action === 'reject') {
+      const noteGate = listingRejectNoteAllowed(
+        [notes, issue_details].filter((part) => Boolean(part?.trim())).join(" ").trim() || notes,
+        { label: "reject this listing after the visit" },
+      )
+      if (!noteGate.ok) {
+        return NextResponse.json({ error: noteGate.error }, { status: 409 })
+      }
       await setCaseState(id, nextCaseState(null, 'reject'))
     }
 

@@ -19,6 +19,10 @@ export function TrustReviewActions({
   const [pending, setPending] = useState(false);
 
   async function send(action: "approve" | "reject" | "flag_duplicate") {
+    if (action === "reject" && notes.trim().length < 12) {
+      setError("Write a short note (at least 12 characters) explaining the reject. The owner will see a safe version.");
+      return;
+    }
     setPending(true);
     setError("");
     const response = await fetch(`/api/admin/validation/ml/${propertyId}`, {
@@ -42,12 +46,17 @@ export function TrustReviewActions({
       <Textarea
         value={notes}
         onChange={(event) => setNotes(event.target.value)}
-        placeholder="Note for the field visit. Required when the reader raised a flag."
+        placeholder="Required to reject: short reason the owner can understand (no detector codes)."
         className="min-h-20"
       />
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <div className="flex gap-2">
-        <Button className="flex-1" variant="outline" disabled={pending} onClick={() => send("reject")}>
+        <Button
+          className="flex-1"
+          variant="outline"
+          disabled={pending || notes.trim().length < 12}
+          onClick={() => send("reject")}
+        >
           <XCircle className="w-4 h-4 mr-2" />
           Reject
         </Button>

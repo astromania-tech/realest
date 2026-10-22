@@ -1,4 +1,5 @@
 import { addressesMatch, haversineMeters } from "@/lib/trust/compare";
+import { listingRejectNoteAllowed } from "@/lib/trust/listing-reject-note";
 import { DUPLICATE_CANDIDATE_STATUSES, DUPLICATE_RADIUS_METERS } from "@/lib/trust/types";
 
 export type DuplicateMatchReason = "duplicate_address" | "duplicate_pin";
@@ -62,8 +63,9 @@ export function matchedPropertyIdsFromResult(result: unknown): string[] {
 }
 
 export function duplicateRejectAllowed(notes: string | undefined): { ok: true } | { ok: false; error: string } {
-  if (!notes?.trim()) {
-    return { ok: false, error: "A note is required to reject a listing as a duplicate." };
-  }
+  const gate = listingRejectNoteAllowed(notes, {
+    label: "reject a listing as a duplicate",
+  });
+  if (!gate.ok) return gate;
   return { ok: true };
 }

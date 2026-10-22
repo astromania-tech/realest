@@ -12,6 +12,7 @@ import {
   listingRejectSiteOrigin,
   resolveListingRejectRecipients,
 } from "@/lib/trust/listing-reject-feedback"
+import { listingRejectNoteAllowed } from "@/lib/trust/listing-reject-note"
 
 // Request body schema for ML validation update
 const mlValidationUpdateSchema = z.object({
@@ -72,6 +73,15 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         { error: 'Property not found or not in ML validation status' },
         { status: 404 }
       )
+    }
+
+    if (action === "reject") {
+      const noteGate = listingRejectNoteAllowed(admin_notes ?? ml_validation_notes, {
+        label: "reject this listing",
+      })
+      if (!noteGate.ok) {
+        return NextResponse.json({ error: noteGate.error }, { status: 409 })
+      }
     }
 
     if (action === "approve") {

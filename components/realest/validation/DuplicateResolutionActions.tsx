@@ -39,7 +39,12 @@ export function DuplicateResolutionActions({ propertyId }: { propertyId: string 
         className="min-h-24"
       />
       {error ? <p className="text-sm text-red-700">{error}</p> : null}
-      <Button className="w-full" variant="outline" disabled={pending} onClick={reject}>
+      <Button
+        className="w-full"
+        variant="outline"
+        disabled={pending || notes.trim().length < 12}
+        onClick={reject}
+      >
         <XCircle className="w-4 h-4 mr-2" />
         Reject as a duplicate
       </Button>
