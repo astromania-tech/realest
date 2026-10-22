@@ -8,6 +8,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { normalizeResetEmail } from "@/lib/auth/password-reset-otp";
 import { createServiceClient } from "@/lib/supabase/service";
 import { prisma } from "@/lib/prisma";
 import { deriveNumericOtp } from "@/lib/utils/otp";
@@ -51,7 +52,8 @@ export const openApiPOST: OpenApiMetadata = {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email } = schema.parse(body);
+    const { email: rawEmail } = schema.parse(body);
+    const email = normalizeResetEmail(rawEmail);
 
     const supabase = createServiceClient();
 

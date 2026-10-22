@@ -448,6 +448,8 @@ export async function handlePasswordResetSession(
     const accessToken = params.get("access_token");
     const refreshToken = params.get("refresh_token");
     const code = params.get("code");
+    const tokenHash = params.get("token_hash");
+    const type = params.get("type");
     const error = params.get("error");
     const errorDescription = params.get("error_description");
 
@@ -455,6 +457,8 @@ export async function handlePasswordResetSession(
       accessToken: accessToken ? "[present]" : null,
       refreshToken: refreshToken ? "[present]" : null,
       code: code ? "[present]" : null,
+      tokenHash: tokenHash ? "[present]" : null,
+      type,
       error,
       fromHash: Boolean(hash),
     });
@@ -470,6 +474,37 @@ export async function handlePasswordResetSession(
         redirectTo: "/forgot-password",
         redirectDelay: 5000,
       };
+    }
+
+    // Email / OTP fill links sometimes land with token_hash + type=recovery
+    if (tokenHash && (type === "recovery" || !type)) {
+      try {
+        const supabase = createClient();
+        const { error: verifyError } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: "recovery",
+        });
+
+        if (verifyError) {
+          console.error("token_hash verify error:", verifyError);
+          return {
+            success: false,
+            error:
+              "Invalid or expired reset link. Please request a new password reset.",
+            redirectTo: "/forgot-password",
+            redirectDelay: 5000,
+          };
+        }
+        return { success: true };
+      } catch (err) {
+        console.error("Error verifying token_hash:", err);
+        return {
+          success: false,
+          error: "Failed to initialize password reset. Please try again.",
+          redirectTo: "/forgot-password",
+          redirectDelay: 3000,
+        };
+      }
     }
 
     // Check for PKCE code parameter (modern Supabase flow)
