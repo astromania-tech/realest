@@ -29,4 +29,9 @@ test("middleware uses its own getUser and skips when session not needed", () => 
   assert.match(source, /middlewareNeedsSession/);
   assert.match(source, /supabase\.auth\.getUser/);
   assert.doesNotMatch(source, /getAuthUser/);
+
+  // Client construction must come after the public-path early return
+  const skipIdx = source.indexOf("if (!middlewareNeedsSession");
+  const clientIdx = source.indexOf("const supabase = createServerClient");
+  assert.ok(skipIdx >= 0 && clientIdx > skipIdx);
 });
