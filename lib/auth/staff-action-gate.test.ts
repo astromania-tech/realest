@@ -35,12 +35,18 @@ test("[A-01] team_member cannot approve or reject a listing", () => {
   assert.equal(vettingActionAllowed("supervisor", "assign"), true);
 });
 
-test("[A-01] ML and vetting routes enforce staff-action gates", () => {
+test("[A-01] ML, vetting, and duplicate routes enforce staff-action gates", () => {
   const ml = readFileSync("app/api/admin/validation/ml/[id]/route.ts", "utf8");
   const vetting = readFileSync(
     "app/api/admin/validation/vetting/[id]/route.ts",
     "utf8",
   );
+  const duplicates = readFileSync(
+    "app/api/admin/validation/duplicates/[id]/route.ts",
+    "utf8",
+  );
   assert.match(ml, /canMakeDeskDecision/);
   assert.match(vetting, /vettingActionAllowed/);
+  assert.match(duplicates, /canMakeDeskDecision/);
 });
+

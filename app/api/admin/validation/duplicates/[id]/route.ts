@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth/require-staff";
+import { canMakeDeskDecision } from "@/lib/auth/staff-action-gate";
 import { duplicateRejectAllowed } from "@/lib/trust/matches";
 import {
   buildListingRejectFeedback,
@@ -25,6 +26,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const staff = await requireStaff();
     if (!staff.ok) {
       return NextResponse.json({ error: staff.error }, { status: staff.status });
+    }
+    if (!canMakeDeskDecision(staff.role)) {
+      return NextResponse.json(
+        { error: "Desk reviewers or admins make this decision." },
+        { status: 403 },
+      );
     }
 
     const { id: propertyId } = await params;

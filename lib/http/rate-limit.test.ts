@@ -20,6 +20,7 @@ test("public forms use the shared limiter", () => {
     "app/api/waitlist/route.ts",
     "app/api/referral/invite/route.ts",
     "app/api/inquiries/guest/route.ts",
+    "app/api/auth/signup/route.ts",
   ]) {
     const source = readFileSync(file, "utf8");
     assert.match(source, /consumeRateLimit/);

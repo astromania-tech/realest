@@ -109,11 +109,7 @@ export default function SignUpPage() {
       }
 
       if (response.user) {
-        fetch('/api/auth/sync-waitlist-context', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: formData.email }),
-        }).catch(() => {});
+        // Waitlist context is synced inside POST /api/auth/signup (no open client race).
 
         if (refCode) {
           fetch('/api/auth/attribute-referral', {

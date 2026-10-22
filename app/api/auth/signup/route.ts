@@ -5,7 +5,18 @@ import { Resend } from 'resend';
 import { sendVerificationEmail } from '@/lib/emailService';
 import { alreadyRegisteredEmail, localEmailConfirmAllowed } from '@/lib/auth/local-email-confirm';
 import { marketplaceSignupRole } from '@/lib/auth/marketplace-signup-role';
+import { clientAddress, consumeRateLimit } from '@/lib/http/rate-limit';
+import { syncWaitlistContextToProfile } from '@/lib/reward-engine';
 import type { User } from '@supabase/supabase-js';
+
+async function syncWaitlistAfterSignup(email: string, userId: string | undefined) {
+  if (!userId) return;
+  try {
+    await syncWaitlistContextToProfile(email.trim().toLowerCase(), userId);
+  } catch (error) {
+    console.error('Waitlist context sync after signup failed:', error);
+  }
+}
 
 async function confirmLocalAuthUser(email: string, password?: string): Promise<User | null> {
   if (!localEmailConfirmAllowed()) return null;
@@ -70,11 +81,14 @@ export async function POST(request: NextRequest) {
       if (confirmLocally && alreadyRegisteredEmail(createError.message)) {
         const confirmed = await confirmLocalAuthUser(email, password);
         if (confirmed) {
+          await syncWaitlistAfterSignup(email, confirmed.id);
           return NextResponse.json({ success: true, user: confirmed, localConfirmed: true });
         }
       }
       return NextResponse.json({ error: createError.message }, { status: createError.status || 400 });
     }
+
+    await syncWaitlistAfterSignup(email, userData.user?.id);
 
     if (confirmLocally) {
       return NextResponse.json({ success: true, user: userData.user, localConfirmed: true });
@@ -129,13 +143,30 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Add to app/api/auth/signup/route.ts
+/**
+ * GET /api/auth/signup?email=
+ * Resend verification (or local confirm). Rate-limited — never an open mail bomb.
+ */
 export async function GET(request: NextRequest) {
   const email = request.nextUrl.searchParams.get('email');
   if (!email) return NextResponse.json({ error: 'Email required' }, { status: 400 });
 
+  const normalized = email.trim().toLowerCase();
+  const ip = clientAddress(request.headers);
+  const limited = await consumeRateLimit({
+    bucket: 'signup_resend',
+    subject: `${ip}:${normalized}`,
+    limit: 3,
+  });
+  if (!limited.allowed) {
+    return NextResponse.json(
+      { error: 'Too many verification requests. Please try again later.' },
+      { status: 429 },
+    );
+  }
+
   if (localEmailConfirmAllowed()) {
-    const confirmed = await confirmLocalAuthUser(email);
+    const confirmed = await confirmLocalAuthUser(normalized);
     if (!confirmed) return NextResponse.json({ error: 'Local account was not found' }, { status: 404 });
     return NextResponse.json({ success: true, localConfirmed: true });
   }
@@ -144,7 +175,7 @@ export async function GET(request: NextRequest) {
 
   const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
     type: 'signup',
-    email,
+    email: normalized,
     password: 'REDACTED_NOT_REQUIRED_FOR_LINK_ONLY',
     options: {
       redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/verify`,
@@ -153,10 +184,10 @@ export async function GET(request: NextRequest) {
 
   if (linkError) return NextResponse.json({ error: linkError.message }, { status: 400 });
 
-  const firstName = email.split('@')[0]; // best we can do without the user object here
+  const firstName = normalized.split('@')[0];
 
   const result = await sendVerificationEmail({
-    email,
+    email: normalized,
     firstName,
     verificationUrl: linkData.properties.action_link,
   });
