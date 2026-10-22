@@ -1,4 +1,3 @@
-import { getAuthUser } from "@/lib/supabase/server";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import {
@@ -7,6 +6,7 @@ import {
   shouldEnableAuthentication,
 } from "@/lib/appMode";
 import { isStaffRole, staffHomePath } from "@/lib/auth/roles";
+import { middlewareNeedsSession } from "@/lib/supabase/middleware-auth-paths";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -40,6 +40,12 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
+  // Public marketing + public APIs: no Auth round-trip (session refresh only
+  // where guest/protected/auth API paths need it).
+  if (!middlewareNeedsSession(pathname)) {
+    return supabaseResponse;
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -63,9 +69,10 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
+  // Must use this client so cookie refresh setAll runs on the response.
   const {
     data: { user },
-  } = await getAuthUser();
+  } = await supabase.auth.getUser();
 
   // Guest-only routes: redirect confirmed + authenticated users to dashboard
   const guestOnlyRoutes = ["/login", "/register", "/forgot-password"];
