@@ -170,7 +170,11 @@ export async function GET(request: NextRequest) {
           created_at: true,
           updated_at: true,
           owners: { select: { profiles: { select: { full_name: true, avatar_url: true } } } },
-          property_media: true,
+          property_media: {
+            select: { media_url: true, is_featured: true },
+            take: 1,
+            orderBy: { is_featured: "desc" },
+          },
         },
         orderBy,
         skip: (query.page - 1) * query.per_page,
