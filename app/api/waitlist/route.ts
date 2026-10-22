@@ -33,6 +33,7 @@ import {
   createWaitlistUnsubscribeToken,
   verifyWaitlistUnsubscribeToken,
 } from '@/lib/waitlist-unsubscribe-token';
+import { publicWaitlistLookupProjection } from '@/lib/waitlist-public-lookup';
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
 
 export const openApiPOST: OpenApiMetadata = {
@@ -343,22 +344,27 @@ export async function GET(request: NextRequest) {
 
       const emailCheck = await checkEmailWithPosition(email);
 
-      // Minimal public projection — no referralCode / queueScore / persona dump.
-      return NextResponse.json({
-        exists: emailCheck.exists,
-        ...(emailCheck.exists
-          ? {
-              status: emailCheck.status,
-              firstName: emailCheck.firstName,
-              position: emailCheck.position,
-              totalCount: emailCheck.totalCount,
-              candidateRole: emailCheck.candidateRole,
-            }
-          : {}),
-      });
+      // Boolean + status only. Role/name/referral stay server-side (signup lookup).
+      return NextResponse.json(
+        publicWaitlistLookupProjection({
+          exists: emailCheck.exists,
+          status: emailCheck.status,
+        }),
+      );
     }
 
     if (stats === 'true') {
+      const statsLimited = await consumeRateLimit({
+        bucket: 'waitlist_stats',
+        subject: ip,
+        limit: 30,
+      });
+      if (!statsLimited.allowed) {
+        return NextResponse.json(
+          { error: 'Too many requests. Please try again later.' },
+          { status: 429 },
+        );
+      }
       const waitlistStats = await getWaitlistStats();
       return NextResponse.json({
         ...waitlistStats,
@@ -366,15 +372,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({
-      message: 'Waitlist API is working!',
-      endpoints: {
-        'POST /': 'Subscribe to waitlist',
-        'GET /?email=user@example.com': 'Check if email exists (minimal fields)',
-        'GET /?stats=true': 'Get waitlist statistics',
-        'DELETE /': 'Unsubscribe with signed token',
-      },
-    });
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
   } catch (error) {
     console.error('❌ Waitlist GET API error:', error);
     return NextResponse.json(
@@ -392,6 +390,19 @@ export async function GET(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const ip = clientAddress(request.headers);
+    const limited = await consumeRateLimit({
+      bucket: 'waitlist_unsubscribe',
+      subject: ip,
+      limit: 10,
+    });
+    if (!limited.allowed) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429 },
+      );
+    }
+
     const body = await request.json();
     const { email, token } = body;
 
@@ -412,8 +423,12 @@ export async function DELETE(request: NextRequest) {
       select: { id: true },
     });
 
+    // Same response whether missing or already gone — no email enumeration via DELETE.
     if (!entry) {
-      return NextResponse.json({ error: 'Email not found on waitlist.' }, { status: 404 });
+      return NextResponse.json(
+        { message: 'Successfully unsubscribed from waitlist' },
+        { status: 200 },
+      );
     }
 
     await prisma.waitlist.update({

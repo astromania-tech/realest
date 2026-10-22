@@ -4,7 +4,7 @@ import { renderCampaignTemplate } from '@/lib/emailBulkSender';
 import { Resend } from 'resend';
 import { sendVerificationEmail } from '@/lib/emailService';
 import { alreadyRegisteredEmail, localEmailConfirmAllowed } from '@/lib/auth/local-email-confirm';
-import { marketplaceSignupRole } from '@/lib/auth/marketplace-signup-role';
+import { resolveSignupRoleFromWaitlist } from '@/lib/auth/signup-waitlist-role';
 import { clientAddress, consumeRateLimit } from '@/lib/http/rate-limit';
 import { syncWaitlistContextToProfile } from '@/lib/reward-engine';
 import type { User } from '@supabase/supabase-js';
@@ -61,8 +61,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
-    // Never accept staff/admin from the client — invite/promote only.
-    const signupRole = marketplaceSignupRole(userType);
+    // Never accept staff/admin from the client. Waitlist candidate_role may
+    // override the UI choice — resolved server-side so public GET cannot leak it.
+    const signupRole = await resolveSignupRoleFromWaitlist(email, userType);
 
     const supabaseAdmin = createServiceClient();
     const confirmLocally = localEmailConfirmAllowed();

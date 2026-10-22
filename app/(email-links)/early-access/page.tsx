@@ -213,7 +213,7 @@ export default function EarlyAccessPage() {
               <div className="mt-3 flex items-start gap-1 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5 text-sm">
                 <CheckCircle className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                 <span>
-                  <strong>{emailValidation.userInfo.firstName}</strong>, you&apos;re already on the waitlist
+                  You&apos;re already on the waitlist
                   {emailValidation.userInfo.position ? (
                     <> at position <strong>#{emailValidation.userInfo.position}</strong></>
                   ) : null}.

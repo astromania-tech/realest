@@ -25,13 +25,9 @@ import {
   BadgeCheck,
 } from "lucide-react";
 
-type CandidateRole = "user" | "owner" | "agent";
-
 interface WaitlistContextResponse {
   exists?: boolean;
-  persona?: string;
-  candidateRole?: CandidateRole | null;
-  waitlistReward?: string | null;
+  status?: string | null;
 }
 
 export default function SignUpPage() {
@@ -82,8 +78,8 @@ export default function SignUpPage() {
     }
 
     try {
-      let effectiveUserType = formData.userType as CandidateRole;
-
+      // Public waitlist GET is existence-only. Role override happens server-side
+      // in POST /api/auth/signup via resolveSignupRoleFromWaitlist.
       const waitlistLookup = await fetch(
         `/api/waitlist?email=${encodeURIComponent(formData.email.trim())}`,
       );
@@ -91,16 +87,13 @@ export default function SignUpPage() {
       if (waitlistLookup.ok) {
         const waitlistData = (await waitlistLookup.json()) as WaitlistContextResponse;
         setWaitlistContext(waitlistData);
-        if (waitlistData.exists && waitlistData.candidateRole) {
-          effectiveUserType = waitlistData.candidateRole;
-        }
       }
 
       const response = await signUpWithPassword(
         formData.email,
         formData.password,
         "", // fullname handled in onboarding
-        effectiveUserType,
+        formData.userType,
       );
 
       if (!response.success) {
@@ -217,18 +210,17 @@ export default function SignUpPage() {
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {waitlistContext?.exists && waitlistContext.candidateRole ? (
+          {waitlistContext?.exists ? (
             <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm text-foreground">
               <div className="mb-1 flex items-center gap-2 font-medium">
                 <BadgeCheck className="h-4 w-4 text-primary" />
-                Waitlist role detected
+                Waitlist email recognized
               </div>
               <p className="text-muted-foreground">
-                Your waitlist persona will activate the <strong>{waitlistContext.candidateRole}</strong> account flow after signup.
+                This email is on the waitlist. Your waitlist persona will set the
+                account type when signup completes — the choice above is a fallback
+                if no waitlist row applies.
               </p>
-              {waitlistContext.waitlistReward ? (
-                <p className="mt-2 text-muted-foreground">{waitlistContext.waitlistReward}</p>
-              ) : null}
             </div>
           ) : null}
 

@@ -34,8 +34,10 @@ test("[A-01] staff and garbage userType collapse to user", () => {
 
 test("[A-01] signup route writes only allowlisted marketplace role", () => {
   const route = readFileSync("app/api/auth/signup/route.ts", "utf8");
-  assert.match(route, /marketplaceSignupRole/);
+  assert.match(route, /resolveSignupRoleFromWaitlist/);
   assert.doesNotMatch(route, /user_type:\s*userType\s*\|\|\s*['\"]user['\"]/);
+  const helper = readFileSync("lib/auth/signup-waitlist-role.ts", "utf8");
+  assert.match(helper, /marketplaceSignupRole/);
 });
 
 test("[A-01] handle_new_user migration clamps metadata to marketplace roles", () => {
