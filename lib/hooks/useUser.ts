@@ -6,7 +6,7 @@ import type { User } from "@supabase/supabase-js";
 import { useAuth } from "@/components/providers/AuthProvider";
 
 // Base user types
-export type UserRole = "user" | "owner" | "agent" | "admin" | "system_owner";
+export type UserRole = "user" | "owner" | "agent" | "admin" | "reviewer" | "system_owner";
 
 export interface BaseUserProfile {
   id: string;
@@ -69,6 +69,10 @@ export interface AdminProfile extends BaseUserProfile {
   };
 }
 
+export interface ReviewerProfile extends BaseUserProfile {
+  user_type: "reviewer";
+}
+
 export interface SystemOwnerProfile extends BaseUserProfile {
   user_type: "system_owner";
   system_owner_details: {
@@ -88,6 +92,7 @@ export type UserProfile =
   | OwnerProfile
   | AgentProfile
   | AdminProfile
+  | ReviewerProfile
   | SystemOwnerProfile;
 
 // Hook return type
@@ -340,6 +345,11 @@ export function useUser(): UseUserReturn {
               system_permissions: ["all"], // Default admin permissions
             },
           } as AdminProfile;
+        } else if (userRole === "reviewer") {
+          completeProfile = {
+            ...basicProfile,
+            user_type: "reviewer",
+          } as ReviewerProfile;
         } else if (userRole === "system_owner") {
           completeProfile = {
             ...basicProfile,

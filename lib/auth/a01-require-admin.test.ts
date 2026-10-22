@@ -60,3 +60,17 @@ test("[A-01] requireAdmin returns ok for admin role", async () => {
     email: "admin@x.com",
   });
 });
+
+test("[A-01] requireAdmin returns 403 for reviewer (super admin only)", async () => {
+  const result = await requireAdmin({
+    getAuthUser: async () => ({
+      data: { user: { id: "u2", email: "rev@x.com" } },
+    }),
+    findUserRole: async () => ({ role: "reviewer" }),
+  });
+  assert.deepEqual(result, {
+    ok: false,
+    error: "Forbidden",
+    status: 403,
+  });
+});
