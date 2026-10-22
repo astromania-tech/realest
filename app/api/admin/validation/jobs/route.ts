@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma'
 import { Prisma } from '@/lib/prisma/client'
 import { logAuth401Diagnostics } from '@/lib/auth-diagnostics'
 import { z } from 'zod'
+import { requireStaff } from "@/lib/auth/require-staff"
+import { authDeniedResponse } from "@/lib/auth/staff-api"
 
 const queueQuerySchema = z.object({
   page: z.string().optional().default('1'),
@@ -54,7 +56,7 @@ export async function GET(request: NextRequest) {
 
     const adminRow = await prisma.users.findUnique({ where: { id: user.id }, select: { role: true } })
 
-    if (!adminRow || adminRow.role !== 'admin') {
+    if (!adminRow || adminRow.role !== 'admin' && adminRow.role !== 'reviewer') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 

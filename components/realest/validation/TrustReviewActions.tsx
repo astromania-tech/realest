@@ -33,7 +33,7 @@ export function TrustReviewActions({
       setError(blocks ? `${body.error} ${blocks}` : body.error || "The gate refused this action.");
       return;
     }
-    router.push("/admin/validation/ml");
+    router.push(`/admin/validation/cases/${propertyId}`);
     router.refresh();
   }
 

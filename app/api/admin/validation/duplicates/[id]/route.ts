@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth/require-admin";
+import { requireStaff } from "@/lib/auth/require-staff";
+import { authDeniedResponse } from "@/lib/auth/staff-api";
 import { duplicateRejectAllowed } from "@/lib/trust/matches";
 
 const duplicateResolutionSchema = z.object({
@@ -15,9 +16,9 @@ type RouteParams = {
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    const admin = await requireAdmin();
-    if (!admin.ok) {
-      return NextResponse.json({ error: admin.error }, { status: admin.status });
+    const staff = await requireStaff();
+    if (!staff.ok) {
+      return NextResponse.json({ error: staff.error }, { status: staff.status });
     }
 
     const { id: propertyId } = await params;
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     await prisma.admin_audit_log.create({
       data: {
-        actor_id: admin.userId,
+        actor_id: staff.userId,
         action: "duplicate_resolution_reject",
         target_id: propertyId,
         metadata: {

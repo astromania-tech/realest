@@ -3,6 +3,8 @@ import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata'
+import { requireStaff } from "@/lib/auth/require-staff"
+import { authDeniedResponse } from "@/lib/auth/staff-api"
 
 // Query parameters schema
 const vettingQuerySchema = z.object({
@@ -43,22 +45,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const supabase = await createClient()
 
     // Verify admin authentication
-    const { data: { user }, error: authError } = await getAuthUser()
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+    const staff = await requireStaff()
+    if (!staff.ok) {
+      return NextResponse.json({ error: staff.error }, { status: staff.status })
     }
-
-    // Verify user is admin
-    const adminRow = await prisma.users.findUnique({ where: { id: user.id }, select: { role: true } })
-    if (!adminRow || adminRow.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
-      )
-    }
+    const user = { id: staff.userId }
 
     // Parse query parameters
     const { searchParams } = new URL(request.url)

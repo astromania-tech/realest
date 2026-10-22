@@ -26,7 +26,7 @@ export function DuplicateResolutionActions({ propertyId }: { propertyId: string 
       setError(body.error || "The duplicate gate refused this action.");
       return;
     }
-    router.push("/admin/validation/duplicates");
+    router.push("/admin/validation?filter=duplicates");
     router.refresh();
   }
 

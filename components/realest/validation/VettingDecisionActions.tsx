@@ -76,7 +76,7 @@ export function VettingDecisionActions({
       router.refresh();
       return;
     }
-    router.push("/admin/validation/vetting");
+    router.push(`/admin/validation/cases/${propertyId}`);
     router.refresh();
   }
 

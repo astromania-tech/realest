@@ -14,6 +14,9 @@ import { nextCaseState } from '@/lib/trust/case'
 import { registryConfirmationAllowed } from '@/lib/trust/registry'
 import { appendEvidence, markCorrection, openDeskCase, readStoredVisit, saveCheckIn, saveRegistryConfirmation, setCaseState, setOpenIssue } from '@/lib/trust/visit-store'
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata'
+import { requireStaff } from "@/lib/auth/require-staff"
+import { authDeniedResponse } from "@/lib/auth/staff-api"
+import { isAssignableOfficerRole } from "@/lib/auth/roles"
 
 // Validation schema for vetting actions
 const vettingUpdateSchema = z.object({
@@ -93,22 +96,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const { id } = await params
 
     // Verify admin authentication
-    const { data: { user }, error: authError } = await getAuthUser()
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+    const staff = await requireStaff()
+    if (!staff.ok) {
+      return NextResponse.json({ error: staff.error }, { status: staff.status })
     }
-
-    // Verify user is admin
-    const adminRow = await prisma.users.findUnique({ where: { id: user.id }, select: { role: true } })
-    if (!adminRow || adminRow.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
-      )
-    }
+    const user = { id: staff.userId }
 
     // Validate request body
     const body = await request.json()
@@ -168,7 +160,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         where: { id: officerId },
         select: { role: true, is_active: true },
       })
-      if (!officer || officer.role !== 'admin' || !officer.is_active) {
+      if (!officer || !officer.is_active || !isAssignableOfficerRole(officer.role)) {
         return NextResponse.json({ error: 'Choose an officer.' }, { status: 400 })
       }
       const updated = await prisma.$queryRaw<Array<{ id: string }>>`

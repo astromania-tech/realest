@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { prisma } from '@/lib/prisma'
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata'
+import { requireStaff } from "@/lib/auth/require-staff"
+import { authDeniedResponse } from "@/lib/auth/staff-api"
 
 export const openApiGET: OpenApiMetadata = {
   method: 'get',
@@ -37,7 +39,7 @@ export async function GET(request: NextRequest) {
 
     // Verify user is admin
     const adminRow = await prisma.users.findUnique({ where: { id: user.id }, select: { role: true } })
-    if (!adminRow || adminRow.role !== 'admin') {
+    if (!adminRow || adminRow.role !== 'admin' && adminRow.role !== 'reviewer') {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }

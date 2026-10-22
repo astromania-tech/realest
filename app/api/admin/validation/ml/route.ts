@@ -4,6 +4,8 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { logAuth401Diagnostics } from '@/lib/auth-diagnostics'
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata'
+import { requireStaff } from "@/lib/auth/require-staff"
+import { authDeniedResponse } from "@/lib/auth/staff-api"
 
 // Query parameters schema
 const mlValidationQuerySchema = z.object({
@@ -57,7 +59,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // Verify user is admin
     const adminRow = await prisma.users.findUnique({ where: { id: user.id }, select: { role: true } })
-    if (!adminRow || adminRow.role !== 'admin') {
+    if (!adminRow || adminRow.role !== 'admin' && adminRow.role !== 'reviewer') {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
