@@ -1,9 +1,15 @@
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/lib/prisma/client";
 import { readTrustDecision } from "@/lib/trust/gate";
 import { fraudSummary, readFraudFindings } from "@/lib/trust/fraud";
 import type { ClaimFinding } from "@/lib/trust/claims";
 import { evidenceLines } from "@/lib/trust/case";
 import { readPublicCase, readStoredVisit } from "@/lib/trust/visit-store";
+import {
+  caseQueueBaseStatusSql,
+  caseQueueFilterSql,
+  caseQueueSearchSql,
+} from "@/lib/trust/case-queue-sql";
 import {
   buildFieldBrief,
   claimFindingToRow,
@@ -11,7 +17,6 @@ import {
   deriveCaseRisk,
   deriveEvidenceCoverage,
   fraudFindingToRow,
-  matchesCaseQueueFilter,
   queueItemLabels,
   type CaseDetailView,
   type CaseQueueFilter,
@@ -86,68 +91,100 @@ function toQueueItem(row: PropertyQueueRow): CaseQueueItem {
   };
 }
 
+const QUEUE_SELECT = Prisma.sql`
+  p.id::text as id,
+  p.title,
+  p.address,
+  p.city,
+  p.state,
+  p.status,
+  p.verification_status,
+  p.created_at,
+  pr.full_name as owner_name,
+  ou.full_name as officer_name,
+  k.state as case_state,
+  k.judgment,
+  k.claims,
+  coalesce((select count(*)::int from public.property_verification_evidence e where e.property_id = p.id), 0) as evidence_count,
+  coalesce((select count(*)::int from public.property_documents d where d.property_id = p.id), 0) as document_count,
+  (c.checked_in_at is not null) as has_check_in,
+  c.open_issue
+`;
+
+const QUEUE_FROM = Prisma.sql`
+  from public.properties p
+  left join public.owners o on o.id = p.owner_id
+  left join public.profiles pr on pr.id = o.profile_id
+  left join public.users ou on ou.id = p.vetting_officer_id
+  left join public.property_verification_cases k on k.property_id = p.id
+  left join public.property_visit_checks c on c.property_id = p.id
+`;
+
+async function loadCaseQueueMetrics(): Promise<Record<string, number>> {
+  const base = caseQueueBaseStatusSql();
+  const [row] = await prisma.$queryRaw<
+    Array<{
+      total: number;
+      review: number;
+      field: number;
+      verified: number;
+      duplicates: number;
+    }>
+  >(Prisma.sql`
+    select
+      count(*)::int as total,
+      count(*) filter (where
+        p.status = 'pending_ml_validation'
+        or k.state in ('human_review', 'desk_review', 'reconciliation')
+      )::int as review,
+      count(*) filter (where
+        p.status = 'pending_vetting'
+        or k.state in ('field_assigned', 'field_in_progress', 'field_complete')
+      )::int as field,
+      count(*) filter (where
+        p.status = 'live' or k.state = 'verified'
+      )::int as verified,
+      count(*) filter (where
+        p.status = 'pending_duplicate_review'
+      )::int as duplicates
+    from public.properties p
+    left join public.property_verification_cases k on k.property_id = p.id
+    where ${base}
+  `);
+
+  return {
+    total: row?.total ?? 0,
+    review: row?.review ?? 0,
+    field: row?.field ?? 0,
+    verified: row?.verified ?? 0,
+    duplicates: row?.duplicates ?? 0,
+  };
+}
+
 export async function listCaseQueue(input: {
   filter: CaseQueueFilter;
   search: string;
   limit?: number;
 }): Promise<{ items: CaseQueueItem[]; metrics: Record<string, number> }> {
-  const rows = await prisma.$queryRaw<PropertyQueueRow[]>`
-    select
-      p.id::text as id,
-      p.title,
-      p.address,
-      p.city,
-      p.state,
-      p.status,
-      p.verification_status,
-      p.created_at,
-      pr.full_name as owner_name,
-      ou.full_name as officer_name,
-      k.state as case_state,
-      k.judgment,
-      k.claims,
-      coalesce((select count(*)::int from public.property_verification_evidence e where e.property_id = p.id), 0) as evidence_count,
-      coalesce((select count(*)::int from public.property_documents d where d.property_id = p.id), 0) as document_count,
-      (c.checked_in_at is not null) as has_check_in,
-      c.open_issue
-    from public.properties p
-    left join public.owners o on o.id = p.owner_id
-    left join public.profiles pr on pr.id = o.profile_id
-    left join public.users ou on ou.id = p.vetting_officer_id
-    left join public.property_verification_cases k on k.property_id = p.id
-    left join public.property_visit_checks c on c.property_id = p.id
-    where p.status in (
-      'pending_ml_validation',
-      'pending_vetting',
-      'pending_duplicate_review',
-      'pending_correction',
-      'live',
-      'rejected'
-    )
-    order by p.created_at asc nulls last
-    limit 200
-  `;
+  const take = Math.max(1, Math.min(input.limit ?? 50, 200));
+  const filterSql = caseQueueFilterSql(input.filter);
+  const searchSql = caseQueueSearchSql(input.search);
+  const base = caseQueueBaseStatusSql();
 
-  const metrics = { review: 0, field: 0, verified: 0, duplicates: 0, total: rows.length };
-  const items: CaseQueueItem[] = [];
-  const needle = input.search.trim().toLowerCase();
+  const [rows, metrics] = await Promise.all([
+    prisma.$queryRaw<PropertyQueueRow[]>(Prisma.sql`
+      select ${QUEUE_SELECT}
+      ${QUEUE_FROM}
+      where ${base}
+      ${filterSql}
+      ${searchSql}
+      order by p.created_at asc nulls last
+      limit ${take}
+    `),
+    loadCaseQueueMetrics(),
+  ]);
 
-  for (const row of rows) {
-    const item = toQueueItem(row);
-    if (matchesCaseQueueFilter(item, "review")) metrics.review += 1;
-    if (matchesCaseQueueFilter(item, "field")) metrics.field += 1;
-    if (matchesCaseQueueFilter(item, "verified")) metrics.verified += 1;
-    if (matchesCaseQueueFilter(item, "duplicates")) metrics.duplicates += 1;
-
-    const matchesSearch =
-      !needle ||
-      `${item.id} ${item.title} ${item.address} ${item.city}`.toLowerCase().includes(needle);
-    if (matchesSearch && matchesCaseQueueFilter(item, input.filter)) {
-      items.push(item);
-    }
-  }
-
-  return { items: items.slice(0, input.limit ?? 50), metrics };
+  return { items: rows.map(toQueueItem), metrics };
 }
 
 export async function loadCaseDetail(propertyId: string): Promise<CaseDetailView | null> {
