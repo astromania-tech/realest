@@ -91,23 +91,56 @@ export async function GET(
         ...publicListingWhere,
         listing_source: isAgent ? "agent" : { not: "agent" },
       },
-      include: {
-        // property_details is one-to-many; take first row
-        property_details: true,
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        price: true,
+        price_frequency: true,
+        listing_type: true,
+        listing_source: true,
+        property_type: true,
+        address: true,
+        city: true,
+        state: true,
+        country: true,
+        latitude: true,
+        longitude: true,
+        bedrooms: true,
+        bathrooms: true,
+        square_feet: true,
+        year_built: true,
+        status: true,
+        verification_status: true,
+        created_at: true,
+        updated_at: true,
+        owner_id: true,
+        agent_id: true,
+        property_details: {
+          select: {
+            metadata: true,
+            features: true,
+            amenities: true,
+            parking_spaces: true,
+            has_pool: true,
+          },
+          take: 1,
+        },
         property_media: {
           select: {
             id: true,
             media_type: true,
-            media_url: true,   // actual column name in DB
+            media_url: true,
             file_name: true,
             display_order: true,
-            is_featured: true, // actual column name (mapped → is_primary in response)
+            is_featured: true,
           },
           orderBy: { display_order: "asc" },
+          take: 24,
         },
-        // Always include both, use only what's relevant
         owners: {
-          include: {
+          select: {
+            id: true,
             profiles: {
               select: { id: true, full_name: true, avatar_url: true },
             },
@@ -121,7 +154,7 @@ export async function GET(
             specialization: true,
             verified: true,
             rating: true,
-              profiles: {
+            profiles: {
               select: { id: true, full_name: true, avatar_url: true },
             },
           },

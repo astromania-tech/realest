@@ -252,11 +252,48 @@ export async function GET(request: NextRequest) {
     const [rawProperties, total] = await Promise.all([
       prisma.properties.findMany({
         where,
-        include: {
-          property_details: true,
-          property_media: { take: 1, orderBy: { is_featured: "desc" } },
-          owners: { include: { profiles: { select: { full_name: true, avatar_url: true } } } },
-          agents: { include: { profiles: { select: { full_name: true, avatar_url: true } } } },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          price: true,
+          price_frequency: true,
+          listing_type: true,
+          listing_source: true,
+          property_type: true,
+          address: true,
+          city: true,
+          state: true,
+          country: true,
+          latitude: true,
+          longitude: true,
+          bedrooms: true,
+          bathrooms: true,
+          square_feet: true,
+          status: true,
+          verification_status: true,
+          created_at: true,
+          property_details: {
+            select: { metadata: true },
+            take: 1,
+          },
+          property_media: {
+            select: { media_url: true, media_type: true },
+            take: 1,
+            orderBy: { is_featured: "desc" },
+          },
+          owners: {
+            select: {
+              id: true,
+              profiles: { select: { full_name: true, avatar_url: true } },
+            },
+          },
+          agents: {
+            select: {
+              id: true,
+              profiles: { select: { full_name: true, avatar_url: true } },
+            },
+          },
         },
         orderBy,
         skip,

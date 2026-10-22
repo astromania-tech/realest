@@ -168,6 +168,7 @@ export async function loadCaseDetail(propertyId: string): Promise<CaseDetailView
       owners: { select: { profiles: { select: { full_name: true } } } },
       property_documents: {
         select: { id: true, document_type: true, file_name: true, document_url: true },
+        take: 30,
       },
       property_media: {
         select: { id: true, file_name: true, media_url: true },
@@ -331,6 +332,7 @@ export async function listMyVisits(officerId: string): Promise<CaseQueueItem[]> 
     where p.status = 'pending_vetting'
       and p.vetting_officer_id = ${officerId}::uuid
     order by p.vetting_visit_on asc nulls last
+    limit 50
   `;
   return rows.map(toQueueItem);
 }
