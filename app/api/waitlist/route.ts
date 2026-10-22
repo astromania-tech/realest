@@ -28,6 +28,11 @@ import {
 import { REFERRAL_CREDIT_EVENT_TYPES, referralAlreadyCredited } from '@/lib/referral-credit';
 import prisma from '@/lib/prisma'; // ← replaces createServiceClient
 import { clientAddress, consumeRateLimit } from '@/lib/http/rate-limit';
+import { verifyTurnstileToken } from '@/lib/http/turnstile';
+import {
+  createWaitlistUnsubscribeToken,
+  verifyWaitlistUnsubscribeToken,
+} from '@/lib/waitlist-unsubscribe-token';
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
 
 export const openApiPOST: OpenApiMetadata = {
@@ -82,9 +87,18 @@ export async function POST(request: NextRequest) {
       email, firstName, lastName, phone, source, ref,
       persona, interests, locationPreference,
       propertyTypePreference, budgetRange, personaDetails,
+      turnstileToken,
     } = body;
 
     console.log('📧 Received subscription data:', { email, firstName, lastName, phone, source, persona });
+
+    const botCheck = await verifyTurnstileToken(
+      typeof turnstileToken === 'string' ? turnstileToken : null,
+      { ip },
+    );
+    if (!botCheck.ok) {
+      return NextResponse.json({ error: botCheck.error }, { status: botCheck.status });
+    }
 
     if (!email || typeof email !== 'string') {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
@@ -270,6 +284,8 @@ export async function POST(request: NextRequest) {
       ).catch((error) => console.error('❌ Resend audience sync failed:', error));
     }
 
+    const unsubscribeToken = createWaitlistUnsubscribeToken(subscriptionData.email);
+
     return NextResponse.json(
       {
         message: 'Successfully added to waitlist!',
@@ -286,6 +302,7 @@ export async function POST(request: NextRequest) {
           : null,
         currentMilestone: getCurrentMilestone(result.data?.referral_count ?? 0),
         waitlistReward: getWaitlistRewardCopy(persona),
+        ...(unsubscribeToken ? { unsubscribeToken } : {}),
         ...(positionData.error && { positionError: positionData.error }),
       },
       { status: 201 },
@@ -307,38 +324,42 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('📋 Waitlist API GET called');
-
     const { searchParams } = new URL(request.url);
     const email = searchParams.get('email');
     const stats = searchParams.get('stats');
+    const ip = clientAddress(request.headers);
 
     if (email) {
-      const emailCheck = await checkEmailWithPosition(email);
-      console.log(`🔍 Email check for ${email}: ${emailCheck.exists}${emailCheck.position ? ` (#${emailCheck.position})` : ''}`);
+      const limited = await consumeRateLimit({
+        bucket: "waitlist_lookup",
+        subject: `${ip}:${email.trim().toLowerCase()}`,
+      });
+      if (!limited.allowed) {
+        return NextResponse.json(
+          { error: 'Too many requests. Please try again later.' },
+          { status: 429 },
+        );
+      }
 
+      const emailCheck = await checkEmailWithPosition(email);
+
+      // Minimal public projection — no referralCode / queueScore / persona dump.
       return NextResponse.json({
         exists: emailCheck.exists,
-        status: emailCheck.status,
-        firstName: emailCheck.firstName,
-        position: emailCheck.position,
-        totalCount: emailCheck.totalCount,
-        persona: emailCheck.persona,
-        candidateRole: emailCheck.candidateRole,
-        queueScore: emailCheck.queueScore,
-        referralCount: emailCheck.referralCount,
-        referralCode: emailCheck.referralCode,
-        currentMilestone: getCurrentMilestone(emailCheck.referralCount ?? 0),
-        waitlistRewardEligible: emailCheck.waitlistRewardEligible,
-        waitlistReward: emailCheck.persona
-          ? getWaitlistRewardCopy(emailCheck.persona)
-          : null,
+        ...(emailCheck.exists
+          ? {
+              status: emailCheck.status,
+              firstName: emailCheck.firstName,
+              position: emailCheck.position,
+              totalCount: emailCheck.totalCount,
+              candidateRole: emailCheck.candidateRole,
+            }
+          : {}),
       });
     }
 
     if (stats === 'true') {
       const waitlistStats = await getWaitlistStats();
-      console.log('📊 Waitlist stats requested:', waitlistStats);
       return NextResponse.json({
         ...waitlistStats,
         message: 'Waitlist statistics from database',
@@ -347,13 +368,11 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       message: 'Waitlist API is working!',
-      mode: 'Prisma + Supabase PostgreSQL',
-      timestamp: new Date().toISOString(),
       endpoints: {
         'POST /': 'Subscribe to waitlist',
-        'GET /?email=user@example.com': 'Check if email exists',
+        'GET /?email=user@example.com': 'Check if email exists (minimal fields)',
         'GET /?stats=true': 'Get waitlist statistics',
-        'DELETE /': 'Unsubscribe from waitlist',
+        'DELETE /': 'Unsubscribe with signed token',
       },
     });
   } catch (error) {
@@ -373,17 +392,23 @@ export async function GET(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    console.log('🗑️  Waitlist API DELETE called');
-
     const body = await request.json();
-    const { email } = body;
+    const { email, token } = body;
 
     if (!email || typeof email !== 'string') {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
+    if (!verifyWaitlistUnsubscribeToken(email, typeof token === 'string' ? token : null)) {
+      return NextResponse.json(
+        { error: 'A valid unsubscribe token is required.' },
+        { status: 403 },
+      );
+    }
+
+    const normalized = email.toLowerCase().trim();
     const entry = await prisma.waitlist.findUnique({
-      where: { email: email.toLowerCase().trim() },
+      where: { email: normalized },
       select: { id: true },
     });
 
@@ -392,13 +417,11 @@ export async function DELETE(request: NextRequest) {
     }
 
     await prisma.waitlist.update({
-      where: { email: email.toLowerCase().trim() },
+      where: { email: normalized },
       data: { status: 'unsubscribed', unsubscribed_at: new Date() },
     });
 
-    console.log(`✅ User unsubscribed from waitlist: ${email}`);
-
-    syncWaitlistUnsubscribe(email.trim()).catch((error) =>
+    syncWaitlistUnsubscribe(normalized).catch((error) =>
       console.error('❌ Resend audience unsubscribe sync failed:', error),
     );
 
