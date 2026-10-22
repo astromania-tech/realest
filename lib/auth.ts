@@ -335,46 +335,11 @@ export async function resendEmailVerification(
 }
 
 /**
- * Get redirect URL based on user type
- */
-export function getRedirectUrl(userType?: string): string {
-  switch (userType) {
-    case "owner":
-    case "agent":
-      return "/onboarding";
-    case "admin":
-      return "/admin";
-    case "user":
-    default:
-      return "/profile";
-  }
-}
-
-/**
  * Check if user is authenticated
  */
 export async function isAuthenticated(): Promise<boolean> {
   const { success, user } = await getCurrentUser();
   return success && !!user;
-}
-
-/**
- * Check if user has specific role
- */
-export async function hasRole(
-  requiredRole: "user" | "owner" | "agent" | "admin",
-): Promise<boolean> {
-  try {
-    const { success, user } = await getCurrentUser();
-    if (!success || !user) return false;
-
-    const { success: profileSuccess, profile } = await getUserProfile(user.id);
-    if (!profileSuccess || !profile) return false;
-
-    return profile.user_type === requiredRole;
-  } catch {
-    return false;
-  }
 }
 
 /**
