@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { requireAdminPage } from "@/lib/auth/require-admin-page";
+import { requireStaffPage } from "@/lib/auth/require-staff-page";
 import { notFound } from "next/navigation";
 import { FieldCheckIn } from "@/components/realest/validation/FieldCheckIn";
 import { nextCaseState } from "@/lib/trust/case";
@@ -7,7 +7,7 @@ import { readStoredVisit, setCaseState } from "@/lib/trust/visit-store";
 
 export default async function FieldVisitPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const admin = await requireAdminPage();
+  const admin = await requireStaffPage();
   const property = await prisma.properties.findFirst({
     where: { id, status: "pending_vetting" },
     select: { id: true, address: true, city: true, state: true, title: true },

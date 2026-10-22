@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { requireAdminPage } from "@/lib/auth/require-admin-page";
+import { requireStaffPage } from "@/lib/auth/require-staff-page";
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +22,7 @@ export default async function DuplicateResolutionPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireAdminPage();
+  await requireStaffPage();
   const { id } = await params;
 
   const property = await prisma.properties.findFirst({

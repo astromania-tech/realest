@@ -54,24 +54,38 @@ export function FieldCheckIn({ propertyId, address }: { propertyId: string; addr
           setError(body.error || "The check-in was refused.");
           return;
         }
-        router.push("/admin/validation/vetting");
+        router.push("/admin/validation/my-visits");
         router.refresh();
       },
       () => {
         setPending(false);
         setError("The phone did not share its GPS. Typed coordinates are refused.");
       },
-      { enableHighAccuracy: true, timeout: 15000 },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
     );
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 py-8">
+    <div className="mx-auto flex min-h-[100dvh] max-w-md flex-col gap-4 px-4 py-8">
       <h1 className="font-heading text-2xl text-[#07402F]">Check in at the pin</h1>
       <p className="text-sm text-muted-foreground">{address}</p>
-      <p className="text-sm">Use this phone's GPS. There is no place to type a coordinate.</p>
-      <Textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="What you see at the gate, including the address." className="min-h-28" />
-      <input className="text-sm" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" onChange={(event) => void onPhoto(event.target.files?.[0])} />
+      <p className="text-sm">
+        Use this phone&apos;s GPS and rear camera. There is no place to type a coordinate. Safari and
+        Chrome on Android/iOS need location permission; the photo uses the device camera when available.
+      </p>
+      <Textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="What you see at the gate, including the address." className="min-h-28 text-base" />
+      <label className="block text-sm font-medium" htmlFor="field-gate-photo">
+        Gate photo (camera)
+      </label>
+      <input
+        id="field-gate-photo"
+        className="w-full text-sm"
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        capture="environment"
+        onChange={(event) => void onPhoto(event.target.files?.[0])}
+      />
+      {photo ? <p className="text-xs text-muted-foreground">Photo ready for upload.</p> : null}
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" checked={sawBuilding} onChange={(event) => setSawBuilding(event.target.checked)} />
         I see the building

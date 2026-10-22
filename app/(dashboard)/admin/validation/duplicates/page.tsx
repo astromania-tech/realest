@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { requireAdminPage } from "@/lib/auth/require-admin-page";
+import { requireStaffPage } from "@/lib/auth/require-staff-page";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -7,7 +7,7 @@ import { Copy, ArrowLeft, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 
 export default async function DuplicatesPage() {
-  await requireAdminPage();
+  await requireStaffPage();
 
   const duplicates = await prisma.properties.findMany({
     where: { status: "pending_duplicate_review" },

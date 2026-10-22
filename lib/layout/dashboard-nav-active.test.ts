@@ -39,3 +39,22 @@ test("small screens get primary bottom tabs and the rest under More", () => {
   assert.ok(more.includes("/setting/security"));
   assert.equal(primary.some((href) => more.includes(href)), false);
 });
+
+test("reviewer mobile tabs stay on verification paths only", () => {
+  const primary = mobilePrimaryItems("reviewer").map((item) => item.href);
+  const more = mobileMoreItems("reviewer").map((item) => item.href);
+  assert.ok(primary.includes("/admin/validation"));
+  assert.ok(primary.includes("/admin/validation/inbox"));
+  assert.equal(primary.includes("/admin/users"), false);
+  assert.equal(more.includes("/admin/users"), false);
+  assert.equal(more.includes("/admin/emails"), false);
+  assert.equal(more.includes("/admin/validation/ml"), false);
+  assert.equal(more.includes("/admin/validation/vetting"), false);
+  assert.equal(primary.includes("/admin/validation/ml"), false);
+  assert.equal(primary.includes("/admin/validation/vetting"), false);
+});
+
+test("team member primary tabs are my visits and inbox", () => {
+  const primary = mobilePrimaryItems("team_member").map((item) => item.href);
+  assert.deepEqual(primary, ["/admin/validation/my-visits", "/admin/validation/inbox"]);
+});

@@ -19,6 +19,7 @@ import {
   Mail,
   Megaphone,
   Users2,
+  MapPin,
 } from "lucide-react";
 
 export type DashboardNavItem = {
@@ -113,11 +114,15 @@ export const ROLE_NAVIGATION: Record<string, RoleNavigation> = {
 
 export const ADMIN_NAV_ITEMS: DashboardNavItem[] = [
   { href: "/admin", label: "Dashboard", description: "System overview", icon: Home },
-  { href: "/admin/validation", label: "Property Verification", description: "Review property listings", icon: Building },
+  { href: "/admin/validation", label: "Case queue", description: "Verification cases needing action", icon: Building },
+  { href: "/admin/validation/field", label: "Field ops", description: "Assign team leaders for visits", icon: Users2 },
+  { href: "/admin/validation/my-visits", label: "My visits", description: "Visits assigned to you", icon: MapPin },
+  { href: "/admin/validation/inbox", label: "Inbox", description: "Case and field notifications", icon: Bell },
   { href: "/admin/agents", label: "Agent Verification", description: "Verify real estate agents", icon: Users },
   { href: "/admin/users", label: "User Management", description: "Manage user accounts", icon: Shield },
   { href: "/admin/content", label: "Content Management", description: "Manage platform content", icon: FileText },
   { href: "/admin/settings", label: "Admin Settings", description: "System configurations", icon: Settings },
+  { href: "/admin/staff", label: "Staff invites", description: "Invite reviewers and field teams", icon: Users2 },
   { href: "/admin/subadmins", label: "Sub-Admins", description: "Manage sub-admin accounts", icon: UserCheck2 },
   { href: "/admin/cms", label: "CMS Dashboard", description: "Content management overview", icon: Layout },
   { href: "/admin/support", label: "Support Center", description: "Support tickets and inquiries", icon: HelpCircle },
@@ -127,11 +132,51 @@ export const ADMIN_NAV_ITEMS: DashboardNavItem[] = [
   { href: "/admin/analytics/referrals", label: "Referrals", description: "Referral tracking and attribution", icon: Users2 },
 ];
 
+/** Desk verification — Case queue is the front door (no legacy /ml or /vetting). */
+export const REVIEWER_NAV_ITEMS: DashboardNavItem[] = [
+  { href: "/admin/validation", label: "Case queue", description: "Verification cases needing action", icon: Building },
+  { href: "/admin/validation/field", label: "Field ops", description: "Assign team leaders", icon: Users2 },
+  { href: "/admin/validation/my-visits", label: "My visits", description: "Visits assigned to you", icon: UserCheck2 },
+  { href: "/admin/validation/inbox", label: "Inbox", description: "Case and field notifications", icon: Bell },
+];
+
+export const SUPERVISOR_NAV_ITEMS: DashboardNavItem[] = [
+  { href: "/admin/validation/field", label: "Field ops", description: "Assign team leaders", icon: Users2 },
+  { href: "/admin/validation", label: "Case queue", description: "All verification cases", icon: Building },
+  { href: "/admin/validation/my-visits", label: "My visits", description: "Your field assignments", icon: MapPin },
+  { href: "/admin/validation/inbox", label: "Inbox", description: "Case and field notifications", icon: Bell },
+];
+
+export const TEAM_LEADER_NAV_ITEMS: DashboardNavItem[] = [
+  { href: "/admin/validation/field", label: "Field ops", description: "Confirm your teams", icon: Users2 },
+  { href: "/admin/validation/my-visits", label: "My visits", description: "Teams you lead", icon: MapPin },
+  { href: "/admin/validation", label: "Case queue", description: "Open a case to build the team", icon: Building },
+  { href: "/admin/validation/inbox", label: "Inbox", description: "Case and field notifications", icon: Bell },
+];
+
+export const TEAM_MEMBER_NAV_ITEMS: DashboardNavItem[] = [
+  { href: "/admin/validation/my-visits", label: "My visits", description: "Your field assignments", icon: MapPin },
+  { href: "/admin/validation/inbox", label: "Inbox", description: "Your visit notifications", icon: Bell },
+];
+
+export function staffNavItems(role: string | null): DashboardNavItem[] {
+  if (role === "admin") return ADMIN_NAV_ITEMS;
+  if (role === "reviewer") return REVIEWER_NAV_ITEMS;
+  if (role === "supervisor") return SUPERVISOR_NAV_ITEMS;
+  if (role === "team_leader") return TEAM_LEADER_NAV_ITEMS;
+  if (role === "team_member") return TEAM_MEMBER_NAV_ITEMS;
+  return [];
+}
+
 const MOBILE_PRIMARY: Record<string, string[]> = {
   user: ["/profile", "/profile/favorites", "/profile/my-inquiries"],
   owner: ["/owner", "/owner/listings", "/owner/listings/new", "/owner/identity"],
   agent: ["/agent", "/agent/properties", "/agent/properties/new", "/agent/identity"],
-  admin: ["/admin", "/admin/validation", "/admin/agents", "/admin/users"],
+  admin: ["/admin", "/admin/validation", "/admin/validation/field", "/admin/validation/inbox"],
+  reviewer: ["/admin/validation", "/admin/validation/field", "/admin/validation/inbox"],
+  supervisor: ["/admin/validation/field", "/admin/validation", "/admin/validation/inbox"],
+  team_leader: ["/admin/validation/field", "/admin/validation/my-visits", "/admin/validation/inbox"],
+  team_member: ["/admin/validation/my-visits", "/admin/validation/inbox"],
 };
 
 export function roleNavigation(userRole: string | null): RoleNavigation {
@@ -143,9 +188,15 @@ export function flattenRoleItems(userRole: string | null): DashboardNavItem[] {
 }
 
 export function mobilePrimaryItems(userRole: string | null): DashboardNavItem[] {
-  if (userRole === "admin") {
-    const hrefs = MOBILE_PRIMARY.admin;
-    return ADMIN_NAV_ITEMS.filter((item) => hrefs.includes(item.href));
+  if (
+    userRole === "admin" ||
+    userRole === "reviewer" ||
+    userRole === "supervisor" ||
+    userRole === "team_leader" ||
+    userRole === "team_member"
+  ) {
+    const hrefs = MOBILE_PRIMARY[userRole] || MOBILE_PRIMARY.admin;
+    return staffNavItems(userRole).filter((item) => hrefs.includes(item.href));
   }
   const hrefs = MOBILE_PRIMARY[userRole || "user"] || MOBILE_PRIMARY.user;
   const items = flattenRoleItems(userRole);
@@ -156,8 +207,14 @@ export function mobilePrimaryItems(userRole: string | null): DashboardNavItem[] 
 
 export function mobileMoreItems(userRole: string | null): DashboardNavItem[] {
   const primary = new Set(mobilePrimaryItems(userRole).map((item) => item.href));
-  if (userRole === "admin") {
-    return ADMIN_NAV_ITEMS.filter((item) => !primary.has(item.href));
+  if (
+    userRole === "admin" ||
+    userRole === "reviewer" ||
+    userRole === "supervisor" ||
+    userRole === "team_leader" ||
+    userRole === "team_member"
+  ) {
+    return staffNavItems(userRole).filter((item) => !primary.has(item.href));
   }
   return flattenRoleItems(userRole).filter((item) => !primary.has(item.href));
 }

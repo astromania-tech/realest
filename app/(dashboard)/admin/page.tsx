@@ -12,8 +12,11 @@ export default async function AdminDashboardPage() {
     redirect("/login")
   }
 
-  // Check if user is an admin
   const { data: userRow } = await supabase.from("users").select("role").eq("id", user.id).single()
+
+  if (userRow?.role === "reviewer") {
+    redirect("/admin/validation")
+  }
 
   if (userRow?.role !== "admin") {
     redirect("/")

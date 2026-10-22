@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { AdminHeader } from "./AdminHeader";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminFooter } from "./AdminFooter";
@@ -21,6 +21,12 @@ import {
   ADMIN_PAGE_PAD,
   adminMainOffset,
 } from "@/lib/layout/dashboard-shell";
+import {
+  isStaffAllowedPath,
+  isStaffRole,
+  staffHomePath,
+  type StaffRole,
+} from "@/lib/auth/roles";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -28,22 +34,41 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { role: userRole, isLoading } = useUser();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
+  const staffRole = isStaffRole(userRole) ? (userRole as StaffRole) : null;
+
+  useEffect(() => {
+    if (isLoading || !staffRole || staffRole === "admin") return;
+    if (!isStaffAllowedPath(staffRole, pathname)) {
+      router.replace(staffHomePath(staffRole));
+    }
+  }, [isLoading, staffRole, pathname, router]);
+
   const generateBreadcrumbs = () => {
     const pathSegments = pathname.split("/").filter(Boolean);
-    const breadcrumbs = [{ label: "Admin Dashboard", href: "/admin" }];
+    const breadcrumbs = [
+      {
+        label: staffRole && staffRole !== "admin" ? "Verification" : "Admin Dashboard",
+        href: staffRole ? staffHomePath(staffRole) : "/admin",
+      },
+    ];
 
     if (pathSegments.length > 1) {
       const currentPath = `/${pathSegments.join("/")}`;
       const pathMap: Record<string, string> = {
-        "/admin/validation": "Property Verification",
+        "/admin/validation": "Case queue",
+        "/admin/validation/field": "Field ops",
+        "/admin/validation/my-visits": "My visits",
+        "/admin/validation/inbox": "Inbox",
         "/admin/agents": "Agent Verification",
         "/admin/users": "User Management",
         "/admin/cms": "CMS Dashboard",
         "/admin/cms/analytics": "System Analytics",
         "/admin/settings": "Settings",
+        "/admin/staff": "Staff invites",
         "/admin/subadmins": "Sub-Admin Management",
         "/admin/support": "Support Center",
         "/admin/content": "Content Management",
@@ -73,25 +98,38 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
           <Shield className="mx-auto mb-4 h-12 w-12 animate-pulse text-primary" />
-          <div className="text-muted-foreground">Loading admin panel...</div>
+          <div className="text-muted-foreground">Loading staff panel...</div>
         </div>
       </div>
     );
   }
 
-  if (!isLoading && userRole !== "admin") {
+  if (!isLoading && !isStaffRole(userRole)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Card className="max-w-md p-8 text-center">
           <Shield className="mx-auto mb-4 h-16 w-16 text-danger" />
           <h2 className="mb-2 text-xl font-bold">Access Denied</h2>
           <p className="mb-4 text-muted-foreground">
-            You don't have permission to access the admin panel.
+            You don't have permission to access the staff panel.
           </p>
           <Button>
             <a href="/profile">Return to Dashboard</a>
           </Button>
         </Card>
+      </div>
+    );
+  }
+
+  if (
+    !isLoading &&
+    staffRole &&
+    staffRole !== "admin" &&
+    !isStaffAllowedPath(staffRole, pathname)
+  ) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-muted-foreground">Redirecting…</div>
       </div>
     );
   }
@@ -105,6 +143,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           currentPath={pathname}
           isCollapsed={isCollapsed}
           onToggle={setIsCollapsed}
+          userRole={staffRole ?? "admin"}
         />
 
         <main className={adminMainOffset(isCollapsed)}>
@@ -139,7 +178,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </main>
       </div>
 
-      <DashboardMobileNav userRole="admin" />
+      <DashboardMobileNav userRole={staffRole ?? "admin"} />
     </div>
   );
 }

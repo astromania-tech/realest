@@ -26,16 +26,20 @@ import {
   Megaphone,
 } from "lucide-react";
 
+import { staffNavItems } from "@/lib/layout/dashboard-nav";
+
 interface AdminSidebarProps {
   currentPath: string;
   isCollapsed: boolean;
   onToggle: (collapsed: boolean) => void;
+  userRole?: "admin" | "reviewer" | "supervisor" | "team_leader" | "team_member";
 }
 
 export function AdminSidebar({
   currentPath,
   isCollapsed,
   onToggle,
+  userRole = "admin",
 }: AdminSidebarProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isButtonHovered, setIsButtonHovered] = useState(false);
@@ -55,86 +59,7 @@ export function AdminSidebar({
     };
   }, []);
 
-  const navigationItems = [
-    {
-      href: "/admin",
-      label: "Dashboard",
-      icon: Home,
-      description: "System overview",
-    },
-    {
-      href: "/admin/validation",
-      label: "Property Verification",
-      icon: Building,
-      description: "Review property listings",
-    },
-    {
-      href: "/admin/agents",
-      label: "Agent Verification",
-      icon: Users,
-      description: "Verify real estate agents",
-    },
-    {
-      href: "/admin/users",
-      label: "User Management",
-      icon: Shield,
-      description: "Manage user accounts",
-    },
-    {
-      href: "/admin/content",
-      label: "Content Managemen",
-      icon: FileText,
-      description: "Manage platform content",
-    },
-    {
-      href: "/admin/settings",
-      label: "Admin Settings",
-      icon: SettingsIcon,
-      description: "System configurations",
-    },
-    {
-      href: "/admin/subadmins",
-      label: "Sub-Admins",
-      icon: UserCheck2,
-      description: "Manage sub-admin accounts",
-    },
-    {
-      href: "/admin/cms",
-      label: "CMS Dashboard",
-      icon: Layout,
-      description: "Content management overview",
-    },
-    {
-      href: "/admin/support",
-      label: "Support Center",
-      icon: HelpCircle,
-      description: "Support tickets and inquiries",
-    },
-    {
-      href: "/admin/emails",
-      label: "Email Templates",
-      icon: Mail,
-      description: "Preview all email templates",
-    },
-    {
-      href: "/admin/emails/campaigns",
-      label: "Email Campaigns",
-      icon: Megaphone,
-      description: "Create and send email campaigns",
-    },
-    {
-      href: "/admin/analytics/polls",
-      label: "Poll Results",
-      icon: BarChart3,
-      description: "View email poll vote results",
-    },
-    {
-      href: "/admin/analytics/referrals",
-      label: "Referrals",
-      icon: Users2,
-      description: "Referral tracking and attribution",
-    },
-  ];
+  const navigationItems = staffNavItems(userRole);
 
   const isActive = (href: string) => {
     if (href === "/admin" && currentPath === "/admin") return true;
@@ -266,8 +191,8 @@ export function AdminSidebar({
           })}
         </nav>
 
-        {/* Quick Actions */}
-        {!shouldCollapse && (
+        {/* Quick Actions — super admin only */}
+        {!shouldCollapse && userRole === "admin" && (
           <div className="p-4 border-t border-accent/20 animate-content-stagger-3">
             <div className="flex flex-col justify-start space-y-2">
               <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide animate-text-slide-in">
