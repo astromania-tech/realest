@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums"
-import type * as Prisma from "../internal/prismaNamespace"
+import type * as $Enums from "../enums.ts"
+import type * as Prisma from "../internal/prismaNamespace.ts"
 
 /**
  * Model referral_events
@@ -182,7 +182,7 @@ export type Referral_eventsGroupByOutputType = {
   _max: Referral_eventsMaxAggregateOutputType | null
 }
 
-export type GetReferral_eventsGroupByPayload<T extends referral_eventsGroupByArgs> = Prisma.PrismaPromise<
+type GetReferral_eventsGroupByPayload<T extends referral_eventsGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<Referral_eventsGroupByOutputType, T['by']> &
       {
@@ -1688,11 +1688,6 @@ export type referral_eventsFindManyArgs<ExtArgs extends runtime.Types.Extensions
    * Skip the first `n` referral_events.
    */
   skip?: number
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-   * 
-   * Filter by unique combinations of referral_events.
-   */
   distinct?: Prisma.Referral_eventsScalarFieldEnum | Prisma.Referral_eventsScalarFieldEnum[]
 }
 

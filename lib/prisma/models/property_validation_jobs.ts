@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums"
-import type * as Prisma from "../internal/prismaNamespace"
+import type * as $Enums from "../enums.ts"
+import type * as Prisma from "../internal/prismaNamespace.ts"
 
 /**
  * Model property_validation_jobs
@@ -279,7 +279,7 @@ export type Property_validation_jobsGroupByOutputType = {
   _max: Property_validation_jobsMaxAggregateOutputType | null
 }
 
-export type GetProperty_validation_jobsGroupByPayload<T extends property_validation_jobsGroupByArgs> = Prisma.PrismaPromise<
+type GetProperty_validation_jobsGroupByPayload<T extends property_validation_jobsGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<Property_validation_jobsGroupByOutputType, T['by']> &
       {
@@ -1813,11 +1813,6 @@ export type property_validation_jobsFindManyArgs<ExtArgs extends runtime.Types.E
    * Skip the first `n` property_validation_jobs.
    */
   skip?: number
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-   * 
-   * Filter by unique combinations of property_validation_jobs.
-   */
   distinct?: Prisma.Property_validation_jobsScalarFieldEnum | Prisma.Property_validation_jobsScalarFieldEnum[]
 }
 

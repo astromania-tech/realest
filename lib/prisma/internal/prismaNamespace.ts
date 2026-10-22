@@ -16,10 +16,10 @@
  */
 
 import * as runtime from "@prisma/client/runtime/client"
-import type * as Prisma from "../models"
-import { type PrismaClient } from "./class"
+import type * as Prisma from "../models.ts"
+import { type PrismaClient } from "./class.ts"
 
-export type * from '../models'
+export type * from '../models.ts'
 
 export type DMMF = typeof runtime.DMMF
 
@@ -80,12 +80,12 @@ export type PrismaVersion = {
 }
 
 /**
- * Prisma Client JS version: 7.8.0
- * Query Engine version: 3c6e192761c0362d496ed980de936e2f3cebcd3a
+ * Prisma Client JS version: 7.4.2
+ * Query Engine version: 94a226be1cf2967af2541cca5529f0f7ba866919
  */
 export const prismaVersion: PrismaVersion = {
-  client: "7.8.0",
-  engine: "3c6e192761c0362d496ed980de936e2f3cebcd3a"
+  client: "7.4.2",
+  engine: "94a226be1cf2967af2541cca5529f0f7ba866919"
 }
 
 /**
@@ -395,6 +395,11 @@ export const ModelName = {
   properties: 'properties',
   property_details: 'property_details',
   property_documents: 'property_documents',
+  property_visit_checks: 'property_visit_checks',
+  property_verification_cases: 'property_verification_cases',
+  property_field_teams: 'property_field_teams',
+  property_field_team_members: 'property_field_team_members',
+  property_verification_evidence: 'property_verification_evidence',
   property_media: 'property_media',
   reviews: 'reviews',
   saved_properties: 'saved_properties',
@@ -427,7 +432,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "admin_audit_log" | "agents" | "inquiries" | "kyc_requests" | "notifications" | "owners" | "payments" | "profiles" | "properties" | "property_details" | "property_documents" | "property_media" | "reviews" | "saved_properties" | "users" | "waitlist" | "poll_responses" | "poll_forms" | "poll_questions" | "poll_submissions" | "poll_submission_answers" | "email_campaigns" | "property_validation_jobs" | "referral_events" | "reward_catalog" | "reward_entitlements" | "reward_redemptions" | "waitlist_rank_history"
+    modelProps: "admin_audit_log" | "agents" | "inquiries" | "kyc_requests" | "notifications" | "owners" | "payments" | "profiles" | "properties" | "property_details" | "property_documents" | "property_visit_checks" | "property_verification_cases" | "property_field_teams" | "property_field_team_members" | "property_verification_evidence" | "property_media" | "reviews" | "saved_properties" | "users" | "waitlist" | "poll_responses" | "poll_forms" | "poll_questions" | "poll_submissions" | "poll_submission_answers" | "email_campaigns" | "property_validation_jobs" | "referral_events" | "reward_catalog" | "reward_entitlements" | "reward_redemptions" | "waitlist_rank_history"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1242,6 +1247,376 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.property_documentsCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.Property_documentsCountAggregateOutputType> | number
+        }
+      }
+    }
+    property_visit_checks: {
+      payload: Prisma.$property_visit_checksPayload<ExtArgs>
+      fields: Prisma.property_visit_checksFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.property_visit_checksFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_visit_checksPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.property_visit_checksFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_visit_checksPayload>
+        }
+        findFirst: {
+          args: Prisma.property_visit_checksFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_visit_checksPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.property_visit_checksFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_visit_checksPayload>
+        }
+        findMany: {
+          args: Prisma.property_visit_checksFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_visit_checksPayload>[]
+        }
+        create: {
+          args: Prisma.property_visit_checksCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_visit_checksPayload>
+        }
+        createMany: {
+          args: Prisma.property_visit_checksCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.property_visit_checksCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_visit_checksPayload>[]
+        }
+        delete: {
+          args: Prisma.property_visit_checksDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_visit_checksPayload>
+        }
+        update: {
+          args: Prisma.property_visit_checksUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_visit_checksPayload>
+        }
+        deleteMany: {
+          args: Prisma.property_visit_checksDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.property_visit_checksUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.property_visit_checksUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_visit_checksPayload>[]
+        }
+        upsert: {
+          args: Prisma.property_visit_checksUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_visit_checksPayload>
+        }
+        aggregate: {
+          args: Prisma.Property_visit_checksAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateProperty_visit_checks>
+        }
+        groupBy: {
+          args: Prisma.property_visit_checksGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Property_visit_checksGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.property_visit_checksCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Property_visit_checksCountAggregateOutputType> | number
+        }
+      }
+    }
+    property_verification_cases: {
+      payload: Prisma.$property_verification_casesPayload<ExtArgs>
+      fields: Prisma.property_verification_casesFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.property_verification_casesFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_verification_casesPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.property_verification_casesFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_verification_casesPayload>
+        }
+        findFirst: {
+          args: Prisma.property_verification_casesFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_verification_casesPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.property_verification_casesFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_verification_casesPayload>
+        }
+        findMany: {
+          args: Prisma.property_verification_casesFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_verification_casesPayload>[]
+        }
+        create: {
+          args: Prisma.property_verification_casesCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_verification_casesPayload>
+        }
+        createMany: {
+          args: Prisma.property_verification_casesCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.property_verification_casesCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_verification_casesPayload>[]
+        }
+        delete: {
+          args: Prisma.property_verification_casesDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_verification_casesPayload>
+        }
+        update: {
+          args: Prisma.property_verification_casesUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_verification_casesPayload>
+        }
+        deleteMany: {
+          args: Prisma.property_verification_casesDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.property_verification_casesUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.property_verification_casesUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_verification_casesPayload>[]
+        }
+        upsert: {
+          args: Prisma.property_verification_casesUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_verification_casesPayload>
+        }
+        aggregate: {
+          args: Prisma.Property_verification_casesAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateProperty_verification_cases>
+        }
+        groupBy: {
+          args: Prisma.property_verification_casesGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Property_verification_casesGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.property_verification_casesCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Property_verification_casesCountAggregateOutputType> | number
+        }
+      }
+    }
+    property_field_teams: {
+      payload: Prisma.$property_field_teamsPayload<ExtArgs>
+      fields: Prisma.property_field_teamsFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.property_field_teamsFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_field_teamsPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.property_field_teamsFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_field_teamsPayload>
+        }
+        findFirst: {
+          args: Prisma.property_field_teamsFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_field_teamsPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.property_field_teamsFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_field_teamsPayload>
+        }
+        findMany: {
+          args: Prisma.property_field_teamsFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_field_teamsPayload>[]
+        }
+        create: {
+          args: Prisma.property_field_teamsCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_field_teamsPayload>
+        }
+        createMany: {
+          args: Prisma.property_field_teamsCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.property_field_teamsCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_field_teamsPayload>[]
+        }
+        delete: {
+          args: Prisma.property_field_teamsDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_field_teamsPayload>
+        }
+        update: {
+          args: Prisma.property_field_teamsUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_field_teamsPayload>
+        }
+        deleteMany: {
+          args: Prisma.property_field_teamsDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.property_field_teamsUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.property_field_teamsUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_field_teamsPayload>[]
+        }
+        upsert: {
+          args: Prisma.property_field_teamsUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_field_teamsPayload>
+        }
+        aggregate: {
+          args: Prisma.Property_field_teamsAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateProperty_field_teams>
+        }
+        groupBy: {
+          args: Prisma.property_field_teamsGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Property_field_teamsGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.property_field_teamsCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Property_field_teamsCountAggregateOutputType> | number
+        }
+      }
+    }
+    property_field_team_members: {
+      payload: Prisma.$property_field_team_membersPayload<ExtArgs>
+      fields: Prisma.property_field_team_membersFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.property_field_team_membersFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_field_team_membersPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.property_field_team_membersFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_field_team_membersPayload>
+        }
+        findFirst: {
+          args: Prisma.property_field_team_membersFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_field_team_membersPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.property_field_team_membersFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_field_team_membersPayload>
+        }
+        findMany: {
+          args: Prisma.property_field_team_membersFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_field_team_membersPayload>[]
+        }
+        create: {
+          args: Prisma.property_field_team_membersCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_field_team_membersPayload>
+        }
+        createMany: {
+          args: Prisma.property_field_team_membersCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.property_field_team_membersCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_field_team_membersPayload>[]
+        }
+        delete: {
+          args: Prisma.property_field_team_membersDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_field_team_membersPayload>
+        }
+        update: {
+          args: Prisma.property_field_team_membersUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_field_team_membersPayload>
+        }
+        deleteMany: {
+          args: Prisma.property_field_team_membersDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.property_field_team_membersUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.property_field_team_membersUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_field_team_membersPayload>[]
+        }
+        upsert: {
+          args: Prisma.property_field_team_membersUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_field_team_membersPayload>
+        }
+        aggregate: {
+          args: Prisma.Property_field_team_membersAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateProperty_field_team_members>
+        }
+        groupBy: {
+          args: Prisma.property_field_team_membersGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Property_field_team_membersGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.property_field_team_membersCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Property_field_team_membersCountAggregateOutputType> | number
+        }
+      }
+    }
+    property_verification_evidence: {
+      payload: Prisma.$property_verification_evidencePayload<ExtArgs>
+      fields: Prisma.property_verification_evidenceFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.property_verification_evidenceFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_verification_evidencePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.property_verification_evidenceFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_verification_evidencePayload>
+        }
+        findFirst: {
+          args: Prisma.property_verification_evidenceFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_verification_evidencePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.property_verification_evidenceFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_verification_evidencePayload>
+        }
+        findMany: {
+          args: Prisma.property_verification_evidenceFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_verification_evidencePayload>[]
+        }
+        create: {
+          args: Prisma.property_verification_evidenceCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_verification_evidencePayload>
+        }
+        createMany: {
+          args: Prisma.property_verification_evidenceCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.property_verification_evidenceCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_verification_evidencePayload>[]
+        }
+        delete: {
+          args: Prisma.property_verification_evidenceDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_verification_evidencePayload>
+        }
+        update: {
+          args: Prisma.property_verification_evidenceUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_verification_evidencePayload>
+        }
+        deleteMany: {
+          args: Prisma.property_verification_evidenceDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.property_verification_evidenceUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.property_verification_evidenceUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_verification_evidencePayload>[]
+        }
+        upsert: {
+          args: Prisma.property_verification_evidenceUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$property_verification_evidencePayload>
+        }
+        aggregate: {
+          args: Prisma.Property_verification_evidenceAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateProperty_verification_evidence>
+        }
+        groupBy: {
+          args: Prisma.property_verification_evidenceGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Property_verification_evidenceGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.property_verification_evidenceCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Property_verification_evidenceCountAggregateOutputType> | number
         }
       }
     }
@@ -2582,6 +2957,9 @@ export const InquiriesScalarFieldEnum = {
   property_id: 'property_id',
   sender_id: 'sender_id',
   owner_id: 'owner_id',
+  guest_name: 'guest_name',
+  guest_email: 'guest_email',
+  guest_phone: 'guest_phone',
   message: 'message',
   status: 'status',
   created_at: 'created_at',
@@ -2708,7 +3086,9 @@ export const PropertiesScalarFieldEnum = {
   updated_at: 'updated_at',
   agent_id: 'agent_id',
   listing_source: 'listing_source',
-  price_frequency: 'price_frequency'
+  price_frequency: 'price_frequency',
+  vetting_officer_id: 'vetting_officer_id',
+  vetting_visit_on: 'vetting_visit_on'
 } as const
 
 export type PropertiesScalarFieldEnum = (typeof PropertiesScalarFieldEnum)[keyof typeof PropertiesScalarFieldEnum]
@@ -2754,6 +3134,76 @@ export const Property_documentsScalarFieldEnum = {
 export type Property_documentsScalarFieldEnum = (typeof Property_documentsScalarFieldEnum)[keyof typeof Property_documentsScalarFieldEnum]
 
 
+export const Property_visit_checksScalarFieldEnum = {
+  property_id: 'property_id',
+  officer_id: 'officer_id',
+  checked_in_at: 'checked_in_at',
+  latitude: 'latitude',
+  longitude: 'longitude',
+  distance_meters: 'distance_meters',
+  photo_path: 'photo_path',
+  saw_building: 'saw_building',
+  address_matches: 'address_matches',
+  document_matches: 'document_matches',
+  note: 'note',
+  open_issue: 'open_issue',
+  correction_document_id: 'correction_document_id',
+  voided_at: 'voided_at'
+} as const
+
+export type Property_visit_checksScalarFieldEnum = (typeof Property_visit_checksScalarFieldEnum)[keyof typeof Property_visit_checksScalarFieldEnum]
+
+
+export const Property_verification_casesScalarFieldEnum = {
+  property_id: 'property_id',
+  state: 'state',
+  claims: 'claims',
+  opened_at: 'opened_at',
+  registry_reference: 'registry_reference',
+  registry_matches: 'registry_matches',
+  registry_confirmed_at: 'registry_confirmed_at',
+  judgment: 'judgment',
+  state_log: 'state_log'
+} as const
+
+export type Property_verification_casesScalarFieldEnum = (typeof Property_verification_casesScalarFieldEnum)[keyof typeof Property_verification_casesScalarFieldEnum]
+
+
+export const Property_field_teamsScalarFieldEnum = {
+  property_id: 'property_id',
+  team_leader_id: 'team_leader_id',
+  check_in_officer_id: 'check_in_officer_id',
+  visit_day: 'visit_day',
+  assigned_by: 'assigned_by',
+  brief: 'brief',
+  confirmed_at: 'confirmed_at',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+} as const
+
+export type Property_field_teamsScalarFieldEnum = (typeof Property_field_teamsScalarFieldEnum)[keyof typeof Property_field_teamsScalarFieldEnum]
+
+
+export const Property_field_team_membersScalarFieldEnum = {
+  property_id: 'property_id',
+  user_id: 'user_id',
+  created_at: 'created_at'
+} as const
+
+export type Property_field_team_membersScalarFieldEnum = (typeof Property_field_team_membersScalarFieldEnum)[keyof typeof Property_field_team_membersScalarFieldEnum]
+
+
+export const Property_verification_evidenceScalarFieldEnum = {
+  id: 'id',
+  property_id: 'property_id',
+  layer: 'layer',
+  recorded_at: 'recorded_at',
+  body: 'body'
+} as const
+
+export type Property_verification_evidenceScalarFieldEnum = (typeof Property_verification_evidenceScalarFieldEnum)[keyof typeof Property_verification_evidenceScalarFieldEnum]
+
+
 export const Property_mediaScalarFieldEnum = {
   id: 'id',
   property_id: 'property_id',
@@ -2762,6 +3212,7 @@ export const Property_mediaScalarFieldEnum = {
   file_name: 'file_name',
   display_order: 'display_order',
   is_featured: 'is_featured',
+  d_hash: 'd_hash',
   created_at: 'created_at'
 } as const
 
@@ -2800,6 +3251,9 @@ export const UsersScalarFieldEnum = {
   role: 'role',
   is_active: 'is_active',
   metadata: 'metadata',
+  ops_state: 'ops_state',
+  ops_lga: 'ops_lga',
+  ops_state_code: 'ops_state_code',
   created_at: 'created_at',
   updated_at: 'updated_at',
   deleted_at: 'deleted_at'
@@ -3168,20 +3622,6 @@ export type ListDecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMo
 
 
 /**
- * Reference to a field of type 'UserRole'
- */
-export type EnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserRole'>
-    
-
-
-/**
- * Reference to a field of type 'UserRole[]'
- */
-export type ListEnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserRole[]'>
-    
-
-
-/**
  * Reference to a field of type 'Float'
  */
 export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -3192,6 +3632,20 @@ export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, '
  * Reference to a field of type 'Float[]'
  */
 export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+    
+
+
+/**
+ * Reference to a field of type 'UserRole'
+ */
+export type EnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserRole'>
+    
+
+
+/**
+ * Reference to a field of type 'UserRole[]'
+ */
+export type ListEnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserRole[]'>
     
 
 /**
@@ -3287,21 +3741,6 @@ export type PrismaClientOptions = ({
    * ```
    */
   comments?: runtime.SqlCommenterPlugin[]
-  /**
-   * Optional maximum size for the query plan cache. If not provided, a default size will be used.
-   * A value of `0` can be used to disable the cache entirely. A higher cache size can improve
-   * performance for applications that execute a large number of unique queries, while a smaller
-   * cache size can reduce memory usage.
-   * 
-   * @example
-   * ```
-   * const prisma = new PrismaClient({
-   *   adapter,
-   *   queryPlanCacheMaxSize: 100,
-   * })
-   * ```
-   */
-  queryPlanCacheMaxSize?: number
 }
 export type GlobalOmitConfig = {
   admin_audit_log?: Prisma.admin_audit_logOmit
@@ -3315,6 +3754,11 @@ export type GlobalOmitConfig = {
   properties?: Prisma.propertiesOmit
   property_details?: Prisma.property_detailsOmit
   property_documents?: Prisma.property_documentsOmit
+  property_visit_checks?: Prisma.property_visit_checksOmit
+  property_verification_cases?: Prisma.property_verification_casesOmit
+  property_field_teams?: Prisma.property_field_teamsOmit
+  property_field_team_members?: Prisma.property_field_team_membersOmit
+  property_verification_evidence?: Prisma.property_verification_evidenceOmit
   property_media?: Prisma.property_mediaOmit
   reviews?: Prisma.reviewsOmit
   saved_properties?: Prisma.saved_propertiesOmit

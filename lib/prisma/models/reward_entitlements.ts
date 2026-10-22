@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums"
-import type * as Prisma from "../internal/prismaNamespace"
+import type * as $Enums from "../enums.ts"
+import type * as Prisma from "../internal/prismaNamespace.ts"
 
 /**
  * Model reward_entitlements
@@ -230,7 +230,7 @@ export type Reward_entitlementsGroupByOutputType = {
   _max: Reward_entitlementsMaxAggregateOutputType | null
 }
 
-export type GetReward_entitlementsGroupByPayload<T extends reward_entitlementsGroupByArgs> = Prisma.PrismaPromise<
+type GetReward_entitlementsGroupByPayload<T extends reward_entitlementsGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<Reward_entitlementsGroupByOutputType, T['by']> &
       {
@@ -1833,11 +1833,6 @@ export type reward_entitlementsFindManyArgs<ExtArgs extends runtime.Types.Extens
    * Skip the first `n` reward_entitlements.
    */
   skip?: number
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-   * 
-   * Filter by unique combinations of reward_entitlements.
-   */
   distinct?: Prisma.Reward_entitlementsScalarFieldEnum | Prisma.Reward_entitlementsScalarFieldEnum[]
 }
 

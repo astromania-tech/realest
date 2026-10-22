@@ -16,12 +16,12 @@ import { fileURLToPath } from 'node:url'
 globalThis['__dirname'] = path.dirname(fileURLToPath(import.meta.url))
 
 import * as runtime from "@prisma/client/runtime/client"
-import * as $Enums from "./enums"
-import * as $Class from "./internal/class"
-import * as Prisma from "./internal/prismaNamespace"
+import * as $Enums from "./enums.ts"
+import * as $Class from "./internal/class.ts"
+import * as Prisma from "./internal/prismaNamespace.ts"
 
-export * as $Enums from './enums'
-export * from "./enums"
+export * as $Enums from './enums.ts'
+export * from "./enums.ts"
 /**
  * ## Prisma Client
  * 
@@ -106,6 +106,31 @@ export type property_details = Prisma.property_detailsModel
  * This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
  */
 export type property_documents = Prisma.property_documentsModel
+/**
+ * Model property_visit_checks
+ * 
+ */
+export type property_visit_checks = Prisma.property_visit_checksModel
+/**
+ * Model property_verification_cases
+ * 
+ */
+export type property_verification_cases = Prisma.property_verification_casesModel
+/**
+ * Model property_field_teams
+ * Case-specific field team for physical verification (Connect ops).
+ */
+export type property_field_teams = Prisma.property_field_teamsModel
+/**
+ * Model property_field_team_members
+ * 
+ */
+export type property_field_team_members = Prisma.property_field_team_membersModel
+/**
+ * Model property_verification_evidence
+ * 
+ */
+export type property_verification_evidence = Prisma.property_verification_evidenceModel
 /**
  * Model property_media
  * This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.

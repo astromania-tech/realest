@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums"
-import type * as Prisma from "../internal/prismaNamespace"
+import type * as $Enums from "../enums.ts"
+import type * as Prisma from "../internal/prismaNamespace.ts"
 
 /**
  * Model properties
@@ -74,6 +74,8 @@ export type PropertiesMinAggregateOutputType = {
   agent_id: string | null
   listing_source: string | null
   price_frequency: string | null
+  vetting_officer_id: string | null
+  vetting_visit_on: Date | null
 }
 
 export type PropertiesMaxAggregateOutputType = {
@@ -102,6 +104,8 @@ export type PropertiesMaxAggregateOutputType = {
   agent_id: string | null
   listing_source: string | null
   price_frequency: string | null
+  vetting_officer_id: string | null
+  vetting_visit_on: Date | null
 }
 
 export type PropertiesCountAggregateOutputType = {
@@ -130,6 +134,8 @@ export type PropertiesCountAggregateOutputType = {
   agent_id: number
   listing_source: number
   price_frequency: number
+  vetting_officer_id: number
+  vetting_visit_on: number
   _all: number
 }
 
@@ -180,6 +186,8 @@ export type PropertiesMinAggregateInputType = {
   agent_id?: true
   listing_source?: true
   price_frequency?: true
+  vetting_officer_id?: true
+  vetting_visit_on?: true
 }
 
 export type PropertiesMaxAggregateInputType = {
@@ -208,6 +216,8 @@ export type PropertiesMaxAggregateInputType = {
   agent_id?: true
   listing_source?: true
   price_frequency?: true
+  vetting_officer_id?: true
+  vetting_visit_on?: true
 }
 
 export type PropertiesCountAggregateInputType = {
@@ -236,6 +246,8 @@ export type PropertiesCountAggregateInputType = {
   agent_id?: true
   listing_source?: true
   price_frequency?: true
+  vetting_officer_id?: true
+  vetting_visit_on?: true
   _all?: true
 }
 
@@ -351,6 +363,8 @@ export type PropertiesGroupByOutputType = {
   agent_id: string | null
   listing_source: string | null
   price_frequency: string | null
+  vetting_officer_id: string | null
+  vetting_visit_on: Date | null
   _count: PropertiesCountAggregateOutputType | null
   _avg: PropertiesAvgAggregateOutputType | null
   _sum: PropertiesSumAggregateOutputType | null
@@ -358,7 +372,7 @@ export type PropertiesGroupByOutputType = {
   _max: PropertiesMaxAggregateOutputType | null
 }
 
-export type GetPropertiesGroupByPayload<T extends propertiesGroupByArgs> = Prisma.PrismaPromise<
+type GetPropertiesGroupByPayload<T extends propertiesGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<PropertiesGroupByOutputType, T['by']> &
       {
@@ -402,6 +416,8 @@ export type propertiesWhereInput = {
   agent_id?: Prisma.UuidNullableFilter<"properties"> | string | null
   listing_source?: Prisma.StringNullableFilter<"properties"> | string | null
   price_frequency?: Prisma.StringNullableFilter<"properties"> | string | null
+  vetting_officer_id?: Prisma.UuidNullableFilter<"properties"> | string | null
+  vetting_visit_on?: Prisma.DateTimeNullableFilter<"properties"> | Date | string | null
   inquiries?: Prisma.InquiriesListRelationFilter
   payments?: Prisma.PaymentsListRelationFilter
   agents?: Prisma.XOR<Prisma.AgentsNullableScalarRelationFilter, Prisma.agentsWhereInput> | null
@@ -412,6 +428,10 @@ export type propertiesWhereInput = {
   property_validation_jobs?: Prisma.Property_validation_jobsListRelationFilter
   reviews?: Prisma.ReviewsListRelationFilter
   saved_properties?: Prisma.Saved_propertiesListRelationFilter
+  property_visit_checks?: Prisma.XOR<Prisma.Property_visit_checksNullableScalarRelationFilter, Prisma.property_visit_checksWhereInput> | null
+  property_verification_cases?: Prisma.XOR<Prisma.Property_verification_casesNullableScalarRelationFilter, Prisma.property_verification_casesWhereInput> | null
+  property_verification_evidence?: Prisma.Property_verification_evidenceListRelationFilter
+  property_field_teams?: Prisma.XOR<Prisma.Property_field_teamsNullableScalarRelationFilter, Prisma.property_field_teamsWhereInput> | null
 }
 
 export type propertiesOrderByWithRelationInput = {
@@ -440,6 +460,8 @@ export type propertiesOrderByWithRelationInput = {
   agent_id?: Prisma.SortOrderInput | Prisma.SortOrder
   listing_source?: Prisma.SortOrderInput | Prisma.SortOrder
   price_frequency?: Prisma.SortOrderInput | Prisma.SortOrder
+  vetting_officer_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  vetting_visit_on?: Prisma.SortOrderInput | Prisma.SortOrder
   inquiries?: Prisma.inquiriesOrderByRelationAggregateInput
   payments?: Prisma.paymentsOrderByRelationAggregateInput
   agents?: Prisma.agentsOrderByWithRelationInput
@@ -450,6 +472,10 @@ export type propertiesOrderByWithRelationInput = {
   property_validation_jobs?: Prisma.property_validation_jobsOrderByRelationAggregateInput
   reviews?: Prisma.reviewsOrderByRelationAggregateInput
   saved_properties?: Prisma.saved_propertiesOrderByRelationAggregateInput
+  property_visit_checks?: Prisma.property_visit_checksOrderByWithRelationInput
+  property_verification_cases?: Prisma.property_verification_casesOrderByWithRelationInput
+  property_verification_evidence?: Prisma.property_verification_evidenceOrderByRelationAggregateInput
+  property_field_teams?: Prisma.property_field_teamsOrderByWithRelationInput
 }
 
 export type propertiesWhereUniqueInput = Prisma.AtLeast<{
@@ -481,6 +507,8 @@ export type propertiesWhereUniqueInput = Prisma.AtLeast<{
   agent_id?: Prisma.UuidNullableFilter<"properties"> | string | null
   listing_source?: Prisma.StringNullableFilter<"properties"> | string | null
   price_frequency?: Prisma.StringNullableFilter<"properties"> | string | null
+  vetting_officer_id?: Prisma.UuidNullableFilter<"properties"> | string | null
+  vetting_visit_on?: Prisma.DateTimeNullableFilter<"properties"> | Date | string | null
   inquiries?: Prisma.InquiriesListRelationFilter
   payments?: Prisma.PaymentsListRelationFilter
   agents?: Prisma.XOR<Prisma.AgentsNullableScalarRelationFilter, Prisma.agentsWhereInput> | null
@@ -491,6 +519,10 @@ export type propertiesWhereUniqueInput = Prisma.AtLeast<{
   property_validation_jobs?: Prisma.Property_validation_jobsListRelationFilter
   reviews?: Prisma.ReviewsListRelationFilter
   saved_properties?: Prisma.Saved_propertiesListRelationFilter
+  property_visit_checks?: Prisma.XOR<Prisma.Property_visit_checksNullableScalarRelationFilter, Prisma.property_visit_checksWhereInput> | null
+  property_verification_cases?: Prisma.XOR<Prisma.Property_verification_casesNullableScalarRelationFilter, Prisma.property_verification_casesWhereInput> | null
+  property_verification_evidence?: Prisma.Property_verification_evidenceListRelationFilter
+  property_field_teams?: Prisma.XOR<Prisma.Property_field_teamsNullableScalarRelationFilter, Prisma.property_field_teamsWhereInput> | null
 }, "id">
 
 export type propertiesOrderByWithAggregationInput = {
@@ -519,6 +551,8 @@ export type propertiesOrderByWithAggregationInput = {
   agent_id?: Prisma.SortOrderInput | Prisma.SortOrder
   listing_source?: Prisma.SortOrderInput | Prisma.SortOrder
   price_frequency?: Prisma.SortOrderInput | Prisma.SortOrder
+  vetting_officer_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  vetting_visit_on?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.propertiesCountOrderByAggregateInput
   _avg?: Prisma.propertiesAvgOrderByAggregateInput
   _max?: Prisma.propertiesMaxOrderByAggregateInput
@@ -555,6 +589,8 @@ export type propertiesScalarWhereWithAggregatesInput = {
   agent_id?: Prisma.UuidNullableWithAggregatesFilter<"properties"> | string | null
   listing_source?: Prisma.StringNullableWithAggregatesFilter<"properties"> | string | null
   price_frequency?: Prisma.StringNullableWithAggregatesFilter<"properties"> | string | null
+  vetting_officer_id?: Prisma.UuidNullableWithAggregatesFilter<"properties"> | string | null
+  vetting_visit_on?: Prisma.DateTimeNullableWithAggregatesFilter<"properties"> | Date | string | null
 }
 
 export type propertiesCreateInput = {
@@ -581,6 +617,8 @@ export type propertiesCreateInput = {
   updated_at?: Date | string | null
   listing_source?: string | null
   price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
   inquiries?: Prisma.inquiriesCreateNestedManyWithoutPropertiesInput
   payments?: Prisma.paymentsCreateNestedManyWithoutPropertiesInput
   agents?: Prisma.agentsCreateNestedOneWithoutPropertiesInput
@@ -591,6 +629,10 @@ export type propertiesCreateInput = {
   property_validation_jobs?: Prisma.property_validation_jobsCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksCreateNestedOneWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceCreateNestedManyWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsCreateNestedOneWithoutPropertiesInput
 }
 
 export type propertiesUncheckedCreateInput = {
@@ -619,6 +661,8 @@ export type propertiesUncheckedCreateInput = {
   agent_id?: string | null
   listing_source?: string | null
   price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
   inquiries?: Prisma.inquiriesUncheckedCreateNestedManyWithoutPropertiesInput
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutPropertiesInput
   property_details?: Prisma.property_detailsUncheckedCreateNestedManyWithoutPropertiesInput
@@ -627,6 +671,10 @@ export type propertiesUncheckedCreateInput = {
   property_validation_jobs?: Prisma.property_validation_jobsUncheckedCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedCreateNestedOneWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedCreateNestedManyWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedCreateNestedOneWithoutPropertiesInput
 }
 
 export type propertiesUpdateInput = {
@@ -653,6 +701,8 @@ export type propertiesUpdateInput = {
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   inquiries?: Prisma.inquiriesUpdateManyWithoutPropertiesNestedInput
   payments?: Prisma.paymentsUpdateManyWithoutPropertiesNestedInput
   agents?: Prisma.agentsUpdateOneWithoutPropertiesNestedInput
@@ -663,6 +713,10 @@ export type propertiesUpdateInput = {
   property_validation_jobs?: Prisma.property_validation_jobsUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUpdateOneWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUpdateManyWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUpdateOneWithoutPropertiesNestedInput
 }
 
 export type propertiesUncheckedUpdateInput = {
@@ -691,6 +745,8 @@ export type propertiesUncheckedUpdateInput = {
   agent_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   inquiries?: Prisma.inquiriesUncheckedUpdateManyWithoutPropertiesNestedInput
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_details?: Prisma.property_detailsUncheckedUpdateManyWithoutPropertiesNestedInput
@@ -699,6 +755,10 @@ export type propertiesUncheckedUpdateInput = {
   property_validation_jobs?: Prisma.property_validation_jobsUncheckedUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUncheckedUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedUpdateOneWithoutPropertiesNestedInput
 }
 
 export type propertiesCreateManyInput = {
@@ -727,6 +787,8 @@ export type propertiesCreateManyInput = {
   agent_id?: string | null
   listing_source?: string | null
   price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
 }
 
 export type propertiesUpdateManyMutationInput = {
@@ -753,6 +815,8 @@ export type propertiesUpdateManyMutationInput = {
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type propertiesUncheckedUpdateManyInput = {
@@ -781,6 +845,8 @@ export type propertiesUncheckedUpdateManyInput = {
   agent_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type PropertiesListRelationFilter = {
@@ -829,6 +895,8 @@ export type propertiesCountOrderByAggregateInput = {
   agent_id?: Prisma.SortOrder
   listing_source?: Prisma.SortOrder
   price_frequency?: Prisma.SortOrder
+  vetting_officer_id?: Prisma.SortOrder
+  vetting_visit_on?: Prisma.SortOrder
 }
 
 export type propertiesAvgOrderByAggregateInput = {
@@ -867,6 +935,8 @@ export type propertiesMaxOrderByAggregateInput = {
   agent_id?: Prisma.SortOrder
   listing_source?: Prisma.SortOrder
   price_frequency?: Prisma.SortOrder
+  vetting_officer_id?: Prisma.SortOrder
+  vetting_visit_on?: Prisma.SortOrder
 }
 
 export type propertiesMinOrderByAggregateInput = {
@@ -895,6 +965,8 @@ export type propertiesMinOrderByAggregateInput = {
   agent_id?: Prisma.SortOrder
   listing_source?: Prisma.SortOrder
   price_frequency?: Prisma.SortOrder
+  vetting_officer_id?: Prisma.SortOrder
+  vetting_visit_on?: Prisma.SortOrder
 }
 
 export type propertiesSumOrderByAggregateInput = {
@@ -1049,6 +1121,62 @@ export type propertiesUpdateOneRequiredWithoutProperty_documentsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.propertiesUpdateToOneWithWhereWithoutProperty_documentsInput, Prisma.propertiesUpdateWithoutProperty_documentsInput>, Prisma.propertiesUncheckedUpdateWithoutProperty_documentsInput>
 }
 
+export type propertiesCreateNestedOneWithoutProperty_visit_checksInput = {
+  create?: Prisma.XOR<Prisma.propertiesCreateWithoutProperty_visit_checksInput, Prisma.propertiesUncheckedCreateWithoutProperty_visit_checksInput>
+  connectOrCreate?: Prisma.propertiesCreateOrConnectWithoutProperty_visit_checksInput
+  connect?: Prisma.propertiesWhereUniqueInput
+}
+
+export type propertiesUpdateOneRequiredWithoutProperty_visit_checksNestedInput = {
+  create?: Prisma.XOR<Prisma.propertiesCreateWithoutProperty_visit_checksInput, Prisma.propertiesUncheckedCreateWithoutProperty_visit_checksInput>
+  connectOrCreate?: Prisma.propertiesCreateOrConnectWithoutProperty_visit_checksInput
+  upsert?: Prisma.propertiesUpsertWithoutProperty_visit_checksInput
+  connect?: Prisma.propertiesWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.propertiesUpdateToOneWithWhereWithoutProperty_visit_checksInput, Prisma.propertiesUpdateWithoutProperty_visit_checksInput>, Prisma.propertiesUncheckedUpdateWithoutProperty_visit_checksInput>
+}
+
+export type propertiesCreateNestedOneWithoutProperty_verification_casesInput = {
+  create?: Prisma.XOR<Prisma.propertiesCreateWithoutProperty_verification_casesInput, Prisma.propertiesUncheckedCreateWithoutProperty_verification_casesInput>
+  connectOrCreate?: Prisma.propertiesCreateOrConnectWithoutProperty_verification_casesInput
+  connect?: Prisma.propertiesWhereUniqueInput
+}
+
+export type propertiesUpdateOneRequiredWithoutProperty_verification_casesNestedInput = {
+  create?: Prisma.XOR<Prisma.propertiesCreateWithoutProperty_verification_casesInput, Prisma.propertiesUncheckedCreateWithoutProperty_verification_casesInput>
+  connectOrCreate?: Prisma.propertiesCreateOrConnectWithoutProperty_verification_casesInput
+  upsert?: Prisma.propertiesUpsertWithoutProperty_verification_casesInput
+  connect?: Prisma.propertiesWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.propertiesUpdateToOneWithWhereWithoutProperty_verification_casesInput, Prisma.propertiesUpdateWithoutProperty_verification_casesInput>, Prisma.propertiesUncheckedUpdateWithoutProperty_verification_casesInput>
+}
+
+export type propertiesCreateNestedOneWithoutProperty_field_teamsInput = {
+  create?: Prisma.XOR<Prisma.propertiesCreateWithoutProperty_field_teamsInput, Prisma.propertiesUncheckedCreateWithoutProperty_field_teamsInput>
+  connectOrCreate?: Prisma.propertiesCreateOrConnectWithoutProperty_field_teamsInput
+  connect?: Prisma.propertiesWhereUniqueInput
+}
+
+export type propertiesUpdateOneRequiredWithoutProperty_field_teamsNestedInput = {
+  create?: Prisma.XOR<Prisma.propertiesCreateWithoutProperty_field_teamsInput, Prisma.propertiesUncheckedCreateWithoutProperty_field_teamsInput>
+  connectOrCreate?: Prisma.propertiesCreateOrConnectWithoutProperty_field_teamsInput
+  upsert?: Prisma.propertiesUpsertWithoutProperty_field_teamsInput
+  connect?: Prisma.propertiesWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.propertiesUpdateToOneWithWhereWithoutProperty_field_teamsInput, Prisma.propertiesUpdateWithoutProperty_field_teamsInput>, Prisma.propertiesUncheckedUpdateWithoutProperty_field_teamsInput>
+}
+
+export type propertiesCreateNestedOneWithoutProperty_verification_evidenceInput = {
+  create?: Prisma.XOR<Prisma.propertiesCreateWithoutProperty_verification_evidenceInput, Prisma.propertiesUncheckedCreateWithoutProperty_verification_evidenceInput>
+  connectOrCreate?: Prisma.propertiesCreateOrConnectWithoutProperty_verification_evidenceInput
+  connect?: Prisma.propertiesWhereUniqueInput
+}
+
+export type propertiesUpdateOneRequiredWithoutProperty_verification_evidenceNestedInput = {
+  create?: Prisma.XOR<Prisma.propertiesCreateWithoutProperty_verification_evidenceInput, Prisma.propertiesUncheckedCreateWithoutProperty_verification_evidenceInput>
+  connectOrCreate?: Prisma.propertiesCreateOrConnectWithoutProperty_verification_evidenceInput
+  upsert?: Prisma.propertiesUpsertWithoutProperty_verification_evidenceInput
+  connect?: Prisma.propertiesWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.propertiesUpdateToOneWithWhereWithoutProperty_verification_evidenceInput, Prisma.propertiesUpdateWithoutProperty_verification_evidenceInput>, Prisma.propertiesUncheckedUpdateWithoutProperty_verification_evidenceInput>
+}
+
 export type propertiesCreateNestedOneWithoutProperty_mediaInput = {
   create?: Prisma.XOR<Prisma.propertiesCreateWithoutProperty_mediaInput, Prisma.propertiesUncheckedCreateWithoutProperty_mediaInput>
   connectOrCreate?: Prisma.propertiesCreateOrConnectWithoutProperty_mediaInput
@@ -1129,6 +1257,8 @@ export type propertiesCreateWithoutAgentsInput = {
   updated_at?: Date | string | null
   listing_source?: string | null
   price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
   inquiries?: Prisma.inquiriesCreateNestedManyWithoutPropertiesInput
   payments?: Prisma.paymentsCreateNestedManyWithoutPropertiesInput
   owners?: Prisma.ownersCreateNestedOneWithoutPropertiesInput
@@ -1138,6 +1268,10 @@ export type propertiesCreateWithoutAgentsInput = {
   property_validation_jobs?: Prisma.property_validation_jobsCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksCreateNestedOneWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceCreateNestedManyWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsCreateNestedOneWithoutPropertiesInput
 }
 
 export type propertiesUncheckedCreateWithoutAgentsInput = {
@@ -1165,6 +1299,8 @@ export type propertiesUncheckedCreateWithoutAgentsInput = {
   updated_at?: Date | string | null
   listing_source?: string | null
   price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
   inquiries?: Prisma.inquiriesUncheckedCreateNestedManyWithoutPropertiesInput
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutPropertiesInput
   property_details?: Prisma.property_detailsUncheckedCreateNestedManyWithoutPropertiesInput
@@ -1173,6 +1309,10 @@ export type propertiesUncheckedCreateWithoutAgentsInput = {
   property_validation_jobs?: Prisma.property_validation_jobsUncheckedCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedCreateNestedOneWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedCreateNestedManyWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedCreateNestedOneWithoutPropertiesInput
 }
 
 export type propertiesCreateOrConnectWithoutAgentsInput = {
@@ -1230,6 +1370,8 @@ export type propertiesScalarWhereInput = {
   agent_id?: Prisma.UuidNullableFilter<"properties"> | string | null
   listing_source?: Prisma.StringNullableFilter<"properties"> | string | null
   price_frequency?: Prisma.StringNullableFilter<"properties"> | string | null
+  vetting_officer_id?: Prisma.UuidNullableFilter<"properties"> | string | null
+  vetting_visit_on?: Prisma.DateTimeNullableFilter<"properties"> | Date | string | null
 }
 
 export type propertiesCreateWithoutInquiriesInput = {
@@ -1256,6 +1398,8 @@ export type propertiesCreateWithoutInquiriesInput = {
   updated_at?: Date | string | null
   listing_source?: string | null
   price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
   payments?: Prisma.paymentsCreateNestedManyWithoutPropertiesInput
   agents?: Prisma.agentsCreateNestedOneWithoutPropertiesInput
   owners?: Prisma.ownersCreateNestedOneWithoutPropertiesInput
@@ -1265,6 +1409,10 @@ export type propertiesCreateWithoutInquiriesInput = {
   property_validation_jobs?: Prisma.property_validation_jobsCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksCreateNestedOneWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceCreateNestedManyWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsCreateNestedOneWithoutPropertiesInput
 }
 
 export type propertiesUncheckedCreateWithoutInquiriesInput = {
@@ -1293,6 +1441,8 @@ export type propertiesUncheckedCreateWithoutInquiriesInput = {
   agent_id?: string | null
   listing_source?: string | null
   price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutPropertiesInput
   property_details?: Prisma.property_detailsUncheckedCreateNestedManyWithoutPropertiesInput
   property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutPropertiesInput
@@ -1300,6 +1450,10 @@ export type propertiesUncheckedCreateWithoutInquiriesInput = {
   property_validation_jobs?: Prisma.property_validation_jobsUncheckedCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedCreateNestedOneWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedCreateNestedManyWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedCreateNestedOneWithoutPropertiesInput
 }
 
 export type propertiesCreateOrConnectWithoutInquiriesInput = {
@@ -1342,6 +1496,8 @@ export type propertiesUpdateWithoutInquiriesInput = {
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   payments?: Prisma.paymentsUpdateManyWithoutPropertiesNestedInput
   agents?: Prisma.agentsUpdateOneWithoutPropertiesNestedInput
   owners?: Prisma.ownersUpdateOneWithoutPropertiesNestedInput
@@ -1351,6 +1507,10 @@ export type propertiesUpdateWithoutInquiriesInput = {
   property_validation_jobs?: Prisma.property_validation_jobsUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUpdateOneWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUpdateManyWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUpdateOneWithoutPropertiesNestedInput
 }
 
 export type propertiesUncheckedUpdateWithoutInquiriesInput = {
@@ -1379,6 +1539,8 @@ export type propertiesUncheckedUpdateWithoutInquiriesInput = {
   agent_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_details?: Prisma.property_detailsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutPropertiesNestedInput
@@ -1386,6 +1548,10 @@ export type propertiesUncheckedUpdateWithoutInquiriesInput = {
   property_validation_jobs?: Prisma.property_validation_jobsUncheckedUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUncheckedUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedUpdateOneWithoutPropertiesNestedInput
 }
 
 export type propertiesCreateWithoutOwnersInput = {
@@ -1412,6 +1578,8 @@ export type propertiesCreateWithoutOwnersInput = {
   updated_at?: Date | string | null
   listing_source?: string | null
   price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
   inquiries?: Prisma.inquiriesCreateNestedManyWithoutPropertiesInput
   payments?: Prisma.paymentsCreateNestedManyWithoutPropertiesInput
   agents?: Prisma.agentsCreateNestedOneWithoutPropertiesInput
@@ -1421,6 +1589,10 @@ export type propertiesCreateWithoutOwnersInput = {
   property_validation_jobs?: Prisma.property_validation_jobsCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksCreateNestedOneWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceCreateNestedManyWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsCreateNestedOneWithoutPropertiesInput
 }
 
 export type propertiesUncheckedCreateWithoutOwnersInput = {
@@ -1448,6 +1620,8 @@ export type propertiesUncheckedCreateWithoutOwnersInput = {
   agent_id?: string | null
   listing_source?: string | null
   price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
   inquiries?: Prisma.inquiriesUncheckedCreateNestedManyWithoutPropertiesInput
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutPropertiesInput
   property_details?: Prisma.property_detailsUncheckedCreateNestedManyWithoutPropertiesInput
@@ -1456,6 +1630,10 @@ export type propertiesUncheckedCreateWithoutOwnersInput = {
   property_validation_jobs?: Prisma.property_validation_jobsUncheckedCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedCreateNestedOneWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedCreateNestedManyWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedCreateNestedOneWithoutPropertiesInput
 }
 
 export type propertiesCreateOrConnectWithoutOwnersInput = {
@@ -1508,6 +1686,8 @@ export type propertiesCreateWithoutPaymentsInput = {
   updated_at?: Date | string | null
   listing_source?: string | null
   price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
   inquiries?: Prisma.inquiriesCreateNestedManyWithoutPropertiesInput
   agents?: Prisma.agentsCreateNestedOneWithoutPropertiesInput
   owners?: Prisma.ownersCreateNestedOneWithoutPropertiesInput
@@ -1517,6 +1697,10 @@ export type propertiesCreateWithoutPaymentsInput = {
   property_validation_jobs?: Prisma.property_validation_jobsCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksCreateNestedOneWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceCreateNestedManyWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsCreateNestedOneWithoutPropertiesInput
 }
 
 export type propertiesUncheckedCreateWithoutPaymentsInput = {
@@ -1545,6 +1729,8 @@ export type propertiesUncheckedCreateWithoutPaymentsInput = {
   agent_id?: string | null
   listing_source?: string | null
   price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
   inquiries?: Prisma.inquiriesUncheckedCreateNestedManyWithoutPropertiesInput
   property_details?: Prisma.property_detailsUncheckedCreateNestedManyWithoutPropertiesInput
   property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutPropertiesInput
@@ -1552,6 +1738,10 @@ export type propertiesUncheckedCreateWithoutPaymentsInput = {
   property_validation_jobs?: Prisma.property_validation_jobsUncheckedCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedCreateNestedOneWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedCreateNestedManyWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedCreateNestedOneWithoutPropertiesInput
 }
 
 export type propertiesCreateOrConnectWithoutPaymentsInput = {
@@ -1594,6 +1784,8 @@ export type propertiesUpdateWithoutPaymentsInput = {
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   inquiries?: Prisma.inquiriesUpdateManyWithoutPropertiesNestedInput
   agents?: Prisma.agentsUpdateOneWithoutPropertiesNestedInput
   owners?: Prisma.ownersUpdateOneWithoutPropertiesNestedInput
@@ -1603,6 +1795,10 @@ export type propertiesUpdateWithoutPaymentsInput = {
   property_validation_jobs?: Prisma.property_validation_jobsUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUpdateOneWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUpdateManyWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUpdateOneWithoutPropertiesNestedInput
 }
 
 export type propertiesUncheckedUpdateWithoutPaymentsInput = {
@@ -1631,6 +1827,8 @@ export type propertiesUncheckedUpdateWithoutPaymentsInput = {
   agent_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   inquiries?: Prisma.inquiriesUncheckedUpdateManyWithoutPropertiesNestedInput
   property_details?: Prisma.property_detailsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutPropertiesNestedInput
@@ -1638,6 +1836,10 @@ export type propertiesUncheckedUpdateWithoutPaymentsInput = {
   property_validation_jobs?: Prisma.property_validation_jobsUncheckedUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUncheckedUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedUpdateOneWithoutPropertiesNestedInput
 }
 
 export type propertiesCreateWithoutProperty_detailsInput = {
@@ -1664,6 +1866,8 @@ export type propertiesCreateWithoutProperty_detailsInput = {
   updated_at?: Date | string | null
   listing_source?: string | null
   price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
   inquiries?: Prisma.inquiriesCreateNestedManyWithoutPropertiesInput
   payments?: Prisma.paymentsCreateNestedManyWithoutPropertiesInput
   agents?: Prisma.agentsCreateNestedOneWithoutPropertiesInput
@@ -1673,6 +1877,10 @@ export type propertiesCreateWithoutProperty_detailsInput = {
   property_validation_jobs?: Prisma.property_validation_jobsCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksCreateNestedOneWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceCreateNestedManyWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsCreateNestedOneWithoutPropertiesInput
 }
 
 export type propertiesUncheckedCreateWithoutProperty_detailsInput = {
@@ -1701,6 +1909,8 @@ export type propertiesUncheckedCreateWithoutProperty_detailsInput = {
   agent_id?: string | null
   listing_source?: string | null
   price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
   inquiries?: Prisma.inquiriesUncheckedCreateNestedManyWithoutPropertiesInput
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutPropertiesInput
   property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutPropertiesInput
@@ -1708,6 +1918,10 @@ export type propertiesUncheckedCreateWithoutProperty_detailsInput = {
   property_validation_jobs?: Prisma.property_validation_jobsUncheckedCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedCreateNestedOneWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedCreateNestedManyWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedCreateNestedOneWithoutPropertiesInput
 }
 
 export type propertiesCreateOrConnectWithoutProperty_detailsInput = {
@@ -1750,6 +1964,8 @@ export type propertiesUpdateWithoutProperty_detailsInput = {
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   inquiries?: Prisma.inquiriesUpdateManyWithoutPropertiesNestedInput
   payments?: Prisma.paymentsUpdateManyWithoutPropertiesNestedInput
   agents?: Prisma.agentsUpdateOneWithoutPropertiesNestedInput
@@ -1759,6 +1975,10 @@ export type propertiesUpdateWithoutProperty_detailsInput = {
   property_validation_jobs?: Prisma.property_validation_jobsUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUpdateOneWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUpdateManyWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUpdateOneWithoutPropertiesNestedInput
 }
 
 export type propertiesUncheckedUpdateWithoutProperty_detailsInput = {
@@ -1787,6 +2007,8 @@ export type propertiesUncheckedUpdateWithoutProperty_detailsInput = {
   agent_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   inquiries?: Prisma.inquiriesUncheckedUpdateManyWithoutPropertiesNestedInput
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutPropertiesNestedInput
@@ -1794,6 +2016,10 @@ export type propertiesUncheckedUpdateWithoutProperty_detailsInput = {
   property_validation_jobs?: Prisma.property_validation_jobsUncheckedUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUncheckedUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedUpdateOneWithoutPropertiesNestedInput
 }
 
 export type propertiesCreateWithoutProperty_documentsInput = {
@@ -1820,6 +2046,8 @@ export type propertiesCreateWithoutProperty_documentsInput = {
   updated_at?: Date | string | null
   listing_source?: string | null
   price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
   inquiries?: Prisma.inquiriesCreateNestedManyWithoutPropertiesInput
   payments?: Prisma.paymentsCreateNestedManyWithoutPropertiesInput
   agents?: Prisma.agentsCreateNestedOneWithoutPropertiesInput
@@ -1829,6 +2057,10 @@ export type propertiesCreateWithoutProperty_documentsInput = {
   property_validation_jobs?: Prisma.property_validation_jobsCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksCreateNestedOneWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceCreateNestedManyWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsCreateNestedOneWithoutPropertiesInput
 }
 
 export type propertiesUncheckedCreateWithoutProperty_documentsInput = {
@@ -1857,6 +2089,8 @@ export type propertiesUncheckedCreateWithoutProperty_documentsInput = {
   agent_id?: string | null
   listing_source?: string | null
   price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
   inquiries?: Prisma.inquiriesUncheckedCreateNestedManyWithoutPropertiesInput
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutPropertiesInput
   property_details?: Prisma.property_detailsUncheckedCreateNestedManyWithoutPropertiesInput
@@ -1864,6 +2098,10 @@ export type propertiesUncheckedCreateWithoutProperty_documentsInput = {
   property_validation_jobs?: Prisma.property_validation_jobsUncheckedCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedCreateNestedOneWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedCreateNestedManyWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedCreateNestedOneWithoutPropertiesInput
 }
 
 export type propertiesCreateOrConnectWithoutProperty_documentsInput = {
@@ -1906,6 +2144,8 @@ export type propertiesUpdateWithoutProperty_documentsInput = {
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   inquiries?: Prisma.inquiriesUpdateManyWithoutPropertiesNestedInput
   payments?: Prisma.paymentsUpdateManyWithoutPropertiesNestedInput
   agents?: Prisma.agentsUpdateOneWithoutPropertiesNestedInput
@@ -1915,6 +2155,10 @@ export type propertiesUpdateWithoutProperty_documentsInput = {
   property_validation_jobs?: Prisma.property_validation_jobsUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUpdateOneWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUpdateManyWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUpdateOneWithoutPropertiesNestedInput
 }
 
 export type propertiesUncheckedUpdateWithoutProperty_documentsInput = {
@@ -1943,6 +2187,8 @@ export type propertiesUncheckedUpdateWithoutProperty_documentsInput = {
   agent_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   inquiries?: Prisma.inquiriesUncheckedUpdateManyWithoutPropertiesNestedInput
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_details?: Prisma.property_detailsUncheckedUpdateManyWithoutPropertiesNestedInput
@@ -1950,6 +2196,730 @@ export type propertiesUncheckedUpdateWithoutProperty_documentsInput = {
   property_validation_jobs?: Prisma.property_validation_jobsUncheckedUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUncheckedUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedUpdateOneWithoutPropertiesNestedInput
+}
+
+export type propertiesCreateWithoutProperty_visit_checksInput = {
+  id?: string
+  title: string
+  description?: string | null
+  price: runtime.Decimal | runtime.DecimalJsLike | number | string
+  property_type: string
+  listing_type?: string
+  address: string
+  city: string
+  state?: string | null
+  postal_code?: string | null
+  country?: string
+  latitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  longitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  bedrooms?: number | null
+  bathrooms?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  square_feet?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  year_built?: number | null
+  status?: string
+  verification_status?: string
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  listing_source?: string | null
+  price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
+  inquiries?: Prisma.inquiriesCreateNestedManyWithoutPropertiesInput
+  payments?: Prisma.paymentsCreateNestedManyWithoutPropertiesInput
+  agents?: Prisma.agentsCreateNestedOneWithoutPropertiesInput
+  owners?: Prisma.ownersCreateNestedOneWithoutPropertiesInput
+  property_details?: Prisma.property_detailsCreateNestedManyWithoutPropertiesInput
+  property_documents?: Prisma.property_documentsCreateNestedManyWithoutPropertiesInput
+  property_media?: Prisma.property_mediaCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsCreateNestedManyWithoutPropertiesInput
+  reviews?: Prisma.reviewsCreateNestedManyWithoutPropertiesInput
+  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceCreateNestedManyWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsCreateNestedOneWithoutPropertiesInput
+}
+
+export type propertiesUncheckedCreateWithoutProperty_visit_checksInput = {
+  id?: string
+  owner_id?: string | null
+  title: string
+  description?: string | null
+  price: runtime.Decimal | runtime.DecimalJsLike | number | string
+  property_type: string
+  listing_type?: string
+  address: string
+  city: string
+  state?: string | null
+  postal_code?: string | null
+  country?: string
+  latitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  longitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  bedrooms?: number | null
+  bathrooms?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  square_feet?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  year_built?: number | null
+  status?: string
+  verification_status?: string
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  agent_id?: string | null
+  listing_source?: string | null
+  price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
+  inquiries?: Prisma.inquiriesUncheckedCreateNestedManyWithoutPropertiesInput
+  payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutPropertiesInput
+  property_details?: Prisma.property_detailsUncheckedCreateNestedManyWithoutPropertiesInput
+  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutPropertiesInput
+  property_media?: Prisma.property_mediaUncheckedCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedCreateNestedManyWithoutPropertiesInput
+  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutPropertiesInput
+  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedCreateNestedManyWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedCreateNestedOneWithoutPropertiesInput
+}
+
+export type propertiesCreateOrConnectWithoutProperty_visit_checksInput = {
+  where: Prisma.propertiesWhereUniqueInput
+  create: Prisma.XOR<Prisma.propertiesCreateWithoutProperty_visit_checksInput, Prisma.propertiesUncheckedCreateWithoutProperty_visit_checksInput>
+}
+
+export type propertiesUpsertWithoutProperty_visit_checksInput = {
+  update: Prisma.XOR<Prisma.propertiesUpdateWithoutProperty_visit_checksInput, Prisma.propertiesUncheckedUpdateWithoutProperty_visit_checksInput>
+  create: Prisma.XOR<Prisma.propertiesCreateWithoutProperty_visit_checksInput, Prisma.propertiesUncheckedCreateWithoutProperty_visit_checksInput>
+  where?: Prisma.propertiesWhereInput
+}
+
+export type propertiesUpdateToOneWithWhereWithoutProperty_visit_checksInput = {
+  where?: Prisma.propertiesWhereInput
+  data: Prisma.XOR<Prisma.propertiesUpdateWithoutProperty_visit_checksInput, Prisma.propertiesUncheckedUpdateWithoutProperty_visit_checksInput>
+}
+
+export type propertiesUpdateWithoutProperty_visit_checksInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  price?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  property_type?: Prisma.StringFieldUpdateOperationsInput | string
+  listing_type?: Prisma.StringFieldUpdateOperationsInput | string
+  address?: Prisma.StringFieldUpdateOperationsInput | string
+  city?: Prisma.StringFieldUpdateOperationsInput | string
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postal_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.StringFieldUpdateOperationsInput | string
+  latitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  longitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  bedrooms?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  bathrooms?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  square_feet?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  year_built?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  verification_status?: Prisma.StringFieldUpdateOperationsInput | string
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  inquiries?: Prisma.inquiriesUpdateManyWithoutPropertiesNestedInput
+  payments?: Prisma.paymentsUpdateManyWithoutPropertiesNestedInput
+  agents?: Prisma.agentsUpdateOneWithoutPropertiesNestedInput
+  owners?: Prisma.ownersUpdateOneWithoutPropertiesNestedInput
+  property_details?: Prisma.property_detailsUpdateManyWithoutPropertiesNestedInput
+  property_documents?: Prisma.property_documentsUpdateManyWithoutPropertiesNestedInput
+  property_media?: Prisma.property_mediaUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUpdateManyWithoutPropertiesNestedInput
+  reviews?: Prisma.reviewsUpdateManyWithoutPropertiesNestedInput
+  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUpdateManyWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUpdateOneWithoutPropertiesNestedInput
+}
+
+export type propertiesUncheckedUpdateWithoutProperty_visit_checksInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  owner_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  price?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  property_type?: Prisma.StringFieldUpdateOperationsInput | string
+  listing_type?: Prisma.StringFieldUpdateOperationsInput | string
+  address?: Prisma.StringFieldUpdateOperationsInput | string
+  city?: Prisma.StringFieldUpdateOperationsInput | string
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postal_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.StringFieldUpdateOperationsInput | string
+  latitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  longitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  bedrooms?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  bathrooms?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  square_feet?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  year_built?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  verification_status?: Prisma.StringFieldUpdateOperationsInput | string
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  agent_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  inquiries?: Prisma.inquiriesUncheckedUpdateManyWithoutPropertiesNestedInput
+  payments?: Prisma.paymentsUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_details?: Prisma.property_detailsUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_media?: Prisma.property_mediaUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedUpdateManyWithoutPropertiesNestedInput
+  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutPropertiesNestedInput
+  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedUpdateOneWithoutPropertiesNestedInput
+}
+
+export type propertiesCreateWithoutProperty_verification_casesInput = {
+  id?: string
+  title: string
+  description?: string | null
+  price: runtime.Decimal | runtime.DecimalJsLike | number | string
+  property_type: string
+  listing_type?: string
+  address: string
+  city: string
+  state?: string | null
+  postal_code?: string | null
+  country?: string
+  latitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  longitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  bedrooms?: number | null
+  bathrooms?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  square_feet?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  year_built?: number | null
+  status?: string
+  verification_status?: string
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  listing_source?: string | null
+  price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
+  inquiries?: Prisma.inquiriesCreateNestedManyWithoutPropertiesInput
+  payments?: Prisma.paymentsCreateNestedManyWithoutPropertiesInput
+  agents?: Prisma.agentsCreateNestedOneWithoutPropertiesInput
+  owners?: Prisma.ownersCreateNestedOneWithoutPropertiesInput
+  property_details?: Prisma.property_detailsCreateNestedManyWithoutPropertiesInput
+  property_documents?: Prisma.property_documentsCreateNestedManyWithoutPropertiesInput
+  property_media?: Prisma.property_mediaCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsCreateNestedManyWithoutPropertiesInput
+  reviews?: Prisma.reviewsCreateNestedManyWithoutPropertiesInput
+  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceCreateNestedManyWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsCreateNestedOneWithoutPropertiesInput
+}
+
+export type propertiesUncheckedCreateWithoutProperty_verification_casesInput = {
+  id?: string
+  owner_id?: string | null
+  title: string
+  description?: string | null
+  price: runtime.Decimal | runtime.DecimalJsLike | number | string
+  property_type: string
+  listing_type?: string
+  address: string
+  city: string
+  state?: string | null
+  postal_code?: string | null
+  country?: string
+  latitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  longitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  bedrooms?: number | null
+  bathrooms?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  square_feet?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  year_built?: number | null
+  status?: string
+  verification_status?: string
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  agent_id?: string | null
+  listing_source?: string | null
+  price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
+  inquiries?: Prisma.inquiriesUncheckedCreateNestedManyWithoutPropertiesInput
+  payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutPropertiesInput
+  property_details?: Prisma.property_detailsUncheckedCreateNestedManyWithoutPropertiesInput
+  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutPropertiesInput
+  property_media?: Prisma.property_mediaUncheckedCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedCreateNestedManyWithoutPropertiesInput
+  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutPropertiesInput
+  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedCreateNestedManyWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedCreateNestedOneWithoutPropertiesInput
+}
+
+export type propertiesCreateOrConnectWithoutProperty_verification_casesInput = {
+  where: Prisma.propertiesWhereUniqueInput
+  create: Prisma.XOR<Prisma.propertiesCreateWithoutProperty_verification_casesInput, Prisma.propertiesUncheckedCreateWithoutProperty_verification_casesInput>
+}
+
+export type propertiesUpsertWithoutProperty_verification_casesInput = {
+  update: Prisma.XOR<Prisma.propertiesUpdateWithoutProperty_verification_casesInput, Prisma.propertiesUncheckedUpdateWithoutProperty_verification_casesInput>
+  create: Prisma.XOR<Prisma.propertiesCreateWithoutProperty_verification_casesInput, Prisma.propertiesUncheckedCreateWithoutProperty_verification_casesInput>
+  where?: Prisma.propertiesWhereInput
+}
+
+export type propertiesUpdateToOneWithWhereWithoutProperty_verification_casesInput = {
+  where?: Prisma.propertiesWhereInput
+  data: Prisma.XOR<Prisma.propertiesUpdateWithoutProperty_verification_casesInput, Prisma.propertiesUncheckedUpdateWithoutProperty_verification_casesInput>
+}
+
+export type propertiesUpdateWithoutProperty_verification_casesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  price?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  property_type?: Prisma.StringFieldUpdateOperationsInput | string
+  listing_type?: Prisma.StringFieldUpdateOperationsInput | string
+  address?: Prisma.StringFieldUpdateOperationsInput | string
+  city?: Prisma.StringFieldUpdateOperationsInput | string
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postal_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.StringFieldUpdateOperationsInput | string
+  latitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  longitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  bedrooms?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  bathrooms?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  square_feet?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  year_built?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  verification_status?: Prisma.StringFieldUpdateOperationsInput | string
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  inquiries?: Prisma.inquiriesUpdateManyWithoutPropertiesNestedInput
+  payments?: Prisma.paymentsUpdateManyWithoutPropertiesNestedInput
+  agents?: Prisma.agentsUpdateOneWithoutPropertiesNestedInput
+  owners?: Prisma.ownersUpdateOneWithoutPropertiesNestedInput
+  property_details?: Prisma.property_detailsUpdateManyWithoutPropertiesNestedInput
+  property_documents?: Prisma.property_documentsUpdateManyWithoutPropertiesNestedInput
+  property_media?: Prisma.property_mediaUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUpdateManyWithoutPropertiesNestedInput
+  reviews?: Prisma.reviewsUpdateManyWithoutPropertiesNestedInput
+  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUpdateManyWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUpdateOneWithoutPropertiesNestedInput
+}
+
+export type propertiesUncheckedUpdateWithoutProperty_verification_casesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  owner_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  price?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  property_type?: Prisma.StringFieldUpdateOperationsInput | string
+  listing_type?: Prisma.StringFieldUpdateOperationsInput | string
+  address?: Prisma.StringFieldUpdateOperationsInput | string
+  city?: Prisma.StringFieldUpdateOperationsInput | string
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postal_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.StringFieldUpdateOperationsInput | string
+  latitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  longitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  bedrooms?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  bathrooms?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  square_feet?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  year_built?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  verification_status?: Prisma.StringFieldUpdateOperationsInput | string
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  agent_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  inquiries?: Prisma.inquiriesUncheckedUpdateManyWithoutPropertiesNestedInput
+  payments?: Prisma.paymentsUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_details?: Prisma.property_detailsUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_media?: Prisma.property_mediaUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedUpdateManyWithoutPropertiesNestedInput
+  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutPropertiesNestedInput
+  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedUpdateOneWithoutPropertiesNestedInput
+}
+
+export type propertiesCreateWithoutProperty_field_teamsInput = {
+  id?: string
+  title: string
+  description?: string | null
+  price: runtime.Decimal | runtime.DecimalJsLike | number | string
+  property_type: string
+  listing_type?: string
+  address: string
+  city: string
+  state?: string | null
+  postal_code?: string | null
+  country?: string
+  latitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  longitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  bedrooms?: number | null
+  bathrooms?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  square_feet?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  year_built?: number | null
+  status?: string
+  verification_status?: string
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  listing_source?: string | null
+  price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
+  inquiries?: Prisma.inquiriesCreateNestedManyWithoutPropertiesInput
+  payments?: Prisma.paymentsCreateNestedManyWithoutPropertiesInput
+  agents?: Prisma.agentsCreateNestedOneWithoutPropertiesInput
+  owners?: Prisma.ownersCreateNestedOneWithoutPropertiesInput
+  property_details?: Prisma.property_detailsCreateNestedManyWithoutPropertiesInput
+  property_documents?: Prisma.property_documentsCreateNestedManyWithoutPropertiesInput
+  property_media?: Prisma.property_mediaCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsCreateNestedManyWithoutPropertiesInput
+  reviews?: Prisma.reviewsCreateNestedManyWithoutPropertiesInput
+  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksCreateNestedOneWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceCreateNestedManyWithoutPropertiesInput
+}
+
+export type propertiesUncheckedCreateWithoutProperty_field_teamsInput = {
+  id?: string
+  owner_id?: string | null
+  title: string
+  description?: string | null
+  price: runtime.Decimal | runtime.DecimalJsLike | number | string
+  property_type: string
+  listing_type?: string
+  address: string
+  city: string
+  state?: string | null
+  postal_code?: string | null
+  country?: string
+  latitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  longitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  bedrooms?: number | null
+  bathrooms?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  square_feet?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  year_built?: number | null
+  status?: string
+  verification_status?: string
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  agent_id?: string | null
+  listing_source?: string | null
+  price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
+  inquiries?: Prisma.inquiriesUncheckedCreateNestedManyWithoutPropertiesInput
+  payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutPropertiesInput
+  property_details?: Prisma.property_detailsUncheckedCreateNestedManyWithoutPropertiesInput
+  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutPropertiesInput
+  property_media?: Prisma.property_mediaUncheckedCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedCreateNestedManyWithoutPropertiesInput
+  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutPropertiesInput
+  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedCreateNestedOneWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedCreateNestedManyWithoutPropertiesInput
+}
+
+export type propertiesCreateOrConnectWithoutProperty_field_teamsInput = {
+  where: Prisma.propertiesWhereUniqueInput
+  create: Prisma.XOR<Prisma.propertiesCreateWithoutProperty_field_teamsInput, Prisma.propertiesUncheckedCreateWithoutProperty_field_teamsInput>
+}
+
+export type propertiesUpsertWithoutProperty_field_teamsInput = {
+  update: Prisma.XOR<Prisma.propertiesUpdateWithoutProperty_field_teamsInput, Prisma.propertiesUncheckedUpdateWithoutProperty_field_teamsInput>
+  create: Prisma.XOR<Prisma.propertiesCreateWithoutProperty_field_teamsInput, Prisma.propertiesUncheckedCreateWithoutProperty_field_teamsInput>
+  where?: Prisma.propertiesWhereInput
+}
+
+export type propertiesUpdateToOneWithWhereWithoutProperty_field_teamsInput = {
+  where?: Prisma.propertiesWhereInput
+  data: Prisma.XOR<Prisma.propertiesUpdateWithoutProperty_field_teamsInput, Prisma.propertiesUncheckedUpdateWithoutProperty_field_teamsInput>
+}
+
+export type propertiesUpdateWithoutProperty_field_teamsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  price?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  property_type?: Prisma.StringFieldUpdateOperationsInput | string
+  listing_type?: Prisma.StringFieldUpdateOperationsInput | string
+  address?: Prisma.StringFieldUpdateOperationsInput | string
+  city?: Prisma.StringFieldUpdateOperationsInput | string
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postal_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.StringFieldUpdateOperationsInput | string
+  latitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  longitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  bedrooms?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  bathrooms?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  square_feet?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  year_built?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  verification_status?: Prisma.StringFieldUpdateOperationsInput | string
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  inquiries?: Prisma.inquiriesUpdateManyWithoutPropertiesNestedInput
+  payments?: Prisma.paymentsUpdateManyWithoutPropertiesNestedInput
+  agents?: Prisma.agentsUpdateOneWithoutPropertiesNestedInput
+  owners?: Prisma.ownersUpdateOneWithoutPropertiesNestedInput
+  property_details?: Prisma.property_detailsUpdateManyWithoutPropertiesNestedInput
+  property_documents?: Prisma.property_documentsUpdateManyWithoutPropertiesNestedInput
+  property_media?: Prisma.property_mediaUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUpdateManyWithoutPropertiesNestedInput
+  reviews?: Prisma.reviewsUpdateManyWithoutPropertiesNestedInput
+  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUpdateOneWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUpdateManyWithoutPropertiesNestedInput
+}
+
+export type propertiesUncheckedUpdateWithoutProperty_field_teamsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  owner_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  price?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  property_type?: Prisma.StringFieldUpdateOperationsInput | string
+  listing_type?: Prisma.StringFieldUpdateOperationsInput | string
+  address?: Prisma.StringFieldUpdateOperationsInput | string
+  city?: Prisma.StringFieldUpdateOperationsInput | string
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postal_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.StringFieldUpdateOperationsInput | string
+  latitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  longitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  bedrooms?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  bathrooms?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  square_feet?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  year_built?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  verification_status?: Prisma.StringFieldUpdateOperationsInput | string
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  agent_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  inquiries?: Prisma.inquiriesUncheckedUpdateManyWithoutPropertiesNestedInput
+  payments?: Prisma.paymentsUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_details?: Prisma.property_detailsUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_media?: Prisma.property_mediaUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedUpdateManyWithoutPropertiesNestedInput
+  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutPropertiesNestedInput
+  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedUpdateManyWithoutPropertiesNestedInput
+}
+
+export type propertiesCreateWithoutProperty_verification_evidenceInput = {
+  id?: string
+  title: string
+  description?: string | null
+  price: runtime.Decimal | runtime.DecimalJsLike | number | string
+  property_type: string
+  listing_type?: string
+  address: string
+  city: string
+  state?: string | null
+  postal_code?: string | null
+  country?: string
+  latitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  longitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  bedrooms?: number | null
+  bathrooms?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  square_feet?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  year_built?: number | null
+  status?: string
+  verification_status?: string
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  listing_source?: string | null
+  price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
+  inquiries?: Prisma.inquiriesCreateNestedManyWithoutPropertiesInput
+  payments?: Prisma.paymentsCreateNestedManyWithoutPropertiesInput
+  agents?: Prisma.agentsCreateNestedOneWithoutPropertiesInput
+  owners?: Prisma.ownersCreateNestedOneWithoutPropertiesInput
+  property_details?: Prisma.property_detailsCreateNestedManyWithoutPropertiesInput
+  property_documents?: Prisma.property_documentsCreateNestedManyWithoutPropertiesInput
+  property_media?: Prisma.property_mediaCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsCreateNestedManyWithoutPropertiesInput
+  reviews?: Prisma.reviewsCreateNestedManyWithoutPropertiesInput
+  saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksCreateNestedOneWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesCreateNestedOneWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsCreateNestedOneWithoutPropertiesInput
+}
+
+export type propertiesUncheckedCreateWithoutProperty_verification_evidenceInput = {
+  id?: string
+  owner_id?: string | null
+  title: string
+  description?: string | null
+  price: runtime.Decimal | runtime.DecimalJsLike | number | string
+  property_type: string
+  listing_type?: string
+  address: string
+  city: string
+  state?: string | null
+  postal_code?: string | null
+  country?: string
+  latitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  longitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  bedrooms?: number | null
+  bathrooms?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  square_feet?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  year_built?: number | null
+  status?: string
+  verification_status?: string
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  agent_id?: string | null
+  listing_source?: string | null
+  price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
+  inquiries?: Prisma.inquiriesUncheckedCreateNestedManyWithoutPropertiesInput
+  payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutPropertiesInput
+  property_details?: Prisma.property_detailsUncheckedCreateNestedManyWithoutPropertiesInput
+  property_documents?: Prisma.property_documentsUncheckedCreateNestedManyWithoutPropertiesInput
+  property_media?: Prisma.property_mediaUncheckedCreateNestedManyWithoutPropertiesInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedCreateNestedManyWithoutPropertiesInput
+  reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutPropertiesInput
+  saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedCreateNestedOneWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedCreateNestedOneWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedCreateNestedOneWithoutPropertiesInput
+}
+
+export type propertiesCreateOrConnectWithoutProperty_verification_evidenceInput = {
+  where: Prisma.propertiesWhereUniqueInput
+  create: Prisma.XOR<Prisma.propertiesCreateWithoutProperty_verification_evidenceInput, Prisma.propertiesUncheckedCreateWithoutProperty_verification_evidenceInput>
+}
+
+export type propertiesUpsertWithoutProperty_verification_evidenceInput = {
+  update: Prisma.XOR<Prisma.propertiesUpdateWithoutProperty_verification_evidenceInput, Prisma.propertiesUncheckedUpdateWithoutProperty_verification_evidenceInput>
+  create: Prisma.XOR<Prisma.propertiesCreateWithoutProperty_verification_evidenceInput, Prisma.propertiesUncheckedCreateWithoutProperty_verification_evidenceInput>
+  where?: Prisma.propertiesWhereInput
+}
+
+export type propertiesUpdateToOneWithWhereWithoutProperty_verification_evidenceInput = {
+  where?: Prisma.propertiesWhereInput
+  data: Prisma.XOR<Prisma.propertiesUpdateWithoutProperty_verification_evidenceInput, Prisma.propertiesUncheckedUpdateWithoutProperty_verification_evidenceInput>
+}
+
+export type propertiesUpdateWithoutProperty_verification_evidenceInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  price?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  property_type?: Prisma.StringFieldUpdateOperationsInput | string
+  listing_type?: Prisma.StringFieldUpdateOperationsInput | string
+  address?: Prisma.StringFieldUpdateOperationsInput | string
+  city?: Prisma.StringFieldUpdateOperationsInput | string
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postal_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.StringFieldUpdateOperationsInput | string
+  latitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  longitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  bedrooms?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  bathrooms?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  square_feet?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  year_built?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  verification_status?: Prisma.StringFieldUpdateOperationsInput | string
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  inquiries?: Prisma.inquiriesUpdateManyWithoutPropertiesNestedInput
+  payments?: Prisma.paymentsUpdateManyWithoutPropertiesNestedInput
+  agents?: Prisma.agentsUpdateOneWithoutPropertiesNestedInput
+  owners?: Prisma.ownersUpdateOneWithoutPropertiesNestedInput
+  property_details?: Prisma.property_detailsUpdateManyWithoutPropertiesNestedInput
+  property_documents?: Prisma.property_documentsUpdateManyWithoutPropertiesNestedInput
+  property_media?: Prisma.property_mediaUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUpdateManyWithoutPropertiesNestedInput
+  reviews?: Prisma.reviewsUpdateManyWithoutPropertiesNestedInput
+  saved_properties?: Prisma.saved_propertiesUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUpdateOneWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUpdateOneWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUpdateOneWithoutPropertiesNestedInput
+}
+
+export type propertiesUncheckedUpdateWithoutProperty_verification_evidenceInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  owner_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  price?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  property_type?: Prisma.StringFieldUpdateOperationsInput | string
+  listing_type?: Prisma.StringFieldUpdateOperationsInput | string
+  address?: Prisma.StringFieldUpdateOperationsInput | string
+  city?: Prisma.StringFieldUpdateOperationsInput | string
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postal_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.StringFieldUpdateOperationsInput | string
+  latitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  longitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  bedrooms?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  bathrooms?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  square_feet?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  year_built?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  verification_status?: Prisma.StringFieldUpdateOperationsInput | string
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  agent_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  inquiries?: Prisma.inquiriesUncheckedUpdateManyWithoutPropertiesNestedInput
+  payments?: Prisma.paymentsUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_details?: Prisma.property_detailsUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_documents?: Prisma.property_documentsUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_media?: Prisma.property_mediaUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_validation_jobs?: Prisma.property_validation_jobsUncheckedUpdateManyWithoutPropertiesNestedInput
+  reviews?: Prisma.reviewsUncheckedUpdateManyWithoutPropertiesNestedInput
+  saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedUpdateOneWithoutPropertiesNestedInput
 }
 
 export type propertiesCreateWithoutProperty_mediaInput = {
@@ -1976,6 +2946,8 @@ export type propertiesCreateWithoutProperty_mediaInput = {
   updated_at?: Date | string | null
   listing_source?: string | null
   price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
   inquiries?: Prisma.inquiriesCreateNestedManyWithoutPropertiesInput
   payments?: Prisma.paymentsCreateNestedManyWithoutPropertiesInput
   agents?: Prisma.agentsCreateNestedOneWithoutPropertiesInput
@@ -1985,6 +2957,10 @@ export type propertiesCreateWithoutProperty_mediaInput = {
   property_validation_jobs?: Prisma.property_validation_jobsCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksCreateNestedOneWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceCreateNestedManyWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsCreateNestedOneWithoutPropertiesInput
 }
 
 export type propertiesUncheckedCreateWithoutProperty_mediaInput = {
@@ -2013,6 +2989,8 @@ export type propertiesUncheckedCreateWithoutProperty_mediaInput = {
   agent_id?: string | null
   listing_source?: string | null
   price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
   inquiries?: Prisma.inquiriesUncheckedCreateNestedManyWithoutPropertiesInput
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutPropertiesInput
   property_details?: Prisma.property_detailsUncheckedCreateNestedManyWithoutPropertiesInput
@@ -2020,6 +2998,10 @@ export type propertiesUncheckedCreateWithoutProperty_mediaInput = {
   property_validation_jobs?: Prisma.property_validation_jobsUncheckedCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedCreateNestedOneWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedCreateNestedManyWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedCreateNestedOneWithoutPropertiesInput
 }
 
 export type propertiesCreateOrConnectWithoutProperty_mediaInput = {
@@ -2062,6 +3044,8 @@ export type propertiesUpdateWithoutProperty_mediaInput = {
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   inquiries?: Prisma.inquiriesUpdateManyWithoutPropertiesNestedInput
   payments?: Prisma.paymentsUpdateManyWithoutPropertiesNestedInput
   agents?: Prisma.agentsUpdateOneWithoutPropertiesNestedInput
@@ -2071,6 +3055,10 @@ export type propertiesUpdateWithoutProperty_mediaInput = {
   property_validation_jobs?: Prisma.property_validation_jobsUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUpdateOneWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUpdateManyWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUpdateOneWithoutPropertiesNestedInput
 }
 
 export type propertiesUncheckedUpdateWithoutProperty_mediaInput = {
@@ -2099,6 +3087,8 @@ export type propertiesUncheckedUpdateWithoutProperty_mediaInput = {
   agent_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   inquiries?: Prisma.inquiriesUncheckedUpdateManyWithoutPropertiesNestedInput
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_details?: Prisma.property_detailsUncheckedUpdateManyWithoutPropertiesNestedInput
@@ -2106,6 +3096,10 @@ export type propertiesUncheckedUpdateWithoutProperty_mediaInput = {
   property_validation_jobs?: Prisma.property_validation_jobsUncheckedUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUncheckedUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedUpdateOneWithoutPropertiesNestedInput
 }
 
 export type propertiesCreateWithoutReviewsInput = {
@@ -2132,6 +3126,8 @@ export type propertiesCreateWithoutReviewsInput = {
   updated_at?: Date | string | null
   listing_source?: string | null
   price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
   inquiries?: Prisma.inquiriesCreateNestedManyWithoutPropertiesInput
   payments?: Prisma.paymentsCreateNestedManyWithoutPropertiesInput
   agents?: Prisma.agentsCreateNestedOneWithoutPropertiesInput
@@ -2141,6 +3137,10 @@ export type propertiesCreateWithoutReviewsInput = {
   property_media?: Prisma.property_mediaCreateNestedManyWithoutPropertiesInput
   property_validation_jobs?: Prisma.property_validation_jobsCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksCreateNestedOneWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceCreateNestedManyWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsCreateNestedOneWithoutPropertiesInput
 }
 
 export type propertiesUncheckedCreateWithoutReviewsInput = {
@@ -2169,6 +3169,8 @@ export type propertiesUncheckedCreateWithoutReviewsInput = {
   agent_id?: string | null
   listing_source?: string | null
   price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
   inquiries?: Prisma.inquiriesUncheckedCreateNestedManyWithoutPropertiesInput
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutPropertiesInput
   property_details?: Prisma.property_detailsUncheckedCreateNestedManyWithoutPropertiesInput
@@ -2176,6 +3178,10 @@ export type propertiesUncheckedCreateWithoutReviewsInput = {
   property_media?: Prisma.property_mediaUncheckedCreateNestedManyWithoutPropertiesInput
   property_validation_jobs?: Prisma.property_validation_jobsUncheckedCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedCreateNestedOneWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedCreateNestedManyWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedCreateNestedOneWithoutPropertiesInput
 }
 
 export type propertiesCreateOrConnectWithoutReviewsInput = {
@@ -2218,6 +3224,8 @@ export type propertiesUpdateWithoutReviewsInput = {
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   inquiries?: Prisma.inquiriesUpdateManyWithoutPropertiesNestedInput
   payments?: Prisma.paymentsUpdateManyWithoutPropertiesNestedInput
   agents?: Prisma.agentsUpdateOneWithoutPropertiesNestedInput
@@ -2227,6 +3235,10 @@ export type propertiesUpdateWithoutReviewsInput = {
   property_media?: Prisma.property_mediaUpdateManyWithoutPropertiesNestedInput
   property_validation_jobs?: Prisma.property_validation_jobsUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUpdateOneWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUpdateManyWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUpdateOneWithoutPropertiesNestedInput
 }
 
 export type propertiesUncheckedUpdateWithoutReviewsInput = {
@@ -2255,6 +3267,8 @@ export type propertiesUncheckedUpdateWithoutReviewsInput = {
   agent_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   inquiries?: Prisma.inquiriesUncheckedUpdateManyWithoutPropertiesNestedInput
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_details?: Prisma.property_detailsUncheckedUpdateManyWithoutPropertiesNestedInput
@@ -2262,6 +3276,10 @@ export type propertiesUncheckedUpdateWithoutReviewsInput = {
   property_media?: Prisma.property_mediaUncheckedUpdateManyWithoutPropertiesNestedInput
   property_validation_jobs?: Prisma.property_validation_jobsUncheckedUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedUpdateOneWithoutPropertiesNestedInput
 }
 
 export type propertiesCreateWithoutSaved_propertiesInput = {
@@ -2288,6 +3306,8 @@ export type propertiesCreateWithoutSaved_propertiesInput = {
   updated_at?: Date | string | null
   listing_source?: string | null
   price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
   inquiries?: Prisma.inquiriesCreateNestedManyWithoutPropertiesInput
   payments?: Prisma.paymentsCreateNestedManyWithoutPropertiesInput
   agents?: Prisma.agentsCreateNestedOneWithoutPropertiesInput
@@ -2297,6 +3317,10 @@ export type propertiesCreateWithoutSaved_propertiesInput = {
   property_media?: Prisma.property_mediaCreateNestedManyWithoutPropertiesInput
   property_validation_jobs?: Prisma.property_validation_jobsCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksCreateNestedOneWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceCreateNestedManyWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsCreateNestedOneWithoutPropertiesInput
 }
 
 export type propertiesUncheckedCreateWithoutSaved_propertiesInput = {
@@ -2325,6 +3349,8 @@ export type propertiesUncheckedCreateWithoutSaved_propertiesInput = {
   agent_id?: string | null
   listing_source?: string | null
   price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
   inquiries?: Prisma.inquiriesUncheckedCreateNestedManyWithoutPropertiesInput
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutPropertiesInput
   property_details?: Prisma.property_detailsUncheckedCreateNestedManyWithoutPropertiesInput
@@ -2332,6 +3358,10 @@ export type propertiesUncheckedCreateWithoutSaved_propertiesInput = {
   property_media?: Prisma.property_mediaUncheckedCreateNestedManyWithoutPropertiesInput
   property_validation_jobs?: Prisma.property_validation_jobsUncheckedCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedCreateNestedOneWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedCreateNestedManyWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedCreateNestedOneWithoutPropertiesInput
 }
 
 export type propertiesCreateOrConnectWithoutSaved_propertiesInput = {
@@ -2374,6 +3404,8 @@ export type propertiesUpdateWithoutSaved_propertiesInput = {
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   inquiries?: Prisma.inquiriesUpdateManyWithoutPropertiesNestedInput
   payments?: Prisma.paymentsUpdateManyWithoutPropertiesNestedInput
   agents?: Prisma.agentsUpdateOneWithoutPropertiesNestedInput
@@ -2383,6 +3415,10 @@ export type propertiesUpdateWithoutSaved_propertiesInput = {
   property_media?: Prisma.property_mediaUpdateManyWithoutPropertiesNestedInput
   property_validation_jobs?: Prisma.property_validation_jobsUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUpdateOneWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUpdateManyWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUpdateOneWithoutPropertiesNestedInput
 }
 
 export type propertiesUncheckedUpdateWithoutSaved_propertiesInput = {
@@ -2411,6 +3447,8 @@ export type propertiesUncheckedUpdateWithoutSaved_propertiesInput = {
   agent_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   inquiries?: Prisma.inquiriesUncheckedUpdateManyWithoutPropertiesNestedInput
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_details?: Prisma.property_detailsUncheckedUpdateManyWithoutPropertiesNestedInput
@@ -2418,6 +3456,10 @@ export type propertiesUncheckedUpdateWithoutSaved_propertiesInput = {
   property_media?: Prisma.property_mediaUncheckedUpdateManyWithoutPropertiesNestedInput
   property_validation_jobs?: Prisma.property_validation_jobsUncheckedUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedUpdateOneWithoutPropertiesNestedInput
 }
 
 export type propertiesCreateWithoutProperty_validation_jobsInput = {
@@ -2444,6 +3486,8 @@ export type propertiesCreateWithoutProperty_validation_jobsInput = {
   updated_at?: Date | string | null
   listing_source?: string | null
   price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
   inquiries?: Prisma.inquiriesCreateNestedManyWithoutPropertiesInput
   payments?: Prisma.paymentsCreateNestedManyWithoutPropertiesInput
   agents?: Prisma.agentsCreateNestedOneWithoutPropertiesInput
@@ -2453,6 +3497,10 @@ export type propertiesCreateWithoutProperty_validation_jobsInput = {
   property_media?: Prisma.property_mediaCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksCreateNestedOneWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceCreateNestedManyWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsCreateNestedOneWithoutPropertiesInput
 }
 
 export type propertiesUncheckedCreateWithoutProperty_validation_jobsInput = {
@@ -2481,6 +3529,8 @@ export type propertiesUncheckedCreateWithoutProperty_validation_jobsInput = {
   agent_id?: string | null
   listing_source?: string | null
   price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
   inquiries?: Prisma.inquiriesUncheckedCreateNestedManyWithoutPropertiesInput
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutPropertiesInput
   property_details?: Prisma.property_detailsUncheckedCreateNestedManyWithoutPropertiesInput
@@ -2488,6 +3538,10 @@ export type propertiesUncheckedCreateWithoutProperty_validation_jobsInput = {
   property_media?: Prisma.property_mediaUncheckedCreateNestedManyWithoutPropertiesInput
   reviews?: Prisma.reviewsUncheckedCreateNestedManyWithoutPropertiesInput
   saved_properties?: Prisma.saved_propertiesUncheckedCreateNestedManyWithoutPropertiesInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedCreateNestedOneWithoutPropertiesInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedCreateNestedOneWithoutPropertiesInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedCreateNestedManyWithoutPropertiesInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedCreateNestedOneWithoutPropertiesInput
 }
 
 export type propertiesCreateOrConnectWithoutProperty_validation_jobsInput = {
@@ -2530,6 +3584,8 @@ export type propertiesUpdateWithoutProperty_validation_jobsInput = {
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   inquiries?: Prisma.inquiriesUpdateManyWithoutPropertiesNestedInput
   payments?: Prisma.paymentsUpdateManyWithoutPropertiesNestedInput
   agents?: Prisma.agentsUpdateOneWithoutPropertiesNestedInput
@@ -2539,6 +3595,10 @@ export type propertiesUpdateWithoutProperty_validation_jobsInput = {
   property_media?: Prisma.property_mediaUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUpdateOneWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUpdateManyWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUpdateOneWithoutPropertiesNestedInput
 }
 
 export type propertiesUncheckedUpdateWithoutProperty_validation_jobsInput = {
@@ -2567,6 +3627,8 @@ export type propertiesUncheckedUpdateWithoutProperty_validation_jobsInput = {
   agent_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   inquiries?: Prisma.inquiriesUncheckedUpdateManyWithoutPropertiesNestedInput
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_details?: Prisma.property_detailsUncheckedUpdateManyWithoutPropertiesNestedInput
@@ -2574,6 +3636,10 @@ export type propertiesUncheckedUpdateWithoutProperty_validation_jobsInput = {
   property_media?: Prisma.property_mediaUncheckedUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUncheckedUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedUpdateOneWithoutPropertiesNestedInput
 }
 
 export type propertiesCreateManyAgentsInput = {
@@ -2601,6 +3667,8 @@ export type propertiesCreateManyAgentsInput = {
   updated_at?: Date | string | null
   listing_source?: string | null
   price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
 }
 
 export type propertiesUpdateWithoutAgentsInput = {
@@ -2627,6 +3695,8 @@ export type propertiesUpdateWithoutAgentsInput = {
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   inquiries?: Prisma.inquiriesUpdateManyWithoutPropertiesNestedInput
   payments?: Prisma.paymentsUpdateManyWithoutPropertiesNestedInput
   owners?: Prisma.ownersUpdateOneWithoutPropertiesNestedInput
@@ -2636,6 +3706,10 @@ export type propertiesUpdateWithoutAgentsInput = {
   property_validation_jobs?: Prisma.property_validation_jobsUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUpdateOneWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUpdateManyWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUpdateOneWithoutPropertiesNestedInput
 }
 
 export type propertiesUncheckedUpdateWithoutAgentsInput = {
@@ -2663,6 +3737,8 @@ export type propertiesUncheckedUpdateWithoutAgentsInput = {
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   inquiries?: Prisma.inquiriesUncheckedUpdateManyWithoutPropertiesNestedInput
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_details?: Prisma.property_detailsUncheckedUpdateManyWithoutPropertiesNestedInput
@@ -2671,6 +3747,10 @@ export type propertiesUncheckedUpdateWithoutAgentsInput = {
   property_validation_jobs?: Prisma.property_validation_jobsUncheckedUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUncheckedUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedUpdateOneWithoutPropertiesNestedInput
 }
 
 export type propertiesUncheckedUpdateManyWithoutAgentsInput = {
@@ -2698,6 +3778,8 @@ export type propertiesUncheckedUpdateManyWithoutAgentsInput = {
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type propertiesCreateManyOwnersInput = {
@@ -2725,6 +3807,8 @@ export type propertiesCreateManyOwnersInput = {
   agent_id?: string | null
   listing_source?: string | null
   price_frequency?: string | null
+  vetting_officer_id?: string | null
+  vetting_visit_on?: Date | string | null
 }
 
 export type propertiesUpdateWithoutOwnersInput = {
@@ -2751,6 +3835,8 @@ export type propertiesUpdateWithoutOwnersInput = {
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   inquiries?: Prisma.inquiriesUpdateManyWithoutPropertiesNestedInput
   payments?: Prisma.paymentsUpdateManyWithoutPropertiesNestedInput
   agents?: Prisma.agentsUpdateOneWithoutPropertiesNestedInput
@@ -2760,6 +3846,10 @@ export type propertiesUpdateWithoutOwnersInput = {
   property_validation_jobs?: Prisma.property_validation_jobsUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUpdateOneWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUpdateManyWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUpdateOneWithoutPropertiesNestedInput
 }
 
 export type propertiesUncheckedUpdateWithoutOwnersInput = {
@@ -2787,6 +3877,8 @@ export type propertiesUncheckedUpdateWithoutOwnersInput = {
   agent_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   inquiries?: Prisma.inquiriesUncheckedUpdateManyWithoutPropertiesNestedInput
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutPropertiesNestedInput
   property_details?: Prisma.property_detailsUncheckedUpdateManyWithoutPropertiesNestedInput
@@ -2795,6 +3887,10 @@ export type propertiesUncheckedUpdateWithoutOwnersInput = {
   property_validation_jobs?: Prisma.property_validation_jobsUncheckedUpdateManyWithoutPropertiesNestedInput
   reviews?: Prisma.reviewsUncheckedUpdateManyWithoutPropertiesNestedInput
   saved_properties?: Prisma.saved_propertiesUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_verification_cases?: Prisma.property_verification_casesUncheckedUpdateOneWithoutPropertiesNestedInput
+  property_verification_evidence?: Prisma.property_verification_evidenceUncheckedUpdateManyWithoutPropertiesNestedInput
+  property_field_teams?: Prisma.property_field_teamsUncheckedUpdateOneWithoutPropertiesNestedInput
 }
 
 export type propertiesUncheckedUpdateManyWithoutOwnersInput = {
@@ -2822,6 +3918,8 @@ export type propertiesUncheckedUpdateManyWithoutOwnersInput = {
   agent_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   listing_source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price_frequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_officer_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vetting_visit_on?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 
@@ -2838,6 +3936,7 @@ export type PropertiesCountOutputType = {
   property_validation_jobs: number
   reviews: number
   saved_properties: number
+  property_verification_evidence: number
 }
 
 export type PropertiesCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2849,6 +3948,7 @@ export type PropertiesCountOutputTypeSelect<ExtArgs extends runtime.Types.Extens
   property_validation_jobs?: boolean | PropertiesCountOutputTypeCountProperty_validation_jobsArgs
   reviews?: boolean | PropertiesCountOutputTypeCountReviewsArgs
   saved_properties?: boolean | PropertiesCountOutputTypeCountSaved_propertiesArgs
+  property_verification_evidence?: boolean | PropertiesCountOutputTypeCountProperty_verification_evidenceArgs
 }
 
 /**
@@ -2917,6 +4017,13 @@ export type PropertiesCountOutputTypeCountSaved_propertiesArgs<ExtArgs extends r
   where?: Prisma.saved_propertiesWhereInput
 }
 
+/**
+ * PropertiesCountOutputType without action
+ */
+export type PropertiesCountOutputTypeCountProperty_verification_evidenceArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.property_verification_evidenceWhereInput
+}
+
 
 export type propertiesSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -2944,6 +4051,8 @@ export type propertiesSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   agent_id?: boolean
   listing_source?: boolean
   price_frequency?: boolean
+  vetting_officer_id?: boolean
+  vetting_visit_on?: boolean
   inquiries?: boolean | Prisma.properties$inquiriesArgs<ExtArgs>
   payments?: boolean | Prisma.properties$paymentsArgs<ExtArgs>
   agents?: boolean | Prisma.properties$agentsArgs<ExtArgs>
@@ -2954,6 +4063,10 @@ export type propertiesSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   property_validation_jobs?: boolean | Prisma.properties$property_validation_jobsArgs<ExtArgs>
   reviews?: boolean | Prisma.properties$reviewsArgs<ExtArgs>
   saved_properties?: boolean | Prisma.properties$saved_propertiesArgs<ExtArgs>
+  property_visit_checks?: boolean | Prisma.properties$property_visit_checksArgs<ExtArgs>
+  property_verification_cases?: boolean | Prisma.properties$property_verification_casesArgs<ExtArgs>
+  property_verification_evidence?: boolean | Prisma.properties$property_verification_evidenceArgs<ExtArgs>
+  property_field_teams?: boolean | Prisma.properties$property_field_teamsArgs<ExtArgs>
   _count?: boolean | Prisma.PropertiesCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["properties"]>
 
@@ -2983,6 +4096,8 @@ export type propertiesSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   agent_id?: boolean
   listing_source?: boolean
   price_frequency?: boolean
+  vetting_officer_id?: boolean
+  vetting_visit_on?: boolean
   agents?: boolean | Prisma.properties$agentsArgs<ExtArgs>
   owners?: boolean | Prisma.properties$ownersArgs<ExtArgs>
 }, ExtArgs["result"]["properties"]>
@@ -3013,6 +4128,8 @@ export type propertiesSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   agent_id?: boolean
   listing_source?: boolean
   price_frequency?: boolean
+  vetting_officer_id?: boolean
+  vetting_visit_on?: boolean
   agents?: boolean | Prisma.properties$agentsArgs<ExtArgs>
   owners?: boolean | Prisma.properties$ownersArgs<ExtArgs>
 }, ExtArgs["result"]["properties"]>
@@ -3043,9 +4160,11 @@ export type propertiesSelectScalar = {
   agent_id?: boolean
   listing_source?: boolean
   price_frequency?: boolean
+  vetting_officer_id?: boolean
+  vetting_visit_on?: boolean
 }
 
-export type propertiesOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "owner_id" | "title" | "description" | "price" | "property_type" | "listing_type" | "address" | "city" | "state" | "postal_code" | "country" | "latitude" | "longitude" | "bedrooms" | "bathrooms" | "square_feet" | "year_built" | "status" | "verification_status" | "created_at" | "updated_at" | "agent_id" | "listing_source" | "price_frequency", ExtArgs["result"]["properties"]>
+export type propertiesOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "owner_id" | "title" | "description" | "price" | "property_type" | "listing_type" | "address" | "city" | "state" | "postal_code" | "country" | "latitude" | "longitude" | "bedrooms" | "bathrooms" | "square_feet" | "year_built" | "status" | "verification_status" | "created_at" | "updated_at" | "agent_id" | "listing_source" | "price_frequency" | "vetting_officer_id" | "vetting_visit_on", ExtArgs["result"]["properties"]>
 export type propertiesInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   inquiries?: boolean | Prisma.properties$inquiriesArgs<ExtArgs>
   payments?: boolean | Prisma.properties$paymentsArgs<ExtArgs>
@@ -3057,6 +4176,10 @@ export type propertiesInclude<ExtArgs extends runtime.Types.Extensions.InternalA
   property_validation_jobs?: boolean | Prisma.properties$property_validation_jobsArgs<ExtArgs>
   reviews?: boolean | Prisma.properties$reviewsArgs<ExtArgs>
   saved_properties?: boolean | Prisma.properties$saved_propertiesArgs<ExtArgs>
+  property_visit_checks?: boolean | Prisma.properties$property_visit_checksArgs<ExtArgs>
+  property_verification_cases?: boolean | Prisma.properties$property_verification_casesArgs<ExtArgs>
+  property_verification_evidence?: boolean | Prisma.properties$property_verification_evidenceArgs<ExtArgs>
+  property_field_teams?: boolean | Prisma.properties$property_field_teamsArgs<ExtArgs>
   _count?: boolean | Prisma.PropertiesCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type propertiesIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -3081,6 +4204,10 @@ export type $propertiesPayload<ExtArgs extends runtime.Types.Extensions.Internal
     property_validation_jobs: Prisma.$property_validation_jobsPayload<ExtArgs>[]
     reviews: Prisma.$reviewsPayload<ExtArgs>[]
     saved_properties: Prisma.$saved_propertiesPayload<ExtArgs>[]
+    property_visit_checks: Prisma.$property_visit_checksPayload<ExtArgs> | null
+    property_verification_cases: Prisma.$property_verification_casesPayload<ExtArgs> | null
+    property_verification_evidence: Prisma.$property_verification_evidencePayload<ExtArgs>[]
+    property_field_teams: Prisma.$property_field_teamsPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -3108,6 +4235,8 @@ export type $propertiesPayload<ExtArgs extends runtime.Types.Extensions.Internal
     agent_id: string | null
     listing_source: string | null
     price_frequency: string | null
+    vetting_officer_id: string | null
+    vetting_visit_on: Date | null
   }, ExtArgs["result"]["properties"]>
   composites: {}
 }
@@ -3512,6 +4641,10 @@ export interface Prisma__propertiesClient<T, Null = never, ExtArgs extends runti
   property_validation_jobs<T extends Prisma.properties$property_validation_jobsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.properties$property_validation_jobsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$property_validation_jobsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   reviews<T extends Prisma.properties$reviewsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.properties$reviewsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$reviewsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   saved_properties<T extends Prisma.properties$saved_propertiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.properties$saved_propertiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$saved_propertiesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  property_visit_checks<T extends Prisma.properties$property_visit_checksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.properties$property_visit_checksArgs<ExtArgs>>): Prisma.Prisma__property_visit_checksClient<runtime.Types.Result.GetResult<Prisma.$property_visit_checksPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  property_verification_cases<T extends Prisma.properties$property_verification_casesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.properties$property_verification_casesArgs<ExtArgs>>): Prisma.Prisma__property_verification_casesClient<runtime.Types.Result.GetResult<Prisma.$property_verification_casesPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  property_verification_evidence<T extends Prisma.properties$property_verification_evidenceArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.properties$property_verification_evidenceArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$property_verification_evidencePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  property_field_teams<T extends Prisma.properties$property_field_teamsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.properties$property_field_teamsArgs<ExtArgs>>): Prisma.Prisma__property_field_teamsClient<runtime.Types.Result.GetResult<Prisma.$property_field_teamsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3566,6 +4699,8 @@ export interface propertiesFieldRefs {
   readonly agent_id: Prisma.FieldRef<"properties", 'String'>
   readonly listing_source: Prisma.FieldRef<"properties", 'String'>
   readonly price_frequency: Prisma.FieldRef<"properties", 'String'>
+  readonly vetting_officer_id: Prisma.FieldRef<"properties", 'String'>
+  readonly vetting_visit_on: Prisma.FieldRef<"properties", 'DateTime'>
 }
     
 
@@ -3762,11 +4897,6 @@ export type propertiesFindManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Skip the first `n` properties.
    */
   skip?: number
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-   * 
-   * Filter by unique combinations of properties.
-   */
   distinct?: Prisma.PropertiesScalarFieldEnum | Prisma.PropertiesScalarFieldEnum[]
 }
 
@@ -4194,6 +5324,87 @@ export type properties$saved_propertiesArgs<ExtArgs extends runtime.Types.Extens
   take?: number
   skip?: number
   distinct?: Prisma.Saved_propertiesScalarFieldEnum | Prisma.Saved_propertiesScalarFieldEnum[]
+}
+
+/**
+ * properties.property_visit_checks
+ */
+export type properties$property_visit_checksArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the property_visit_checks
+   */
+  select?: Prisma.property_visit_checksSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the property_visit_checks
+   */
+  omit?: Prisma.property_visit_checksOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.property_visit_checksInclude<ExtArgs> | null
+  where?: Prisma.property_visit_checksWhereInput
+}
+
+/**
+ * properties.property_verification_cases
+ */
+export type properties$property_verification_casesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the property_verification_cases
+   */
+  select?: Prisma.property_verification_casesSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the property_verification_cases
+   */
+  omit?: Prisma.property_verification_casesOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.property_verification_casesInclude<ExtArgs> | null
+  where?: Prisma.property_verification_casesWhereInput
+}
+
+/**
+ * properties.property_verification_evidence
+ */
+export type properties$property_verification_evidenceArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the property_verification_evidence
+   */
+  select?: Prisma.property_verification_evidenceSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the property_verification_evidence
+   */
+  omit?: Prisma.property_verification_evidenceOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.property_verification_evidenceInclude<ExtArgs> | null
+  where?: Prisma.property_verification_evidenceWhereInput
+  orderBy?: Prisma.property_verification_evidenceOrderByWithRelationInput | Prisma.property_verification_evidenceOrderByWithRelationInput[]
+  cursor?: Prisma.property_verification_evidenceWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Property_verification_evidenceScalarFieldEnum | Prisma.Property_verification_evidenceScalarFieldEnum[]
+}
+
+/**
+ * properties.property_field_teams
+ */
+export type properties$property_field_teamsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the property_field_teams
+   */
+  select?: Prisma.property_field_teamsSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the property_field_teams
+   */
+  omit?: Prisma.property_field_teamsOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.property_field_teamsInclude<ExtArgs> | null
+  where?: Prisma.property_field_teamsWhereInput
 }
 
 /**

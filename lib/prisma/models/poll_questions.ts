@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums"
-import type * as Prisma from "../internal/prismaNamespace"
+import type * as $Enums from "../enums.ts"
+import type * as Prisma from "../internal/prismaNamespace.ts"
 
 /**
  * Model poll_questions
@@ -237,7 +237,7 @@ export type Poll_questionsGroupByOutputType = {
   _max: Poll_questionsMaxAggregateOutputType | null
 }
 
-export type GetPoll_questionsGroupByPayload<T extends poll_questionsGroupByArgs> = Prisma.PrismaPromise<
+type GetPoll_questionsGroupByPayload<T extends poll_questionsGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<Poll_questionsGroupByOutputType, T['by']> &
       {
@@ -1411,11 +1411,6 @@ export type poll_questionsFindManyArgs<ExtArgs extends runtime.Types.Extensions.
    * Skip the first `n` poll_questions.
    */
   skip?: number
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-   * 
-   * Filter by unique combinations of poll_questions.
-   */
   distinct?: Prisma.Poll_questionsScalarFieldEnum | Prisma.Poll_questionsScalarFieldEnum[]
 }
 
