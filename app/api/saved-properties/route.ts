@@ -80,22 +80,60 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get saved properties with full property details
+    const { searchParams } = new URL(request.url);
+    const takeRaw = parseInt(searchParams.get("limit") || "50", 10);
+    const take = Math.min(50, Math.max(1, Number.isFinite(takeRaw) ? takeRaw : 50));
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
+    const skip = (page - 1) * take;
+
     const savedProperties = await prisma.saved_properties.findMany({
       where: { user_id: user.id },
-      include: {
+      select: {
+        id: true,
+        created_at: true,
+        property_id: true,
         properties: {
-          include: {
-            property_details: true,
-            property_media: true,
-            owners: { include: { profiles: { select: { full_name: true, avatar_url: true } } } },
+          select: {
+            id: true,
+            title: true,
+            price: true,
+            address: true,
+            city: true,
+            state: true,
+            property_type: true,
+            listing_type: true,
+            status: true,
+            verification_status: true,
+            bedrooms: true,
+            bathrooms: true,
+            square_feet: true,
+            property_media: {
+              select: {
+                id: true,
+                media_url: true,
+                is_featured: true,
+                display_order: true,
+              },
+              orderBy: { display_order: "asc" },
+              take: 1,
+            },
+            owners: {
+              select: {
+                profiles: { select: { full_name: true, avatar_url: true } },
+              },
+            },
           },
         },
       },
       orderBy: { created_at: "desc" },
+      skip,
+      take,
     });
 
-    return NextResponse.json({ saved_properties: savedProperties });
+    return NextResponse.json({
+      saved_properties: savedProperties,
+      pagination: { page, limit: take },
+    });
   } catch (error) {
     console.error("Saved properties API error:", error);
     return NextResponse.json(
