@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardFooter } from "./DashboardFooter";
@@ -10,6 +10,7 @@ import { useUser } from "@/lib/hooks/useUser";
 import {
   DASHBOARD_PAGE_PAD,
   dashboardMainOffset,
+  shellBlocksOnUserLoad,
 } from "@/lib/layout/dashboard-shell";
 
 interface DashboardLayoutProps {
@@ -20,8 +21,22 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const { role: userRole, isLoading } = useUser();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const stickyRole = useRef<string | null>(null);
 
-  if (isLoading) {
+  if (pathname.startsWith("/admin")) {
+    return <>{children}</>;
+  }
+
+  if (userRole) stickyRole.current = userRole;
+  const displayRole = userRole ?? stickyRole.current;
+
+  // Once marketplace chrome has hydrated, never tear it down on tab clicks
+  const blockShell = shellBlocksOnUserLoad({
+    isLoading,
+    hasRole: Boolean(displayRole),
+  });
+
+  if (blockShell) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-muted-foreground">Loading dashboard...</div>
@@ -29,17 +44,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     );
   }
 
-  if (pathname.startsWith("/admin")) {
-    return <>{children}</>;
-  }
-
   return (
     <div className="min-h-screen overflow-x-hidden bg-background">
-      <DashboardHeader userRole={userRole} />
+      <DashboardHeader userRole={displayRole} />
 
       <div className="flex">
         <DashboardSidebar
-          userRole={userRole}
+          userRole={displayRole}
           currentPath={pathname}
           isCollapsed={isCollapsed}
           onToggleCollapsed={() => setIsCollapsed((value) => !value)}
@@ -55,7 +66,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </main>
       </div>
 
-      <DashboardMobileNav userRole={userRole} />
+      <DashboardMobileNav userRole={displayRole} />
     </div>
   );
 }

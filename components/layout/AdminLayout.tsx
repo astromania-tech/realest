@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { AdminHeader } from "./AdminHeader";
 import { AdminSidebar } from "./AdminSidebar";
@@ -20,6 +21,7 @@ import { useUser } from "@/lib/hooks/useUser";
 import {
   ADMIN_PAGE_PAD,
   adminMainOffset,
+  shellBlocksOnUserLoad,
 } from "@/lib/layout/dashboard-shell";
 import {
   isStaffAllowedPath,
@@ -37,8 +39,16 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const router = useRouter();
   const { role: userRole, isLoading } = useUser();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const stickyStaffRole = useRef<StaffRole | null>(null);
 
-  const staffRole = isStaffRole(userRole) ? (userRole as StaffRole) : null;
+  if (isStaffRole(userRole)) stickyStaffRole.current = userRole as StaffRole;
+  const staffRole = stickyStaffRole.current;
+
+  // Once staff chrome has hydrated, never tear it down on tab clicks
+  const blockShell = shellBlocksOnUserLoad({
+    isLoading,
+    hasRole: Boolean(staffRole),
+  });
 
   useEffect(() => {
     if (isLoading || !staffRole || staffRole === "admin") return;
@@ -93,7 +103,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   const breadcrumbs = generateBreadcrumbs();
 
-  if (isLoading) {
+  if (blockShell) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
@@ -104,7 +114,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     );
   }
 
-  if (!isLoading && !isStaffRole(userRole)) {
+  // Only deny after hydrate when we never had a staff role (not a brief null during revalidate)
+  if (!isLoading && !staffRole && !isStaffRole(userRole)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Card className="max-w-md p-8 text-center">
@@ -114,25 +125,18 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             You don't have permission to access the staff panel.
           </p>
           <Button>
-            <a href="/profile">Return to Dashboard</a>
+            <Link href="/profile">Return to Dashboard</Link>
           </Button>
         </Card>
       </div>
     );
   }
 
-  if (
+  const redirecting =
     !isLoading &&
-    staffRole &&
+    Boolean(staffRole) &&
     staffRole !== "admin" &&
-    !isStaffAllowedPath(staffRole, pathname)
-  ) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="text-muted-foreground">Redirecting…</div>
-      </div>
-    );
-  }
+    !isStaffAllowedPath(staffRole, pathname);
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-background">
@@ -143,7 +147,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           currentPath={pathname}
           isCollapsed={isCollapsed}
           onToggle={setIsCollapsed}
-          userRole={staffRole ?? "admin"}
+          userRole={staffRole ?? "reviewer"}
         />
 
         <main className={adminMainOffset(isCollapsed)}>
@@ -158,8 +162,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                         {index === breadcrumbs.length - 1 ? (
                           <BreadcrumbPage>{item.label}</BreadcrumbPage>
                         ) : (
-                          <BreadcrumbLink href={item.href}>
-                            {item.label}
+                          <BreadcrumbLink asChild>
+                            <Link href={item.href} prefetch>
+                              {item.label}
+                            </Link>
                           </BreadcrumbLink>
                         )}
                       </BreadcrumbItem>
@@ -169,16 +175,20 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               </Breadcrumb>
             </div>
             <div className={ADMIN_PAGE_PAD} data-dashboard-main>
-              {children}
+              {redirecting ? (
+                <p className="text-sm text-muted-foreground">Redirecting…</p>
+              ) : (
+                children
+              )}
             </div>
           </div>
           <div className="hidden md:block">
-            <AdminFooter userRole={staffRole ?? "admin"} />
+            <AdminFooter userRole={staffRole ?? "reviewer"} />
           </div>
         </main>
       </div>
 
-      <DashboardMobileNav userRole={staffRole ?? "admin"} />
+      <DashboardMobileNav userRole={staffRole ?? "reviewer"} />
     </div>
   );
 }

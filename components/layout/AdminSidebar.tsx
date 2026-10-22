@@ -4,26 +4,12 @@ import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@heroui/react";
 import {
-  Home,
-  Building,
-  Users,
-  Shield,
-  BarChart3,
-  Settings,
   ChevronLeft,
-  ChevronRight,
   Lock,
   AlertTriangle,
   CheckCircle,
   MenuSquare,
-  FileText,
-  SettingsIcon,
-  Users2,
-  UserCheck2,
-  Layout,
-  HelpCircle,
-  Mail,
-  Megaphone,
+  Settings,
 } from "lucide-react";
 
 import { isDashboardNavActive, staffNavItems } from "@/lib/layout/dashboard-nav";
@@ -48,15 +34,10 @@ export function AdminSidebar({
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current);
-      }
-      if (animationTimeoutRef.current) {
-        clearTimeout(animationTimeoutRef.current);
-      }
+      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+      if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
     };
   }, []);
 
@@ -68,33 +49,25 @@ export function AdminSidebar({
   const isActive = (href: string) =>
     isDashboardNavActive(currentPath, href, navigationHrefs);
 
-  // Handle mouse enter - expand immediately
   const handleMouseEnter = () => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-    }
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
     setIsHovered(true);
   };
 
-  // Handle mouse leave - collapse after delay if manually collapsed
   const handleMouseLeave = () => {
     hoverTimeoutRef.current = setTimeout(() => {
       setIsHovered(false);
-    }, 150); // 300ms delay to prevent flickering
+    }, 150);
   };
 
-  // Determine if sidebar should be collapsed (manual collapse + not hovered)
   const shouldCollapse = isCollapsed && !isHovered;
 
-  // Trigger animation when collapse state changes
   useEffect(() => {
     setIsAnimating(true);
-    if (animationTimeoutRef.current) {
-      clearTimeout(animationTimeoutRef.current);
-    }
+    if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
     animationTimeoutRef.current = setTimeout(() => {
       setIsAnimating(false);
-    }, 500); // Match animation duration
+    }, 500);
   }, [shouldCollapse]);
 
   return (
@@ -106,13 +79,10 @@ export function AdminSidebar({
       onMouseLeave={handleMouseLeave}
     >
       <div className="flex h-full flex-col overscroll-y-none">
-        {/* Header */}
-        <div
-          className={`p-4 -mb-2 border-b border-accent/20 ${!shouldCollapse ? "animate-content-fade-in" : ""}`}
-        >
+        <div className="p-4 -mb-2 border-b border-accent/20">
           <div className="flex px-0 items-center justify-between">
             {!shouldCollapse && (
-              <div className="animate-text-slide-in">
+              <div>
                 <h2 className="text-lg font-semibold">{panelTitle}</h2>
                 <p className="text-xs text-muted-foreground">{panelSubtitle}</p>
               </div>
@@ -136,129 +106,85 @@ export function AdminSidebar({
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav
-          className={`sidebar-nav my-4 flex-1 space-y-2 overflow-y-auto overscroll-y-none px-2 ${!shouldCollapse ? "animate-content-stagger-1" : ""}`}
-        >
-          {navigationItems.map((item, index) => {
+        {/*
+          Plain <Link> only — never nest HeroUI <Button> inside <Link>.
+          Nested <a><button> breaks Next soft navigation and remounts the whole admin shell.
+        */}
+        <nav className="sidebar-nav my-4 flex-1 space-y-2 overflow-y-auto overscroll-y-none px-2">
+          {navigationItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href);
 
             return (
-              <Link key={item.href} href={item.href}>
-                <Button
-                  variant={active ? "primary" : "ghost"}
-                  className={`w-full flex items-center hover:bg-popover-foreground/20 hover:cursor-pointer justify-start mt-0.5 gap-2 h-auto p-2 ${
-                    shouldCollapse ? "p-3" : ""
-                  } ${active ? "bg-primary hover:bg-primary text-primary-foreground" : ""} ${
-                    shouldCollapse ? "rounded-sm" : "rounded-md"
-                  } ${!shouldCollapse ? `animate-content-stagger-${Math.min(index + 2, 3)}` : ""}`}
-                >
-                  <Icon
-                    className={`w-5 h-5 shrink-0 ${
-                      active ? "text-primary-foreground" : ""
-                    } ${!shouldCollapse ? "animate-icon-scale" : ""}`}
-                  />
-                  {!shouldCollapse && (
-                    <div className="flex flex-col items-start">
-                      <span
-                        className={`font-medium animate-text-slide-in ${
-                          active
-                            ? "text-primary-foreground"
-                            : "text-foreground"
-                        }
-                        `}
-                      >
-                        {item.label}
-                      </span>
-                      <span
-                        className={`text-xs ${
-                          active
-                            ? "text-primary-foreground"
-                            : "text-muted-foreground/70"
-                        } animate-text-slide-in`}
-                        style={{ animationDelay: `${0.2 + index * 0.05}s` }}
-                      >
-                        {item.description}
-                      </span>
-                    </div>
-                  )}
-                </Button>
+              <Link
+                key={item.href}
+                href={item.href}
+                prefetch
+                className={`mt-0.5 flex w-full items-center gap-2 p-2 transition-colors hover:bg-popover-foreground/20 ${
+                  shouldCollapse ? "justify-center rounded-sm p-3" : "justify-start rounded-md"
+                } ${
+                  active
+                    ? "bg-primary text-primary-foreground hover:bg-primary"
+                    : "text-foreground"
+                }`}
+              >
+                <Icon className="h-5 w-5 shrink-0" />
+                {!shouldCollapse ? (
+                  <span className="flex min-w-0 flex-col items-start">
+                    <span className="truncate font-medium">{item.label}</span>
+                    <span
+                      className={`truncate text-xs ${
+                        active ? "text-primary-foreground/80" : "text-muted-foreground/70"
+                      }`}
+                    >
+                      {item.description}
+                    </span>
+                  </span>
+                ) : null}
               </Link>
             );
           })}
         </nav>
 
-        {/* Quick Actions — super admin only */}
-        {!shouldCollapse && userRole === "admin" && (
-          <div className="p-4 border-t border-accent/20 animate-content-stagger-3">
-            <div className="flex flex-col justify-start space-y-2">
-              <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide animate-text-slide-in">
-                Quick Actions
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full flex items-center justify-start gap-2 text-warning hover:text-warning hover:bg-warning/10 animate-content-stagger-3"
-                style={{ animationDelay: "0.4s" }}
-              >
-                <AlertTriangle className="w-4 h-4 animate-icon-scale" />
-                <span
-                  className="animate-text-slide-in"
-                  style={{ animationDelay: "0.45s" }}
-                >
-                  System Alerts
-                </span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full flex items-center justify-start gap-2 text-success hover:text-success hover:bg-success/10 animate-content-stagger-3"
-                style={{ animationDelay: "0.45s" }}
-              >
-                <CheckCircle className="w-4 h-4 animate-icon-scale" />
-                <span
-                  className="animate-text-slide-in"
-                  style={{ animationDelay: "0.5s" }}
-                >
-                  Health Check
-                </span>
-              </Button>
+        {!shouldCollapse && userRole === "admin" ? (
+          <div className="space-y-2 border-t border-accent/20 p-4">
+            <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Quick Actions
             </div>
-          </div>
-        )}
-
-        {/* Settings */}
-        <div
-          className={`py-4 border-t border-accent/20 ${!shouldCollapse ? "animate-content-stagger-3" : ""}`}
-        >
-          <Link href="/settings">
-            <Button
-              variant="ghost"
-              className={`w-full flex items-center justify-start gap-3 h-10 ${
-                shouldCollapse ? "p-6" : "px-3"
-              } ${!shouldCollapse ? "animate-content-stagger-3" : ""}`}
-              style={{ animationDelay: "0.5s" }}
+            <button
+              type="button"
+              className="flex w-full items-center justify-start gap-2 rounded-md px-2 py-1.5 text-sm text-warning hover:bg-warning/10"
             >
-              <Settings
-                className={`w-4 h-4 shrink-0 ${!shouldCollapse ? "animate-icon-scale" : ""}`}
-              />
-              {!shouldCollapse && (
-                <span
-                  className="animate-text-slide-in"
-                  style={{ animationDelay: "0.55s" }}
-                >
-                  Settings
-                </span>
-              )}
-            </Button>
-          </Link>
-        </div>
+              <AlertTriangle className="h-4 w-4" />
+              System Alerts
+            </button>
+            <button
+              type="button"
+              className="flex w-full items-center justify-start gap-2 rounded-md px-2 py-1.5 text-sm text-success hover:bg-success/10"
+            >
+              <CheckCircle className="h-4 w-4" />
+              Health Check
+            </button>
+          </div>
+        ) : null}
+
+        {userRole === "admin" ? (
+          <div className="border-t border-accent/20 py-4">
+            <Link
+              href="/admin/settings"
+              prefetch
+              className={`flex h-10 w-full items-center gap-3 hover:bg-popover-foreground/20 ${
+                shouldCollapse ? "justify-center p-3" : "justify-start px-3"
+              }`}
+            >
+              <Settings className="h-4 w-4 shrink-0" />
+              {!shouldCollapse ? <span>Settings</span> : null}
+            </Link>
+          </div>
+        ) : null}
       </div>
       <style>{`
-        .sidebar-nav::-webkit-scrollbar {
-          display: none;
-        }
+        .sidebar-nav::-webkit-scrollbar { display: none; }
         .sidebar-nav {
           scrollbar-width: none;
           overscroll-behavior-y: none;

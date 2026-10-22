@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Avatar } from "@heroui/react";
 import { Button } from "../ui";
 import {
@@ -26,10 +27,18 @@ interface DashboardHeaderProps {
   userRole: string | null;
 }
 
+function marketplaceHomePath(role: string | null): string {
+  if (role === "owner") return "/owner";
+  if (role === "agent") return "/agent";
+  return "/profile";
+}
+
 export function DashboardHeader({ userRole }: DashboardHeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, profile } = useUser();
+  const router = useRouter();
   const { openLogoutModal } = useLogoutModal();
+  const homeHref = marketplaceHomePath(userRole);
 
   const getRoleDisplayName = (role: string | null) => {
     switch (role) {
@@ -67,7 +76,7 @@ export function DashboardHeader({ userRole }: DashboardHeaderProps) {
         <div className="flex h-16 items-center justify-between">
           {/* Logo and Role Badge */}
           <div className="flex items-center gap-4">
-            <Link href="/" className="flex items-center group">
+            <Link href={homeHref} prefetch className="flex items-center group">
               <HeaderLogo />
             </Link>
           </div>
@@ -162,7 +171,7 @@ export function DashboardHeader({ userRole }: DashboardHeaderProps) {
               className="w-full justify-start gap-3"
               onClick={() => {
                 setIsMobileMenuOpen(false);
-                window.location.href = "/profile";
+                router.push(homeHref);
               }}
             >
               <User className="h-4 w-4" />
@@ -174,7 +183,7 @@ export function DashboardHeader({ userRole }: DashboardHeaderProps) {
               className="w-full justify-start gap-3"
               onClick={() => {
                 setIsMobileMenuOpen(false);
-                window.location.href = "/setting";
+                router.push("/setting");
               }}
             >
               <Settings className="h-4 w-4" />

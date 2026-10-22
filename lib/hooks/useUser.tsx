@@ -1,9 +1,19 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { userInitShouldBlockUi } from "@/lib/layout/dashboard-shell";
 
 // Base user types
 export type UserRole =
@@ -136,15 +146,23 @@ export interface UseUserReturn {
 const userCache = new Map<string, { data: UserProfile; timestamp: number }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-export function useUser(): UseUserReturn {
+const UserContext = createContext<UseUserReturn | null>(null);
+
+/**
+ * Single shared user state for the whole app.
+ * Layouts must not each call an independent useUser() with isLoading=true —
+ * that remounted the staff shell on every navigation.
+ */
+function useUserState(): UseUserReturn {
   const { user: authUser, isLoading: authLoading } = useAuth();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [role, setRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const isInitialized = useRef(false);
+  const hydratedUserId = useRef<string | null>(null);
 
   // Fetch user role from public.users table (single source of truth)
   const fetchUserRole = useCallback(
@@ -429,23 +447,43 @@ export function useUser(): UseUserReturn {
   // Initialize user data — driven by AuthProvider's authUser
   const initializeUser = useCallback(async (currentUser: User) => {
     try {
-      setIsLoading(true);
       setError(null);
-
       setUser(currentUser);
+
+      const cached = userCache.get(currentUser.id);
+      const hasCachedProfile = Boolean(
+        cached && Date.now() - cached.timestamp < CACHE_DURATION,
+      );
+
+      // Hydrate from cache immediately so the shell can stay mounted
+      if (hasCachedProfile && cached) {
+        setProfile(cached.data);
+        setRole(cached.data.user_type);
+      }
+
+      const blockUi = userInitShouldBlockUi({
+        alreadyInitialized: isInitialized.current,
+        hasCachedProfile,
+      });
+      if (blockUi) {
+        setIsLoading(true);
+      } else {
+        setIsLoading(false);
+      }
 
       const userProfile = await fetchCompleteProfile(currentUser.id);
 
       if (userProfile) {
         setProfile(userProfile);
         setRole(userProfile.user_type);
-      } else {
+      } else if (!hasCachedProfile) {
         setError("Failed to load user profile");
       }
     } catch (err) {
       console.error("Error initializing user:", err);
       setError("Failed to load user data");
     } finally {
+      isInitialized.current = true;
       setIsLoading(false);
     }
   }, [fetchCompleteProfile]);
@@ -551,22 +589,37 @@ export function useUser(): UseUserReturn {
     }
   }, [supabase]);
 
-  // React to AuthProvider's user changes
+  // React to AuthProvider's user changes (by id — ignore token-refresh identity churn)
   useEffect(() => {
-    if (authLoading) return; // wait for AuthProvider to resolve
+    if (authLoading) return;
 
-    if (authUser) {
-      initializeUser(authUser);
-    } else {
-      // signed out
+    if (!authUser) {
+      hydratedUserId.current = null;
+      isInitialized.current = false;
       setUser(null);
       setProfile(null);
       setRole(null);
       setError(null);
       setIsLoading(false);
       userCache.clear();
+      return;
     }
-  }, [authUser, authLoading, initializeUser]);
+
+    // Same signed-in user: quiet profile refresh, never blank the shell
+    if (hydratedUserId.current === authUser.id && isInitialized.current) {
+      void (async () => {
+        const userProfile = await fetchCompleteProfile(authUser.id);
+        if (userProfile) {
+          setProfile(userProfile);
+          setRole(userProfile.user_type);
+        }
+      })();
+      return;
+    }
+
+    hydratedUserId.current = authUser.id;
+    void initializeUser(authUser);
+  }, [authUser?.id, authLoading, initializeUser, fetchCompleteProfile, authUser]);
 
   return {
     user,
@@ -579,6 +632,19 @@ export function useUser(): UseUserReturn {
     updateProfile,
     logout,
   };
+}
+
+export function UserProvider({ children }: { children: ReactNode }) {
+  const value = useUserState();
+  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
+}
+
+export function useUser(): UseUserReturn {
+  const ctx = useContext(UserContext);
+  if (!ctx) {
+    throw new Error("useUser must be used within UserProvider");
+  }
+  return ctx;
 }
 
 // Utility hooks for specific user types

@@ -33,3 +33,22 @@ export function adminMainOffset(isCollapsed: boolean): string {
     isCollapsed ? ADMIN_SIDEBAR_COLLAPSED : ADMIN_SIDEBAR_EXPANDED,
   ].join(" ");
 }
+
+/**
+ * Full-chrome boot screen only on cold start (no role yet).
+ * Once a role is known, keep the shell mounted during soft navigations / quiet revalidations.
+ */
+export function shellBlocksOnUserLoad(input: {
+  isLoading: boolean;
+  hasRole: boolean;
+}): boolean {
+  return input.isLoading && !input.hasRole;
+}
+
+/** Block useUser UI only on first hydrate when there is no cached profile to show. */
+export function userInitShouldBlockUi(input: {
+  alreadyInitialized: boolean;
+  hasCachedProfile: boolean;
+}): boolean {
+  return !input.alreadyInitialized && !input.hasCachedProfile;
+}

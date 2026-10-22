@@ -12,7 +12,6 @@ export function AdminFooter({
   userRole?: StaffRole;
 }) {
   const currentYear = new Date().getFullYear();
-  const lastUpdated = new Date().toLocaleString();
   const panelTitle = staffRolePanelTitle(userRole);
   const homeHref = staffHomePath(userRole);
 
@@ -34,7 +33,7 @@ export function AdminFooter({
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
-              <span>Last updated: {lastUpdated}</span>
+              <span>RealEST Connect</span>
             </div>
           </div>
 

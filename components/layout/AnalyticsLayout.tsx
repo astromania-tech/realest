@@ -3,6 +3,7 @@
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardFooter } from "./DashboardFooter";
 import { useUser } from "@/lib/hooks/useUser";
+import { shellBlocksOnUserLoad } from "@/lib/layout/dashboard-shell";
 
 interface AnalyticsLayoutProps {
   children: React.ReactNode;
@@ -11,8 +12,8 @@ interface AnalyticsLayoutProps {
 export function AnalyticsLayout({ children }: AnalyticsLayoutProps) {
   const { role: userRole, isLoading } = useUser();
 
-  // Don't render anything while loading
-  if (isLoading) {
+  // Cold boot only — keep chrome mounted after role is known
+  if (shellBlocksOnUserLoad({ isLoading, hasRole: Boolean(userRole) })) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-muted-foreground">Loading analytics...</div>

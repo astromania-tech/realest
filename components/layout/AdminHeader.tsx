@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Avatar, Dropdown } from "@heroui/react";
+import { Button, Avatar } from "@heroui/react";
 import { Bell, Settings, LogOut, User, Shield, Menu } from "lucide-react";
 import { HeaderLogo } from "@/components/ui/RealEstLogo";
 import { ThemeToggleCompact } from "@/components/ui/theme-toggle-wrapper";
@@ -11,7 +11,12 @@ import { useUser } from "@/lib/hooks/useUser";
 import { ProfileDropdown } from "@/components/realest";
 import { useLogoutModal } from "@/components/providers/LogoutModalProvider";
 import { MobileAccountOverlay } from "@/components/layout/MobileAccountOverlay";
-import { staffRoleBadgeLabel } from "@/lib/auth/roles";
+import {
+  isStaffRole,
+  staffHomePath,
+  staffRoleBadgeLabel,
+  type StaffRole,
+} from "@/lib/auth/roles";
 
 export function AdminHeader() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -19,14 +24,17 @@ export function AdminHeader() {
   const router = useRouter();
   const { openLogoutModal } = useLogoutModal();
   const roleBadge = staffRoleBadgeLabel(role);
+  const homeHref = isStaffRole(role)
+    ? staffHomePath(role as StaffRole)
+    : "/admin";
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-accent/20 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 shadow-sm">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo and Admin Badge */}
+          {/* Logo — role home, never hard-bounce non-admin to /admin */}
           <div className="flex items-center gap-4">
-            <Link href="/admin" className="flex items-center group">
+            <Link href={homeHref} prefetch className="flex items-center group">
               <HeaderLogo />
             </Link>
           </div>
@@ -101,32 +109,37 @@ export function AdminHeader() {
               className="w-full justify-start gap-3"
               onPress={() => {
                 setIsMobileMenuOpen(false);
-                window.location.href = "/profile";
+                router.push(homeHref);
               }}
             >
               <User className="h-4 w-4" />
-              My Profile
+              Panel home
             </Button>
 
-            <Button
-              variant="ghost"
-              className="w-full justify-start gap-3"
-              onPress={() => {
-                setIsMobileMenuOpen(false);
-                window.location.href = "/settings";
-              }}
-            >
-              <Settings className="h-4 w-4" />
-              Settings
-            </Button>
+            {role === "admin" ? (
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-3"
+                onPress={() => {
+                  setIsMobileMenuOpen(false);
+                  router.push("/admin/settings");
+                }}
+              >
+                <Settings className="h-4 w-4" />
+                Settings
+              </Button>
+            ) : null}
 
             <Button
               variant="ghost"
               className="relative w-full justify-start gap-3"
-              onPress={() => setIsMobileMenuOpen(false)}
+              onPress={() => {
+                setIsMobileMenuOpen(false);
+                router.push("/admin/validation/inbox");
+              }}
             >
               <Bell className="h-4 w-4" />
-              Notifications
+              Inbox
               <span className="absolute right-4 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-danger" />
             </Button>
           </div>

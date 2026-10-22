@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { RealEstThemeProvider } from "@/components/providers/RealEstThemeProvider";
 import { LogoutModalProvider } from "@/components/providers/LogoutModalProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import { UserProvider } from "@/lib/hooks/useUser";
 import { CookieBanner } from "@/components/shared";
 import "@/lib/styles/globals.css";
 
@@ -192,22 +193,24 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <RealEstThemeProvider defaultTheme="system" enableSystem={true}>
           <AuthProvider>
-            <LogoutModalProvider>
-              <noscript>
-                <div className="fixed inset-0 bg-background flex items-center justify-center z-50">
-                  <div className="text-center p-8">
-                    <h1 className="text-h1 mb-4">JavaScript Required</h1>
-                    <p className="text-body-m text-muted-foreground">
-                      RealEST requires JavaScript to function properly. Please enable
-                      JavaScript in your browser.
-                    </p>
+            <UserProvider>
+              <LogoutModalProvider>
+                <noscript>
+                  <div className="fixed inset-0 bg-background flex items-center justify-center z-50">
+                    <div className="text-center p-8">
+                      <h1 className="text-h1 mb-4">JavaScript Required</h1>
+                      <p className="text-body-m text-muted-foreground">
+                        RealEST requires JavaScript to function properly. Please enable
+                        JavaScript in your browser.
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </noscript>
-              {children}
-              <CookieBanner />
-              <Analytics />
-            </LogoutModalProvider>
+                </noscript>
+                {children}
+                <CookieBanner />
+                <Analytics />
+              </LogoutModalProvider>
+            </UserProvider>
           </AuthProvider>
         </RealEstThemeProvider>
       </body>

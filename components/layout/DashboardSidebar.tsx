@@ -81,6 +81,7 @@ export function DashboardSidebar({
                     <Link
                       key={item.href}
                       href={item.href}
+                      prefetch
                       className={`mt-0.5 flex w-full items-center gap-2 rounded-md p-2 text-left transition-colors hover:cursor-pointer hover:bg-popover-foreground/20 ${
                         showLabels ? "justify-start" : "justify-center p-3"
                       } ${
@@ -111,6 +112,7 @@ export function DashboardSidebar({
         <div className="border-t border-accent/20 p-4">
           <Link
             href="/setting"
+            prefetch
             className={`flex h-11 w-full items-center gap-3 rounded-md px-3 text-muted-foreground transition-colors hover:cursor-pointer hover:bg-popover-foreground/20 ${
               showLabels ? "justify-start" : "justify-center px-2"
             } ${
