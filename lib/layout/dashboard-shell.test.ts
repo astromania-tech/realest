@@ -106,6 +106,11 @@ test("user state is a shared provider under authenticated shells only", () => {
   assert.match(dashboard, /UserSessionBoundary/);
   assert.match(analytics, /UserSessionBoundary/);
   assert.match(onboarding, /UserSessionBoundary/);
+  assert.match(onboarding, /prisma\.users\.findUnique/);
+  assert.match(onboarding, /select:\s*\{\s*role:\s*true\s*\}/);
+  assert.doesNotMatch(onboarding, /app_metadata\?\.role/);
+  assert.doesNotMatch(onboarding, /user_metadata\?\.user_type/);
+  assert.doesNotMatch(onboarding, /\.from\(/);
 });
 
 test("admin sidebar uses plain Link nav without nested Button", () => {
