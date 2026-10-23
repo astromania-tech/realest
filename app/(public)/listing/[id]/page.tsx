@@ -5,6 +5,7 @@
  * and passes it into the client island so the browser does not re-fetch.
  */
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import {
   loadPublicPropertyDetail,
   publicPropertyMetadataFields,
@@ -91,5 +92,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function ListingPage({ params }: PageProps) {
   const { id } = await params;
   const initialProperty = await loadPublicPropertyDetail(id, "agent");
+  if (!initialProperty) notFound();
   return <ListingDetailsPage initialProperty={initialProperty} propertyId={id} />;
 }

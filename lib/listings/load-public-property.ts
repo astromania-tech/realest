@@ -72,11 +72,19 @@ export type PublicPropertyDetail = {
  * Shared public listing payload for /property and /listing pages + public API.
  * Wrapped in React.cache so generateMetadata + page share one DB round-trip.
  */
+const PROPERTY_ID_UUID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export const loadPublicPropertyDetail = cache(
   async (
     propertyId: string,
     source: PublicListingSource,
   ): Promise<PublicPropertyDetail | null> => {
+    // Marketing mock cards sometimes use "1"/"2"; Postgres UUID columns reject those.
+    if (!PROPERTY_ID_UUID.test(propertyId)) {
+      return null;
+    }
+
     const isAgent = source === "agent";
 
     const property = await prisma.properties.findFirst({

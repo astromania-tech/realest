@@ -9,6 +9,13 @@ test("an agent listing links to /listing and an owner listing links to /property
   assert.equal(publicListingPath("p1", null), "/property/p1");
 });
 
+test("public detail loader rejects non-UUID ids before Prisma", () => {
+  const loader = readFileSync("lib/listings/load-public-property.ts", "utf8");
+  assert.match(loader, /PROPERTY_ID_UUID/);
+  assert.match(loader, /PROPERTY_ID_UUID\.test\(propertyId\)/);
+  assert.match(loader, /return null/);
+});
+
 test("a public listing is live and verified", () => {
   assert.equal(isPublicListing({ status: "live", verification_status: "verified" }), true);
   assert.equal(isPublicListing({ status: "live", verification_status: "pending" }), false);
@@ -43,9 +50,12 @@ test("public routes share the live and verified rule", () => {
   const pub = readFileSync("app/api/properties/[id]/public/route.ts", "utf8");
   const guest = readFileSync("app/api/inquiries/guest/route.ts", "utf8");
   const search = readFileSync("app/api/search/properties/route.ts", "utf8");
-  for (const source of [list, detail, pub, guest, search]) {
+  const loader = readFileSync("lib/listings/load-public-property.ts", "utf8");
+  for (const source of [list, detail, guest, search, loader]) {
     assert.match(source, /publicListingWhere|isPublicListing/);
   }
+  // Public detail API delegates the live+verified rule to loadPublicPropertyDetail.
+  assert.match(pub, /loadPublicPropertyDetail/);
   assert.equal(pub.includes("email: property.owners"), false);
   assert.equal(list.includes("phone: true"), false);
   assert.equal(search.includes("phone: true"), false);
