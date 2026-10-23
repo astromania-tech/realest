@@ -7,7 +7,6 @@ import { test } from "node:test";
 import { requireStaff } from "./require-staff.ts";
 import {
   isAdminOnlyPath,
-  isReviewerAllowedPath,
   isStaffAllowedPath,
   isStaffRole,
   postLoginHomePath,
@@ -101,11 +100,11 @@ test("[A-01] reviewer path rules hide sensitive admin surfaces", () => {
   assert.equal(isAdminOnlyPath("/admin/cms/waitlist"), true);
   assert.equal(isAdminOnlyPath("/admin/staff"), true);
   assert.equal(isAdminOnlyPath("/admin/validation"), false);
-  assert.equal(isReviewerAllowedPath("/admin/validation"), true);
-  assert.equal(isReviewerAllowedPath("/admin/validation/vetting/x"), true);
-  assert.equal(isReviewerAllowedPath("/field/visit/x"), true);
-  assert.equal(isReviewerAllowedPath("/admin"), false);
-  assert.equal(isReviewerAllowedPath("/admin/users"), false);
+  assert.equal(isStaffAllowedPath("reviewer", "/admin/validation"), true);
+  assert.equal(isStaffAllowedPath("reviewer", "/admin/validation/vetting/x"), true);
+  assert.equal(isStaffAllowedPath("reviewer", "/field/visit/x"), true);
+  assert.equal(isStaffAllowedPath("reviewer", "/admin"), false);
+  assert.equal(isStaffAllowedPath("reviewer", "/admin/users"), false);
   assert.equal(staffHomePath("reviewer"), "/admin/validation");
   assert.equal(staffHomePath("admin"), "/admin");
   assert.equal(staffHomePath("supervisor"), "/admin/validation/field");

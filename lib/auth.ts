@@ -1,7 +1,6 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { createServiceClient } from "@/lib/supabase/service";
 import type { User } from "@supabase/supabase-js";
 
 // Auth utility types
@@ -11,8 +10,6 @@ export interface AuthResponse {
   error?: string;
   localConfirmed?: boolean;
 }
-
-// const createClient = createServiceClient;
 
 export type { PasswordValidation } from "@/lib/auth/password-rules";
 export { isPasswordValid, validatePassword } from "@/lib/auth/password-rules";
@@ -170,57 +167,6 @@ export async function sendHybridPasswordReset(
 }
 
 /**
- * Send password reset email (legacy function)
- */
-export async function sendPasswordResetEmail(
-  email: string,
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const supabase = createClient();
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
-    return { success: true };
-  } catch (err) {
-    return { success: false, error: "Failed to send reset email" };
-  }
-}
-
-/**
- * Reset password with new password
- */
-export async function resetPassword(
-  newPassword: string,
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    if (!isPasswordValid(newPassword)) {
-      return {
-        success: false,
-        error: "Password does not meet security requirements",
-      };
-    }
-
-    const supabase = createClient();
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword,
-    });
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
-    return { success: true };
-  } catch (err) {
-    return { success: false, error: "Failed to reset password" };
-  }
-}
-
-/**
  * Sign out current user
  */
 export async function signOut(): Promise<{ success: boolean; error?: string }> {
@@ -235,32 +181,6 @@ export async function signOut(): Promise<{ success: boolean; error?: string }> {
     return { success: true };
   } catch (err) {
     return { success: false, error: "Failed to sign out" };
-  }
-}
-
-/**
- * Send OTP for magic-link login (passwordless sign-in for existing, confirmed users).
- * NOT for signup verification — use resendEmailVerification() for that.
- */
-export async function sendOTP(
-  email: string,
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: false,
-      },
-    });
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
-    return { success: true };
-  } catch (err) {
-    return { success: false, error: "Failed to send OTP" };
   }
 }
 
@@ -290,33 +210,6 @@ export async function verifyOTP(
 }
 
 /**
- * Verify email using token hash from a Supabase-generated email link.
- * type: "signup" — for confirming a new account's email address (default)
- * type: "email"  — for magic-link login tokens
- */
-export async function verifyEmail(
-  tokenHash: string,
-  type: "signup" | "email" = "signup",
-): Promise<AuthResponse> {
-  try {
-    const supabase = createClient();
-    const { data, error } = await supabase.auth.verifyOtp({
-      token: tokenHash,
-      email: "", // Supabase requires email for verifyOtp, but it's not actually used for token verification in this context
-      type,
-    });
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
-    return { success: true, user: data.user || undefined };
-  } catch (err) {
-    return { success: false, error: "Failed to verify email" };
-  }
-}
-
-/**
  * Resend email verification
  */
 export async function resendEmailVerification(
@@ -335,14 +228,6 @@ export async function resendEmailVerification(
 }
 
 /**
- * Check if user is authenticated
- */
-export async function isAuthenticated(): Promise<boolean> {
-  const { success, user } = await getCurrentUser();
-  return success && !!user;
-}
-
-/**
  * Format auth error messages for better UX
  */
 export function formatAuthError(error: string): string {
@@ -358,14 +243,6 @@ export function formatAuthError(error: string): string {
   };
 
   return errorMappings[error] || error;
-}
-
-/**
- * Validate email format
- */
-export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
 }
 
 /**
@@ -565,12 +442,4 @@ export async function handlePasswordResetSession(
       redirectDelay: 3000,
     };
   }
-}
-
-/**
- * Generate secure session timeout
- */
-export function getSessionTimeout(): number {
-  // 24 hours in seconds
-  return 24 * 60 * 60;
 }

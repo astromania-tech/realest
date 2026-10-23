@@ -186,21 +186,3 @@ export function staffRolePanelSubtitle(role: string | null | undefined): string 
       return "Verification";
   }
 }
-
-export const REVIEWER_HIDDEN_PROFILE_FIELDS = ["email", "phone"] as const;
-
-export const SENSITIVE_ADMIN_CAPABILITIES = [
-  "owner_agent_email_phone",
-  "kyc_id_images_nin_bvn_cac_raw",
-  "user_suspend_ban_moderation",
-  "subadmin_manage",
-  "email_campaigns_audiences_recipients",
-  "waitlist_pii_export",
-  "cms_user_lists_with_contact",
-  "system_status_internals",
-] as const;
-
-/** @deprecated use isStaffAllowedPath */
-export function isReviewerAllowedPath(pathname: string): boolean {
-  return isStaffAllowedPath("reviewer", pathname);
-}
