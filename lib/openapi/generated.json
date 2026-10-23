@@ -508,7 +508,7 @@
       "post": {
         "method": "post",
         "summary": "Create new property listing",
-        "description": "Create a new property listing. Requires owner or agent role. Drafts stay editable; submitted listings are automatically queued for ML validation.",
+        "description": "Create a new property listing. Requires owner or agent role and an approved Youverify kyc_requests row. Drafts stay editable; submitted listings are automatically queued for ML validation.",
         "tags": [
           "Properties"
         ],
@@ -569,7 +569,7 @@
             }
           },
           "403": {
-            "description": "Forbidden - user role insufficient",
+            "description": "Forbidden. The caller is not an owner or agent, or Youverify has not approved their identity.",
             "content": {
               "application/json": {
                 "schema": {
@@ -941,7 +941,7 @@
       "get": {
         "method": "get",
         "summary": "Get property details",
-        "description": "Retrieve complete property details including media, documents, and inquiries. Live properties are publicly viewable.",
+        "description": "Public viewers receive a live, verified listing without documents, inquiries, email, or phone. The owner and an admin receive the full record.",
         "tags": [
           "Properties"
         ],
@@ -3154,7 +3154,7 @@
       "post": {
         "method": "post",
         "summary": "Sync waitlist context to profile",
-        "description": "Copy waitlist metadata and referral context to a newly created profile inside the sync window.",
+        "description": "Copy waitlist metadata and referral context to the signed-in profile inside the sync window.",
         "tags": [
           "Auth"
         ],
@@ -3188,6 +3188,12 @@
           },
           "400": {
             "description": "Invalid body or missing email"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Email does not match the session"
           },
           "404": {
             "description": "Profile not found or sync window expired"
@@ -3306,7 +3312,7 @@
       "post": {
         "method": "post",
         "summary": "Create dashboard property",
-        "description": "Create a new property listing from the owner dashboard and queue it for validation.",
+        "description": "Create a new property listing from the owner dashboard. An owner or agent must already have Youverify identity approval.",
         "tags": [
           "Dashboard - Listings"
         ],
@@ -3336,7 +3342,7 @@
             "description": "Unauthorized"
           },
           "403": {
-            "description": "Forbidden - Property owners only"
+            "description": "Forbidden. Property owners and agents need an approved Youverify identity before a draft is saved."
           }
         },
         "operationId": "postDashboardListings"
@@ -4631,13 +4637,23 @@
                       "approve",
                       "reject",
                       "schedule",
-                      "flag_issue"
+                      "flag_issue",
+                      "assign",
+                      "check_in",
+                      "request_correction",
+                      "confirm_registry"
                     ]
                   },
                   "notes": {
                     "type": "string"
                   },
                   "scheduled_date": {
+                    "type": "string"
+                  },
+                  "officer_id": {
+                    "type": "string"
+                  },
+                  "visit_day": {
                     "type": "string"
                   },
                   "rejection_reason": {
@@ -6172,6 +6188,238 @@
         },
         "operationId": "postAdminValidationMlId"
       }
+    },
+    "/api/admin/staff-invites": {
+      "get": {
+        "method": "get",
+        "summary": "List verification staff",
+        "description": "List reviewers and field staff invited by admins.",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Staff list"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "operationId": "getAdminStaffInvites"
+      },
+      "post": {
+        "method": "post",
+        "summary": "Invite verification staff",
+        "description": "Create or promote a staff account with operating state/LGA and email a password setup link.",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "full_name",
+                  "role",
+                  "state",
+                  "lga"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "full_name": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "reviewer",
+                      "supervisor",
+                      "team_leader",
+                      "team_member"
+                    ]
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "lga": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Invitation sent"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "409": {
+            "description": "Already has this role or is admin"
+          },
+          "500": {
+            "description": "Invite failed"
+          }
+        },
+        "operationId": "postAdminStaffInvites"
+      }
+    },
+    "/api/auth/complete-password-reset": {
+      "post": {
+        "method": "post",
+        "summary": "Complete password reset",
+        "description": "Set a new password for the recovery session established by verify-reset-otp.",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "password"
+                ],
+                "properties": {
+                  "password": {
+                    "type": "string",
+                    "minLength": 8
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password updated"
+          },
+          "400": {
+            "description": "Invalid password or update failed"
+          },
+          "401": {
+            "description": "Recovery session missing or expired"
+          }
+        },
+        "operationId": "postAuthCompletePasswordReset"
+      }
+    },
+    "/api/kyc/youverify": {
+      "post": {
+        "method": "post",
+        "summary": "Verify identity with Youverify",
+        "description": "An owner submits NIN or BVN with the first name, last name, date of birth, and a photo of the face on that ID. An agent submits a CAC number with the registered company name. An approved owner row requires the typed details and the ID photo to match the Youverify record. The photo is not stored.",
+        "tags": [
+          "Kyc"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "idType",
+                  "idNumber",
+                  "consent"
+                ],
+                "properties": {
+                  "idType": {
+                    "type": "string",
+                    "enum": [
+                      "nin",
+                      "bvn",
+                      "cac"
+                    ]
+                  },
+                  "idNumber": {
+                    "type": "string"
+                  },
+                  "consent": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  },
+                  "firstName": {
+                    "type": "string"
+                  },
+                  "lastName": {
+                    "type": "string"
+                  },
+                  "dateOfBirth": {
+                    "type": "string"
+                  },
+                  "companyName": {
+                    "type": "string"
+                  },
+                  "idImageBase64": {
+                    "type": "string",
+                    "description": "JPEG, PNG, or WebP of the face on the ID, max 1 MB."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "An approved Youverify row already exists"
+          },
+          "201": {
+            "description": "Youverify result saved"
+          },
+          "400": {
+            "description": "Identity number, consent, or id type does not match the role"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Only an owner or an agent can verify identity"
+          },
+          "502": {
+            "description": "Youverify did not return a result. No row was approved."
+          },
+          "503": {
+            "description": "Youverify is not configured"
+          }
+        },
+        "operationId": "postKycYouverify"
+      }
     }
   },
   "tags": [
@@ -6264,6 +6512,10 @@
       "description": "Agent verification workflows"
     },
     {
+      "name": "Admin",
+      "description": "Administrative operations"
+    },
+    {
       "name": "Notifications",
       "description": "User notification management"
     },
@@ -6282,6 +6534,9 @@
     {
       "name": "Waitlist",
       "description": "Waitlist signup and follow-up"
+    },
+    {
+      "name": "Kyc"
     }
   ]
 }
