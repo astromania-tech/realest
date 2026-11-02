@@ -22,8 +22,8 @@ export default async function DuplicateResolutionPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireStaffPage();
   const { id } = await params;
+  await requireStaffPage(`/admin/validation/duplicates/${id}`);
 
   const property = await prisma.properties.findFirst({
     where: { id, status: "pending_duplicate_review" },

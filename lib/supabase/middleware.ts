@@ -5,6 +5,7 @@ import {
   isRouteAccessible,
   shouldEnableAuthentication,
 } from "@/lib/appMode";
+import { accountSignInClosed } from "@/lib/auth/account-closed";
 import { isStaffRole, staffHomePath } from "@/lib/auth/roles";
 import { middlewareNeedsSession } from "@/lib/supabase/middleware-auth-paths";
 
@@ -73,6 +74,36 @@ export async function updateSession(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  if (user) {
+    const { data: account } = await supabase
+      .from("users")
+      .select("deleted_at")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (accountSignInClosed(account)) {
+      await supabase.auth.signOut();
+      if (pathname.startsWith("/api/")) {
+        const denied = NextResponse.json({ error: "This account is closed." }, { status: 403 });
+        supabaseResponse.cookies.getAll().forEach((cookie) => {
+          denied.cookies.set(cookie);
+        });
+        return denied;
+      }
+      if (!(pathname === "/login" && request.nextUrl.searchParams.get("closed") === "1")) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/login";
+        url.search = "";
+        url.searchParams.set("closed", "1");
+        const redirect = NextResponse.redirect(url);
+        supabaseResponse.cookies.getAll().forEach((cookie) => {
+          redirect.cookies.set(cookie);
+        });
+        return redirect;
+      }
+      return supabaseResponse;
+    }
+  }
 
   // Guest-only routes: redirect confirmed + authenticated users to dashboard
   const guestOnlyRoutes = ["/login", "/register", "/forgot-password"];

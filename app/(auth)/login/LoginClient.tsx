@@ -16,6 +16,7 @@ import {
   signInWithPassword,
   formatAuthError,
 } from "@/lib/auth";
+import { accountSignInClosed } from "@/lib/auth/account-closed";
 import { isStaffRole, postLoginHomePath, staffHomePath } from "@/lib/auth/roles";
 import { Eye, EyeOff, Mail, Lock, CheckCircle, AlertCircle } from "lucide-react";
 
@@ -39,7 +40,9 @@ function LoginForm() {
     if (emailParam) {
       setFormData((prev) => ({ ...prev, email: decodeURIComponent(emailParam) }));
     }
-    if (searchParams.get("local") === "1") {
+    if (searchParams.get("closed") === "1") {
+      setError("This account is closed. An admin has to restore it.");
+    } else if (searchParams.get("local") === "1") {
       setSuccessMessage("This PC confirmed the email. Sign in with the password you just set.");
     } else if (verified === "true") {
       setSuccessMessage("Email verification complete! Sign in to continue.");
@@ -79,9 +82,14 @@ function LoginForm() {
         // public.users.role is source of truth (JWT metadata can lag after invite).
         const { data: roleRow } = await supabase
           .from("users")
-          .select("role")
+          .select("role, deleted_at")
           .eq("id", response.user.id)
           .single();
+        if (accountSignInClosed(roleRow)) {
+          await supabase.auth.signOut();
+          setError("This account is closed. An admin has to restore it.");
+          return;
+        }
         const role =
           roleRow?.role ??
           response.user.app_metadata?.role ??
@@ -112,7 +120,7 @@ function LoginForm() {
         router.push(postLoginHomePath(role));
         router.refresh();
       }
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred");
     } finally {
       setIsLoading(false);

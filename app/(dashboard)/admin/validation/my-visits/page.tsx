@@ -2,7 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireStaffPage } from "@/lib/auth/require-staff-page";
 import { listMyFieldAssignments } from "@/lib/trust/field-team-store";
-import { listMyVisits } from "@/lib/trust/load-case-view";
 import { ListPager } from "@/components/realest/ListPager";
 import { pageWindow, parsePage } from "@/lib/ui/page-window";
 import { Badge } from "@/components/ui/badge";
@@ -20,60 +19,14 @@ export default async function MyVisitsPage({
   searchParams: Promise<{ page?: string }>;
 }) {
   const staff = await requireStaffPage("/admin/validation/my-visits");
-  const [teamAssignments, officerVisits] = await Promise.all([
-    listMyFieldAssignments(staff.userId),
-    listMyVisits(staff.userId),
-  ]);
-
-  const byId = new Map<
-    string,
-    {
-      id: string;
-      title: string;
-      address: string;
-      city: string;
-      visitDay: string | null;
-      roleOnTeam: string;
-      fieldBrief: string | null;
-      caseStateLabel: string | null;
-      canCheckIn: boolean;
-    }
-  >();
-
-  for (const item of teamAssignments) {
-    byId.set(item.id, {
-      id: item.id,
-      title: item.title,
-      address: item.address,
-      city: item.city,
-      visitDay: item.visitDay,
-      roleOnTeam: item.roleOnTeam,
-      fieldBrief: null,
-      caseStateLabel: null,
-      canCheckIn: item.roleOnTeam === "check_in",
-    });
-  }
-  for (const item of officerVisits) {
-    const existing = byId.get(item.id);
-    byId.set(item.id, {
-      id: item.id,
-      title: item.title,
-      address: item.address,
-      city: item.city,
-      visitDay: existing?.visitDay ?? null,
-      roleOnTeam: existing?.roleOnTeam ?? "check_in",
-      fieldBrief: item.fieldBrief,
-      caseStateLabel: item.caseStateLabel,
-      canCheckIn: true,
-    });
-  }
-
-  const visits = Array.from(byId.values());
   const params = await searchParams;
   const requested = parsePage(params.page);
-  const window = pageWindow(visits.length, requested, PAGE_SIZE);
-  if (params.page && requested !== window.page) redirect(visitsHref(window.page));
-  const visible = visits.slice(window.start, window.end);
+  const { items, total, page } = await listMyFieldAssignments(staff.userId, {
+    page: requested,
+    pageSize: PAGE_SIZE,
+  });
+  if (params.page && requested !== page) redirect(visitsHref(page));
+  const window = pageWindow(total, page, PAGE_SIZE);
 
   return (
     <div className="mx-auto min-w-0 max-w-4xl">
@@ -88,7 +41,7 @@ export default async function MyVisitsPage({
       </p>
 
       <div className="mt-6 space-y-4 sm:space-y-5">
-        {visible.map((item) => (
+        {items.map((item) => (
           <article
             key={item.id}
             className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5"
@@ -123,7 +76,7 @@ export default async function MyVisitsPage({
               </div>
             ) : null}
             <div className="mt-4 flex flex-col gap-2 sm:mt-5 sm:flex-row sm:flex-wrap">
-              {item.canCheckIn ? (
+              {item.roleOnTeam === "check_in" ? (
                 <Link
                   className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 sm:w-auto"
                   href={`/field/visit/${item.id}`}
@@ -140,7 +93,7 @@ export default async function MyVisitsPage({
             </div>
           </article>
         ))}
-        {visits.length === 0 ? (
+        {total === 0 ? (
           <div className="rounded-2xl border border-border bg-card p-8 text-center sm:p-10">
             <p className="font-semibold">No field assignments</p>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -154,7 +107,7 @@ export default async function MyVisitsPage({
         pageCount={window.pageCount}
         from={window.from}
         to={window.to}
-        total={visits.length}
+        total={total}
         prevHref={window.page > 1 ? visitsHref(window.page - 1) : null}
         nextHref={window.page < window.pageCount ? visitsHref(window.page + 1) : null}
       />

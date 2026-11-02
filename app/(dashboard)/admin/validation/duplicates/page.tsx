@@ -20,7 +20,7 @@ export default async function DuplicatesPage({
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
-  await requireStaffPage();
+  await requireStaffPage("/admin/validation/duplicates");
   const params = await searchParams;
   const requested = parsePage(params.page);
   const total = await prisma.properties.count({ where: { status: "pending_duplicate_review" } });

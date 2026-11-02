@@ -3,6 +3,7 @@ import { Prisma } from "@/lib/prisma/client";
 import { nextCaseState } from "@/lib/trust/case";
 import { openDeskCase, setCaseState, readStoredVisit } from "@/lib/trust/visit-store";
 import { notifyStaff, notifyStaffMany } from "@/lib/notifications/staff-notify";
+import { queueItemLabels } from "@/lib/trust/case-view";
 import {
   assignTeamLeaderAllowed,
   confirmFieldTeamAllowed,
@@ -583,10 +584,46 @@ export async function confirmFieldTeam(input: {
   return { ok: true, team };
 }
 
-/** Visits where the user is check-in officer or a confirmed team member. */
-export async function listMyFieldAssignments(userId: string): Promise<
-  Array<{ id: string; title: string; address: string; city: string; visitDay: string | null; roleOnTeam: string }>
-> {
+/** Visits where the user is check-in officer, leader, or a confirmed member. One page, not a 50-row cap. */
+export async function listMyFieldAssignments(
+  userId: string,
+  options?: { page?: number; pageSize?: number },
+): Promise<{
+  items: Array<{
+    id: string;
+    title: string;
+    address: string;
+    city: string;
+    visitDay: string | null;
+    roleOnTeam: string;
+    fieldBrief: string | null;
+    caseStateLabel: string | null;
+  }>;
+  total: number;
+  page: number;
+}> {
+  const pageSize = Math.min(20, Math.max(1, Math.floor(options?.pageSize ?? 5)));
+  const requested = Math.max(1, Math.floor(options?.page ?? 1));
+  const membership = Prisma.sql`
+    p.status = 'pending_vetting'
+    and (
+      p.vetting_officer_id = ${userId}::uuid
+      or t.team_leader_id = ${userId}::uuid
+      or m.user_id is not null
+    )
+  `;
+  const countRows = await prisma.$queryRaw<Array<{ total: number }>>`
+    select count(distinct p.id)::int as total
+    from public.properties p
+    left join public.property_field_teams t on t.property_id = p.id
+    left join public.property_field_team_members m
+      on m.property_id = p.id and m.user_id = ${userId}::uuid
+    where ${membership}
+  `;
+  const total = Number(countRows[0]?.total ?? 0);
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const page = Math.min(requested, pageCount);
+  const offset = (page - 1) * pageSize;
   const rows = await prisma.$queryRaw<
     Array<{
       id: string;
@@ -595,37 +632,56 @@ export async function listMyFieldAssignments(userId: string): Promise<
       city: string;
       visit_day: Date | null;
       role_on_team: string;
+      field_brief: string | null;
+      case_state: string | null;
     }>
   >`
-    select distinct on (p.id)
-      p.id::text as id,
-      p.title,
-      p.address,
-      p.city,
-      coalesce(t.visit_day, p.vetting_visit_on) as visit_day,
-      case
-        when t.check_in_officer_id = ${userId}::uuid or p.vetting_officer_id = ${userId}::uuid then 'check_in'
-        when t.team_leader_id = ${userId}::uuid then 'leader'
-        else 'member'
-      end as role_on_team
-    from public.properties p
-    left join public.property_field_teams t on t.property_id = p.id
-    left join public.property_field_team_members m on m.property_id = p.id and m.user_id = ${userId}::uuid
-    where p.status = 'pending_vetting'
-      and (
-        p.vetting_officer_id = ${userId}::uuid
-        or t.team_leader_id = ${userId}::uuid
-        or m.user_id is not null
-      )
-    order by p.id, coalesce(t.visit_day, p.vetting_visit_on) asc nulls last
-    limit 50
+    select id, title, address, city, visit_day, role_on_team, field_brief, case_state
+    from (
+      select distinct on (p.id)
+        p.id::text as id,
+        p.title,
+        p.address,
+        p.city,
+        coalesce(t.visit_day, p.vetting_visit_on) as visit_day,
+        case
+          when t.check_in_officer_id = ${userId}::uuid or p.vetting_officer_id = ${userId}::uuid then 'check_in'
+          when t.team_leader_id = ${userId}::uuid then 'leader'
+          else 'member'
+        end as role_on_team,
+        case
+          when t.check_in_officer_id = ${userId}::uuid or p.vetting_officer_id = ${userId}::uuid then k.judgment
+          else null
+        end as field_brief,
+        case
+          when t.check_in_officer_id = ${userId}::uuid or p.vetting_officer_id = ${userId}::uuid then k.state
+          else null
+        end as case_state
+      from public.properties p
+      left join public.property_field_teams t on t.property_id = p.id
+      left join public.property_field_team_members m
+        on m.property_id = p.id and m.user_id = ${userId}::uuid
+      left join public.property_verification_cases k on k.property_id = p.id
+      where ${membership}
+      order by p.id, coalesce(t.visit_day, p.vetting_visit_on) asc nulls last
+    ) visits
+    order by visit_day asc nulls last, id
+    limit ${pageSize} offset ${offset}
   `;
-  return rows.map((row) => ({
-    id: row.id,
-    title: row.title,
-    address: row.address,
-    city: row.city,
-    visitDay: row.visit_day ? dayString(row.visit_day) : null,
-    roleOnTeam: row.role_on_team,
-  }));
+  return {
+    total,
+    page,
+    items: rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      address: row.address,
+      city: row.city,
+      visitDay: row.visit_day ? dayString(row.visit_day) : null,
+      roleOnTeam: row.role_on_team,
+      fieldBrief: row.field_brief,
+      caseStateLabel: row.case_state
+        ? queueItemLabels(row.case_state, "pending_vetting").caseStateLabel
+        : null,
+    })),
+  };
 }
