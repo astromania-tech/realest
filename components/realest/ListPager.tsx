@@ -34,7 +34,7 @@ export function ListPager({
       <p className="text-xs text-muted-foreground">
         Showing {from}–{to} of {total}
       </p>
-      <div className="flex items-center gap-2">
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
         {prevHref && !prevDisabled ? (
           <Button asChild variant="outline" size="sm" className="min-w-24">
             <Link href={prevHref}>Previous</Link>

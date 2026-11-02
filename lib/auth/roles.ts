@@ -44,6 +44,7 @@ export const ADMIN_ONLY_PATH_PREFIXES = [
   "/admin/users",
   "/admin/subadmins",
   "/admin/staff",
+  "/admin/activity",
   "/admin/cms",
   "/admin/emails",
   "/admin/settings",

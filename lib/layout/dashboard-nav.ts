@@ -20,6 +20,7 @@ import {
   Megaphone,
   Users2,
   MapPin,
+  ScrollText,
 } from "lucide-react";
 
 export type DashboardNavItem = {
@@ -123,6 +124,7 @@ export const ADMIN_NAV_ITEMS: DashboardNavItem[] = [
   { href: "/admin/content", label: "Content Management", description: "Manage platform content", icon: FileText },
   { href: "/admin/settings", label: "Admin Settings", description: "System configurations", icon: Settings },
   { href: "/admin/staff", label: "Staff invites", description: "Invite reviewers and field teams", icon: Users2 },
+  { href: "/admin/activity", label: "Staff activity", description: "Who did what across Connect", icon: ScrollText },
   { href: "/admin/subadmins", label: "Sub-Admins", description: "Manage sub-admin accounts", icon: UserCheck2 },
   { href: "/admin/cms", label: "CMS Dashboard", description: "Content management overview", icon: Layout },
   { href: "/admin/support", label: "Support Center", description: "Support tickets and inquiries", icon: HelpCircle },

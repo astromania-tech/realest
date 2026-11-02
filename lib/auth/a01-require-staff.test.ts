@@ -118,6 +118,8 @@ test("[A-01] reviewer path rules hide sensitive admin surfaces", () => {
   assert.equal(isAdminOnlyPath("/admin/emails/campaigns"), true);
   assert.equal(isAdminOnlyPath("/admin/cms/waitlist"), true);
   assert.equal(isAdminOnlyPath("/admin/staff"), true);
+  assert.equal(isAdminOnlyPath("/admin/activity"), true);
+  assert.equal(isStaffAllowedPath("reviewer", "/admin/activity"), false);
   assert.equal(isAdminOnlyPath("/admin/validation"), false);
   assert.equal(isStaffAllowedPath("reviewer", "/admin/validation"), true);
   assert.equal(isStaffAllowedPath("reviewer", "/admin/validation/vetting/x"), true);
