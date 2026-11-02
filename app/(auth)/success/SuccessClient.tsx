@@ -17,6 +17,7 @@ import { resendEmailVerification } from "@/lib/auth";
 function SignUpSuccessContent() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
+  const mailMissing = searchParams.get("sent") === "0";
   const [isResending, setIsResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
   const [resendError, setResendError] = useState("");
@@ -76,7 +77,9 @@ function SignUpSuccessContent() {
         <CardContent className="space-y-6">
           <div className="bg-muted/50 border border-border rounded-lg p-4 space-y-3">
             <p className="text-sm text-center text-muted-foreground">
-              We sent an activation link to
+              {mailMissing
+                ? "The account exists, but the activation email did not send. Use resend below."
+                : "We sent an activation link to"}
             </p>
             {email && (
               <p className="text-sm font-semibold text-center text-foreground break-all">
@@ -84,8 +87,9 @@ function SignUpSuccessContent() {
               </p>
             )}
             <p className="text-sm text-muted-foreground text-center">
-              Click the link in that email to activate your account and access
-              your dashboard. The link expires in <strong>24 hours</strong>.
+              {mailMissing
+                ? "Resend sends a new activation link to this address. The link expires in 24 hours."
+                : "Click the link in that email to activate your account and access your dashboard. The link expires in 24 hours."}
             </p>
           </div>
 

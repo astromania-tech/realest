@@ -64,7 +64,7 @@ export async function loadMarketplaceListings(input: {
     city: row.city,
     bedrooms: row.bedrooms,
     bathrooms: row.bathrooms ? Number(row.bathrooms) : null,
-    square_feet: row.square_feet,
+    square_feet: row.square_feet == null ? null : Number(row.square_feet),
     listing_type: row.listing_type,
     property_type: row.property_type,
     verification_status: row.verification_status,

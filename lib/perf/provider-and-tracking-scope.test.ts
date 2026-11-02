@@ -36,12 +36,15 @@ test("marketing, home, and email-links mount tracking; dashboard does not", () =
   assert.doesNotMatch(root, /MarketingTrackingScripts/);
 });
 
-test("ProfileDropdown tolerates missing UserProvider via useOptionalUser", () => {
+test("ProfileDropdown and ProfileUpload tolerate a missing UserProvider", () => {
   const dropdown = readFileSync("components/realest/ProfileDropdown.tsx", "utf8");
+  const upload = readFileSync("components/realest/ProfileUpload.tsx", "utf8");
   const header = readFileSync("components/layout/Header.tsx", "utf8");
   assert.match(dropdown, /useOptionalUser/);
   assert.match(dropdown, /fallbackRole/);
   assert.match(header, /fallbackRole=\{role\}/);
+  assert.match(upload, /useOptionalUser/);
+  assert.doesNotMatch(upload, /useUser\(/);
 });
 
 test("listCaseQueue pushes filter and search into SQL", () => {

@@ -21,7 +21,6 @@ export function HeatmapLayer({
   useEffect(() => {
     if (!map || !points.length) return;
 
-    // @ts-expect-error leaflet.heat attaches at runtime
     const heatLayer = (window as any).L.heatLayer(points, options);
     map.addLayer(heatLayer);
 

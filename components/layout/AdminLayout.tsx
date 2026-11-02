@@ -134,7 +134,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   const redirecting =
     !isLoading &&
-    Boolean(staffRole) &&
+    staffRole !== null &&
     staffRole !== "admin" &&
     !isStaffAllowedPath(staffRole, pathname);
 

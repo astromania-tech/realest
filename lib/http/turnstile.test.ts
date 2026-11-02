@@ -4,28 +4,29 @@ import test from "node:test";
 import { turnstileMode, verifyTurnstileToken } from "./turnstile.ts";
 
 test("turnstileMode skips locally without secret and verifies when secret is set", () => {
-  const prevSecret = process.env.TURNSTILE_SECRET_KEY;
-  const prevNode = process.env.NODE_ENV;
-  const prevMode = process.env.NEXT_PUBLIC_APP_MODE;
+  const env = process.env as Record<string, string | undefined>;
+  const prevSecret = env.TURNSTILE_SECRET_KEY;
+  const prevNode = env.NODE_ENV;
+  const prevMode = env.NEXT_PUBLIC_APP_MODE;
   try {
-    delete process.env.TURNSTILE_SECRET_KEY;
-    process.env.NODE_ENV = "development";
-    process.env.NEXT_PUBLIC_APP_MODE = "development";
+    delete env.TURNSTILE_SECRET_KEY;
+    env.NODE_ENV = "development";
+    env.NEXT_PUBLIC_APP_MODE = "development";
     assert.equal(turnstileMode(), "skip");
 
-    process.env.TURNSTILE_SECRET_KEY = "test-secret";
+    env.TURNSTILE_SECRET_KEY = "test-secret";
     assert.equal(turnstileMode(), "verify");
 
-    delete process.env.TURNSTILE_SECRET_KEY;
-    process.env.NODE_ENV = "production";
+    delete env.TURNSTILE_SECRET_KEY;
+    env.NODE_ENV = "production";
     assert.equal(turnstileMode(), "misconfigured");
   } finally {
-    if (prevSecret === undefined) delete process.env.TURNSTILE_SECRET_KEY;
-    else process.env.TURNSTILE_SECRET_KEY = prevSecret;
-    if (prevNode === undefined) delete process.env.NODE_ENV;
-    else process.env.NODE_ENV = prevNode;
-    if (prevMode === undefined) delete process.env.NEXT_PUBLIC_APP_MODE;
-    else process.env.NEXT_PUBLIC_APP_MODE = prevMode;
+    if (prevSecret === undefined) delete env.TURNSTILE_SECRET_KEY;
+    else env.TURNSTILE_SECRET_KEY = prevSecret;
+    if (prevNode === undefined) delete env.NODE_ENV;
+    else env.NODE_ENV = prevNode;
+    if (prevMode === undefined) delete env.NEXT_PUBLIC_APP_MODE;
+    else env.NEXT_PUBLIC_APP_MODE = prevMode;
   }
 });
 

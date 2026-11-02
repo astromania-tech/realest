@@ -124,7 +124,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       : inquiry.profiles_inquiries_owner_idToprofiles;
 
     const emailData = {
-      to: recipient.email,
+      to: recipient?.email,
       subject: `Inquiry closed for ${inquiry.properties?.title}`,
       template: "inquiry-closed",
       data: {

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from "@/lib/supabase/service";
-import { renderCampaignTemplate } from '@/lib/emailBulkSender';
-import { Resend } from 'resend';
 import { sendVerificationEmail } from '@/lib/emailService';
-import { alreadyRegisteredEmail, localEmailConfirmAllowed } from '@/lib/auth/local-email-confirm';
+import { duplicateSignupError, localEmailConfirmAllowed } from '@/lib/auth/local-email-confirm';
+import { signupVerifyRedirect } from '@/lib/auth/signup-mail';
 import { resolveSignupRoleFromWaitlist } from '@/lib/auth/signup-waitlist-role';
 import { clientAddress, consumeRateLimit } from '@/lib/http/rate-limit';
 import { syncWaitlistContextToProfile } from '@/lib/reward-engine';
+import { prisma } from '@/lib/prisma';
 import type { User } from '@supabase/supabase-js';
 
 async function syncWaitlistAfterSignup(email: string, userId: string | undefined) {
@@ -18,7 +18,7 @@ async function syncWaitlistAfterSignup(email: string, userId: string | undefined
   }
 }
 
-async function confirmLocalAuthUser(email: string, password?: string): Promise<User | null> {
+async function confirmLocalAuthUser(email: string): Promise<User | null> {
   if (!localEmailConfirmAllowed()) return null;
   const admin = createServiceClient();
   const target = email.trim().toLowerCase();
@@ -29,7 +29,6 @@ async function confirmLocalAuthUser(email: string, password?: string): Promise<U
     if (found) {
       const updated = await admin.auth.admin.updateUserById(found.id, {
         email_confirm: true,
-        ...(password ? { password } : {}),
       });
       if (updated.error || !updated.data.user) return null;
       return updated.data.user;
@@ -39,19 +38,13 @@ async function confirmLocalAuthUser(email: string, password?: string): Promise<U
   return null;
 }
 
-function mailClient(): Resend | null {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) return null;
-  return new Resend(key);
-}
-
 /**
  * POST /api/auth/signup
  * 
  * Custom signup flow that:
- * 1. Creates user via Supabase Auth Admin API (service_role)
- * 2. Leaves email unconfirmed, then sends the branded link via Resend
  * On this PC, against local Supabase only, the address is confirmed and no mail is sent.
+ * Production creates the unconfirmed user with a signup link and sends that link through Resend.
+ * Resend of an existing account uses a magic link, because a second signup link is rejected.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -68,72 +61,99 @@ export async function POST(request: NextRequest) {
     const supabaseAdmin = createServiceClient();
     const confirmLocally = localEmailConfirmAllowed();
 
-    const { data: userData, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: confirmLocally,
-      user_metadata: {
-        full_name: fullName || '',
-        user_type: signupRole,
-      },
-    });
-
-    if (createError) {
-      if (confirmLocally && alreadyRegisteredEmail(createError.message)) {
-        const confirmed = await confirmLocalAuthUser(email, password);
-        if (confirmed) {
-          await syncWaitlistAfterSignup(email, confirmed.id);
-          return NextResponse.json({ success: true, user: confirmed, localConfirmed: true });
-        }
-      }
-      return NextResponse.json({ error: createError.message }, { status: createError.status || 400 });
-    }
-
-    await syncWaitlistAfterSignup(email, userData.user?.id);
-
     if (confirmLocally) {
+      const { data: userData, error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          full_name: fullName || '',
+          user_type: signupRole,
+        },
+      });
+
+      if (createError) {
+        const duplicate = duplicateSignupError(createError);
+        if (duplicate) {
+          return NextResponse.json({ error: duplicate }, { status: 409 });
+        }
+        return NextResponse.json({ error: createError.message }, { status: createError.status || 400 });
+      }
+
+      if (userData.user?.id) {
+        await prisma.users.upsert({
+          where: { id: userData.user.id },
+          update: { role: signupRole },
+          create: {
+            id: userData.user.id,
+            email: email.trim().toLowerCase(),
+            full_name: fullName || null,
+            role: signupRole,
+          },
+        });
+      }
+
+      await syncWaitlistAfterSignup(email, userData.user?.id);
       return NextResponse.json({ success: true, user: userData.user, localConfirmed: true });
     }
 
-    // Generate verification link and send it. Production always takes this path.
+    // Hosted Auth: this signup link creates the unconfirmed user and the mail URL.
+    // Creating the Auth user first makes a second signup link fail with email_exists.
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'signup',
       email,
       password,
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/verify`,
+        data: {
+          full_name: fullName || '',
+          user_type: signupRole,
+        },
+        redirectTo: signupVerifyRedirect(),
       },
     });
 
-    if (linkError) throw linkError;
-
-    // 3. Render and send custom branded email
-    const verificationUrl = linkData.properties.action_link;
-    const { html } = await renderCampaignTemplate('VerificationEmail', {
-      firstName: fullName?.split(' ')[0] || 'there',
-      verificationUrl,
-    });
-
-    const from = process.env.FROM_EMAIL_AUTH || process.env.FROM_EMAIL || 'RealEST <noreply@realest.ng>';
-
-    const resend = mailClient();
-    if (!resend) {
-      console.error('Resend signup email skipped: RESEND_API_KEY is not set');
-    } else {
-      const { error: resendError } = await resend.emails.send({
-        from,
-        to: email,
-        subject: 'Verify your RealEST account',
-        html,
-      });
-
-      if (resendError) {
-        console.error('Resend signup email error:', resendError);
-        // Note: User record is created, they can request a resend later if this fails
+    if (linkError) {
+      const duplicate = duplicateSignupError(linkError);
+      if (duplicate) {
+        return NextResponse.json({ error: duplicate }, { status: 409 });
       }
+      throw linkError;
     }
 
-    return NextResponse.json({ success: true, user: userData.user });
+    const actionLink = linkData?.properties?.action_link;
+    const created = linkData?.user;
+    if (!actionLink || !created?.id) {
+      throw new Error('Verification link was not created');
+    }
+
+    await prisma.users.upsert({
+      where: { id: created.id },
+      update: { role: signupRole },
+      create: {
+        id: created.id,
+        email: email.trim().toLowerCase(),
+        full_name: fullName || null,
+        role: signupRole,
+      },
+    });
+
+    await syncWaitlistAfterSignup(email, created.id);
+
+    const sent = await sendVerificationEmail({
+      email: email.trim().toLowerCase(),
+      firstName: fullName?.split(' ')[0] || 'there',
+      verificationUrl: actionLink,
+    });
+
+    if (!sent.success) {
+      console.error('Resend signup email error:', sent.error);
+    }
+
+    return NextResponse.json({
+      success: true,
+      user: created,
+      emailSent: sent.success,
+    });
 
   } catch (error: any) {
     console.error('Signup API Route error:', error);
@@ -174,16 +194,19 @@ export async function GET(request: NextRequest) {
 
   const supabaseAdmin = createServiceClient();
 
+  // The account already exists. A signup link is rejected with email_exists.
+  // A magic link confirms the address and signs them in on /verify.
   const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-    type: 'signup',
+    type: 'magiclink',
     email: normalized,
-    password: 'REDACTED_NOT_REQUIRED_FOR_LINK_ONLY',
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/verify`,
+      redirectTo: signupVerifyRedirect(),
     },
   });
 
-  if (linkError) return NextResponse.json({ error: linkError.message }, { status: 400 });
+  if (linkError || !linkData?.properties?.action_link) {
+    return NextResponse.json({ error: linkError?.message || 'Verification link was not created' }, { status: 400 });
+  }
 
   const firstName = normalized.split('@')[0];
 
@@ -193,5 +216,12 @@ export async function GET(request: NextRequest) {
     verificationUrl: linkData.properties.action_link,
   });
 
-  return NextResponse.json({ success: result.success, error: result.error });
+  if (!result.success) {
+    return NextResponse.json(
+      { success: false, error: result.error || 'Verification email was not sent' },
+      { status: 502 },
+    );
+  }
+
+  return NextResponse.json({ success: true });
 }

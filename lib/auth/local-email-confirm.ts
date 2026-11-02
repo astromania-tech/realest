@@ -20,5 +20,22 @@ export function localEmailConfirmAllowed(env: {
 }
 
 export function alreadyRegisteredEmail(message: string): boolean {
-  return /already been registered|already registered/i.test(message);
+  return /already been registered|already registered|email address already/i.test(message);
+}
+
+export const DUPLICATE_SIGNUP_MESSAGE =
+  "An account with this email already exists. Sign in instead.";
+
+export function duplicateSignupError(error: {
+  message?: string;
+  code?: string;
+}): string | null {
+  const code = (error.code || "").toLowerCase();
+  if (code === "email_exists" || code === "user_already_exists") {
+    return DUPLICATE_SIGNUP_MESSAGE;
+  }
+  if (error.message && alreadyRegisteredEmail(error.message)) {
+    return DUPLICATE_SIGNUP_MESSAGE;
+  }
+  return null;
 }

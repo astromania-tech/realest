@@ -58,6 +58,7 @@ export default function SignUpPage() {
   };
 
   const handleRoleSelect = (userType: string) => {
+    sessionStorage.setItem("realest-signup-role", userType);
     setFormData((prev) => ({ ...prev, userType }));
     setStep(2);
   };
@@ -73,6 +74,15 @@ export default function SignUpPage() {
 
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
+      setIsLoading(false);
+      return;
+    }
+
+    const chosenRole =
+      formData.userType || sessionStorage.getItem("realest-signup-role") || "";
+    if (chosenRole !== "user" && chosenRole !== "owner" && chosenRole !== "agent") {
+      setError("Choose an account type");
+      setStep(1);
       setIsLoading(false);
       return;
     }
@@ -93,7 +103,7 @@ export default function SignUpPage() {
         formData.email,
         formData.password,
         "", // fullname handled in onboarding
-        formData.userType,
+        chosenRole,
       );
 
       if (!response.success) {
@@ -116,7 +126,8 @@ export default function SignUpPage() {
         if (response.localConfirmed) {
           router.push(`/login?local=1&email=${emailQuery}`);
         } else {
-          router.push(`/success?email=${emailQuery}`);
+          const sent = response.emailSent === false ? "&sent=0" : "";
+          router.push(`/success?email=${emailQuery}${sent}`);
         }
       }
     } catch (err) {
@@ -205,7 +216,13 @@ export default function SignUpPage() {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
           <CardDescription>
-            Fill in your details to complete registration
+            {formData.userType === "owner"
+              ? "Property Owner account"
+              : formData.userType === "agent"
+                ? "Agent account"
+                : formData.userType === "user"
+                  ? "Buyer or renter account"
+                  : "Fill in your details to complete registration"}
           </CardDescription>
         </CardHeader>
 

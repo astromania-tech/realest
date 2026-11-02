@@ -2,6 +2,10 @@
 
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import { isPasswordValid, validatePassword } from "@/lib/auth/password-rules";
+
+export type { PasswordValidation } from "@/lib/auth/password-rules";
+export { isPasswordValid, validatePassword };
 
 // Auth utility types
 export interface AuthResponse {
@@ -9,10 +13,8 @@ export interface AuthResponse {
   user?: User;
   error?: string;
   localConfirmed?: boolean;
+  emailSent?: boolean;
 }
-
-export type { PasswordValidation } from "@/lib/auth/password-rules";
-export { isPasswordValid, validatePassword } from "@/lib/auth/password-rules";
 
 export interface UserProfile {
   id: string;
@@ -134,8 +136,14 @@ export async function signUpWithPassword(
       return { success: false, error: result.error || "Signup failed" };
     }
 
-    return { success: true, user: result.user, localConfirmed: result.localConfirmed === true };
+    return {
+      success: true,
+      user: result.user,
+      localConfirmed: result.localConfirmed === true,
+      emailSent: result.emailSent !== false,
+    };
   } catch (err) {
+    console.error("signUpWithPassword failed:", err);
     return { success: false, error: "An unexpected error occurred" };
   }
 }
@@ -220,7 +228,9 @@ export async function resendEmailVerification(
       `/api/auth/signup?email=${encodeURIComponent(email.trim().toLowerCase())}`,
     );
     const data = await response.json();
-    if (!response.ok) return { success: false, error: data.error || 'Failed to resend' };
+    if (!response.ok || data.success === false) {
+      return { success: false, error: data.error || 'Failed to resend' };
+    }
     return { success: true, localConfirmed: data.localConfirmed === true };
   } catch {
     return { success: false, error: 'Failed to resend verification email' };

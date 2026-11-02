@@ -182,6 +182,12 @@ export async function updateSession(request: NextRequest) {
         url.pathname = "/onboarding";
         return NextResponse.redirect(url);
       }
+
+      if (pathname === "/profile" || pathname.startsWith("/profile/")) {
+        const url = request.nextUrl.clone();
+        url.pathname = role === "owner" ? "/owner" : "/agent";
+        return NextResponse.redirect(url);
+      }
     }
   }
 

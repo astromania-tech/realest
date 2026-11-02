@@ -13,11 +13,16 @@ export function localStaffSetupLink(actionLink: string): string | undefined {
 }
 
 /** Where recovery links land after Supabase verify (invite password setup). */
-export function staffInviteRedirectTo(
-  env: { NEXT_PUBLIC_SITE_URL?: string; NEXT_PUBLIC_APP_URL?: string } = process.env,
-): string {
+export function staffInviteRedirectTo(env?: {
+  NEXT_PUBLIC_SITE_URL?: string;
+  NEXT_PUBLIC_APP_URL?: string;
+}): string {
+  const source = env ?? {
+    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+  };
   let base =
-    env.NEXT_PUBLIC_SITE_URL ?? env.NEXT_PUBLIC_APP_URL ?? "http://127.0.0.1:3000";
+    source.NEXT_PUBLIC_SITE_URL ?? source.NEXT_PUBLIC_APP_URL ?? "http://127.0.0.1:3000";
   base = base.replace(/\/$/, "");
   // Local Supabase site_url is 127.0.0.1 — keep redirect host aligned.
   base = base.replace("://localhost:", "://127.0.0.1:");

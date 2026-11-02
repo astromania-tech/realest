@@ -28,7 +28,7 @@ export type Property = Pick<
   | "id"
   | "title"
   | "price"
-  | "currency"
+  | "price_frequency"
   | "property_type"
   | "listing_type"
   | "address"
@@ -146,7 +146,7 @@ export function usePropertyMap({
         .from("properties")
         .select(
           `
-          id, title, price, currency, property_type, listing_type,
+          id, title, price, price_frequency, property_type, listing_type,
           address, city, state, latitude, longitude,
           bedrooms, bathrooms, square_feet, status, verification_status, created_at,
           property_details ( metadata ),

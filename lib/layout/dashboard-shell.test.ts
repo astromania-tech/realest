@@ -141,6 +141,12 @@ test("staff header logo uses role home path not hard /admin", () => {
   assert.doesNotMatch(header, /window\.location\.href/);
 });
 
+test("owner listing menu trigger is one button", () => {
+  const page = readFileSync("components/dashboard/OwnerListingsClient.tsx", "utf8");
+  assert.match(page, /<DropdownMenuTrigger asChild>/);
+  assert.doesNotMatch(page, /<DropdownMenuTrigger>\s*<Button/);
+});
+
 test("dashboard sidebar uses plain Link nav with prefetch", () => {
   const sidebar = readFileSync("components/layout/DashboardSidebar.tsx", "utf8");
   assert.doesNotMatch(sidebar, /<Link[^>]*>\s*<Button/);
