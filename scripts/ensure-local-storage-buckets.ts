@@ -1,5 +1,5 @@
 /**
- * Ensure local Supabase storage buckets exist (avatars, property-media, property-documents).
+ * Ensure local Supabase storage buckets exist (avatars, property-media, property-documents, kyc-identity).
  *
  *   npx tsx scripts/ensure-local-storage-buckets.ts
  */
@@ -16,6 +16,7 @@ const REQUIRED: Bucket[] = [
   { id: "avatars", name: "avatars", public: true },
   { id: "property-media", name: "property-media", public: false },
   { id: "property-documents", name: "property-documents", public: false },
+  { id: "kyc-identity", name: "kyc-identity", public: false },
 ];
 
 async function listBuckets(): Promise<Array<{ id: string; name: string }>> {

@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums"
-import type * as Prisma from "../internal/prismaNamespace"
+import type * as $Enums from "../enums.ts"
+import type * as Prisma from "../internal/prismaNamespace.ts"
 
 /**
  * Model property_documents
@@ -242,7 +242,7 @@ export type Property_documentsGroupByOutputType = {
   _max: Property_documentsMaxAggregateOutputType | null
 }
 
-export type GetProperty_documentsGroupByPayload<T extends property_documentsGroupByArgs> = Prisma.PrismaPromise<
+type GetProperty_documentsGroupByPayload<T extends property_documentsGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<Property_documentsGroupByOutputType, T['by']> &
       {
@@ -275,6 +275,7 @@ export type property_documentsWhereInput = {
   updated_at?: Prisma.DateTimeNullableFilter<"property_documents"> | Date | string | null
   properties?: Prisma.XOR<Prisma.PropertiesScalarRelationFilter, Prisma.propertiesWhereInput>
   profiles?: Prisma.XOR<Prisma.ProfilesNullableScalarRelationFilter, Prisma.profilesWhereInput> | null
+  property_visit_checks?: Prisma.Property_visit_checksListRelationFilter
 }
 
 export type property_documentsOrderByWithRelationInput = {
@@ -292,6 +293,7 @@ export type property_documentsOrderByWithRelationInput = {
   updated_at?: Prisma.SortOrderInput | Prisma.SortOrder
   properties?: Prisma.propertiesOrderByWithRelationInput
   profiles?: Prisma.profilesOrderByWithRelationInput
+  property_visit_checks?: Prisma.property_visit_checksOrderByRelationAggregateInput
 }
 
 export type property_documentsWhereUniqueInput = Prisma.AtLeast<{
@@ -312,6 +314,7 @@ export type property_documentsWhereUniqueInput = Prisma.AtLeast<{
   updated_at?: Prisma.DateTimeNullableFilter<"property_documents"> | Date | string | null
   properties?: Prisma.XOR<Prisma.PropertiesScalarRelationFilter, Prisma.propertiesWhereInput>
   profiles?: Prisma.XOR<Prisma.ProfilesNullableScalarRelationFilter, Prisma.profilesWhereInput> | null
+  property_visit_checks?: Prisma.Property_visit_checksListRelationFilter
 }, "id">
 
 export type property_documentsOrderByWithAggregationInput = {
@@ -365,6 +368,7 @@ export type property_documentsCreateInput = {
   updated_at?: Date | string | null
   properties: Prisma.propertiesCreateNestedOneWithoutProperty_documentsInput
   profiles?: Prisma.profilesCreateNestedOneWithoutProperty_documentsInput
+  property_visit_checks?: Prisma.property_visit_checksCreateNestedManyWithoutProperty_documentsInput
 }
 
 export type property_documentsUncheckedCreateInput = {
@@ -380,6 +384,7 @@ export type property_documentsUncheckedCreateInput = {
   notes?: string | null
   created_at?: Date | string | null
   updated_at?: Date | string | null
+  property_visit_checks?: Prisma.property_visit_checksUncheckedCreateNestedManyWithoutProperty_documentsInput
 }
 
 export type property_documentsUpdateInput = {
@@ -395,6 +400,7 @@ export type property_documentsUpdateInput = {
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   properties?: Prisma.propertiesUpdateOneRequiredWithoutProperty_documentsNestedInput
   profiles?: Prisma.profilesUpdateOneWithoutProperty_documentsNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUpdateManyWithoutProperty_documentsNestedInput
 }
 
 export type property_documentsUncheckedUpdateInput = {
@@ -410,6 +416,7 @@ export type property_documentsUncheckedUpdateInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  property_visit_checks?: Prisma.property_visit_checksUncheckedUpdateManyWithoutProperty_documentsNestedInput
 }
 
 export type property_documentsCreateManyInput = {
@@ -518,6 +525,11 @@ export type property_documentsSumOrderByAggregateInput = {
   file_size?: Prisma.SortOrder
 }
 
+export type Property_documentsNullableScalarRelationFilter = {
+  is?: Prisma.property_documentsWhereInput | null
+  isNot?: Prisma.property_documentsWhereInput | null
+}
+
 export type property_documentsCreateNestedManyWithoutProfilesInput = {
   create?: Prisma.XOR<Prisma.property_documentsCreateWithoutProfilesInput, Prisma.property_documentsUncheckedCreateWithoutProfilesInput> | Prisma.property_documentsCreateWithoutProfilesInput[] | Prisma.property_documentsUncheckedCreateWithoutProfilesInput[]
   connectOrCreate?: Prisma.property_documentsCreateOrConnectWithoutProfilesInput | Prisma.property_documentsCreateOrConnectWithoutProfilesInput[]
@@ -602,6 +614,22 @@ export type property_documentsUncheckedUpdateManyWithoutPropertiesNestedInput = 
   deleteMany?: Prisma.property_documentsScalarWhereInput | Prisma.property_documentsScalarWhereInput[]
 }
 
+export type property_documentsCreateNestedOneWithoutProperty_visit_checksInput = {
+  create?: Prisma.XOR<Prisma.property_documentsCreateWithoutProperty_visit_checksInput, Prisma.property_documentsUncheckedCreateWithoutProperty_visit_checksInput>
+  connectOrCreate?: Prisma.property_documentsCreateOrConnectWithoutProperty_visit_checksInput
+  connect?: Prisma.property_documentsWhereUniqueInput
+}
+
+export type property_documentsUpdateOneWithoutProperty_visit_checksNestedInput = {
+  create?: Prisma.XOR<Prisma.property_documentsCreateWithoutProperty_visit_checksInput, Prisma.property_documentsUncheckedCreateWithoutProperty_visit_checksInput>
+  connectOrCreate?: Prisma.property_documentsCreateOrConnectWithoutProperty_visit_checksInput
+  upsert?: Prisma.property_documentsUpsertWithoutProperty_visit_checksInput
+  disconnect?: Prisma.property_documentsWhereInput | boolean
+  delete?: Prisma.property_documentsWhereInput | boolean
+  connect?: Prisma.property_documentsWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.property_documentsUpdateToOneWithWhereWithoutProperty_visit_checksInput, Prisma.property_documentsUpdateWithoutProperty_visit_checksInput>, Prisma.property_documentsUncheckedUpdateWithoutProperty_visit_checksInput>
+}
+
 export type property_documentsCreateWithoutProfilesInput = {
   id?: string
   document_type: string
@@ -614,6 +642,7 @@ export type property_documentsCreateWithoutProfilesInput = {
   created_at?: Date | string | null
   updated_at?: Date | string | null
   properties: Prisma.propertiesCreateNestedOneWithoutProperty_documentsInput
+  property_visit_checks?: Prisma.property_visit_checksCreateNestedManyWithoutProperty_documentsInput
 }
 
 export type property_documentsUncheckedCreateWithoutProfilesInput = {
@@ -628,6 +657,7 @@ export type property_documentsUncheckedCreateWithoutProfilesInput = {
   notes?: string | null
   created_at?: Date | string | null
   updated_at?: Date | string | null
+  property_visit_checks?: Prisma.property_visit_checksUncheckedCreateNestedManyWithoutProperty_documentsInput
 }
 
 export type property_documentsCreateOrConnectWithoutProfilesInput = {
@@ -686,6 +716,7 @@ export type property_documentsCreateWithoutPropertiesInput = {
   created_at?: Date | string | null
   updated_at?: Date | string | null
   profiles?: Prisma.profilesCreateNestedOneWithoutProperty_documentsInput
+  property_visit_checks?: Prisma.property_visit_checksCreateNestedManyWithoutProperty_documentsInput
 }
 
 export type property_documentsUncheckedCreateWithoutPropertiesInput = {
@@ -700,6 +731,7 @@ export type property_documentsUncheckedCreateWithoutPropertiesInput = {
   notes?: string | null
   created_at?: Date | string | null
   updated_at?: Date | string | null
+  property_visit_checks?: Prisma.property_visit_checksUncheckedCreateNestedManyWithoutProperty_documentsInput
 }
 
 export type property_documentsCreateOrConnectWithoutPropertiesInput = {
@@ -728,6 +760,82 @@ export type property_documentsUpdateManyWithWhereWithoutPropertiesInput = {
   data: Prisma.XOR<Prisma.property_documentsUpdateManyMutationInput, Prisma.property_documentsUncheckedUpdateManyWithoutPropertiesInput>
 }
 
+export type property_documentsCreateWithoutProperty_visit_checksInput = {
+  id?: string
+  document_type: string
+  document_url: string
+  file_name: string
+  file_size?: number | null
+  verification_status?: string
+  verified_at?: Date | string | null
+  notes?: string | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  properties: Prisma.propertiesCreateNestedOneWithoutProperty_documentsInput
+  profiles?: Prisma.profilesCreateNestedOneWithoutProperty_documentsInput
+}
+
+export type property_documentsUncheckedCreateWithoutProperty_visit_checksInput = {
+  id?: string
+  property_id: string
+  document_type: string
+  document_url: string
+  file_name: string
+  file_size?: number | null
+  verification_status?: string
+  verified_by?: string | null
+  verified_at?: Date | string | null
+  notes?: string | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+}
+
+export type property_documentsCreateOrConnectWithoutProperty_visit_checksInput = {
+  where: Prisma.property_documentsWhereUniqueInput
+  create: Prisma.XOR<Prisma.property_documentsCreateWithoutProperty_visit_checksInput, Prisma.property_documentsUncheckedCreateWithoutProperty_visit_checksInput>
+}
+
+export type property_documentsUpsertWithoutProperty_visit_checksInput = {
+  update: Prisma.XOR<Prisma.property_documentsUpdateWithoutProperty_visit_checksInput, Prisma.property_documentsUncheckedUpdateWithoutProperty_visit_checksInput>
+  create: Prisma.XOR<Prisma.property_documentsCreateWithoutProperty_visit_checksInput, Prisma.property_documentsUncheckedCreateWithoutProperty_visit_checksInput>
+  where?: Prisma.property_documentsWhereInput
+}
+
+export type property_documentsUpdateToOneWithWhereWithoutProperty_visit_checksInput = {
+  where?: Prisma.property_documentsWhereInput
+  data: Prisma.XOR<Prisma.property_documentsUpdateWithoutProperty_visit_checksInput, Prisma.property_documentsUncheckedUpdateWithoutProperty_visit_checksInput>
+}
+
+export type property_documentsUpdateWithoutProperty_visit_checksInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  document_type?: Prisma.StringFieldUpdateOperationsInput | string
+  document_url?: Prisma.StringFieldUpdateOperationsInput | string
+  file_name?: Prisma.StringFieldUpdateOperationsInput | string
+  file_size?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  verification_status?: Prisma.StringFieldUpdateOperationsInput | string
+  verified_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  properties?: Prisma.propertiesUpdateOneRequiredWithoutProperty_documentsNestedInput
+  profiles?: Prisma.profilesUpdateOneWithoutProperty_documentsNestedInput
+}
+
+export type property_documentsUncheckedUpdateWithoutProperty_visit_checksInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  property_id?: Prisma.StringFieldUpdateOperationsInput | string
+  document_type?: Prisma.StringFieldUpdateOperationsInput | string
+  document_url?: Prisma.StringFieldUpdateOperationsInput | string
+  file_name?: Prisma.StringFieldUpdateOperationsInput | string
+  file_size?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  verification_status?: Prisma.StringFieldUpdateOperationsInput | string
+  verified_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verified_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+}
+
 export type property_documentsCreateManyProfilesInput = {
   id?: string
   property_id: string
@@ -754,6 +862,7 @@ export type property_documentsUpdateWithoutProfilesInput = {
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   properties?: Prisma.propertiesUpdateOneRequiredWithoutProperty_documentsNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUpdateManyWithoutProperty_documentsNestedInput
 }
 
 export type property_documentsUncheckedUpdateWithoutProfilesInput = {
@@ -768,6 +877,7 @@ export type property_documentsUncheckedUpdateWithoutProfilesInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  property_visit_checks?: Prisma.property_visit_checksUncheckedUpdateManyWithoutProperty_documentsNestedInput
 }
 
 export type property_documentsUncheckedUpdateManyWithoutProfilesInput = {
@@ -810,6 +920,7 @@ export type property_documentsUpdateWithoutPropertiesInput = {
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   profiles?: Prisma.profilesUpdateOneWithoutProperty_documentsNestedInput
+  property_visit_checks?: Prisma.property_visit_checksUpdateManyWithoutProperty_documentsNestedInput
 }
 
 export type property_documentsUncheckedUpdateWithoutPropertiesInput = {
@@ -824,6 +935,7 @@ export type property_documentsUncheckedUpdateWithoutPropertiesInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  property_visit_checks?: Prisma.property_visit_checksUncheckedUpdateManyWithoutProperty_documentsNestedInput
 }
 
 export type property_documentsUncheckedUpdateManyWithoutPropertiesInput = {
@@ -841,6 +953,35 @@ export type property_documentsUncheckedUpdateManyWithoutPropertiesInput = {
 }
 
 
+/**
+ * Count Type Property_documentsCountOutputType
+ */
+
+export type Property_documentsCountOutputType = {
+  property_visit_checks: number
+}
+
+export type Property_documentsCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  property_visit_checks?: boolean | Property_documentsCountOutputTypeCountProperty_visit_checksArgs
+}
+
+/**
+ * Property_documentsCountOutputType without action
+ */
+export type Property_documentsCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Property_documentsCountOutputType
+   */
+  select?: Prisma.Property_documentsCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * Property_documentsCountOutputType without action
+ */
+export type Property_documentsCountOutputTypeCountProperty_visit_checksArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.property_visit_checksWhereInput
+}
+
 
 export type property_documentsSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -857,6 +998,8 @@ export type property_documentsSelect<ExtArgs extends runtime.Types.Extensions.In
   updated_at?: boolean
   properties?: boolean | Prisma.propertiesDefaultArgs<ExtArgs>
   profiles?: boolean | Prisma.property_documents$profilesArgs<ExtArgs>
+  property_visit_checks?: boolean | Prisma.property_documents$property_visit_checksArgs<ExtArgs>
+  _count?: boolean | Prisma.Property_documentsCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["property_documents"]>
 
 export type property_documentsSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -912,6 +1055,8 @@ export type property_documentsOmit<ExtArgs extends runtime.Types.Extensions.Inte
 export type property_documentsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   properties?: boolean | Prisma.propertiesDefaultArgs<ExtArgs>
   profiles?: boolean | Prisma.property_documents$profilesArgs<ExtArgs>
+  property_visit_checks?: boolean | Prisma.property_documents$property_visit_checksArgs<ExtArgs>
+  _count?: boolean | Prisma.Property_documentsCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type property_documentsIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   properties?: boolean | Prisma.propertiesDefaultArgs<ExtArgs>
@@ -927,6 +1072,7 @@ export type $property_documentsPayload<ExtArgs extends runtime.Types.Extensions.
   objects: {
     properties: Prisma.$propertiesPayload<ExtArgs>
     profiles: Prisma.$profilesPayload<ExtArgs> | null
+    property_visit_checks: Prisma.$property_visit_checksPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1337,6 +1483,7 @@ export interface Prisma__property_documentsClient<T, Null = never, ExtArgs exten
   readonly [Symbol.toStringTag]: "PrismaPromise"
   properties<T extends Prisma.propertiesDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.propertiesDefaultArgs<ExtArgs>>): Prisma.Prisma__propertiesClient<runtime.Types.Result.GetResult<Prisma.$propertiesPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   profiles<T extends Prisma.property_documents$profilesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.property_documents$profilesArgs<ExtArgs>>): Prisma.Prisma__profilesClient<runtime.Types.Result.GetResult<Prisma.$profilesPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  property_visit_checks<T extends Prisma.property_documents$property_visit_checksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.property_documents$property_visit_checksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$property_visit_checksPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1574,11 +1721,6 @@ export type property_documentsFindManyArgs<ExtArgs extends runtime.Types.Extensi
    * Skip the first `n` property_documents.
    */
   skip?: number
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-   * 
-   * Filter by unique combinations of property_documents.
-   */
   distinct?: Prisma.Property_documentsScalarFieldEnum | Prisma.Property_documentsScalarFieldEnum[]
 }
 
@@ -1795,6 +1937,30 @@ export type property_documents$profilesArgs<ExtArgs extends runtime.Types.Extens
    */
   include?: Prisma.profilesInclude<ExtArgs> | null
   where?: Prisma.profilesWhereInput
+}
+
+/**
+ * property_documents.property_visit_checks
+ */
+export type property_documents$property_visit_checksArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the property_visit_checks
+   */
+  select?: Prisma.property_visit_checksSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the property_visit_checks
+   */
+  omit?: Prisma.property_visit_checksOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.property_visit_checksInclude<ExtArgs> | null
+  where?: Prisma.property_visit_checksWhereInput
+  orderBy?: Prisma.property_visit_checksOrderByWithRelationInput | Prisma.property_visit_checksOrderByWithRelationInput[]
+  cursor?: Prisma.property_visit_checksWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Property_visit_checksScalarFieldEnum | Prisma.Property_visit_checksScalarFieldEnum[]
 }
 
 /**

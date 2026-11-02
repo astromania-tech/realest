@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { shouldShowDemoPages } from "@/lib/appMode";
+import { PrototypeHold } from "@/components/realest/PrototypeHold";
 import { Card, Button } from "@heroui/react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -166,6 +168,8 @@ export default function SettingPage() {
         return <AlertCircle className="w-4 h-4" />;
     }
   };
+
+  if (!shouldShowDemoPages()) return <PrototypeHold />;
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">

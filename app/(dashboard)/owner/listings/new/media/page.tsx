@@ -59,10 +59,10 @@ export default function PropertyMediaStep() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full max-w-7xl mx-auto py-4 sm:py-6">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
             <div className="flex items-center gap-4">
               <Link href={`/owner/listings/new/location?type=${propertyType}`}>
                 <Button variant="ghost" size="sm">
@@ -123,7 +123,7 @@ export default function PropertyMediaStep() {
                     <h4 className="font-medium mb-4">
                       Uploaded Files ({uploadedFiles.length})
                     </h4>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                       {uploadedFiles.map((file, index) => (
                         <div key={index} className="relative">
                           <div className="aspect-square bg-muted rounded-lg flex items-center justify-center">

@@ -2,6 +2,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { enqueueTrustRead } from "@/lib/trust/enqueue";
+import { correctionReplacementAllowed } from "@/lib/trust/visit";
+import { readStoredVisit, resumeAfterCorrection } from "@/lib/trust/visit-store";
 import { z } from "zod";
 import { propertyDocumentSchema } from "@/lib/validations/property";
 import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
@@ -203,6 +206,15 @@ export async function POST(
 
     const body = await request.json();
     const validatedData = propertyDocumentSchema.parse(body);
+    const visit = property.status === "pending_correction" ? await readStoredVisit(propertyId) : null;
+    const replacement = correctionReplacementAllowed({
+      status: property.status ?? "",
+      correctionDocumentType: visit?.correctionDocumentType ?? null,
+      uploadedType: validatedData.document_type,
+    });
+    if (!replacement.ok) {
+      return NextResponse.json({ error: replacement.error }, { status: 400 });
+    }
 
     const document = await prisma.property_documents.create({
       data: {
@@ -214,7 +226,15 @@ export async function POST(
       },
     });
 
-    // TODO: Trigger ML validation service here
+    if (property.status === "pending_correction") {
+      await resumeAfterCorrection(propertyId);
+    }
+
+    try {
+      await enqueueTrustRead(propertyId, user.id);
+    } catch (queueError) {
+      console.error("Trust read queue error:", queueError);
+    }
 
     return NextResponse.json(
       { document, message: "Document uploaded successfully. Validation in progress." },

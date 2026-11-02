@@ -1,19 +1,32 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
+import dynamic from "next/dynamic";
+import Image from "next/image";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { RealEstButton } from "@/components/heroui/RealEstButton";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { AdvancedSearchForm } from "@/components/patterns/forms";
-import { PropertyMap } from "@/components/property/PropertyMap";
+import { AdvancedSearchForm } from "@/components/patterns/forms/AdvancedSearchForm";
 import { Chip } from "@heroui/react";
+
+const PropertyMap = dynamic(
+  () =>
+    import("@/components/property/PropertyMap").then((mod) => mod.PropertyMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-full min-h-[400px] animate-pulse bg-muted" />
+    ),
+  },
+);
 import { 
   Card, 
   Input, 
   Button 
 } from "@/components/ui";
-import { Header, Footer } from "@/components/layout";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 import {
   MapPin,
   Bed,
@@ -265,10 +278,12 @@ function SearchPageContent() {
             {/* Image */}
             <div className="w-48 h-32 bg-muted rounded-xl overflow-hidden shrink-0 relative">
               {property.thumbnail ? (
-                <img
+                <Image
                   src={property.thumbnail.url}
                   alt={property.title}
-                  className="w-full h-full object-cover"
+                  fill
+                  sizes="192px"
+                  className="object-cover"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-muted to-muted/50">
@@ -326,9 +341,11 @@ function SearchPageContent() {
                   {/* Lister info */}
                   <div className="flex items-center gap-2 mt-2">
                     {lister?.avatar_url && (
-                      <img
+                      <Image
                         src={lister.avatar_url}
-                        alt={lister.full_name ?? undefined}
+                        alt={lister.full_name ?? "Lister"}
+                        width={28}
+                        height={28}
                         className="w-7 h-7 rounded-full object-cover"
                       />
                     )}
@@ -440,10 +457,12 @@ function SearchPageContent() {
         {/* Image */}
         <div className="relative h-48 bg-muted overflow-hidden">
           {property.thumbnail ? (
-            <img
+            <Image
               src={property.thumbnail.url}
               alt={property.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
+              className="object-cover group-hover:scale-105 transition-transform duration-300"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-muted to-muted/50">

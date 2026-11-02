@@ -105,7 +105,8 @@ export default async function AmenitiesPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
+              <div className="w-full min-w-0 overflow-x-auto">
+                <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
@@ -182,7 +183,8 @@ export default async function AmenitiesPage() {
                   ))}
                 </TableBody>
               </Table>
-            </CardContent>
+            </div>
+          </CardContent>
           </Card>
         </div>
       </div>

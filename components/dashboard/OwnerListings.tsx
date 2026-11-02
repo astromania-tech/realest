@@ -38,7 +38,7 @@ export default function OwnerListings({ properties }: OwnerListingsProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
       {properties.map((property) => (
         <Card key={property.id} className="hover:shadow-lg transition-shadow">
           <div className="h-40 bg-gradient-to-br from-slate-400 to-slate-600 rounded-t-lg" />

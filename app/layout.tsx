@@ -76,17 +76,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Preload critical RealEST fonts for performance */}
+        {/* Preload only critical above-the-fold faces; others load via @font-face */}
         <link
           rel="preload"
           href="/fonts/space-grotesk/SpaceGrotesk-Regular.ttf"
-          as="font"
-          type="font/ttf"
-          crossOrigin="anonymous"
-        />
-        <link
-          rel="preload"
-          href="/fonts/space-grotesk/SpaceGrotesk-Medium.ttf"
           as="font"
           type="font/ttf"
           crossOrigin="anonymous"
@@ -97,22 +90,6 @@ export default function RootLayout({
           as="font"
           type="font/otf"
           crossOrigin="anonymous"
-        />
-        <link
-          rel="preload"
-          href="/fonts/lufga/LufgaRegular.ttf"
-          as="font"
-          type="font/ttf"
-          crossOrigin="anonymous"
-          media="(min-width: 768px)"
-        />
-        <link
-          rel="preload"
-          href="/fonts/jetbrains-mono/JetBrainsMono-Regular.ttf"
-          as="font"
-          type="font/ttf"
-          crossOrigin="anonymous"
-          media="(min-width: 768px)"
         />
 
         {/* DNS prefetch for external resources */}
@@ -151,43 +128,6 @@ export default function RootLayout({
         <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120.png" />
         <link rel="apple-touch-icon-precomposed" sizes="120x120" href="/apple-touch-icon-120x120-precomposed.png" />
         <link rel="manifest" href="/manifest.json" />
-        
-        {/* HubSpot Tracking Code */}
-        {/*<!-- Start of HubSpot Embed Code -->*/}
-        <script type="text/javascript" id="hs-script-loader" async defer src="//js-eu1.hs-scripts.com/147628032.js"></script>
-        {/*<!-- End of HubSpot Embed Code -->*/}
-        
-        {/* <!-- Meta Pixel Code --> */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              !function(f,b,e,v,n,t,s)
-              {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-              n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-              if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-              n.queue=[];t=b.createElement(e);t.async=!0;
-              t.src=v;s=b.getElementsByTagName(e)[0];
-              s.parentNode.insertBefore(t,s)}(window, document,'script',
-              'https://connect.facebook.net/en_US/fbevents.js');
-              fbq('init', '930986666494169');
-              fbq('track', 'PageView');
-            `,
-          }}
-        />
-        <noscript>
-          <img
-            height="1"
-            width="1"
-            style={{ display: "none" }}
-            src="https://www.facebook.com/tr?id=930986666494169&ev=PageView&noscript=1"
-            alt=""
-          />
-        </noscript>
-        {/* <!-- End Meta Pixel Code --> */}
-
-        {/* <!-- Start of realestconnecthelp Zendesk Widget script --> */}
-        <script id="ze-snippet" src="https://static.zdassets.com/ekr/snippet.js?key=16241a82-2e89-4760-a55a-eebed2ba144a"></script>
-        {/* <!-- End of realestconnecthelp Zendesk Widget script --> */}
       </head>
       <body className="font-body antialiased">
         <RealEstThemeProvider defaultTheme="system" enableSystem={true}>

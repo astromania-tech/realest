@@ -123,10 +123,50 @@ export async function GET(request: NextRequest) {
     const [properties, totalCount] = await Promise.all([
       prisma.properties.findMany({
         where,
-        include: {
-          property_details: true,
-          property_media: true,
-          property_documents: true,
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          price: true,
+          price_frequency: true,
+          property_type: true,
+          listing_type: true,
+          status: true,
+          verification_status: true,
+          address: true,
+          city: true,
+          state: true,
+          bedrooms: true,
+          bathrooms: true,
+          square_feet: true,
+          created_at: true,
+          updated_at: true,
+          owner_id: true,
+          agent_id: true,
+          property_details: {
+            select: { amenities: true, metadata: true, features: true },
+            take: 1,
+          },
+          property_media: {
+            select: {
+              id: true,
+              media_url: true,
+              media_type: true,
+              is_featured: true,
+              display_order: true,
+            },
+            orderBy: { display_order: "asc" },
+            take: 6,
+          },
+          property_documents: {
+            select: {
+              id: true,
+              document_type: true,
+              file_name: true,
+              document_url: true,
+            },
+            take: 20,
+          },
         },
         orderBy: { created_at: "desc" },
         skip,
@@ -135,31 +175,42 @@ export async function GET(request: NextRequest) {
       prisma.properties.count({ where }),
     ]);
 
-    // Get inquiry stats for each property
-    const propertyIds = properties.map((p: any) => p.id);
+    // Get inquiry stats for each property (counts via groupBy; recent capped)
+    const propertyIds = properties.map((p) => p.id);
     let inquiryStats: Record<string, { count: number; recent: unknown[] }> = {};
 
     if (propertyIds.length > 0) {
-      const inquiries = await prisma.inquiries.findMany({
-        where: { property_id: { in: propertyIds } },
-        select: {
-          id: true,
-          property_id: true,
-          message: true,
-          status: true,
-          created_at: true,
-          profiles_inquiries_sender_idToprofiles: {
-            select: { full_name: true, avatar_url: true },
+      const [counts, recentInquiries] = await Promise.all([
+        prisma.inquiries.groupBy({
+          by: ["property_id"],
+          where: { property_id: { in: propertyIds } },
+          _count: { _all: true },
+        }),
+        prisma.inquiries.findMany({
+          where: { property_id: { in: propertyIds } },
+          select: {
+            id: true,
+            property_id: true,
+            message: true,
+            status: true,
+            created_at: true,
+            profiles_inquiries_sender_idToprofiles: {
+              select: { full_name: true, avatar_url: true },
+            },
           },
-        },
-        orderBy: { created_at: "desc" },
-      });
+          orderBy: { created_at: "desc" },
+          take: propertyIds.length * 3,
+        }),
+      ]);
 
       const countMap: Record<string, number> = {};
-      const recentMap: Record<string, unknown[]> = {};
+      for (const row of counts) {
+        if (row.property_id) countMap[row.property_id] = row._count._all;
+      }
 
-      inquiries.forEach((inq: any) => {
-        countMap[inq.property_id] = (countMap[inq.property_id] || 0) + 1;
+      const recentMap: Record<string, unknown[]> = {};
+      for (const inq of recentInquiries) {
+        if (!inq.property_id) continue;
         if (!recentMap[inq.property_id]) recentMap[inq.property_id] = [];
         if (recentMap[inq.property_id].length < 3) {
           recentMap[inq.property_id].push({
@@ -170,9 +221,9 @@ export async function GET(request: NextRequest) {
             sender: inq.profiles_inquiries_sender_idToprofiles,
           });
         }
-      });
+      }
 
-      propertyIds.forEach((id: string) => {
+      propertyIds.forEach((id) => {
         inquiryStats[id] = {
           count: countMap[id] || 0,
           recent: recentMap[id] || [],

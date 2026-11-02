@@ -35,6 +35,7 @@ function OTPContent() {
   const [timeLeft, setTimeLeft] = useState(900); // 15 minutes in seconds — matches server-side token expiry
   const [isPaused, setIsPaused] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const resendLockRef = useRef(false);
 
   // Initialize from URL params
   useEffect(() => {
@@ -210,6 +211,8 @@ function OTPContent() {
   };
 
   const handleResendOtp = async () => {
+    if (resendLockRef.current || isResending) return;
+    resendLockRef.current = true;
     setIsResending(true);
     setError("");
 
@@ -236,6 +239,7 @@ function OTPContent() {
       setError("Failed to resend code. Please try again.");
     } finally {
       setIsResending(false);
+      resendLockRef.current = false;
     }
   };
 

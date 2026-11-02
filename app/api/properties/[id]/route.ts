@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { isPublicListing, propertyForViewer } from "@/lib/listings/public-listing";
 import { 
   propertyListingSchema, 
   propertyDetailsSchema 
@@ -18,7 +19,7 @@ const propertyIdSchema = z.string().uuid("Invalid property ID");
 export const openApiGET: OpenApiMetadata = {
   method: 'get',
   summary: 'Get property details',
-  description: 'Retrieve complete property details including media, documents, and inquiries. Live properties are publicly viewable.',
+  description: 'Public viewers receive a live, verified listing without documents, inquiries, email, or phone. The owner and an admin receive the full record.',
   tags: ['Properties'],
   parameters: [
     {
@@ -62,13 +63,31 @@ export const openApiGET: OpenApiMetadata = {
   },
 }
 
+const ownerProfileSelect = {
+  id: true,
+  full_name: true,
+  avatar_url: true,
+  created_at: true,
+} as const;
+
+const mediaSelect = {
+  select: {
+    id: true,
+    media_url: true,
+    media_type: true,
+    is_featured: true,
+    display_order: true,
+  },
+  orderBy: { display_order: "asc" as const },
+  take: 24,
+};
+
 // GET /api/properties/[id] - Get single property with full details
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const supabase = await createClient();
     const { id } = await params;
     const propertyIdResult = propertyIdSchema.safeParse(id);
     if (!propertyIdResult.success) {
@@ -76,30 +95,112 @@ export async function GET(
     }
     const propertyId = propertyIdResult.data;
 
+    const [{ data: { user } }, lite] = await Promise.all([
+      getAuthUser(),
+      prisma.properties.findUnique({
+        where: { id: propertyId },
+        select: {
+          id: true,
+          owner_id: true,
+          status: true,
+          verification_status: true,
+        },
+      }),
+    ]);
+
+    if (!lite) {
+      return NextResponse.json({ error: "Property not found" }, { status: 404 });
+    }
+
+    let isOwner = false;
+    let isAdmin = false;
+    if (user) {
+      const [ownerRecord, userRow] = await Promise.all([
+        prisma.owners.findUnique({
+          where: { profile_id: user.id },
+          select: { id: true },
+        }),
+        prisma.users.findUnique({
+          where: { id: user.id },
+          select: { role: true },
+        }),
+      ]);
+      isOwner = ownerRecord !== null && lite.owner_id === ownerRecord.id;
+      isAdmin = userRow?.role === "admin";
+    }
+
+    const privateViewer = isOwner || isAdmin;
+    if (!privateViewer && !isPublicListing(lite)) {
+      return NextResponse.json({ error: "Property not available" }, { status: 404 });
+    }
+
     const property = await prisma.properties.findUnique({
       where: { id: propertyId },
-      include: {
+      select: {
+        id: true,
+        owner_id: true,
+        agent_id: true,
+        title: true,
+        description: true,
+        price: true,
+        price_frequency: true,
+        property_type: true,
+        listing_type: true,
+        listing_source: true,
+        address: true,
+        city: true,
+        state: true,
+        country: true,
+        postal_code: true,
+        latitude: true,
+        longitude: true,
+        bedrooms: true,
+        bathrooms: true,
+        square_feet: true,
+        year_built: true,
+        status: true,
+        verification_status: true,
+        created_at: true,
+        updated_at: true,
         property_details: true,
-        property_media: true,
-        property_documents: true,
+        property_media: mediaSelect,
         owners: {
-          include: {
-            profiles: {
-              select: { id: true, full_name: true, avatar_url: true, phone: true, created_at: true },
-            },
-          },
-        },
-        inquiries: {
           select: {
             id: true,
-            message: true,
-            status: true,
-            created_at: true,
-            profiles_inquiries_sender_idToprofiles: {
-              select: { full_name: true, avatar_url: true },
+            profiles: {
+              select: privateViewer
+                ? { ...ownerProfileSelect, phone: true }
+                : ownerProfileSelect,
             },
           },
         },
+        ...(privateViewer
+          ? {
+              property_documents: {
+                select: {
+                  id: true,
+                  document_type: true,
+                  document_url: true,
+                  file_name: true,
+                  created_at: true,
+                },
+                take: 50,
+              },
+              inquiries: {
+                select: {
+                  id: true,
+                  message: true,
+                  status: true,
+                  created_at: true,
+                  profiles_inquiries_sender_idToprofiles: {
+                    select: { full_name: true, avatar_url: true },
+                  },
+                },
+                orderBy: { created_at: "desc" as const },
+                take: 50,
+              },
+            }
+          : {}),
       },
     });
 
@@ -107,27 +208,9 @@ export async function GET(
       return NextResponse.json({ error: "Property not found" }, { status: 404 });
     }
 
-    // Visibility check — only live properties are public; owners can see their own
-    const { data: { user } } = await getAuthUser();
-
-    // Resolve owner record: properties.owner_id → owners.id (not profiles.id)
-    let ownerRecord: { id: string } | null = null;
-    if (user) {
-      ownerRecord = await prisma.owners.findUnique({ where: { profile_id: user.id }, select: { id: true } });
-    }
-    const isOwner = ownerRecord !== null && property.owner_id === ownerRecord.id;
-    // Admin check via Prisma (only if user exists and property isn't live)
-    let isAdmin = false;
-    if (user && property.status !== "live") {
-      const userRow = await prisma.users.findUnique({ where: { id: user.id }, select: { role: true } });
-      isAdmin = userRow?.role === "admin";
-    }
-
-    if (!isOwner && !isAdmin && property.status !== "live") {
-      return NextResponse.json({ error: "Property not available" }, { status: 404 });
-    }
-
-    return NextResponse.json({ property });
+    return NextResponse.json({
+      property: propertyForViewer(property, privateViewer ? "private" : "public"),
+    });
   } catch (error) {
     console.error("Property API error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
