@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { listStaffActivity, STAFF_ACTIVITY_PAGE_SIZE } from "@/lib/admin/load-staff-activity";
-import { activityScope } from "@/lib/admin/staff-activity";
+import { activityClock, activityScope, groupActivityByDay } from "@/lib/admin/staff-activity";
 import { ListPager } from "@/components/realest/ListPager";
 import { pageWindow, parsePage } from "@/lib/ui/page-window";
 
@@ -33,6 +33,7 @@ export default async function StaffActivityPage({
   });
   if (params.page && requested !== page) redirect(activityPageHref(scope, page));
   const window = pageWindow(total, page, STAFF_ACTIVITY_PAGE_SIZE);
+  const groups = groupActivityByDay(items);
 
   return (
     <div className="min-w-0">
@@ -43,7 +44,7 @@ export default async function StaffActivityPage({
         Staff activity
       </h1>
       <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-        Every recorded staff action, newest first. Case timelines still show the latest 40 for that property.
+        Each page is grouped by day, newest first. Case timelines still show the latest 40 for that property.
       </p>
 
       <div className="mt-5 flex flex-wrap gap-2">
@@ -70,39 +71,42 @@ export default async function StaffActivityPage({
       </div>
 
       <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-        <div className="hidden grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_9.5rem] gap-4 border-b border-border bg-muted px-5 py-3 text-xs font-bold uppercase tracking-[0.1em] text-muted-foreground md:grid">
+        <div className="hidden grid-cols-[4.5rem_minmax(0,0.9fr)_minmax(0,1.5fr)] gap-4 border-b border-border bg-muted px-5 py-3 text-xs font-bold uppercase tracking-[0.1em] text-muted-foreground md:grid">
+          <span>When</span>
           <span>Who</span>
           <span>Action</span>
-          <span>When</span>
         </div>
-        {items.map((item) => {
-          const when = item.createdAt
-            ? new Date(item.createdAt).toLocaleString("en-NG", { timeZone: "Africa/Lagos" })
-            : "";
-          return (
-            <div
-              key={item.id}
-              className="grid min-w-0 gap-1 border-b border-border px-4 py-3 last:border-b-0 sm:px-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_9.5rem] md:items-center md:gap-4"
-              style={{ contentVisibility: "auto", containIntrinsicSize: "auto 72px" }}
-            >
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{item.actorName}</p>
-                <p className="truncate text-xs text-muted-foreground">{item.actorEmail}</p>
+        {groups.map((group) => (
+          <section key={group.day}>
+            <h2 className="border-b border-border bg-muted/70 px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[#07402F] dark:text-foreground sm:px-5">
+              {group.day}
+            </h2>
+            {group.items.map((item) => (
+              <div
+                key={item.id}
+                className="grid min-w-0 grid-cols-[4.5rem_minmax(0,1fr)] gap-x-3 gap-y-1 border-b border-border px-4 py-2.5 last:border-b-0 sm:px-5 md:grid-cols-[4.5rem_minmax(0,0.9fr)_minmax(0,1.5fr)] md:items-center md:gap-4"
+                style={{ contentVisibility: "auto", containIntrinsicSize: "auto 56px" }}
+              >
+                <p className="text-xs font-medium tabular-nums text-muted-foreground">
+                  {activityClock(item.createdAt)}
+                </p>
+                <p className="min-w-0 truncate text-sm font-medium" title={item.actorEmail || undefined}>
+                  {item.actorName}
+                </p>
+                <div className="col-span-2 min-w-0 md:col-span-1">
+                  {item.href ? (
+                    <Link href={item.href} className="break-words text-sm font-semibold text-primary hover:underline">
+                      {item.title}
+                    </Link>
+                  ) : (
+                    <p className="break-words text-sm font-semibold">{item.title}</p>
+                  )}
+                  {item.detail ? <p className="truncate text-xs text-muted-foreground">{item.detail}</p> : null}
+                </div>
               </div>
-              <div className="min-w-0">
-                {item.href ? (
-                  <Link href={item.href} className="break-words text-sm font-semibold text-primary hover:underline">
-                    {item.title}
-                  </Link>
-                ) : (
-                  <p className="break-words text-sm font-semibold">{item.title}</p>
-                )}
-                {item.detail ? <p className="truncate text-xs text-muted-foreground">{item.detail}</p> : null}
-              </div>
-              <p className="text-xs text-muted-foreground md:text-right">{when}</p>
-            </div>
-          );
-        })}
+            ))}
+          </section>
+        ))}
         {items.length === 0 ? (
           <p className="px-5 py-12 text-center text-sm text-muted-foreground">
             {scope === "mine" ? "You have no recorded actions yet." : "No staff actions recorded yet."}

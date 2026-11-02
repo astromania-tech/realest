@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { activityHref, activityLabel, activityScope } from "./staff-activity.ts";
+import { activityHref, activityLabel, activityScope, groupActivityByDay } from "./staff-activity.ts";
 
 test("activity scope is everyone unless the admin asks for their own", () => {
   assert.equal(activityScope(undefined), "all");
@@ -29,4 +29,15 @@ test("activity rows name the action and link the case or user", () => {
     "/admin/users/22222222-2222-2222-2222-222222222222",
   );
   assert.equal(activityHref("invite_staff", null), null);
+});
+
+test("a page of activity stays grouped by Lagos day without reordering rows", () => {
+  const groups = groupActivityByDay([
+    { id: "a", createdAt: "2026-11-02T18:00:00.000Z" },
+    { id: "b", createdAt: "2026-11-02T09:00:00.000Z" },
+    { id: "c", createdAt: "2026-11-01T18:00:00.000Z" },
+  ]);
+  assert.equal(groups.length, 2);
+  assert.deepEqual(groups[0].items.map((row) => row.id), ["a", "b"]);
+  assert.deepEqual(groups[1].items.map((row) => row.id), ["c"]);
 });

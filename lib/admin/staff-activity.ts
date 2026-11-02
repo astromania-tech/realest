@@ -89,3 +89,37 @@ export function activityLabel(
   const detail = visitDay ? `Visit day ${visitDay}` : role ? role.replaceAll("_", " ") : null;
   return { title, detail };
 }
+
+/** Calendar day in Lagos, so a page of rows can be read as a log instead of one pile. */
+export function activityDayLabel(iso: string | null): string {
+  if (!iso) return "Undated";
+  return new Date(iso).toLocaleDateString("en-NG", {
+    timeZone: "Africa/Lagos",
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+export function activityClock(iso: string | null): string {
+  if (!iso) return "";
+  return new Date(iso).toLocaleTimeString("en-NG", {
+    timeZone: "Africa/Lagos",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+export function groupActivityByDay<T extends { createdAt: string | null }>(
+  items: readonly T[],
+): Array<{ day: string; items: T[] }> {
+  const groups: Array<{ day: string; items: T[] }> = [];
+  for (const item of items) {
+    const day = activityDayLabel(item.createdAt);
+    const last = groups[groups.length - 1];
+    if (last && last.day === day) last.items.push(item);
+    else groups.push({ day, items: [item] });
+  }
+  return groups;
+}
