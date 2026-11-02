@@ -1,26 +1,36 @@
 import { getAuthUser } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Users, Search, UserCheck, UserX, Edit } from "lucide-react";
 import Link from "next/link";
+import { AdminBanControl } from "@/components/admin/AdminBanControl";
 import { ListPager } from "@/components/realest/ListPager";
 import { pageWindow, parsePage } from "@/lib/ui/page-window";
+import {
+  accountRoleLabel,
+  accountRoles,
+  usersListHref,
+  usersListWhere,
+  usersRoleFilter,
+  usersSearchTerm,
+} from "@/lib/admin/users-list";
 
 const PAGE_SIZE = 10;
 
-function usersHref(page: number) {
-  return page > 1 ? `/admin/users?page=${page}` : "/admin/users";
+function joinedOn(value: Date | null): string {
+  if (!value) return "Join date unknown";
+  return new Date(value).toLocaleDateString("en-NG", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 export default async function UsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; q?: string; role?: string }>;
 }) {
   const {
     data: { user },
@@ -40,15 +50,20 @@ export default async function UsersPage({
   }
 
   const params = await searchParams;
+  const q = usersSearchTerm(params.q);
+  const role = usersRoleFilter(params.role);
+  const where = usersListWhere(q, role);
   const requested = parsePage(params.page);
-  const [totalUsers, activeUsers, bannedUsers] = await Promise.all([
+  const [totalUsers, activeUsers, inactiveUsers, matched] = await Promise.all([
     prisma.users.count(),
     prisma.users.count({ where: { is_active: true } }),
     prisma.users.count({ where: { is_active: false } }),
+    prisma.users.count({ where }),
   ]);
-  const window = pageWindow(totalUsers, requested, PAGE_SIZE);
-  if (params.page && requested !== window.page) redirect(usersHref(window.page));
+  const window = pageWindow(matched, requested, PAGE_SIZE);
+  if (params.page && requested !== window.page) redirect(usersListHref(window.page, q, role));
   const users = await prisma.users.findMany({
+    where,
     select: {
       id: true,
       email: true,
@@ -62,151 +77,129 @@ export default async function UsersPage({
     take: PAGE_SIZE,
   });
 
-  const userStats = {
-    totalUsers,
-    verifiedUsers: activeUsers,
-    activeUsers,
-    bannedUsers,
-  };
-
   return (
-    <>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">User Management</h1>
-        <p className="text-muted-foreground">
-          Manage user accounts, verification status, and permissions
-        </p>
+    <div className="min-w-0">
+      <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
+        Admin only
+      </p>
+      <h1 className="mt-1 font-heading text-2xl text-[#07402F] dark:text-foreground sm:text-3xl">
+        User management
+      </h1>
+      <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+        Find an account and open it. Ban stays on this screen, and only for an admin looking at someone else.
+      </p>
+
+      <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="rounded-2xl border border-border bg-card px-4 py-3">
+          <p className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">Total</p>
+          <p className="mt-1 font-heading text-2xl text-[#07402F] dark:text-foreground">{totalUsers}</p>
+          <p className="mt-1 text-xs text-muted-foreground">Every account</p>
+        </div>
+        <div className="rounded-2xl border border-border bg-card px-4 py-3">
+          <p className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">Active</p>
+          <p className="mt-1 font-heading text-2xl text-[#07402F] dark:text-foreground">{activeUsers}</p>
+          <p className="mt-1 text-xs text-muted-foreground">Can sign in</p>
+        </div>
+        <div className="rounded-2xl border border-border bg-card px-4 py-3">
+          <p className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">Inactive</p>
+          <p className="mt-1 font-heading text-2xl text-[#07402F] dark:text-foreground">{inactiveUsers}</p>
+          <p className="mt-1 text-xs text-muted-foreground">Suspended or banned</p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 mb-6 sm:mb-8">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <Users className="w-8 h-8 text-blue-600" />
-              <div>
-                <p className="text-2xl font-bold">{userStats.totalUsers}</p>
-                <p className="text-sm text-muted-foreground">Total Users</p>
+      <form action="/admin/users" className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <Input
+          name="q"
+          defaultValue={q}
+          placeholder="Name or email"
+          className="min-w-0 sm:flex-1"
+        />
+        <select
+          name="role"
+          defaultValue={role}
+          className="border-input h-9 w-full rounded-md border bg-transparent px-3 text-base md:text-sm sm:w-44"
+        >
+          <option value="">All roles</option>
+          {accountRoles().map((item) => (
+            <option key={item} value={item}>
+              {accountRoleLabel(item)}
+            </option>
+          ))}
+        </select>
+        <Button type="submit" className="w-full sm:w-auto">
+          Search
+        </Button>
+        {q || role ? (
+          <Button asChild variant="outline" className="w-full sm:w-auto">
+            <Link href="/admin/users">Clear</Link>
+          </Button>
+        ) : null}
+      </form>
+
+      <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5">
+          <h2 className="text-sm font-semibold">Accounts</h2>
+          <p className="text-xs text-muted-foreground">
+            {matched === 1 ? "1 account" : `${matched} accounts`}
+          </p>
+        </div>
+        {users.length === 0 ? (
+          <p className="px-5 py-12 text-center text-sm text-muted-foreground">
+            {q || role ? "No accounts match that search." : "No accounts yet."}
+          </p>
+        ) : (
+          users.map((userProfile) => {
+            const active = userProfile.is_active !== false;
+            const mine = user.id === userProfile.id;
+            return (
+              <div
+                key={userProfile.id}
+                className="flex min-w-0 flex-col gap-3 border-b border-border px-4 py-3 last:border-b-0 sm:flex-row sm:items-center sm:justify-between sm:px-5"
+                style={{ contentVisibility: "auto", containIntrinsicSize: "auto 88px" }}
+              >
+                <div className="min-w-0">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <p className="truncate text-sm font-medium">{userProfile.full_name || "No name"}</p>
+                    <span
+                      className={
+                        active
+                          ? "shrink-0 rounded-full bg-[#ADF434]/40 px-2 py-0.5 text-[11px] font-semibold text-[#07402F]"
+                          : "shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground"
+                      }
+                    >
+                      {active ? "Active" : "Inactive"}
+                    </span>
+                  </div>
+                  <p className="truncate text-xs text-muted-foreground">{userProfile.email || "No email"}</p>
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                    {accountRoleLabel(userProfile.role)} · {joinedOn(userProfile.created_at)}
+                  </p>
+                </div>
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={`/admin/users/${userProfile.id}`}>Open</Link>
+                  </Button>
+                  {mine ? (
+                    <span className="inline-flex h-8 items-center px-2 text-xs text-muted-foreground">You</span>
+                  ) : (
+                    <AdminBanControl userId={userProfile.id} isActive={active} />
+                  )}
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            );
+          })
+        )}
       </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-4">
-            <UserCheck className="w-8 h-8 text-purple-600" />
-            <div>
-              <p className="text-2xl font-bold">{userStats.activeUsers}</p>
-              <p className="text-sm text-muted-foreground">Active</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-4">
-            <UserX className="w-8 h-8 text-red-600" />
-            <div>
-              <p className="text-2xl font-bold">{userStats.bannedUsers}</p>
-              <p className="text-sm text-muted-foreground">Banned</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
-            <div className="min-w-0 flex-1">
-              <Input
-                placeholder="Search users by name or email..."
-                className="w-full max-w-sm"
-              />
-            </div>
-            <Button variant="outline" className="w-full shrink-0 sm:w-auto">
-              <Search className="w-4 h-4 mr-2" />
-              Search
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>All Users</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="w-full min-w-0 overflow-x-auto">
-            <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Joined</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
-                    No users found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                users.map((userProfile) => (
-                  <TableRow key={userProfile.id}>
-                    <TableCell className="font-medium">
-                      {userProfile.full_name || "N/A"}
-                    </TableCell>
-                    <TableCell>{userProfile.email || "N/A"}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{userProfile.role}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={userProfile.is_active ? "default" : "secondary"}>
-                        {userProfile.is_active ? "Active" : "Inactive"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {userProfile.created_at
-                        ? new Date(userProfile.created_at).toLocaleDateString()
-                        : "N/A"}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button asChild size="sm" variant="outline">
-                          <Link href={`/admin/users/${userProfile.id}`}>
-                            <Edit className="w-4 h-4 mr-1" />
-                            Edit
-                          </Link>
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          {userProfile.is_active ? "Ban" : "Unban"}
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-            </div>
-          </CardContent>
-      </Card>
       <ListPager
         page={window.page}
         pageCount={window.pageCount}
         from={window.from}
         to={window.to}
-        total={totalUsers}
-        prevHref={window.page > 1 ? usersHref(window.page - 1) : null}
-        nextHref={window.page < window.pageCount ? usersHref(window.page + 1) : null}
+        total={matched}
+        prevHref={window.page > 1 ? usersListHref(window.page - 1, q, role) : null}
+        nextHref={window.page < window.pageCount ? usersListHref(window.page + 1, q, role) : null}
       />
-    </>
+    </div>
   );
 }
