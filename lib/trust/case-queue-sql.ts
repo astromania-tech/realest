@@ -76,6 +76,15 @@ export function caseQueueFilterSql(filter: CaseQueueFilter): Prisma.Sql {
   return Prisma.empty;
 }
 
+/** Limit the queue to teams this leader owns. Empty for desk staff. */
+export function caseQueueLeaderSql(leaderId: string | null | undefined): Prisma.Sql {
+  if (!leaderId) return Prisma.empty;
+  return Prisma.sql`and exists (
+    select 1 from public.property_field_teams ft
+    where ft.property_id = p.id and ft.team_leader_id = ${leaderId}::uuid
+  )`;
+}
+
 /** Case-insensitive search across id/title/address/city/state. Empty when blank. */
 export function caseQueueSearchSql(search: string): Prisma.Sql {
   const needle = search.trim();

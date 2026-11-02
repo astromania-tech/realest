@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/lib/prisma/client";
 import { nextCaseState } from "@/lib/trust/case";
 import { openDeskCase, setCaseState, readStoredVisit } from "@/lib/trust/visit-store";
 import { notifyStaff, notifyStaffMany } from "@/lib/notifications/staff-notify";
@@ -89,7 +90,10 @@ export async function readFieldTeam(propertyId: string): Promise<FieldTeamView |
   };
 }
 
-export async function listFieldOpsQueue(limit = 40): Promise<
+export async function listFieldOpsQueue(options?: {
+  limit?: number;
+  leaderId?: string;
+}): Promise<
   Array<{
     id: string;
     title: string;
@@ -101,6 +105,10 @@ export async function listFieldOpsQueue(limit = 40): Promise<
     officerName: string | null;
   }>
 > {
+  const limit = Math.max(1, Math.min(options?.limit ?? 40, 80));
+  const leaderSql = options?.leaderId
+    ? Prisma.sql`and t.team_leader_id = ${options.leaderId}::uuid`
+    : Prisma.empty;
   const rows = await prisma.$queryRaw<
     Array<{
       id: string;
@@ -127,6 +135,7 @@ export async function listFieldOpsQueue(limit = 40): Promise<
     left join public.users l on l.id = t.team_leader_id
     left join public.users o on o.id = coalesce(t.check_in_officer_id, p.vetting_officer_id)
     where p.status = 'pending_vetting'
+      ${leaderSql}
     order by coalesce(t.visit_day, p.vetting_visit_on) asc nulls last, p.updated_at desc
     limit ${limit}
   `;
@@ -140,6 +149,61 @@ export async function listFieldOpsQueue(limit = 40): Promise<
     confirmed: Boolean(row.confirmed_at),
     officerName: row.officer_name,
   }));
+}
+
+/** Open visits must not stay pinned to a staff account that can no longer sign in. */
+export async function releaseOpenVisitsForUser(userId: string): Promise<void> {
+  await prisma.$executeRaw`
+    update public.property_field_teams t
+    set check_in_officer_id = t.team_leader_id,
+        confirmed_at = null,
+        updated_at = now()
+    from public.properties p
+    where t.property_id = p.id
+      and p.status = 'pending_vetting'
+      and t.check_in_officer_id = ${userId}::uuid
+      and t.team_leader_id <> ${userId}::uuid
+  `;
+  await prisma.$executeRaw`
+    update public.properties p
+    set vetting_officer_id = t.team_leader_id,
+        updated_at = now()
+    from public.property_field_teams t
+    where t.property_id = p.id
+      and p.status = 'pending_vetting'
+      and p.vetting_officer_id = ${userId}::uuid
+      and t.team_leader_id <> ${userId}::uuid
+      and t.check_in_officer_id = t.team_leader_id
+  `;
+  await prisma.$executeRaw`
+    delete from public.property_field_team_members m
+    using public.property_field_teams t, public.properties p
+    where m.property_id = t.property_id
+      and t.property_id = p.id
+      and p.status = 'pending_vetting'
+      and t.team_leader_id = ${userId}::uuid
+  `;
+  await prisma.$executeRaw`
+    delete from public.property_field_teams t
+    using public.properties p
+    where t.property_id = p.id
+      and p.status = 'pending_vetting'
+      and t.team_leader_id = ${userId}::uuid
+  `;
+  await prisma.$executeRaw`
+    delete from public.property_field_team_members m
+    using public.properties p
+    where m.property_id = p.id
+      and p.status = 'pending_vetting'
+      and m.user_id = ${userId}::uuid
+  `;
+  await prisma.$executeRaw`
+    update public.properties
+    set vetting_officer_id = null,
+        updated_at = now()
+    where status = 'pending_vetting'
+      and vetting_officer_id = ${userId}::uuid
+  `;
 }
 
 async function openVisitCountsByUser(): Promise<Map<string, number>> {
@@ -533,6 +597,7 @@ export async function listMyFieldAssignments(userId: string): Promise<
         or m.user_id is not null
       )
     order by p.id, coalesce(t.visit_day, p.vetting_visit_on) asc nulls last
+    limit 50
   `;
   return rows.map((row) => ({
     id: row.id,

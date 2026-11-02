@@ -32,7 +32,8 @@ test("[A-01] team_member cannot approve or reject a listing", () => {
   assert.equal(vettingActionAllowed("team_member", "assign"), false);
   assert.equal(vettingActionAllowed("team_member", "check_in"), true);
   assert.equal(vettingActionAllowed("reviewer", "approve"), true);
-  assert.equal(vettingActionAllowed("supervisor", "assign"), true);
+  assert.equal(vettingActionAllowed("supervisor", "assign"), false);
+  assert.equal(vettingActionAllowed("admin", "assign"), false);
 });
 
 test("[A-01] ML, vetting, and duplicate routes enforce staff-action gates", () => {

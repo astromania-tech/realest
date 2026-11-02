@@ -15,8 +15,6 @@ import { FieldTeamPanel } from "@/components/realest/validation/FieldTeamPanel";
 import { FieldTeamManageModal } from "@/components/realest/validation/FieldTeamManageModal";
 import type { CaseDetailView } from "@/lib/trust/case-view";
 
-type Officer = { id: string; full_name: string | null };
-
 const CASE_TABS = ["Overview", "Claims", "Evidence", "Field visit", "Timeline", "Decision"] as const;
 
 function initialCaseTab(requested: string | null | undefined): string {
@@ -26,14 +24,14 @@ function initialCaseTab(requested: string | null | undefined): string {
 
 export function CaseDetailConsole({
   detail,
-  officers,
+  detailLevel = "full",
   canApprove,
   blockReason,
   conflicts,
   initialTab,
 }: {
   detail: CaseDetailView;
-  officers: Officer[];
+  detailLevel?: "full" | "visit";
   canApprove: boolean;
   blockReason: string | null;
   conflicts: string[];
@@ -145,11 +143,16 @@ export function CaseDetailConsole({
                 <Users2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
                 <div>
                   <p className="text-sm font-semibold">
-                    {detail.officerName ? "Field team in progress" : "Needs a team leader"}
+                    {detailLevel === "visit"
+                      ? "Your visit"
+                      : detail.officerName
+                        ? "Field team in progress"
+                        : "Needs a team leader"}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Assign a team leader on the Field visit tab (or from Field ops). The leader
-                    confirms members and the check-in officer.
+                    {detailLevel === "visit"
+                      ? "You can read the address, photos, and field brief. The check-in officer writes GPS on their phone."
+                      : "Assign a team leader on the Field visit tab (or from Field ops). The leader confirms members and the check-in officer."}
                   </p>
                 </div>
               </div>
@@ -159,11 +162,11 @@ export function CaseDetailConsole({
                 className="w-full sm:w-auto"
                 onClick={() => {
                   setTab("Field visit");
-                  if (!detail.officerName) setTeamModalOpen(true);
+                  if (detailLevel === "full" && !detail.officerName) setTeamModalOpen(true);
                 }}
               >
                 <Users2 className="mr-1.5 h-3.5 w-3.5" />
-                {detail.officerName ? "Open Field visit" : "Assign team leader"}
+                {detailLevel === "visit" || detail.officerName ? "Open Field visit" : "Assign team leader"}
               </Button>
             </div>
           ) : null}
@@ -247,7 +250,7 @@ export function CaseDetailConsole({
             <section className="space-y-3 rounded-2xl border border-border bg-card p-4 text-sm sm:p-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <h2 className="text-lg font-semibold">Visit record</h2>
-                {detail.listingStatus === "pending_vetting" ? (
+                {detailLevel === "full" && detail.listingStatus === "pending_vetting" ? (
                   <Button
                     type="button"
                     variant="outline"
@@ -281,7 +284,7 @@ export function CaseDetailConsole({
                 </Link>
               ) : null}
             </section>
-            {detail.listingStatus === "pending_vetting" ? (
+            {detailLevel === "full" && detail.listingStatus === "pending_vetting" ? (
               <section className="hidden rounded-2xl border border-border bg-card p-5 xl:block">
                 <FieldTeamPanel propertyId={detail.id} />
               </section>
@@ -321,15 +324,17 @@ export function CaseDetailConsole({
               stay auditable and do not overwrite existing evidence.
             </p>
             <div className="mt-5">
-              {detail.listingStatus === "pending_ml_validation" ? (
+              {detailLevel === "full" && detail.listingStatus === "pending_ml_validation" ? (
                 <TrustReviewActions propertyId={detail.id} allowsVetting={detail.trustAllowsVetting} />
               ) : null}
-              {detail.listingStatus === "pending_vetting" ? (
+              {detailLevel === "visit" ? (
+                <p className="text-sm text-muted-foreground">
+                  Desk staff record the decision. Check in from the visit tab on your phone.
+                </p>
+              ) : null}
+              {detailLevel === "full" && detail.listingStatus === "pending_vetting" ? (
                 <VettingDecisionActions
                   propertyId={detail.id}
-                  officers={officers}
-                  assignedOfficerId={detail.visit.officerId}
-                  visitDay={detail.visit.visitDay}
                   documents={detail.documents}
                   canApprove={canApprove}
                   blockReason={blockReason}
@@ -339,7 +344,7 @@ export function CaseDetailConsole({
                   registryMatches={detail.visit.registryMatches}
                 />
               ) : null}
-              {detail.listingStatus === "pending_duplicate_review" ? (
+              {detailLevel === "full" && detail.listingStatus === "pending_duplicate_review" ? (
                 <DuplicateResolutionActions propertyId={detail.id} />
               ) : null}
               {detail.listingStatus === "live" || detail.listingStatus === "rejected" ? (

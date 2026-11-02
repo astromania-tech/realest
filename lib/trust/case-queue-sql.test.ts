@@ -6,6 +6,7 @@ import {
   CASE_QUEUE_BASE_STATUSES,
   caseQueueFilterParts,
   caseQueueFilterSql,
+  caseQueueLeaderSql,
   caseQueueSearchSql,
 } from "./case-queue-sql.ts";
 
@@ -73,4 +74,12 @@ test("filter SQL embeds the listing statuses for each bucket", () => {
   const search = caseQueueSearchSql("Lekki").strings.join(" ");
   assert.match(search, /ilike/);
   assert.match(search, /p\.title/);
+});
+
+test("leader SQL is empty for desk and binds the leader id for a team", () => {
+  assert.equal(caseQueueLeaderSql(undefined).strings.join(""), "");
+  assert.equal(caseQueueLeaderSql("").strings.join(""), "");
+  const led = caseQueueLeaderSql("11111111-1111-1111-1111-111111111111");
+  assert.match(led.strings.join(" "), /team_leader_id/);
+  assert.equal(led.values[0], "11111111-1111-1111-1111-111111111111");
 });

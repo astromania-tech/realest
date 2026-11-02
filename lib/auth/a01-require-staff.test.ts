@@ -76,6 +76,25 @@ test("[A-01] requireStaff returns ok for supervisor, team_leader, team_member", 
   }
 });
 
+test("[A-01] requireStaff rejects a suspended or departed staff account", async () => {
+  const inactive = await requireStaff({
+    getAuthUser: async () => ({
+      data: { user: { id: "u4", email: "off@x.com" } },
+    }),
+    findUserRole: async () => ({ role: "reviewer", is_active: false, deleted_at: null }),
+  });
+  assert.equal(inactive.ok, false);
+  if (!inactive.ok) assert.equal(inactive.status, 403);
+
+  const departed = await requireStaff({
+    getAuthUser: async () => ({
+      data: { user: { id: "u5", email: "gone@x.com" } },
+    }),
+    findUserRole: async () => ({ role: "supervisor", is_active: true, deleted_at: new Date() }),
+  });
+  assert.equal(departed.ok, false);
+});
+
 test("[A-01] requireStaff returns 500 when role lookup throws", async () => {
   const result = await requireStaff({
     getAuthUser: async () => ({

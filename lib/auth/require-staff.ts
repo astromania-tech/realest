@@ -10,19 +10,28 @@ export type RequireStaffDeps = {
   getAuthUser: () => Promise<{
     data: { user: { id: string; email?: string | null } | null };
   }>;
-  findUserRole: (userId: string) => Promise<{ role: string } | null>;
+  findUserRole: (
+    userId: string,
+  ) => Promise<{ role: string; is_active?: boolean; deleted_at?: Date | null } | null>;
 };
 
 async function defaultFindUserRole(userId: string) {
   return prisma.users.findUnique({
     where: { id: userId },
-    select: { role: true },
+    select: { role: true, is_active: true, deleted_at: true },
   });
+}
+
+function staffAccountClosed(row: {
+  is_active?: boolean;
+  deleted_at?: Date | null;
+}): boolean {
+  return row.is_active === false || Boolean(row.deleted_at);
 }
 
 /**
  * Session via Supabase Auth; role via Prisma.
- * Allows admin (super admin) or reviewer (verification staff).
+ * Allows admin, reviewer, supervisor, team_leader, and team_member.
  * DB failures return status 500, not a throw.
  */
 export async function requireStaff(
@@ -41,7 +50,7 @@ export async function requireStaff(
 
   try {
     const row = await findUserRole(user.id);
-    if (!row || !isStaffRole(row.role)) {
+    if (!row || !isStaffRole(row.role) || staffAccountClosed(row)) {
       return { ok: false, error: "Forbidden", status: 403 };
     }
     return {

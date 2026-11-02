@@ -8,6 +8,7 @@ import {
   readFieldTeam,
 } from "@/lib/trust/field-team-store";
 import { canAssignTeamLeader, canConfirmFieldTeam } from "@/lib/trust/field-team";
+import { canReadFieldTeam } from "@/lib/trust/case-access";
 
 const assignSchema = z.object({
   action: z.literal("assign_leader"),
@@ -37,6 +38,17 @@ export async function GET(
 
   const { id } = await context.params;
   const team = await readFieldTeam(id);
+  if (
+    !canReadFieldTeam({
+      role: staff.role,
+      userId: staff.userId,
+      teamLeaderId: team?.teamLeaderId ?? null,
+      memberIds: team?.memberIds ?? [],
+      checkInOfficerId: team?.checkInOfficerId ?? null,
+    })
+  ) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   let leaders: Awaited<ReturnType<typeof listRankedStaffForProperty>> | null = null;
   let members: Awaited<ReturnType<typeof listRankedStaffForProperty>> | null = null;

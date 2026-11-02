@@ -12,14 +12,10 @@ import {
   staffPermissionDeniedMessage,
 } from "@/lib/auth/staff-permission-ui";
 
-type Officer = { id: string; full_name: string | null };
 type ListingFile = { id: string; document_type: string; file_name: string };
 
 export function VettingDecisionActions({
   propertyId,
-  officers,
-  assignedOfficerId,
-  visitDay,
   documents,
   canApprove,
   blockReason,
@@ -29,9 +25,6 @@ export function VettingDecisionActions({
   registryMatches,
 }: {
   propertyId: string;
-  officers: Officer[];
-  assignedOfficerId: string | null;
-  visitDay: string | null;
   documents: ListingFile[];
   canApprove: boolean;
   blockReason: string | null;
@@ -47,14 +40,11 @@ export function VettingDecisionActions({
   const [permissionOpen, setPermissionOpen] = useState(false);
   const [permissionMessage, setPermissionMessage] = useState("");
   const [pending, setPending] = useState(false);
-  const [officerId, setOfficerId] = useState(assignedOfficerId ?? "");
-  const [day, setDay] = useState(visitDay ?? "");
   const [documentId, setDocumentId] = useState(documents[0]?.id ?? "");
   const [registryFile, setRegistryFile] = useState(registryReference ?? "");
-  const assigned = Boolean(assignedOfficerId && visitDay);
 
   async function send(
-    action: "approve" | "reject" | "assign" | "flag_issue" | "request_correction" | "confirm_registry",
+    action: "approve" | "reject" | "flag_issue" | "request_correction" | "confirm_registry",
     extra: Record<string, unknown> = {},
   ) {
     if (action === "reject") {
@@ -73,8 +63,6 @@ export function VettingDecisionActions({
         action,
         notes,
         rejection_reason: action === "reject" ? "other" : undefined,
-        officer_id: action === "assign" ? officerId : undefined,
-        visit_day: action === "assign" ? day : undefined,
         issue_details: action === "flag_issue" || action === "request_correction" ? issue : undefined,
         document_id: action === "request_correction" ? documentId : undefined,
         ...extra,
@@ -91,7 +79,7 @@ export function VettingDecisionActions({
       setError(body.error || "The vetting action was refused.");
       return;
     }
-    if (action === "assign" || action === "flag_issue" || action === "confirm_registry") {
+    if (action === "flag_issue" || action === "confirm_registry") {
       router.refresh();
       return;
     }
@@ -101,33 +89,6 @@ export function VettingDecisionActions({
 
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <label className="text-sm" htmlFor="vetting-officer">Officer</label>
-        <select
-          id="vetting-officer"
-          className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-          value={officerId}
-          onChange={(event) => setOfficerId(event.target.value)}
-        >
-          <option value="">Choose an officer</option>
-          {officers.map((officer) => (
-            <option key={officer.id} value={officer.id}>
-              {officer.full_name || "Admin"}
-            </option>
-          ))}
-        </select>
-        <label className="text-sm" htmlFor="vetting-day">Visit day</label>
-        <input
-          id="vetting-day"
-          type="date"
-          className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-          value={day}
-          onChange={(event) => setDay(event.target.value)}
-        />
-        <Button className="w-full" variant="outline" disabled={pending} onClick={() => send("assign")}>
-          Assign this visit
-        </Button>
-      </div>
       <div className="space-y-2">
         <p className="text-sm">The assigned officer checks in on their phone. Typed coordinates stay closed.</p>
         <Link href={`/field/visit/${propertyId}`} className="inline-flex w-full justify-center rounded-md border px-3 py-2 text-sm">
@@ -211,7 +172,7 @@ export function VettingDecisionActions({
       <p className="text-sm text-muted-foreground">
         {canApprove
           ? "Approve is the only action that sets the listing live and RealEST Verified. The visit does not prove title."
-          : blockReason || "Assign one officer and a visit day. Approve stays closed until the check-in is saved."}
+          : blockReason || "Approve stays closed until the check-in officer saves the visit."}
       </p>
       <StaffPermissionModal
         open={permissionOpen}

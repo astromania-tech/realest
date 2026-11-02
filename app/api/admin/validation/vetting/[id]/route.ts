@@ -5,7 +5,6 @@ import { prisma } from '@/lib/prisma'
 import { randomUUID } from 'node:crypto'
 import { createServiceClient } from '@/lib/supabase/service'
 import { haversineMeters } from '@/lib/trust/compare'
-import { lagosToday, visitAssignmentAllowed } from '@/lib/trust/assignment'
 import { badgeWriteAllowed, deviceCheckInAllowed, observationConflicts } from '@/lib/trust/visit'
 import { readVisitPhoto, VISIT_EVIDENCE_BUCKET, visitPhotoPath } from '@/lib/trust/visit-photo'
 import { claimsBlockBadge, documentClaimFields, reconcileClaims, type ClaimFinding } from '@/lib/trust/claims'
@@ -15,7 +14,6 @@ import { registryConfirmationAllowed } from '@/lib/trust/registry'
 import { appendEvidence, markCorrection, openDeskCase, readStoredVisit, saveCheckIn, saveRegistryConfirmation, setCaseState, setOpenIssue } from '@/lib/trust/visit-store'
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata'
 import { requireStaff } from "@/lib/auth/require-staff"
-import { isAssignableOfficerRole } from "@/lib/auth/roles"
 import { vettingActionAllowed } from "@/lib/auth/staff-action-gate"
 import {
   buildListingRejectFeedback,
@@ -123,10 +121,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     const {
-      action, notes, scheduled_date, rejection_reason, issue_details, officer_id, visit_day,
+      action, notes, scheduled_date, rejection_reason, issue_details,
       document_id, latitude, longitude, photo_base64, saw_building, address_matches, document_matches,
       location_source, accuracy_meters, registry_reference, registry_matches,
     } = validation.data
+
+    if (action === "assign") {
+      return NextResponse.json(
+        { error: "Assign the field team. Single-officer assignment is closed." },
+        { status: 403 },
+      )
+    }
 
     if (!vettingActionAllowed(staff.role, action)) {
       return NextResponse.json(
@@ -157,56 +162,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         { error: 'Property not found or not eligible for vetting' },
         { status: 404 }
       )
-    }
-
-    if (action === 'assign') {
-      const current = await readVettingAssignment(id)
-      const decision = visitAssignmentAllowed({
-        currentOfficerId: current.officerId,
-        officerId: officer_id ?? '',
-        visitDay: visit_day ?? '',
-        today: lagosToday(),
-      })
-      if (!decision.ok) {
-        return NextResponse.json({ error: decision.error }, { status: decision.status })
-      }
-      const officerId = officer_id ?? ""
-      const visitDay = visit_day ?? ""
-      const officer = await prisma.users.findUnique({
-        where: { id: officerId },
-        select: { role: true, is_active: true },
-      })
-      if (!officer || !officer.is_active || !isAssignableOfficerRole(officer.role)) {
-        return NextResponse.json({ error: 'Choose an officer.' }, { status: 400 })
-      }
-      const updated = await prisma.$queryRaw<Array<{ id: string }>>`
-        update public.properties
-        set vetting_officer_id = ${officerId}::uuid,
-            vetting_visit_on = ${visitDay}::date,
-            updated_at = now()
-        where id = ${id}::uuid
-          and status = 'pending_vetting'
-          and (vetting_officer_id is null or vetting_officer_id = ${officerId}::uuid)
-        returning id::text as id
-      `
-      if (updated.length === 0) {
-        return NextResponse.json({ error: 'This visit is already assigned.' }, { status: 409 })
-      }
-      await openDeskCase(id)
-      const opened = await readStoredVisit(id)
-      await setCaseState(id, nextCaseState(opened.caseState, 'assign'))
-      await prisma.admin_audit_log.create({
-        data: {
-          actor_id: user.id,
-          action: 'assign_vetting_visit',
-          target_id: id,
-          metadata: { officer_id: officerId, visit_day: visitDay, case_state: 'field_in_progress' },
-        },
-      })
-      return NextResponse.json({
-        success: true,
-        data: { property: { id, status: 'pending_vetting' }, action_taken: 'assign' },
-      })
     }
 
     if (action === 'check_in') {
@@ -509,11 +464,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       { status: 500 }
     )
   }
-}
-
-async function readVettingAssignment(propertyId: string): Promise<{ officerId: string | null; visitDay: string | null }> {
-  const visit = await readStoredVisit(propertyId)
-  return { officerId: visit.officerId, visitDay: visit.visitDay }
 }
 
 function getActionMessage(action: string, propertyTitle: string): string {

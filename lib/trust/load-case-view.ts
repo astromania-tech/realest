@@ -8,6 +8,7 @@ import { readPublicCase, readStoredVisit } from "@/lib/trust/visit-store";
 import {
   caseQueueBaseStatusSql,
   caseQueueFilterSql,
+  caseQueueLeaderSql,
   caseQueueSearchSql,
 } from "@/lib/trust/case-queue-sql";
 import {
@@ -120,8 +121,9 @@ const QUEUE_FROM = Prisma.sql`
   left join public.property_visit_checks c on c.property_id = p.id
 `;
 
-async function loadCaseQueueMetrics(): Promise<Record<string, number>> {
+async function loadCaseQueueMetrics(leaderId?: string): Promise<Record<string, number>> {
   const base = caseQueueBaseStatusSql();
+  const leaderSql = caseQueueLeaderSql(leaderId);
   const [row] = await prisma.$queryRaw<
     Array<{
       total: number;
@@ -150,6 +152,7 @@ async function loadCaseQueueMetrics(): Promise<Record<string, number>> {
     from public.properties p
     left join public.property_verification_cases k on k.property_id = p.id
     where ${base}
+    ${leaderSql}
   `);
 
   return {
@@ -165,10 +168,12 @@ export async function listCaseQueue(input: {
   filter: CaseQueueFilter;
   search: string;
   limit?: number;
+  leaderId?: string;
 }): Promise<{ items: CaseQueueItem[]; metrics: Record<string, number> }> {
   const take = Math.max(1, Math.min(input.limit ?? 50, 200));
   const filterSql = caseQueueFilterSql(input.filter);
   const searchSql = caseQueueSearchSql(input.search);
+  const leaderSql = caseQueueLeaderSql(input.leaderId);
   const base = caseQueueBaseStatusSql();
 
   const [rows, metrics] = await Promise.all([
@@ -178,10 +183,11 @@ export async function listCaseQueue(input: {
       where ${base}
       ${filterSql}
       ${searchSql}
+      ${leaderSql}
       order by p.created_at asc nulls last
       limit ${take}
     `),
-    loadCaseQueueMetrics(),
+    loadCaseQueueMetrics(input.leaderId),
   ]);
 
   return { items: rows.map(toQueueItem), metrics };

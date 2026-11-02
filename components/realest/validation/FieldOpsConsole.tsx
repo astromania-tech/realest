@@ -34,6 +34,7 @@ export function FieldOpsConsole({ items }: { items: FieldOpsItem[] }) {
           <div
             key={item.id}
             className="grid min-w-0 gap-3 border-b border-border px-4 py-4 last:border-b-0 sm:px-5 md:grid-cols-[1.2fr_1fr_0.8fr_0.7fr_auto] md:items-center md:gap-4"
+            style={{ contentVisibility: "auto", containIntrinsicSize: "auto 96px" }}
           >
             <div className="min-w-0">
               <Link

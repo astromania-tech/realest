@@ -35,7 +35,7 @@ export function vettingActionAllowed(
 ): boolean {
   switch (action) {
     case "assign":
-      return canAssignFieldVisit(role);
+      return false;
     case "check_in":
       return true;
     case "approve":

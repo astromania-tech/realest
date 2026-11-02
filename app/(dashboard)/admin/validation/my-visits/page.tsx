@@ -71,7 +71,11 @@ export default async function MyVisitsPage() {
 
       <div className="mt-6 space-y-4 sm:space-y-5">
         {visits.map((item) => (
-          <article key={item.id} className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
+          <article
+            key={item.id}
+            className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5"
+            style={{ contentVisibility: "auto", containIntrinsicSize: "auto 180px" }}
+          >
             <div className="flex flex-col justify-between gap-3 sm:flex-row sm:gap-4">
               <div className="min-w-0">
                 <p className="font-mono text-xs text-muted-foreground">{item.id.slice(0, 8)}…</p>

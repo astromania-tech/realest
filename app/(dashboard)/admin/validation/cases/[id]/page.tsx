@@ -1,6 +1,8 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { requireStaffPage } from "@/lib/auth/require-staff-page";
-import { prisma } from "@/lib/prisma";
+import { staffHomePath } from "@/lib/auth/roles";
+import { caseDetailAccess, redactCaseDetailForVisit } from "@/lib/trust/case-access";
+import { readFieldTeam } from "@/lib/trust/field-team-store";
 import { loadCaseDetail } from "@/lib/trust/load-case-view";
 import { badgeWriteAllowed, observationConflicts } from "@/lib/trust/visit";
 import { readStoredVisit } from "@/lib/trust/visit-store";
@@ -15,24 +17,22 @@ export default async function VerificationCasePage({
 }) {
   const { id } = await params;
   const { tab } = await searchParams;
-  await requireStaffPage();
+  const staff = await requireStaffPage();
+  const team = await readFieldTeam(id);
+  const access = caseDetailAccess({
+    role: staff.role,
+    userId: staff.userId,
+    teamLeaderId: team?.teamLeaderId ?? null,
+    memberIds: team?.memberIds ?? [],
+    checkInOfficerId: team?.checkInOfficerId ?? null,
+  });
+  if (access === "none") redirect(staffHomePath(staff.role));
 
   const detail = await loadCaseDetail(id);
   if (!detail) notFound();
+  const visible = access === "visit" ? redactCaseDetailForVisit(detail) : detail;
 
-  const [officers, visit] = await Promise.all([
-    prisma.users.findMany({
-      where: {
-        role: { in: ["admin", "reviewer", "supervisor", "team_leader", "team_member"] },
-        is_active: true,
-        deleted_at: null,
-      },
-      select: { id: true, full_name: true },
-      orderBy: { full_name: "asc" },
-    }),
-    readStoredVisit(id),
-  ]);
-
+  const visit = await readStoredVisit(id);
   const badge = badgeWriteAllowed(visit);
   const conflicts =
     visit.sawBuilding === null ||
@@ -49,8 +49,8 @@ export default async function VerificationCasePage({
 
   return (
     <CaseDetailConsole
-      detail={detail}
-      officers={officers}
+      detail={visible}
+      detailLevel={access === "visit" ? "visit" : "full"}
       canApprove={badge.ok}
       blockReason={badge.ok ? null : badge.error}
       conflicts={conflicts}

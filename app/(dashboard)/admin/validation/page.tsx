@@ -1,5 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { requireStaffPage } from "@/lib/auth/require-staff-page";
+import { staffHomePath } from "@/lib/auth/roles";
+import { caseQueueScope } from "@/lib/trust/case-access";
 import { listCaseQueue, listMyVisits } from "@/lib/trust/load-case-view";
 import type { CaseQueueFilter } from "@/lib/trust/case-view";
 import { Badge } from "@/components/ui/badge";
@@ -27,9 +30,16 @@ export default async function ValidationPage({
     ? params.filter
     : "all") as CaseQueueFilter;
   const search = params.q ?? "";
+  const scope = caseQueueScope(staff.role);
+  if (scope === "none") redirect(staffHomePath(staff.role));
 
   const [{ items, metrics }, myVisits] = await Promise.all([
-    listCaseQueue({ filter, search, limit: 50 }),
+    listCaseQueue({
+      filter,
+      search,
+      limit: 50,
+      leaderId: scope === "led" ? staff.userId : undefined,
+    }),
     listMyVisits(staff.userId),
   ]);
 
@@ -44,7 +54,9 @@ export default async function ValidationPage({
             Case queue
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Monitor work by evidence state, operational priority, and reviewer readiness.
+            {scope === "led"
+              ? "Cases for the teams you lead. Open one to assign the visit or read the full file."
+              : "Monitor work by evidence state, operational priority, and reviewer readiness."}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -154,6 +166,12 @@ export default async function ValidationPage({
         {filter !== "all" ? <input type="hidden" name="filter" value={filter} /> : null}
       </form>
 
+      {items.length === 50 ? (
+        <p className="mb-3 text-xs text-muted-foreground">
+          Showing the first 50 cases. Search or pick a filter to narrow the list.
+        </p>
+      ) : null}
+
       <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
         <div className="hidden grid-cols-[1.15fr_1.1fr_0.85fr_0.7fr_auto] gap-4 border-b border-border bg-muted px-5 py-3 text-xs font-bold uppercase tracking-[0.1em] text-muted-foreground md:grid">
           <span>Case</span>
@@ -173,6 +191,7 @@ export default async function ValidationPage({
                   : `/admin/validation/cases/${item.id}`
               }
               className="grid gap-3 border-b border-border px-5 py-4 transition-colors last:border-b-0 hover:bg-secondary/40 md:grid-cols-[1.15fr_1.1fr_0.85fr_0.7fr_auto] md:items-center md:gap-4"
+              style={{ contentVisibility: "auto", containIntrinsicSize: "auto 92px" }}
             >
               <div>
                 <p className="font-mono text-xs text-muted-foreground">{item.id.slice(0, 8)}…</p>
