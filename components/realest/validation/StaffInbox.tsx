@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Bell, CheckCheck, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ListPager } from "@/components/realest/ListPager";
+import { pageWindow } from "@/lib/ui/page-window";
 
 type InboxItem = {
   id: string;
@@ -37,6 +39,9 @@ export function StaffInbox() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState(false);
+  const [page, setPage] = useState(1);
+  const window = pageWindow(items.length, page, 8);
+  const visible = items.slice(window.start, window.end);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -97,7 +102,7 @@ export function StaffInbox() {
       {error ? <p className="mb-4 break-words text-sm text-destructive">{error}</p> : null}
 
       <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-        {items.map((item) => {
+        {visible.map((item) => {
           const href = hrefFor(item);
           const body = (
             <div className="flex min-w-0 items-start gap-3">
@@ -156,6 +161,15 @@ export function StaffInbox() {
           </div>
         ) : null}
       </div>
+      <ListPager
+        page={window.page}
+        pageCount={window.pageCount}
+        from={window.from}
+        to={window.to}
+        total={items.length}
+        onPrev={() => setPage(window.page - 1)}
+        onNext={() => setPage(window.page + 1)}
+      />
     </div>
   );
 }

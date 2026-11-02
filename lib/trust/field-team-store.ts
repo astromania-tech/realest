@@ -92,9 +92,10 @@ export async function readFieldTeam(propertyId: string): Promise<FieldTeamView |
 
 export async function listFieldOpsQueue(options?: {
   limit?: number;
+  page?: number;
   leaderId?: string;
-}): Promise<
-  Array<{
+}): Promise<{
+  items: Array<{
     id: string;
     title: string;
     address: string;
@@ -103,12 +104,27 @@ export async function listFieldOpsQueue(options?: {
     teamLeaderName: string | null;
     confirmed: boolean;
     officerName: string | null;
-  }>
-> {
-  const limit = Math.max(1, Math.min(options?.limit ?? 40, 80));
+  }>;
+  total: number;
+  page: number;
+}> {
+  const limit = Math.max(1, Math.min(options?.limit ?? 8, 40));
   const leaderSql = options?.leaderId
     ? Prisma.sql`and t.team_leader_id = ${options.leaderId}::uuid`
     : Prisma.empty;
+  const counted = await prisma.$queryRaw<Array<{ total: number }>>`
+    select count(*)::int as total
+    from public.properties p
+    left join public.property_field_teams t on t.property_id = p.id
+    where p.status = 'pending_vetting'
+      ${leaderSql}
+  `;
+  const total = counted[0]?.total ?? 0;
+  const page = Math.min(
+    Math.max(1, Math.floor(options?.page ?? 1) || 1),
+    Math.max(1, Math.ceil(total / limit)),
+  );
+  const offset = (page - 1) * limit;
   const rows = await prisma.$queryRaw<
     Array<{
       id: string;
@@ -138,17 +154,22 @@ export async function listFieldOpsQueue(options?: {
       ${leaderSql}
     order by coalesce(t.visit_day, p.vetting_visit_on) asc nulls last, p.updated_at desc
     limit ${limit}
+    offset ${offset}
   `;
-  return rows.map((row) => ({
-    id: row.id,
-    title: row.title,
-    address: row.address,
-    city: row.city,
-    visitDay: row.visit_day ? dayString(row.visit_day) : null,
-    teamLeaderName: row.leader_name,
-    confirmed: Boolean(row.confirmed_at),
-    officerName: row.officer_name,
-  }));
+  return {
+    total,
+    page,
+    items: rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      address: row.address,
+      city: row.city,
+      visitDay: row.visit_day ? dayString(row.visit_day) : null,
+      teamLeaderName: row.leader_name,
+      confirmed: Boolean(row.confirmed_at),
+      officerName: row.officer_name,
+    })),
+  };
 }
 
 /** Open visits must not stay pinned to a staff account that can no longer sign in. */

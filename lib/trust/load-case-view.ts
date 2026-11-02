@@ -168,29 +168,45 @@ export async function listCaseQueue(input: {
   filter: CaseQueueFilter;
   search: string;
   limit?: number;
+  page?: number;
   leaderId?: string;
-}): Promise<{ items: CaseQueueItem[]; metrics: Record<string, number> }> {
-  const take = Math.max(1, Math.min(input.limit ?? 50, 200));
+}): Promise<{ items: CaseQueueItem[]; metrics: Record<string, number>; total: number; page: number }> {
+  const take = Math.max(1, Math.min(input.limit ?? 10, 50));
   const filterSql = caseQueueFilterSql(input.filter);
   const searchSql = caseQueueSearchSql(input.search);
   const leaderSql = caseQueueLeaderSql(input.leaderId);
   const base = caseQueueBaseStatusSql();
+  const where = Prisma.sql`
+    where ${base}
+    ${filterSql}
+    ${searchSql}
+    ${leaderSql}
+  `;
 
-  const [rows, metrics] = await Promise.all([
-    prisma.$queryRaw<PropertyQueueRow[]>(Prisma.sql`
-      select ${QUEUE_SELECT}
+  const [counted, metrics] = await Promise.all([
+    prisma.$queryRaw<Array<{ total: number }>>(Prisma.sql`
+      select count(*)::int as total
       ${QUEUE_FROM}
-      where ${base}
-      ${filterSql}
-      ${searchSql}
-      ${leaderSql}
-      order by p.created_at asc nulls last
-      limit ${take}
+      ${where}
     `),
     loadCaseQueueMetrics(input.leaderId),
   ]);
+  const total = counted[0]?.total ?? 0;
+  const window = {
+    page: Math.min(Math.max(1, Math.floor(input.page ?? 1) || 1), Math.max(1, Math.ceil(total / take))),
+  };
+  const offset = (window.page - 1) * take;
 
-  return { items: rows.map(toQueueItem), metrics };
+  const rows = await prisma.$queryRaw<PropertyQueueRow[]>(Prisma.sql`
+    select ${QUEUE_SELECT}
+    ${QUEUE_FROM}
+    ${where}
+    order by p.created_at asc nulls last
+    limit ${take}
+    offset ${offset}
+  `);
+
+  return { items: rows.map(toQueueItem), metrics, total, page: window.page };
 }
 
 export async function loadCaseDetail(propertyId: string): Promise<CaseDetailView | null> {

@@ -14,8 +14,10 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const items = await listFieldOpsQueue({
+  const { items, total, page } = await listFieldOpsQueue({
+    limit: 8,
+    page: 1,
     leaderId: scope === "led" ? staff.userId : undefined,
   });
-  return NextResponse.json({ items });
+  return NextResponse.json({ items, total, page });
 }

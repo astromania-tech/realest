@@ -1,11 +1,24 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { requireStaffPage } from "@/lib/auth/require-staff-page";
 import { listMyFieldAssignments } from "@/lib/trust/field-team-store";
 import { listMyVisits } from "@/lib/trust/load-case-view";
+import { ListPager } from "@/components/realest/ListPager";
+import { pageWindow, parsePage } from "@/lib/ui/page-window";
 import { Badge } from "@/components/ui/badge";
 import { MapPin } from "lucide-react";
 
-export default async function MyVisitsPage() {
+const PAGE_SIZE = 5;
+
+function visitsHref(page: number) {
+  return page > 1 ? `/admin/validation/my-visits?page=${page}` : "/admin/validation/my-visits";
+}
+
+export default async function MyVisitsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   const staff = await requireStaffPage("/admin/validation/my-visits");
   const [teamAssignments, officerVisits] = await Promise.all([
     listMyFieldAssignments(staff.userId),
@@ -56,6 +69,11 @@ export default async function MyVisitsPage() {
   }
 
   const visits = Array.from(byId.values());
+  const params = await searchParams;
+  const requested = parsePage(params.page);
+  const window = pageWindow(visits.length, requested, PAGE_SIZE);
+  if (params.page && requested !== window.page) redirect(visitsHref(window.page));
+  const visible = visits.slice(window.start, window.end);
 
   return (
     <div className="mx-auto min-w-0 max-w-4xl">
@@ -70,7 +88,7 @@ export default async function MyVisitsPage() {
       </p>
 
       <div className="mt-6 space-y-4 sm:space-y-5">
-        {visits.map((item) => (
+        {visible.map((item) => (
           <article
             key={item.id}
             className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5"
@@ -131,6 +149,15 @@ export default async function MyVisitsPage() {
           </div>
         ) : null}
       </div>
+      <ListPager
+        page={window.page}
+        pageCount={window.pageCount}
+        from={window.from}
+        to={window.to}
+        total={visits.length}
+        prevHref={window.page > 1 ? visitsHref(window.page - 1) : null}
+        nextHref={window.page < window.pageCount ? visitsHref(window.page + 1) : null}
+      />
     </div>
   );
 }

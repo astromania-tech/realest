@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
   if (scope === "none") {
     return NextResponse.json({
       success: true,
-      data: { items: [], metrics: { total: 0, review: 0, field: 0, verified: 0, duplicates: 0 } },
+      data: { items: [], metrics: { total: 0, review: 0, field: 0, verified: 0, duplicates: 0 }, total: 0, page: 1 },
     });
   }
 

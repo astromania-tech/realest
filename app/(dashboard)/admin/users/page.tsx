@@ -8,8 +8,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Users, Search, UserCheck, UserX, Edit } from "lucide-react";
 import Link from "next/link";
+import { ListPager } from "@/components/realest/ListPager";
+import { pageWindow, parsePage } from "@/lib/ui/page-window";
 
-export default async function UsersPage() {
+const PAGE_SIZE = 10;
+
+function usersHref(page: number) {
+  return page > 1 ? `/admin/users?page=${page}` : "/admin/users";
+}
+
+export default async function UsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   const {
     data: { user },
   } = await getAuthUser();
@@ -27,23 +39,28 @@ export default async function UsersPage() {
     redirect("/");
   }
 
-  const [users, totalUsers, activeUsers, bannedUsers] = await Promise.all([
-    prisma.users.findMany({
-      select: {
-        id: true,
-        email: true,
-        full_name: true,
-        role: true,
-        is_active: true,
-        created_at: true,
-      },
-      orderBy: { created_at: "desc" },
-      take: 50,
-    }),
+  const params = await searchParams;
+  const requested = parsePage(params.page);
+  const [totalUsers, activeUsers, bannedUsers] = await Promise.all([
     prisma.users.count(),
     prisma.users.count({ where: { is_active: true } }),
     prisma.users.count({ where: { is_active: false } }),
   ]);
+  const window = pageWindow(totalUsers, requested, PAGE_SIZE);
+  if (params.page && requested !== window.page) redirect(usersHref(window.page));
+  const users = await prisma.users.findMany({
+    select: {
+      id: true,
+      email: true,
+      full_name: true,
+      role: true,
+      is_active: true,
+      created_at: true,
+    },
+    orderBy: { created_at: "desc" },
+    skip: window.start,
+    take: PAGE_SIZE,
+  });
 
   const userStats = {
     totalUsers,
@@ -181,6 +198,15 @@ export default async function UsersPage() {
             </div>
           </CardContent>
       </Card>
+      <ListPager
+        page={window.page}
+        pageCount={window.pageCount}
+        from={window.from}
+        to={window.to}
+        total={totalUsers}
+        prevHref={window.page > 1 ? usersHref(window.page - 1) : null}
+        nextHref={window.page < window.pageCount ? usersHref(window.page + 1) : null}
+      />
     </>
   );
 }

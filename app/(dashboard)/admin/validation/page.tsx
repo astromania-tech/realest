@@ -4,12 +4,25 @@ import { requireStaffPage } from "@/lib/auth/require-staff-page";
 import { staffHomePath } from "@/lib/auth/roles";
 import { caseQueueScope } from "@/lib/trust/case-access";
 import { listCaseQueue, listMyVisits } from "@/lib/trust/load-case-view";
+import { ListPager } from "@/components/realest/ListPager";
+import { pageWindow, parsePage } from "@/lib/ui/page-window";
 import type { CaseQueueFilter } from "@/lib/trust/case-view";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Building, CheckCircle, Eye, MapPin, Search, Users2, XCircle } from "lucide-react";
+
+const PAGE_SIZE = 10;
+
+function queueHref(filter: CaseQueueFilter, search: string, page: number) {
+  const params = new URLSearchParams();
+  if (filter !== "all") params.set("filter", filter);
+  if (search) params.set("q", search);
+  if (page > 1) params.set("page", String(page));
+  const query = params.toString();
+  return query ? `/admin/validation?${query}` : "/admin/validation";
+}
 
 const FILTERS: { id: CaseQueueFilter; label: string }[] = [
   { id: "all", label: "All" },
@@ -22,7 +35,7 @@ const FILTERS: { id: CaseQueueFilter; label: string }[] = [
 export default async function ValidationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string; q?: string }>;
+  searchParams: Promise<{ filter?: string; q?: string; page?: string }>;
 }) {
   const staff = await requireStaffPage();
   const params = await searchParams;
@@ -33,15 +46,20 @@ export default async function ValidationPage({
   const scope = caseQueueScope(staff.role);
   if (scope === "none") redirect(staffHomePath(staff.role));
 
-  const [{ items, metrics }, myVisits] = await Promise.all([
+  const requestedPage = parsePage(params.page);
+  const [{ items, metrics, total, page }, myVisits] = await Promise.all([
     listCaseQueue({
       filter,
       search,
-      limit: 50,
+      limit: PAGE_SIZE,
+      page: requestedPage,
       leaderId: scope === "led" ? staff.userId : undefined,
     }),
     listMyVisits(staff.userId),
   ]);
+  if (params.page && requestedPage !== page) {
+    redirect(queueHref(filter, search, page));
+  }
 
   return (
     <div>
@@ -166,12 +184,6 @@ export default async function ValidationPage({
         {filter !== "all" ? <input type="hidden" name="filter" value={filter} /> : null}
       </form>
 
-      {items.length === 50 ? (
-        <p className="mb-3 text-xs text-muted-foreground">
-          Showing the first 50 cases. Search or pick a filter to narrow the list.
-        </p>
-      ) : null}
-
       <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
         <div className="hidden grid-cols-[1.15fr_1.1fr_0.85fr_0.7fr_auto] gap-4 border-b border-border bg-muted px-5 py-3 text-xs font-bold uppercase tracking-[0.1em] text-muted-foreground md:grid">
           <span>Case</span>
@@ -239,6 +251,15 @@ export default async function ValidationPage({
           </div>
         ) : null}
       </div>
+      <ListPager
+        page={page}
+        pageCount={pageWindow(total, page, PAGE_SIZE).pageCount}
+        from={total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}
+        to={Math.min(page * PAGE_SIZE, total)}
+        total={total}
+        prevHref={page > 1 ? queueHref(filter, search, page - 1) : null}
+        nextHref={page * PAGE_SIZE < total ? queueHref(filter, search, page + 1) : null}
+      />
     </div>
   );
 }

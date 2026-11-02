@@ -5,13 +5,33 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Copy, ArrowLeft, AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { ListPager } from "@/components/realest/ListPager";
+import { pageWindow, parsePage } from "@/lib/ui/page-window";
 
-export default async function DuplicatesPage() {
+const PAGE_SIZE = 10;
+
+function duplicatesHref(page: number) {
+  return page > 1 ? `/admin/validation/duplicates?page=${page}` : "/admin/validation/duplicates";
+}
+
+export default async function DuplicatesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   await requireStaffPage();
+  const params = await searchParams;
+  const requested = parsePage(params.page);
+  const total = await prisma.properties.count({ where: { status: "pending_duplicate_review" } });
+  const window = pageWindow(total, requested, PAGE_SIZE);
+  if (params.page && requested !== window.page) redirect(duplicatesHref(window.page));
 
   const duplicates = await prisma.properties.findMany({
     where: { status: "pending_duplicate_review" },
     orderBy: { created_at: "asc" },
+    skip: window.start,
+    take: PAGE_SIZE,
     select: {
       id: true,
       title: true,
@@ -38,7 +58,7 @@ export default async function DuplicatesPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Copy className="w-5 h-5 text-orange-600" />
-            Potential Duplicates ({duplicates.length})
+            Potential Duplicates ({total})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -81,6 +101,15 @@ export default async function DuplicatesPage() {
             </TableBody>
           </Table>
             </div>
+            <ListPager
+              page={window.page}
+              pageCount={window.pageCount}
+              from={window.from}
+              to={window.to}
+              total={total}
+              prevHref={window.page > 1 ? duplicatesHref(window.page - 1) : null}
+              nextHref={window.page < window.pageCount ? duplicatesHref(window.page + 1) : null}
+            />
           </CardContent>
       </Card>
     </div>
