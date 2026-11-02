@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { isDashboardNavActive, mobileMoreItems, mobilePrimaryItems } from "@/lib/layout/dashboard-nav";
+import {
+  isDashboardNavActive,
+  mobileMoreItems,
+  mobilePrimaryItems,
+  staffNavItems,
+  staffNavSections,
+} from "@/lib/layout/dashboard-nav";
 
 const agentHrefs = [
   "/agent",
@@ -52,6 +58,36 @@ test("reviewer mobile tabs stay on verification paths only", () => {
   assert.equal(more.includes("/admin/validation/vetting"), false);
   assert.equal(primary.includes("/admin/validation/ml"), false);
   assert.equal(primary.includes("/admin/validation/vetting"), false);
+});
+
+test("admin nav keeps related jobs together and the same links", () => {
+  const sections = staffNavSections("admin");
+  const titles = sections.map((section) => section.title);
+  assert.deepEqual(titles, ["Overview", "Verification", "People", "Content", "Outreach", "System"]);
+  const hrefs = (title: string) =>
+    sections.find((section) => section.title === title)?.items.map((item) => item.href) ?? [];
+  assert.deepEqual(hrefs("Verification"), [
+    "/admin/validation",
+    "/admin/validation/field",
+    "/admin/validation/my-visits",
+    "/admin/validation/inbox",
+    "/admin/agents",
+  ]);
+  assert.ok(hrefs("People").includes("/admin/users"));
+  assert.ok(hrefs("People").includes("/admin/staff"));
+  assert.ok(hrefs("People").includes("/admin/activity"));
+  assert.ok(hrefs("People").includes("/admin/subadmins"));
+  assert.deepEqual(
+    sections.flatMap((section) => section.items.map((item) => item.href)),
+    staffNavItems("admin").map((item) => item.href),
+  );
+  assert.deepEqual(mobilePrimaryItems("admin").map((item) => item.href), [
+    "/admin",
+    "/admin/validation",
+    "/admin/validation/field",
+    "/admin/validation/inbox",
+  ]);
+  assert.equal(staffNavSections("reviewer")[0]?.title, "");
 });
 
 test("team member primary tabs are my visits and inbox", () => {

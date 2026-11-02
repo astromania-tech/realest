@@ -9,6 +9,7 @@ import {
   isDashboardNavActive,
   mobileMoreItems,
   mobilePrimaryItems,
+  staffNavSections,
 } from "@/lib/layout/dashboard-nav";
 
 export function DashboardMobileNav({ userRole }: { userRole: string | null }) {
@@ -26,6 +27,15 @@ export function DashboardMobileNav({ userRole }: { userRole: string | null }) {
   }, [pathname]);
 
   const moreActive = more.some((item) => isDashboardNavActive(pathname, item.href, allHrefs));
+  const moreSections =
+    userRole === "admin"
+      ? staffNavSections(userRole)
+          .map((section) => ({
+            title: section.title,
+            items: section.items.filter((item) => more.some((row) => row.href === item.href)),
+          }))
+          .filter((section) => section.items.length > 0)
+      : [{ title: "", items: more }];
 
   return (
     <>
@@ -49,31 +59,42 @@ export function DashboardMobileNav({ userRole }: { userRole: string | null }) {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <ul className="space-y-2 pb-2">
-              {more.map((item) => {
-                const Icon = item.icon;
-                const active = isDashboardNavActive(pathname, item.href, allHrefs);
-                return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      onClick={() => setMoreOpen(false)}
-                      className={`flex items-center gap-3 rounded-xl px-3 py-3 ${
-                        active
-                          ? "bg-brand-accent text-[#07402F]"
-                          : "bg-muted/40 text-foreground hover:bg-muted"
-                      }`}
-                    >
-                      <Icon className="h-5 w-5 shrink-0" />
-                      <span className="min-w-0">
-                        <span className="block truncate text-sm font-medium">{item.label}</span>
-                        <span className="block truncate text-xs opacity-80">{item.description}</span>
-                      </span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+            <div className="space-y-4 pb-2">
+              {moreSections.map((section) => (
+                <section key={section.title || "more"}>
+                  {section.title ? (
+                    <p className="mb-2 px-1 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                      {section.title}
+                    </p>
+                  ) : null}
+                  <ul className="space-y-2">
+                    {section.items.map((item) => {
+                      const Icon = item.icon;
+                      const active = isDashboardNavActive(pathname, item.href, allHrefs);
+                      return (
+                        <li key={item.href}>
+                          <Link
+                            href={item.href}
+                            onClick={() => setMoreOpen(false)}
+                            className={`flex items-center gap-3 rounded-xl px-3 py-3 ${
+                              active
+                                ? "bg-brand-accent text-[#07402F]"
+                                : "bg-muted/40 text-foreground hover:bg-muted"
+                            }`}
+                          >
+                            <Icon className="h-5 w-5 shrink-0" />
+                            <span className="min-w-0">
+                              <span className="block truncate text-sm font-medium">{item.label}</span>
+                              <span className="block truncate text-xs opacity-80">{item.description}</span>
+                            </span>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              ))}
+            </div>
           </div>
         </div>
       ) : null}

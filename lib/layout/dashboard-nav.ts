@@ -113,26 +113,58 @@ export const ROLE_NAVIGATION: Record<string, RoleNavigation> = {
   },
 };
 
-export const ADMIN_NAV_ITEMS: DashboardNavItem[] = [
-  { href: "/admin", label: "Dashboard", description: "System overview", icon: Home },
-  { href: "/admin/validation", label: "Case queue", description: "Verification cases needing action", icon: Building },
-  { href: "/admin/validation/field", label: "Field ops", description: "Assign team leaders for visits", icon: Users2 },
-  { href: "/admin/validation/my-visits", label: "My visits", description: "Visits assigned to you", icon: MapPin },
-  { href: "/admin/validation/inbox", label: "Inbox", description: "Case and field notifications", icon: Bell },
-  { href: "/admin/agents", label: "Agent Verification", description: "Verify real estate agents", icon: Users },
-  { href: "/admin/users", label: "User Management", description: "Manage user accounts", icon: Shield },
-  { href: "/admin/content", label: "Content Management", description: "Manage platform content", icon: FileText },
-  { href: "/admin/settings", label: "Admin Settings", description: "System configurations", icon: Settings },
-  { href: "/admin/staff", label: "Staff invites", description: "Invite reviewers and field teams", icon: Users2 },
-  { href: "/admin/activity", label: "Staff activity", description: "Who did what across Connect", icon: ScrollText },
-  { href: "/admin/subadmins", label: "Sub-Admins", description: "Manage sub-admin accounts", icon: UserCheck2 },
-  { href: "/admin/cms", label: "CMS Dashboard", description: "Content management overview", icon: Layout },
-  { href: "/admin/support", label: "Support Center", description: "Support tickets and inquiries", icon: HelpCircle },
-  { href: "/admin/emails", label: "Email Templates", description: "Preview all email templates", icon: Mail },
-  { href: "/admin/emails/campaigns", label: "Email Campaigns", description: "Create and send email campaigns", icon: Megaphone },
-  { href: "/admin/analytics/polls", label: "Poll Results", description: "View email poll vote results", icon: BarChart3 },
-  { href: "/admin/analytics/referrals", label: "Referrals", description: "Referral tracking and attribution", icon: Users2 },
+export const ADMIN_NAV_SECTIONS: DashboardNavSection[] = [
+  {
+    title: "Overview",
+    items: [
+      { href: "/admin", label: "Dashboard", description: "System overview", icon: Home },
+    ],
+  },
+  {
+    title: "Verification",
+    items: [
+      { href: "/admin/validation", label: "Case queue", description: "Verification cases needing action", icon: Building },
+      { href: "/admin/validation/field", label: "Field ops", description: "Assign team leaders for visits", icon: Users2 },
+      { href: "/admin/validation/my-visits", label: "My visits", description: "Visits assigned to you", icon: MapPin },
+      { href: "/admin/validation/inbox", label: "Inbox", description: "Case and field notifications", icon: Bell },
+      { href: "/admin/agents", label: "Agent Verification", description: "Verify real estate agents", icon: Users },
+    ],
+  },
+  {
+    title: "People",
+    items: [
+      { href: "/admin/users", label: "User Management", description: "Manage user accounts", icon: Shield },
+      { href: "/admin/staff", label: "Staff invites", description: "Invite reviewers and field teams", icon: Users2 },
+      { href: "/admin/activity", label: "Staff activity", description: "Who did what across Connect", icon: ScrollText },
+      { href: "/admin/subadmins", label: "Sub-Admins", description: "Manage sub-admin accounts", icon: UserCheck2 },
+    ],
+  },
+  {
+    title: "Content",
+    items: [
+      { href: "/admin/content", label: "Content Management", description: "Manage platform content", icon: FileText },
+      { href: "/admin/cms", label: "CMS Dashboard", description: "Content management overview", icon: Layout },
+      { href: "/admin/support", label: "Support Center", description: "Support tickets and inquiries", icon: HelpCircle },
+    ],
+  },
+  {
+    title: "Outreach",
+    items: [
+      { href: "/admin/emails", label: "Email Templates", description: "Preview all email templates", icon: Mail },
+      { href: "/admin/emails/campaigns", label: "Email Campaigns", description: "Create and send email campaigns", icon: Megaphone },
+      { href: "/admin/analytics/polls", label: "Poll Results", description: "View email poll vote results", icon: BarChart3 },
+      { href: "/admin/analytics/referrals", label: "Referrals", description: "Referral tracking and attribution", icon: Users2 },
+    ],
+  },
+  {
+    title: "System",
+    items: [
+      { href: "/admin/settings", label: "Admin Settings", description: "System configurations", icon: Settings },
+    ],
+  },
 ];
+
+export const ADMIN_NAV_ITEMS: DashboardNavItem[] = ADMIN_NAV_SECTIONS.flatMap((section) => section.items);
 
 /** Desk verification — Case queue is the front door (no legacy /ml or /vetting). */
 export const REVIEWER_NAV_ITEMS: DashboardNavItem[] = [
@@ -160,6 +192,13 @@ export const TEAM_MEMBER_NAV_ITEMS: DashboardNavItem[] = [
   { href: "/admin/validation/my-visits", label: "My visits", description: "Your field assignments", icon: MapPin },
   { href: "/admin/validation/inbox", label: "Inbox", description: "Your visit notifications", icon: Bell },
 ];
+
+export function staffNavSections(role: string | null): DashboardNavSection[] {
+  if (role === "admin") return ADMIN_NAV_SECTIONS;
+  const items = staffNavItems(role);
+  if (items.length === 0) return [];
+  return [{ title: "", items }];
+}
 
 export function staffNavItems(role: string | null): DashboardNavItem[] {
   if (role === "admin") return ADMIN_NAV_ITEMS;

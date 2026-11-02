@@ -12,7 +12,7 @@ import {
   Settings,
 } from "lucide-react";
 
-import { isDashboardNavActive, staffNavItems } from "@/lib/layout/dashboard-nav";
+import { isDashboardNavActive, staffNavItems, staffNavSections } from "@/lib/layout/dashboard-nav";
 import { staffRolePanelSubtitle, staffRolePanelTitle } from "@/lib/auth/roles";
 
 interface AdminSidebarProps {
@@ -111,39 +111,48 @@ export function AdminSidebar({
           Nested <a><button> breaks Next soft navigation and remounts the whole admin shell.
         */}
         <nav className="sidebar-nav my-4 flex-1 space-y-2 overflow-y-auto overscroll-y-none px-2">
-          {navigationItems.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.href);
+          {staffNavSections(userRole).map((section, sectionIndex) => (
+            <div key={section.title || `section-${sectionIndex}`} className={sectionIndex > 0 ? "border-t border-accent/20 pt-2" : ""}>
+              {!shouldCollapse && section.title ? (
+                <p className="px-2 pb-1 pt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                  {section.title}
+                </p>
+              ) : null}
+              {section.items.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item.href);
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                prefetch
-                className={`mt-0.5 flex w-full items-center gap-2 p-2 transition-colors hover:bg-popover-foreground/20 ${
-                  shouldCollapse ? "justify-center rounded-sm p-3" : "justify-start rounded-md"
-                } ${
-                  active
-                    ? "bg-primary text-primary-foreground hover:bg-primary"
-                    : "text-foreground"
-                }`}
-              >
-                <Icon className="h-5 w-5 shrink-0" />
-                {!shouldCollapse ? (
-                  <span className="flex min-w-0 flex-col items-start">
-                    <span className="truncate font-medium">{item.label}</span>
-                    <span
-                      className={`truncate text-xs ${
-                        active ? "text-primary-foreground/80" : "text-muted-foreground/70"
-                      }`}
-                    >
-                      {item.description}
-                    </span>
-                  </span>
-                ) : null}
-              </Link>
-            );
-          })}
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    prefetch
+                    className={`mt-0.5 flex w-full items-center gap-2 p-2 transition-colors hover:bg-popover-foreground/20 ${
+                      shouldCollapse ? "justify-center rounded-sm p-3" : "justify-start rounded-md"
+                    } ${
+                      active
+                        ? "bg-primary text-primary-foreground hover:bg-primary"
+                        : "text-foreground"
+                    }`}
+                  >
+                    <Icon className="h-5 w-5 shrink-0" />
+                    {!shouldCollapse ? (
+                      <span className="flex min-w-0 flex-col items-start">
+                        <span className="truncate font-medium">{item.label}</span>
+                        <span
+                          className={`truncate text-xs ${
+                            active ? "text-primary-foreground/80" : "text-muted-foreground/70"
+                          }`}
+                        >
+                          {item.description}
+                        </span>
+                      </span>
+                    ) : null}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
         {!shouldCollapse && userRole === "admin" ? (
