@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { signupVerifyRedirect, verificationEmailLink } from "./signup-mail.ts";
+import { duplicateSignupMessage, signupVerifyRedirect, verificationEmailLink } from "./signup-mail.ts";
 
 const hosted = { VERCEL_ENV: "production", VERCEL_PROJECT_PRODUCTION_URL: "app.example.com" };
 
@@ -84,9 +84,17 @@ test("a local send keeps a loopback link", () => {
   assert.equal(url.searchParams.get("redirect_to"), "http://127.0.0.1:3000/verify");
 });
 
+test("an existing account is not treated as a fresh signup", () => {
+  assert.match(duplicateSignupMessage({ code: "email_exists" }) || "", /already exists/);
+  assert.equal(duplicateSignupMessage({ message: "Invalid login" }), null);
+});
+
 test("signup route does not fall back to localhost", () => {
   const route = readFileSync(new URL("../../app/api/auth/signup/route.ts", import.meta.url), "utf8");
   assert.match(route, /signupVerifyRedirect/);
   assert.match(route, /verificationEmailLink/);
+  assert.match(route, /type: 'magiclink'/);
+  assert.match(route, /sendVerificationEmail/);
+  assert.doesNotMatch(route, /admin\.createUser/);
   assert.doesNotMatch(route, /localhost/);
 });

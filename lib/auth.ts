@@ -158,7 +158,7 @@ export async function signUpWithPassword(
 
     const result = await response.json();
 
-    if (!response.ok) {
+    if (!response.ok || result.success === false) {
       return { success: false, error: result.error || "Signup failed" };
     }
 
@@ -352,7 +352,9 @@ export async function resendEmailVerification(
       `/api/auth/signup?email=${encodeURIComponent(email.trim().toLowerCase())}`,
     );
     const data = await response.json();
-    if (!response.ok) return { success: false, error: data.error || 'Failed to resend' };
+    if (!response.ok || data.success === false) {
+      return { success: false, error: data.error || 'Failed to resend' };
+    }
     return { success: true };
   } catch {
     return { success: false, error: 'Failed to resend verification email' };

@@ -69,6 +69,25 @@ export function signupVerifyRedirect(env?: SignupMailEnv): string {
   return `${publicSiteOrigin(env)}/verify`;
 }
 
+/** Signup link after the Auth user already exists. Supabase rejects that with email_exists. */
+export function duplicateSignupMessage(
+  error: { message?: string; code?: string } | null | undefined,
+): string | null {
+  if (!error) return null;
+  const code = String(error.code || "");
+  const message = String(error.message || "").toLowerCase();
+  if (
+    code === "email_exists" ||
+    code === "user_already_exists" ||
+    message.includes("already been registered") ||
+    message.includes("already registered") ||
+    message.includes("already exists")
+  ) {
+    return "An account with this email already exists. Sign in, or resend the verification email.";
+  }
+  return null;
+}
+
 /**
  * The URL written into the verification email.
  * Supabase puts redirectTo on action_link. A local Site URL also makes the link host localhost.
