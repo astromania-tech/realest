@@ -3,6 +3,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { renderCampaignTemplate } from '@/lib/emailBulkSender';
 import { Resend } from 'resend';
 import { sendVerificationEmail } from '@/lib/emailService';
+import { signupVerifyRedirect, verificationEmailLink } from '@/lib/auth/signup-mail';
 
 function mailClient(): Resend | null {
   const key = process.env.RESEND_API_KEY;
@@ -50,14 +51,14 @@ export async function POST(request: NextRequest) {
       email,
       password,
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/verify`,
+        redirectTo: signupVerifyRedirect(),
       },
     });
 
     if (linkError) throw linkError;
 
     // 3. Render and send custom branded email
-    const verificationUrl = linkData.properties.action_link;
+    const verificationUrl = verificationEmailLink(linkData.properties.action_link);
     const { html } = await renderCampaignTemplate('VerificationEmail', {
       firstName: fullName?.split(' ')[0] || 'there',
       verificationUrl,
@@ -98,6 +99,14 @@ export async function GET(request: NextRequest) {
   const email = request.nextUrl.searchParams.get('email');
   if (!email) return NextResponse.json({ error: 'Email required' }, { status: 400 });
 
+  let redirectTo: string;
+  try {
+    redirectTo = signupVerifyRedirect();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Signup verification link is not configured';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+
   const supabaseAdmin = createServiceClient();
 
   const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
@@ -105,7 +114,7 @@ export async function GET(request: NextRequest) {
     email,
     password: 'REDACTED_NOT_REQUIRED_FOR_LINK_ONLY',
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/verify`,
+      redirectTo,
     },
   });
 
@@ -113,10 +122,18 @@ export async function GET(request: NextRequest) {
 
   const firstName = email.split('@')[0]; // best we can do without the user object here
 
+  let verificationUrl: string;
+  try {
+    verificationUrl = verificationEmailLink(linkData.properties.action_link);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Signup verification link is not configured';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+
   const result = await sendVerificationEmail({
     email,
     firstName,
-    verificationUrl: linkData.properties.action_link,
+    verificationUrl,
   });
 
   return NextResponse.json({ success: result.success, error: result.error });
