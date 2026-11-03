@@ -123,7 +123,8 @@ export default function SignUpPage() {
           }).catch(() => {});
           sessionStorage.removeItem('referralCode');
         }
-        router.push(`/success?email=${encodeURIComponent(formData.email)}`);
+        const sentQuery = response.emailSent === false ? "&sent=0" : "";
+        router.push(`/success?email=${encodeURIComponent(formData.email)}${sentQuery}`);
       }
     } catch (err) {
       setError("An unexpected error occurred");
