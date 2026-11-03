@@ -22,6 +22,18 @@ test("app url is used when the site url is empty", () => {
   );
 });
 
+test("preview send uses the preview host", () => {
+  assert.equal(
+    signupVerifyRedirect({
+      VERCEL_ENV: "preview",
+      NEXT_PUBLIC_APP_URL: "http://localhost:3000",
+      VERCEL_URL: "realest-git-preview.vercel.app",
+      VERCEL_PROJECT_PRODUCTION_URL: "realest.ng",
+    }),
+    "https://realest-git-preview.vercel.app/verify",
+  );
+});
+
 test("hosted send ignores a localhost public url", () => {
   assert.equal(
     signupVerifyRedirect({
@@ -93,8 +105,10 @@ test("signup route does not fall back to localhost", () => {
   const route = readFileSync(new URL("../../app/api/auth/signup/route.ts", import.meta.url), "utf8");
   assert.match(route, /signupVerifyRedirect/);
   assert.match(route, /verificationEmailLink/);
-  assert.match(route, /type: 'magiclink'/);
+  assert.match(route, /type:\s*['"]magiclink['"]/);
   assert.match(route, /sendVerificationEmail/);
+  assert.match(route, /emailSent:\s*false/);
+  assert.doesNotMatch(route, /linkError\?\.message/);
   assert.doesNotMatch(route, /admin\.createUser/);
   assert.doesNotMatch(route, /localhost/);
 });

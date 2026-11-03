@@ -63,13 +63,10 @@ export async function POST(request: NextRequest) {
 
     if (!sent.success) {
       console.error('Resend signup email error:', sent.error);
-      return NextResponse.json(
-        { success: false, error: 'Your account was created, but the verification email was not sent.' },
-        { status: 502 },
-      );
+      return NextResponse.json({ success: true, user: created, emailSent: false });
     }
 
-    return NextResponse.json({ success: true, user: created });
+    return NextResponse.json({ success: true, user: created, emailSent: true });
   } catch (error: unknown) {
     console.error('Signup API Route error:', error);
     const message = error instanceof Error ? error.message : 'An unexpected error occurred during signup';
@@ -106,8 +103,9 @@ export async function GET(request: NextRequest) {
   });
 
   if (linkError || !linkData?.properties?.action_link) {
+    console.error('Signup resend link error:', linkError);
     return NextResponse.json(
-      { success: false, error: linkError?.message || 'Verification link was not created' },
+      { success: false, error: 'Verification link was not created' },
       { status: 400 },
     );
   }

@@ -9,6 +9,7 @@ export interface AuthResponse {
   success: boolean;
   user?: User;
   error?: string;
+  emailSent?: boolean;
 }
 
 // const createClient = createServiceClient;
@@ -162,7 +163,7 @@ export async function signUpWithPassword(
       return { success: false, error: result.error || "Signup failed" };
     }
 
-    return { success: true, user: result.user };
+    return { success: true, user: result.user, emailSent: result.emailSent !== false };
   } catch (err) {
     return { success: false, error: "An unexpected error occurred" };
   }

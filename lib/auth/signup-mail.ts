@@ -9,6 +9,7 @@ export type SignupMailEnv = {
   NEXT_PUBLIC_APP_URL?: string;
   NEXT_PUBLIC_SUPABASE_URL?: string;
   VERCEL_PROJECT_PRODUCTION_URL?: string;
+  VERCEL_URL?: string;
   VERCEL_ENV?: string;
 };
 
@@ -19,6 +20,7 @@ function envOrProcess(env?: SignupMailEnv): SignupMailEnv {
       NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
       NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
       VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL,
+      VERCEL_URL: process.env.VERCEL_URL,
       VERCEL_ENV: process.env.VERCEL_ENV,
     }
   );
@@ -50,6 +52,11 @@ export function publicSiteOrigin(env?: SignupMailEnv): string {
   for (const raw of configured) {
     const url = parseOrigin(raw);
     if (url && !isLocalHostname(url.hostname)) return url.origin;
+  }
+  if (source.VERCEL_ENV === "preview") {
+    const preview = parseOrigin(source.VERCEL_URL);
+    if (preview && !isLocalHostname(preview.hostname)) return preview.origin;
+    throw new Error("NEXT_PUBLIC_SITE_URL is not set");
   }
   const production = parseOrigin(source.VERCEL_PROJECT_PRODUCTION_URL);
   if (production && !isLocalHostname(production.hostname)) return production.origin;
