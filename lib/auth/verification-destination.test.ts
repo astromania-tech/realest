@@ -12,6 +12,13 @@ test("an owner or agent lands on onboarding", () => {
   assert.equal(verificationDestination({ id: "u1", app_metadata: { role: "agent" } }), "/onboarding");
 });
 
+test("a non-string role is ignored", () => {
+  assert.equal(
+    verificationDestination({ id: "u1", app_metadata: { role: 1 } }),
+    "/login?verified=true",
+  );
+});
+
 test("an admin lands on the admin home", () => {
   assert.equal(verificationDestination({ id: "u1", app_metadata: { role: "admin" } }), "/admin");
 });
