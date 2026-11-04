@@ -1,15 +1,14 @@
 /**
  * Listing Detail Page — Server Component wrapper
  *
- * Loads the public payload once (shared with generateMetadata via React.cache)
- * and passes it into the client island so the browser does not re-fetch.
+ * Exports `generateMetadata` for dynamic per-listing SEO/OG metadata,
+ * then delegates all interactive rendering to the Client Component.
+ *
+ * Data source: Prisma (same client used by /api/properties/[id]/public)
+ * Mirrors the agent-side public route — listing_source: "agent"
  */
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import {
-  loadPublicPropertyDetail,
-  publicPropertyMetadataFields,
-} from "@/lib/listings/load-public-property";
+import { prisma } from "@/lib/prisma";
 import ListingDetailsPage from "./ListingDetailClient";
 
 type PageProps = { params: Promise<{ id: string }> };
@@ -26,7 +25,34 @@ const LISTING_TYPE_LABEL: Record<string, string> = {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
-  const listing = await loadPublicPropertyDetail(id, "agent");
+
+  const listing = await prisma.properties
+    .findFirst({
+      where: { id, status: "live", listing_source: "agent" },
+      select: {
+        title: true,
+        description: true,
+        city: true,
+        state: true,
+        property_type: true,
+        listing_type: true,
+        bedrooms: true,
+        bathrooms: true,
+        agents: {
+          select: {
+            agency_name: true,
+            profiles: { select: { full_name: true } },
+          },
+        },
+        property_media: {
+          where: { is_featured: true },
+          orderBy: { display_order: "asc" },
+          take: 1,
+          select: { media_url: true },
+        },
+      },
+    })
+    .catch(() => null);
 
   if (!listing) {
     return {
@@ -36,15 +62,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   }
 
-  const fields = publicPropertyMetadataFields(listing);
-  const location = [fields.city, fields.state].filter(Boolean).join(", ");
+  const location = [listing.city, listing.state].filter(Boolean).join(", ");
 
-  const typeLabel = (fields.property_type ?? "Property")
+  const typeLabel = (listing.property_type ?? "Property")
     .replace(/_/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
 
-  const beds = fields.bedrooms;
-  const baths = fields.bathrooms ? Number(fields.bathrooms) : null;
+  const beds = listing.bedrooms;
+  const baths = listing.bathrooms ? Number(listing.bathrooms) : null;
   const specParts = [
     beds ? `${beds}-Bed` : null,
     baths ? `${baths}-Bath` : null,
@@ -53,18 +78,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     .filter(Boolean)
     .join(" ");
 
-  const listingLabel = LISTING_TYPE_LABEL[fields.listing_type ?? ""] ?? "";
-  const agentName = fields.agentName;
+  const listingLabel = LISTING_TYPE_LABEL[listing.listing_type ?? ""] ?? "";
+  const agentName =
+    listing.agents?.agency_name ||
+    listing.agents?.profiles?.full_name ||
+    null;
 
   const baseTitle =
-    fields.title ?? `${specParts}${location ? " in " + location : ""}`;
+    listing.title ?? `${specParts}${location ? " in " + location : ""}`;
   const title = `${baseTitle}${listingLabel ? " · " + listingLabel : ""} | RealEST`;
 
-  const description = fields.description
-    ? fields.description.slice(0, 155)
+  const description = listing.description
+    ? listing.description.slice(0, 155)
     : `Verified ${specParts.toLowerCase()}${location ? " in " + location : ""} listed by ${agentName ?? "a verified agent"} on RealEST.`;
 
-  const ogImageUrl = fields.ogImageUrl;
+  const ogImageUrl = listing.property_media?.[0]?.media_url ?? undefined;
 
   return {
     title,
@@ -89,9 +117,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default async function ListingPage({ params }: PageProps) {
-  const { id } = await params;
-  const initialProperty = await loadPublicPropertyDetail(id, "agent");
-  if (!initialProperty) notFound();
-  return <ListingDetailsPage initialProperty={initialProperty} propertyId={id} />;
+export default function ListingPage() {
+  return <ListingDetailsPage />;
 }

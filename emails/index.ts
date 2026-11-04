@@ -35,7 +35,6 @@ export { OnboardingReminderEmail }    from './templates/platform/OnboardingRemin
 export { PasswordChangedEmail }       from './templates/platform/PasswordChangedEmail';
 export { InquiryNotificationEmail }   from './templates/platform/InquiryNotificationEmail';
 export { SubAdminInvitationEmail }    from './templates/platform/SubAdminInvitationEmail';
-export { StaffInvitationEmail }       from './templates/platform/StaffInvitationEmail';
 export { VerificationEmail }          from './templates/platform/VerificationEmail';
 
 // Listing lifecycle
@@ -87,7 +86,6 @@ export type { OnboardingReminderEmailData } from './templates/platform/Onboardin
 export type { PasswordChangedEmailData }    from './templates/platform/PasswordChangedEmail';
 export type { InquiryEmailData }            from './templates/platform/InquiryNotificationEmail';
 export type { SubAdminInvitationData }      from './templates/platform/SubAdminInvitationEmail';
-export type { StaffInvitationData }         from './templates/platform/StaffInvitationEmail';
 export type { VerificationEmailData }       from './templates/platform/VerificationEmail';
 
 // Listing lifecycle

@@ -13,11 +13,7 @@ export const UserRole = {
   user: 'user',
   agent: 'agent',
   owner: 'owner',
-  admin: 'admin',
-  reviewer: 'reviewer',
-  supervisor: 'supervisor',
-  team_leader: 'team_leader',
-  team_member: 'team_member'
+  admin: 'admin'
 } as const
 
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]

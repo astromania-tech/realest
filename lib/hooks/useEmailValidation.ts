@@ -76,9 +76,10 @@ export function useEmailValidation(
         return {
           exists: true,
           userInfo: {
-            // Public lookup no longer returns firstName / position (probing).
-            firstName: "there",
+            firstName: data.firstName,
             status: data.status,
+            position: data.position,
+            totalCount: data.totalCount
           }
         };
       }

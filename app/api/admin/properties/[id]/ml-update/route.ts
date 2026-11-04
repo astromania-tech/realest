@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireStaff } from "@/lib/auth/require-staff"
-import { authDeniedResponse } from "@/lib/auth/staff-api"
 
 // Schema for ML validation update
 const mlUpdateSchema = z.object({
@@ -40,7 +38,7 @@ export async function PUT(
 
     // Verify user is admin
     const adminRow = await prisma.users.findUnique({ where: { id: user.id }, select: { role: true } })
-    if (!adminRow || adminRow.role !== 'admin' && adminRow.role !== 'reviewer') {
+    if (!adminRow || adminRow.role !== 'admin') {
       return NextResponse.json(
         { error: "Admin access required" },
         { status: 403 },

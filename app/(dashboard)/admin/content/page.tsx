@@ -93,8 +93,7 @@ export default async function ContentPage() {
                 <CardTitle>Pending Reviews</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="w-full min-w-0 overflow-x-auto">
-                  <Table>
+                <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Property</TableHead>
@@ -138,8 +137,7 @@ export default async function ContentPage() {
                     ))}
                   </TableBody>
                 </Table>
-            </div>
-          </CardContent>
+              </CardContent>
             </Card>
           </TabsContent>
 
@@ -149,8 +147,7 @@ export default async function ContentPage() {
                 <CardTitle>Pending Media</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="w-full min-w-0 overflow-x-auto">
-                  <Table>
+                <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Property</TableHead>
@@ -191,8 +188,7 @@ export default async function ContentPage() {
                     ))}
                   </TableBody>
                 </Table>
-            </div>
-          </CardContent>
+              </CardContent>
             </Card>
           </TabsContent>
         </Tabs>

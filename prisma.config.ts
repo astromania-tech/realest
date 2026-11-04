@@ -10,6 +10,7 @@ export default defineConfig({
     seed: "prisma/seed.ts",
   },
   datasource: {
+    // Next build and the app read DATABASE_URL. DIRECT_URL is the migrate shadow URL.
     url: env("DATABASE_URL"),
     shadowDatabaseUrl: env("DIRECT_URL")
   },

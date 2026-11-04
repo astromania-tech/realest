@@ -1,3 +1,4 @@
+import { getAuthUser } from "@/lib/supabase/server";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import {
@@ -5,9 +6,6 @@ import {
   isRouteAccessible,
   shouldEnableAuthentication,
 } from "@/lib/appMode";
-import { accountSignInClosed } from "@/lib/auth/account-closed";
-import { isStaffRole, staffHomePath } from "@/lib/auth/roles";
-import { middlewareNeedsSession } from "@/lib/supabase/middleware-auth-paths";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -41,12 +39,6 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
-  // Public marketing + public APIs: no Auth round-trip (session refresh only
-  // where guest/protected/auth API paths need it).
-  if (!middlewareNeedsSession(pathname)) {
-    return supabaseResponse;
-  }
-
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -70,40 +62,9 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // Must use this client so cookie refresh setAll runs on the response.
   const {
     data: { user },
-  } = await supabase.auth.getUser();
-
-  if (user) {
-    const { data: account } = await supabase
-      .from("users")
-      .select("deleted_at")
-      .eq("id", user.id)
-      .maybeSingle();
-    if (accountSignInClosed(account)) {
-      await supabase.auth.signOut();
-      if (pathname.startsWith("/api/")) {
-        const denied = NextResponse.json({ error: "This account is closed." }, { status: 403 });
-        supabaseResponse.cookies.getAll().forEach((cookie) => {
-          denied.cookies.set(cookie);
-        });
-        return denied;
-      }
-      if (!(pathname === "/login" && request.nextUrl.searchParams.get("closed") === "1")) {
-        const url = request.nextUrl.clone();
-        url.pathname = "/login";
-        url.search = "";
-        url.searchParams.set("closed", "1");
-        const redirect = NextResponse.redirect(url);
-        supabaseResponse.cookies.getAll().forEach((cookie) => {
-          redirect.cookies.set(cookie);
-        });
-        return redirect;
-      }
-      return supabaseResponse;
-    }
-  }
+  } = await getAuthUser();
 
   // Guest-only routes: redirect confirmed + authenticated users to dashboard
   const guestOnlyRoutes = ["/login", "/register", "/forgot-password"];
@@ -125,12 +86,16 @@ export async function updateSession(request: NextRequest) {
 
     const role = roleData?.role ?? "user";
     const url = request.nextUrl.clone();
-    if (isStaffRole(role)) {
-      url.pathname = staffHomePath(role);
-    } else if (role === "owner" || role === "agent") {
-      url.pathname = "/onboarding";
-    } else {
-      url.pathname = "/profile";
+    switch (role) {
+      case "owner":
+      case "agent":
+        url.pathname = "/onboarding";
+        break;
+      case "admin":
+        url.pathname = "/admin";
+        break;
+      default:
+        url.pathname = "/profile";
     }
     return NextResponse.redirect(url);
   }
@@ -189,16 +154,6 @@ export async function updateSession(request: NextRequest) {
 
     const role = userData?.role;
 
-    // Connect staff belong in the verification shell, not marketplace /profile.
-    if (
-      isStaffRole(role) &&
-      (pathname === "/profile" || pathname.startsWith("/profile/"))
-    ) {
-      const url = request.nextUrl.clone();
-      url.pathname = staffHomePath(role);
-      return NextResponse.redirect(url);
-    }
-
     if (role === "owner" || role === "agent") {
       const table = role === "owner" ? "owners" : "agents";
 
@@ -211,12 +166,6 @@ export async function updateSession(request: NextRequest) {
       if (!onboardingRecord) {
         const url = request.nextUrl.clone();
         url.pathname = "/onboarding";
-        return NextResponse.redirect(url);
-      }
-
-      if (pathname === "/profile" || pathname.startsWith("/profile/")) {
-        const url = request.nextUrl.clone();
-        url.pathname = role === "owner" ? "/owner" : "/agent";
         return NextResponse.redirect(url);
       }
     }

@@ -3,8 +3,6 @@ import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { enqueueValidationJob } from '@/lib/validation/validation-job-worker'
-import { requireStaff } from "@/lib/auth/require-staff"
-import { authDeniedResponse } from "@/lib/auth/staff-api"
 
 const duplicateCheckSchema = z.object({
   propertyId: z.string().uuid('Invalid property ID'),
@@ -27,11 +25,26 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const supabase = await createClient()
 
     // Verify admin authentication
-    const staff = await requireStaff()
-    if (!staff.ok) {
-      return NextResponse.json({ error: staff.error }, { status: staff.status })
+    const { data: { user }, error: authError } = await getAuthUser()
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
     }
-    const user = { id: staff.userId }
+
+    // Verify user is admin
+    const adminRow = await prisma.users.findUnique({
+      where: { id: user.id },
+      select: { role: true }
+    })
+    
+    if (!adminRow || adminRow.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Admin access required' },
+        { status: 403 }
+      )
+    }
 
     // Parse request body
     const body = await request.json()

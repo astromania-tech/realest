@@ -21,10 +21,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createServerClient } from "@supabase/ssr";
-import {
-  recoveryVerifyOtpParams,
-  resetOtpMatches,
-} from "@/lib/auth/password-reset-otp";
 import { deriveNumericOtp } from "@/lib/utils/otp";
 import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
 
@@ -80,7 +76,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate: code must match the derived numeric OTP from the stored hash
-    if (!resetOtpMatches(code, storedHash, deriveNumericOtp)) {
+    const expectedCode = deriveNumericOtp(storedHash);
+    if (code !== expectedCode) {
       return NextResponse.json(
         { success: false, error: "Invalid code. Please check and try again." },
         { status: 400 },
@@ -107,10 +104,12 @@ export async function POST(request: NextRequest) {
       },
     );
 
-    // Exchange the full token hash for a recovery session (token_hash, not token+email)
-    const { error: verifyError } = await supabase.auth.verifyOtp(
-      recoveryVerifyOtpParams(storedHash),
-    );
+    // Exchange the full token hash for a recovery session
+    const { error: verifyError } = await supabase.auth.verifyOtp({
+      token: storedHash,
+      email: "", // Supabase requires email for verifyOtp, but it's not actually used for token verification in this context
+      type: "recovery",
+    });
 
     if (verifyError) {
       const isExpired =

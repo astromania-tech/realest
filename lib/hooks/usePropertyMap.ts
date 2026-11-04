@@ -23,46 +23,21 @@ export type PropertyDetailMetadata = {
   [key: string]: unknown;
 };
 
-export type Property = Pick<
-  Database["public"]["Tables"]["properties"]["Row"],
-  | "id"
-  | "title"
-  | "price"
-  | "price_frequency"
-  | "property_type"
-  | "listing_type"
-  | "address"
-  | "city"
-  | "state"
-  | "latitude"
-  | "longitude"
-  | "bedrooms"
-  | "bathrooms"
-  | "square_feet"
-  | "status"
-  | "verification_status"
-  | "created_at"
-> & {
-  property_details: Array<{
+export type Property = Database["public"]["Tables"]["properties"]["Row"] & {
+  property_details: (Database["public"]["Tables"]["property_details"]["Row"] & {
     metadata: PropertyDetailMetadata | null;
-  }>;
-  property_media: Array<{
-    id: string;
-    media_type: string;
-    media_url: string;
-    is_featured: boolean | null;
-    display_order: number | null;
-  }>;
+  })[];
+  property_media: Database["public"]["Tables"]["property_media"]["Row"][];
   owners: {
     profiles: Pick<
       Database["public"]["Tables"]["profiles"]["Row"],
-      "full_name" | "avatar_url"
+      "full_name" | "avatar_url" | "phone"
     > | null;
   } | null;
   agents: {
     profiles: Pick<
       Database["public"]["Tables"]["profiles"]["Row"],
-      "full_name" | "avatar_url"
+      "full_name" | "avatar_url" | "phone"
     > | null;
   } | null;
 };
@@ -128,8 +103,8 @@ export function usePropertyMap({
     if (baseLimit) return baseLimit;
     if (zoomLevel <= 8) return 50;
     if (zoomLevel <= 10) return 100;
-    if (zoomLevel <= 12) return 150;
-    return 200;
+    if (zoomLevel <= 12) return 200;
+    return 500;
   };
 
   const fetchProperties = useCallback(async () => {
@@ -146,15 +121,11 @@ export function usePropertyMap({
         .from("properties")
         .select(
           `
-          id, title, price, price_frequency, property_type, listing_type,
-          address, city, state, latitude, longitude,
-          bedrooms, bathrooms, square_feet, status, verification_status, created_at,
-          property_details ( metadata ),
-          property_media (
-            id, media_type, media_url, is_featured, display_order
-          ),
-          owners ( profiles ( full_name, avatar_url ) ),
-          agents ( profiles ( full_name, avatar_url ) )
+          *,
+          property_details (*),
+          property_media (*),
+          owners (profiles (full_name, avatar_url, phone)),
+          agents (profiles (full_name, avatar_url, phone))
         `,
         )
         .eq("status", "live")

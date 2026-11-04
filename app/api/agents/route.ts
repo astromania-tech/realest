@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { publicPersonCard } from '@/lib/listings/public-listing'
 
 // GET /api/agents - List verified agents
 export async function GET(request: NextRequest) {
@@ -38,8 +37,9 @@ export async function GET(request: NextRequest) {
         include: {
           profiles: {
             select: {
-              id: true,
               full_name: true,
+              email: true,
+              phone: true,
               avatar_url: true,
               created_at: true,
             },
@@ -54,18 +54,8 @@ export async function GET(request: NextRequest) {
 
     const totalPages = Math.ceil(total / perPage)
 
-    const data = agents.map((agent) => {
-      const card = publicPersonCard(agent.profiles)
-      return {
-        ...agent,
-        profiles: card
-          ? { ...card, created_at: agent.profiles.created_at }
-          : null,
-      }
-    })
-
     return NextResponse.json({
-      data,
+      data: agents,
       pagination: {
         page,
         per_page: perPage,

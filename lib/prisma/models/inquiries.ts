@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums.ts"
-import type * as Prisma from "../internal/prismaNamespace.ts"
+import type * as $Enums from "../enums"
+import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model inquiries
@@ -30,9 +30,6 @@ export type InquiriesMinAggregateOutputType = {
   property_id: string | null
   sender_id: string | null
   owner_id: string | null
-  guest_name: string | null
-  guest_email: string | null
-  guest_phone: string | null
   message: string | null
   status: string | null
   created_at: Date | null
@@ -44,9 +41,6 @@ export type InquiriesMaxAggregateOutputType = {
   property_id: string | null
   sender_id: string | null
   owner_id: string | null
-  guest_name: string | null
-  guest_email: string | null
-  guest_phone: string | null
   message: string | null
   status: string | null
   created_at: Date | null
@@ -58,9 +52,6 @@ export type InquiriesCountAggregateOutputType = {
   property_id: number
   sender_id: number
   owner_id: number
-  guest_name: number
-  guest_email: number
-  guest_phone: number
   message: number
   status: number
   created_at: number
@@ -74,9 +65,6 @@ export type InquiriesMinAggregateInputType = {
   property_id?: true
   sender_id?: true
   owner_id?: true
-  guest_name?: true
-  guest_email?: true
-  guest_phone?: true
   message?: true
   status?: true
   created_at?: true
@@ -88,9 +76,6 @@ export type InquiriesMaxAggregateInputType = {
   property_id?: true
   sender_id?: true
   owner_id?: true
-  guest_name?: true
-  guest_email?: true
-  guest_phone?: true
   message?: true
   status?: true
   created_at?: true
@@ -102,9 +87,6 @@ export type InquiriesCountAggregateInputType = {
   property_id?: true
   sender_id?: true
   owner_id?: true
-  guest_name?: true
-  guest_email?: true
-  guest_phone?: true
   message?: true
   status?: true
   created_at?: true
@@ -187,11 +169,8 @@ export type inquiriesGroupByArgs<ExtArgs extends runtime.Types.Extensions.Intern
 export type InquiriesGroupByOutputType = {
   id: string
   property_id: string
-  sender_id: string | null
+  sender_id: string
   owner_id: string
-  guest_name: string | null
-  guest_email: string | null
-  guest_phone: string | null
   message: string
   status: string
   created_at: Date | null
@@ -201,7 +180,7 @@ export type InquiriesGroupByOutputType = {
   _max: InquiriesMaxAggregateOutputType | null
 }
 
-type GetInquiriesGroupByPayload<T extends inquiriesGroupByArgs> = Prisma.PrismaPromise<
+export type GetInquiriesGroupByPayload<T extends inquiriesGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<InquiriesGroupByOutputType, T['by']> &
       {
@@ -222,28 +201,22 @@ export type inquiriesWhereInput = {
   NOT?: Prisma.inquiriesWhereInput | Prisma.inquiriesWhereInput[]
   id?: Prisma.UuidFilter<"inquiries"> | string
   property_id?: Prisma.UuidFilter<"inquiries"> | string
-  sender_id?: Prisma.UuidNullableFilter<"inquiries"> | string | null
+  sender_id?: Prisma.UuidFilter<"inquiries"> | string
   owner_id?: Prisma.UuidFilter<"inquiries"> | string
-  guest_name?: Prisma.StringNullableFilter<"inquiries"> | string | null
-  guest_email?: Prisma.StringNullableFilter<"inquiries"> | string | null
-  guest_phone?: Prisma.StringNullableFilter<"inquiries"> | string | null
   message?: Prisma.StringFilter<"inquiries"> | string
   status?: Prisma.StringFilter<"inquiries"> | string
   created_at?: Prisma.DateTimeNullableFilter<"inquiries"> | Date | string | null
   updated_at?: Prisma.DateTimeNullableFilter<"inquiries"> | Date | string | null
   profiles_inquiries_owner_idToprofiles?: Prisma.XOR<Prisma.ProfilesScalarRelationFilter, Prisma.profilesWhereInput>
   properties?: Prisma.XOR<Prisma.PropertiesScalarRelationFilter, Prisma.propertiesWhereInput>
-  profiles_inquiries_sender_idToprofiles?: Prisma.XOR<Prisma.ProfilesNullableScalarRelationFilter, Prisma.profilesWhereInput> | null
+  profiles_inquiries_sender_idToprofiles?: Prisma.XOR<Prisma.ProfilesScalarRelationFilter, Prisma.profilesWhereInput>
 }
 
 export type inquiriesOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   property_id?: Prisma.SortOrder
-  sender_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  sender_id?: Prisma.SortOrder
   owner_id?: Prisma.SortOrder
-  guest_name?: Prisma.SortOrderInput | Prisma.SortOrder
-  guest_email?: Prisma.SortOrderInput | Prisma.SortOrder
-  guest_phone?: Prisma.SortOrderInput | Prisma.SortOrder
   message?: Prisma.SortOrder
   status?: Prisma.SortOrder
   created_at?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -259,28 +232,22 @@ export type inquiriesWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.inquiriesWhereInput[]
   NOT?: Prisma.inquiriesWhereInput | Prisma.inquiriesWhereInput[]
   property_id?: Prisma.UuidFilter<"inquiries"> | string
-  sender_id?: Prisma.UuidNullableFilter<"inquiries"> | string | null
+  sender_id?: Prisma.UuidFilter<"inquiries"> | string
   owner_id?: Prisma.UuidFilter<"inquiries"> | string
-  guest_name?: Prisma.StringNullableFilter<"inquiries"> | string | null
-  guest_email?: Prisma.StringNullableFilter<"inquiries"> | string | null
-  guest_phone?: Prisma.StringNullableFilter<"inquiries"> | string | null
   message?: Prisma.StringFilter<"inquiries"> | string
   status?: Prisma.StringFilter<"inquiries"> | string
   created_at?: Prisma.DateTimeNullableFilter<"inquiries"> | Date | string | null
   updated_at?: Prisma.DateTimeNullableFilter<"inquiries"> | Date | string | null
   profiles_inquiries_owner_idToprofiles?: Prisma.XOR<Prisma.ProfilesScalarRelationFilter, Prisma.profilesWhereInput>
   properties?: Prisma.XOR<Prisma.PropertiesScalarRelationFilter, Prisma.propertiesWhereInput>
-  profiles_inquiries_sender_idToprofiles?: Prisma.XOR<Prisma.ProfilesNullableScalarRelationFilter, Prisma.profilesWhereInput> | null
+  profiles_inquiries_sender_idToprofiles?: Prisma.XOR<Prisma.ProfilesScalarRelationFilter, Prisma.profilesWhereInput>
 }, "id">
 
 export type inquiriesOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   property_id?: Prisma.SortOrder
-  sender_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  sender_id?: Prisma.SortOrder
   owner_id?: Prisma.SortOrder
-  guest_name?: Prisma.SortOrderInput | Prisma.SortOrder
-  guest_email?: Prisma.SortOrderInput | Prisma.SortOrder
-  guest_phone?: Prisma.SortOrderInput | Prisma.SortOrder
   message?: Prisma.SortOrder
   status?: Prisma.SortOrder
   created_at?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -296,11 +263,8 @@ export type inquiriesScalarWhereWithAggregatesInput = {
   NOT?: Prisma.inquiriesScalarWhereWithAggregatesInput | Prisma.inquiriesScalarWhereWithAggregatesInput[]
   id?: Prisma.UuidWithAggregatesFilter<"inquiries"> | string
   property_id?: Prisma.UuidWithAggregatesFilter<"inquiries"> | string
-  sender_id?: Prisma.UuidNullableWithAggregatesFilter<"inquiries"> | string | null
+  sender_id?: Prisma.UuidWithAggregatesFilter<"inquiries"> | string
   owner_id?: Prisma.UuidWithAggregatesFilter<"inquiries"> | string
-  guest_name?: Prisma.StringNullableWithAggregatesFilter<"inquiries"> | string | null
-  guest_email?: Prisma.StringNullableWithAggregatesFilter<"inquiries"> | string | null
-  guest_phone?: Prisma.StringNullableWithAggregatesFilter<"inquiries"> | string | null
   message?: Prisma.StringWithAggregatesFilter<"inquiries"> | string
   status?: Prisma.StringWithAggregatesFilter<"inquiries"> | string
   created_at?: Prisma.DateTimeNullableWithAggregatesFilter<"inquiries"> | Date | string | null
@@ -309,26 +273,20 @@ export type inquiriesScalarWhereWithAggregatesInput = {
 
 export type inquiriesCreateInput = {
   id?: string
-  guest_name?: string | null
-  guest_email?: string | null
-  guest_phone?: string | null
   message: string
   status?: string
   created_at?: Date | string | null
   updated_at?: Date | string | null
   profiles_inquiries_owner_idToprofiles: Prisma.profilesCreateNestedOneWithoutInquiries_inquiries_owner_idToprofilesInput
   properties: Prisma.propertiesCreateNestedOneWithoutInquiriesInput
-  profiles_inquiries_sender_idToprofiles?: Prisma.profilesCreateNestedOneWithoutInquiries_inquiries_sender_idToprofilesInput
+  profiles_inquiries_sender_idToprofiles: Prisma.profilesCreateNestedOneWithoutInquiries_inquiries_sender_idToprofilesInput
 }
 
 export type inquiriesUncheckedCreateInput = {
   id?: string
   property_id: string
-  sender_id?: string | null
+  sender_id: string
   owner_id: string
-  guest_name?: string | null
-  guest_email?: string | null
-  guest_phone?: string | null
   message: string
   status?: string
   created_at?: Date | string | null
@@ -337,26 +295,20 @@ export type inquiriesUncheckedCreateInput = {
 
 export type inquiriesUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  guest_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   message?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   profiles_inquiries_owner_idToprofiles?: Prisma.profilesUpdateOneRequiredWithoutInquiries_inquiries_owner_idToprofilesNestedInput
   properties?: Prisma.propertiesUpdateOneRequiredWithoutInquiriesNestedInput
-  profiles_inquiries_sender_idToprofiles?: Prisma.profilesUpdateOneWithoutInquiries_inquiries_sender_idToprofilesNestedInput
+  profiles_inquiries_sender_idToprofiles?: Prisma.profilesUpdateOneRequiredWithoutInquiries_inquiries_sender_idToprofilesNestedInput
 }
 
 export type inquiriesUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   property_id?: Prisma.StringFieldUpdateOperationsInput | string
-  sender_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sender_id?: Prisma.StringFieldUpdateOperationsInput | string
   owner_id?: Prisma.StringFieldUpdateOperationsInput | string
-  guest_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   message?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -366,11 +318,8 @@ export type inquiriesUncheckedUpdateInput = {
 export type inquiriesCreateManyInput = {
   id?: string
   property_id: string
-  sender_id?: string | null
+  sender_id: string
   owner_id: string
-  guest_name?: string | null
-  guest_email?: string | null
-  guest_phone?: string | null
   message: string
   status?: string
   created_at?: Date | string | null
@@ -379,9 +328,6 @@ export type inquiriesCreateManyInput = {
 
 export type inquiriesUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  guest_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   message?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -391,11 +337,8 @@ export type inquiriesUpdateManyMutationInput = {
 export type inquiriesUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   property_id?: Prisma.StringFieldUpdateOperationsInput | string
-  sender_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sender_id?: Prisma.StringFieldUpdateOperationsInput | string
   owner_id?: Prisma.StringFieldUpdateOperationsInput | string
-  guest_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   message?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -407,9 +350,6 @@ export type inquiriesCountOrderByAggregateInput = {
   property_id?: Prisma.SortOrder
   sender_id?: Prisma.SortOrder
   owner_id?: Prisma.SortOrder
-  guest_name?: Prisma.SortOrder
-  guest_email?: Prisma.SortOrder
-  guest_phone?: Prisma.SortOrder
   message?: Prisma.SortOrder
   status?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
@@ -421,9 +361,6 @@ export type inquiriesMaxOrderByAggregateInput = {
   property_id?: Prisma.SortOrder
   sender_id?: Prisma.SortOrder
   owner_id?: Prisma.SortOrder
-  guest_name?: Prisma.SortOrder
-  guest_email?: Prisma.SortOrder
-  guest_phone?: Prisma.SortOrder
   message?: Prisma.SortOrder
   status?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
@@ -435,9 +372,6 @@ export type inquiriesMinOrderByAggregateInput = {
   property_id?: Prisma.SortOrder
   sender_id?: Prisma.SortOrder
   owner_id?: Prisma.SortOrder
-  guest_name?: Prisma.SortOrder
-  guest_email?: Prisma.SortOrder
-  guest_phone?: Prisma.SortOrder
   message?: Prisma.SortOrder
   status?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
@@ -582,24 +516,18 @@ export type inquiriesUncheckedUpdateManyWithoutPropertiesNestedInput = {
 
 export type inquiriesCreateWithoutProfiles_inquiries_owner_idToprofilesInput = {
   id?: string
-  guest_name?: string | null
-  guest_email?: string | null
-  guest_phone?: string | null
   message: string
   status?: string
   created_at?: Date | string | null
   updated_at?: Date | string | null
   properties: Prisma.propertiesCreateNestedOneWithoutInquiriesInput
-  profiles_inquiries_sender_idToprofiles?: Prisma.profilesCreateNestedOneWithoutInquiries_inquiries_sender_idToprofilesInput
+  profiles_inquiries_sender_idToprofiles: Prisma.profilesCreateNestedOneWithoutInquiries_inquiries_sender_idToprofilesInput
 }
 
 export type inquiriesUncheckedCreateWithoutProfiles_inquiries_owner_idToprofilesInput = {
   id?: string
   property_id: string
-  sender_id?: string | null
-  guest_name?: string | null
-  guest_email?: string | null
-  guest_phone?: string | null
+  sender_id: string
   message: string
   status?: string
   created_at?: Date | string | null
@@ -618,9 +546,6 @@ export type inquiriesCreateManyProfiles_inquiries_owner_idToprofilesInputEnvelop
 
 export type inquiriesCreateWithoutProfiles_inquiries_sender_idToprofilesInput = {
   id?: string
-  guest_name?: string | null
-  guest_email?: string | null
-  guest_phone?: string | null
   message: string
   status?: string
   created_at?: Date | string | null
@@ -633,9 +558,6 @@ export type inquiriesUncheckedCreateWithoutProfiles_inquiries_sender_idToprofile
   id?: string
   property_id: string
   owner_id: string
-  guest_name?: string | null
-  guest_email?: string | null
-  guest_phone?: string | null
   message: string
   status?: string
   created_at?: Date | string | null
@@ -674,11 +596,8 @@ export type inquiriesScalarWhereInput = {
   NOT?: Prisma.inquiriesScalarWhereInput | Prisma.inquiriesScalarWhereInput[]
   id?: Prisma.UuidFilter<"inquiries"> | string
   property_id?: Prisma.UuidFilter<"inquiries"> | string
-  sender_id?: Prisma.UuidNullableFilter<"inquiries"> | string | null
+  sender_id?: Prisma.UuidFilter<"inquiries"> | string
   owner_id?: Prisma.UuidFilter<"inquiries"> | string
-  guest_name?: Prisma.StringNullableFilter<"inquiries"> | string | null
-  guest_email?: Prisma.StringNullableFilter<"inquiries"> | string | null
-  guest_phone?: Prisma.StringNullableFilter<"inquiries"> | string | null
   message?: Prisma.StringFilter<"inquiries"> | string
   status?: Prisma.StringFilter<"inquiries"> | string
   created_at?: Prisma.DateTimeNullableFilter<"inquiries"> | Date | string | null
@@ -703,24 +622,18 @@ export type inquiriesUpdateManyWithWhereWithoutProfiles_inquiries_sender_idTopro
 
 export type inquiriesCreateWithoutPropertiesInput = {
   id?: string
-  guest_name?: string | null
-  guest_email?: string | null
-  guest_phone?: string | null
   message: string
   status?: string
   created_at?: Date | string | null
   updated_at?: Date | string | null
   profiles_inquiries_owner_idToprofiles: Prisma.profilesCreateNestedOneWithoutInquiries_inquiries_owner_idToprofilesInput
-  profiles_inquiries_sender_idToprofiles?: Prisma.profilesCreateNestedOneWithoutInquiries_inquiries_sender_idToprofilesInput
+  profiles_inquiries_sender_idToprofiles: Prisma.profilesCreateNestedOneWithoutInquiries_inquiries_sender_idToprofilesInput
 }
 
 export type inquiriesUncheckedCreateWithoutPropertiesInput = {
   id?: string
-  sender_id?: string | null
+  sender_id: string
   owner_id: string
-  guest_name?: string | null
-  guest_email?: string | null
-  guest_phone?: string | null
   message: string
   status?: string
   created_at?: Date | string | null
@@ -756,10 +669,7 @@ export type inquiriesUpdateManyWithWhereWithoutPropertiesInput = {
 export type inquiriesCreateManyProfiles_inquiries_owner_idToprofilesInput = {
   id?: string
   property_id: string
-  sender_id?: string | null
-  guest_name?: string | null
-  guest_email?: string | null
-  guest_phone?: string | null
+  sender_id: string
   message: string
   status?: string
   created_at?: Date | string | null
@@ -770,9 +680,6 @@ export type inquiriesCreateManyProfiles_inquiries_sender_idToprofilesInput = {
   id?: string
   property_id: string
   owner_id: string
-  guest_name?: string | null
-  guest_email?: string | null
-  guest_phone?: string | null
   message: string
   status?: string
   created_at?: Date | string | null
@@ -781,24 +688,18 @@ export type inquiriesCreateManyProfiles_inquiries_sender_idToprofilesInput = {
 
 export type inquiriesUpdateWithoutProfiles_inquiries_owner_idToprofilesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  guest_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   message?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   properties?: Prisma.propertiesUpdateOneRequiredWithoutInquiriesNestedInput
-  profiles_inquiries_sender_idToprofiles?: Prisma.profilesUpdateOneWithoutInquiries_inquiries_sender_idToprofilesNestedInput
+  profiles_inquiries_sender_idToprofiles?: Prisma.profilesUpdateOneRequiredWithoutInquiries_inquiries_sender_idToprofilesNestedInput
 }
 
 export type inquiriesUncheckedUpdateWithoutProfiles_inquiries_owner_idToprofilesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   property_id?: Prisma.StringFieldUpdateOperationsInput | string
-  sender_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sender_id?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -808,10 +709,7 @@ export type inquiriesUncheckedUpdateWithoutProfiles_inquiries_owner_idToprofiles
 export type inquiriesUncheckedUpdateManyWithoutProfiles_inquiries_owner_idToprofilesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   property_id?: Prisma.StringFieldUpdateOperationsInput | string
-  sender_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sender_id?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -820,9 +718,6 @@ export type inquiriesUncheckedUpdateManyWithoutProfiles_inquiries_owner_idToprof
 
 export type inquiriesUpdateWithoutProfiles_inquiries_sender_idToprofilesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  guest_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   message?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -835,9 +730,6 @@ export type inquiriesUncheckedUpdateWithoutProfiles_inquiries_sender_idToprofile
   id?: Prisma.StringFieldUpdateOperationsInput | string
   property_id?: Prisma.StringFieldUpdateOperationsInput | string
   owner_id?: Prisma.StringFieldUpdateOperationsInput | string
-  guest_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   message?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -848,9 +740,6 @@ export type inquiriesUncheckedUpdateManyWithoutProfiles_inquiries_sender_idTopro
   id?: Prisma.StringFieldUpdateOperationsInput | string
   property_id?: Prisma.StringFieldUpdateOperationsInput | string
   owner_id?: Prisma.StringFieldUpdateOperationsInput | string
-  guest_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   message?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -859,11 +748,8 @@ export type inquiriesUncheckedUpdateManyWithoutProfiles_inquiries_sender_idTopro
 
 export type inquiriesCreateManyPropertiesInput = {
   id?: string
-  sender_id?: string | null
+  sender_id: string
   owner_id: string
-  guest_name?: string | null
-  guest_email?: string | null
-  guest_phone?: string | null
   message: string
   status?: string
   created_at?: Date | string | null
@@ -872,24 +758,18 @@ export type inquiriesCreateManyPropertiesInput = {
 
 export type inquiriesUpdateWithoutPropertiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  guest_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   message?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   profiles_inquiries_owner_idToprofiles?: Prisma.profilesUpdateOneRequiredWithoutInquiries_inquiries_owner_idToprofilesNestedInput
-  profiles_inquiries_sender_idToprofiles?: Prisma.profilesUpdateOneWithoutInquiries_inquiries_sender_idToprofilesNestedInput
+  profiles_inquiries_sender_idToprofiles?: Prisma.profilesUpdateOneRequiredWithoutInquiries_inquiries_sender_idToprofilesNestedInput
 }
 
 export type inquiriesUncheckedUpdateWithoutPropertiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  sender_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sender_id?: Prisma.StringFieldUpdateOperationsInput | string
   owner_id?: Prisma.StringFieldUpdateOperationsInput | string
-  guest_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   message?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -898,11 +778,8 @@ export type inquiriesUncheckedUpdateWithoutPropertiesInput = {
 
 export type inquiriesUncheckedUpdateManyWithoutPropertiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  sender_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sender_id?: Prisma.StringFieldUpdateOperationsInput | string
   owner_id?: Prisma.StringFieldUpdateOperationsInput | string
-  guest_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  guest_phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   message?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -916,16 +793,13 @@ export type inquiriesSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   property_id?: boolean
   sender_id?: boolean
   owner_id?: boolean
-  guest_name?: boolean
-  guest_email?: boolean
-  guest_phone?: boolean
   message?: boolean
   status?: boolean
   created_at?: boolean
   updated_at?: boolean
   profiles_inquiries_owner_idToprofiles?: boolean | Prisma.profilesDefaultArgs<ExtArgs>
   properties?: boolean | Prisma.propertiesDefaultArgs<ExtArgs>
-  profiles_inquiries_sender_idToprofiles?: boolean | Prisma.inquiries$profiles_inquiries_sender_idToprofilesArgs<ExtArgs>
+  profiles_inquiries_sender_idToprofiles?: boolean | Prisma.profilesDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["inquiries"]>
 
 export type inquiriesSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -933,16 +807,13 @@ export type inquiriesSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   property_id?: boolean
   sender_id?: boolean
   owner_id?: boolean
-  guest_name?: boolean
-  guest_email?: boolean
-  guest_phone?: boolean
   message?: boolean
   status?: boolean
   created_at?: boolean
   updated_at?: boolean
   profiles_inquiries_owner_idToprofiles?: boolean | Prisma.profilesDefaultArgs<ExtArgs>
   properties?: boolean | Prisma.propertiesDefaultArgs<ExtArgs>
-  profiles_inquiries_sender_idToprofiles?: boolean | Prisma.inquiries$profiles_inquiries_sender_idToprofilesArgs<ExtArgs>
+  profiles_inquiries_sender_idToprofiles?: boolean | Prisma.profilesDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["inquiries"]>
 
 export type inquiriesSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -950,16 +821,13 @@ export type inquiriesSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   property_id?: boolean
   sender_id?: boolean
   owner_id?: boolean
-  guest_name?: boolean
-  guest_email?: boolean
-  guest_phone?: boolean
   message?: boolean
   status?: boolean
   created_at?: boolean
   updated_at?: boolean
   profiles_inquiries_owner_idToprofiles?: boolean | Prisma.profilesDefaultArgs<ExtArgs>
   properties?: boolean | Prisma.propertiesDefaultArgs<ExtArgs>
-  profiles_inquiries_sender_idToprofiles?: boolean | Prisma.inquiries$profiles_inquiries_sender_idToprofilesArgs<ExtArgs>
+  profiles_inquiries_sender_idToprofiles?: boolean | Prisma.profilesDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["inquiries"]>
 
 export type inquiriesSelectScalar = {
@@ -967,30 +835,27 @@ export type inquiriesSelectScalar = {
   property_id?: boolean
   sender_id?: boolean
   owner_id?: boolean
-  guest_name?: boolean
-  guest_email?: boolean
-  guest_phone?: boolean
   message?: boolean
   status?: boolean
   created_at?: boolean
   updated_at?: boolean
 }
 
-export type inquiriesOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "property_id" | "sender_id" | "owner_id" | "guest_name" | "guest_email" | "guest_phone" | "message" | "status" | "created_at" | "updated_at", ExtArgs["result"]["inquiries"]>
+export type inquiriesOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "property_id" | "sender_id" | "owner_id" | "message" | "status" | "created_at" | "updated_at", ExtArgs["result"]["inquiries"]>
 export type inquiriesInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   profiles_inquiries_owner_idToprofiles?: boolean | Prisma.profilesDefaultArgs<ExtArgs>
   properties?: boolean | Prisma.propertiesDefaultArgs<ExtArgs>
-  profiles_inquiries_sender_idToprofiles?: boolean | Prisma.inquiries$profiles_inquiries_sender_idToprofilesArgs<ExtArgs>
+  profiles_inquiries_sender_idToprofiles?: boolean | Prisma.profilesDefaultArgs<ExtArgs>
 }
 export type inquiriesIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   profiles_inquiries_owner_idToprofiles?: boolean | Prisma.profilesDefaultArgs<ExtArgs>
   properties?: boolean | Prisma.propertiesDefaultArgs<ExtArgs>
-  profiles_inquiries_sender_idToprofiles?: boolean | Prisma.inquiries$profiles_inquiries_sender_idToprofilesArgs<ExtArgs>
+  profiles_inquiries_sender_idToprofiles?: boolean | Prisma.profilesDefaultArgs<ExtArgs>
 }
 export type inquiriesIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   profiles_inquiries_owner_idToprofiles?: boolean | Prisma.profilesDefaultArgs<ExtArgs>
   properties?: boolean | Prisma.propertiesDefaultArgs<ExtArgs>
-  profiles_inquiries_sender_idToprofiles?: boolean | Prisma.inquiries$profiles_inquiries_sender_idToprofilesArgs<ExtArgs>
+  profiles_inquiries_sender_idToprofiles?: boolean | Prisma.profilesDefaultArgs<ExtArgs>
 }
 
 export type $inquiriesPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -998,16 +863,13 @@ export type $inquiriesPayload<ExtArgs extends runtime.Types.Extensions.InternalA
   objects: {
     profiles_inquiries_owner_idToprofiles: Prisma.$profilesPayload<ExtArgs>
     properties: Prisma.$propertiesPayload<ExtArgs>
-    profiles_inquiries_sender_idToprofiles: Prisma.$profilesPayload<ExtArgs> | null
+    profiles_inquiries_sender_idToprofiles: Prisma.$profilesPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     property_id: string
-    sender_id: string | null
+    sender_id: string
     owner_id: string
-    guest_name: string | null
-    guest_email: string | null
-    guest_phone: string | null
     message: string
     status: string
     created_at: Date | null
@@ -1408,7 +1270,7 @@ export interface Prisma__inquiriesClient<T, Null = never, ExtArgs extends runtim
   readonly [Symbol.toStringTag]: "PrismaPromise"
   profiles_inquiries_owner_idToprofiles<T extends Prisma.profilesDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.profilesDefaultArgs<ExtArgs>>): Prisma.Prisma__profilesClient<runtime.Types.Result.GetResult<Prisma.$profilesPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   properties<T extends Prisma.propertiesDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.propertiesDefaultArgs<ExtArgs>>): Prisma.Prisma__propertiesClient<runtime.Types.Result.GetResult<Prisma.$propertiesPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  profiles_inquiries_sender_idToprofiles<T extends Prisma.inquiries$profiles_inquiries_sender_idToprofilesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.inquiries$profiles_inquiries_sender_idToprofilesArgs<ExtArgs>>): Prisma.Prisma__profilesClient<runtime.Types.Result.GetResult<Prisma.$profilesPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  profiles_inquiries_sender_idToprofiles<T extends Prisma.profilesDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.profilesDefaultArgs<ExtArgs>>): Prisma.Prisma__profilesClient<runtime.Types.Result.GetResult<Prisma.$profilesPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1442,9 +1304,6 @@ export interface inquiriesFieldRefs {
   readonly property_id: Prisma.FieldRef<"inquiries", 'String'>
   readonly sender_id: Prisma.FieldRef<"inquiries", 'String'>
   readonly owner_id: Prisma.FieldRef<"inquiries", 'String'>
-  readonly guest_name: Prisma.FieldRef<"inquiries", 'String'>
-  readonly guest_email: Prisma.FieldRef<"inquiries", 'String'>
-  readonly guest_phone: Prisma.FieldRef<"inquiries", 'String'>
   readonly message: Prisma.FieldRef<"inquiries", 'String'>
   readonly status: Prisma.FieldRef<"inquiries", 'String'>
   readonly created_at: Prisma.FieldRef<"inquiries", 'DateTime'>
@@ -1645,6 +1504,11 @@ export type inquiriesFindManyArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Skip the first `n` inquiries.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of inquiries.
+   */
   distinct?: Prisma.InquiriesScalarFieldEnum | Prisma.InquiriesScalarFieldEnum[]
 }
 
@@ -1842,25 +1706,6 @@ export type inquiriesDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Limit how many inquiries to delete.
    */
   limit?: number
-}
-
-/**
- * inquiries.profiles_inquiries_sender_idToprofiles
- */
-export type inquiries$profiles_inquiries_sender_idToprofilesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the profiles
-   */
-  select?: Prisma.profilesSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the profiles
-   */
-  omit?: Prisma.profilesOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.profilesInclude<ExtArgs> | null
-  where?: Prisma.profilesWhereInput
 }
 
 /**

@@ -1,19 +1,25 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { createServiceClient } from "@/lib/supabase/service";
 import type { User } from "@supabase/supabase-js";
-import { isPasswordValid, validatePassword } from "@/lib/auth/password-rules";
-
-export type { PasswordValidation } from "@/lib/auth/password-rules";
-export { isPasswordValid, validatePassword };
 
 // Auth utility types
 export interface AuthResponse {
   success: boolean;
   user?: User;
   error?: string;
-  localConfirmed?: boolean;
   emailSent?: boolean;
+}
+
+// const createClient = createServiceClient;
+
+export interface PasswordValidation {
+  minLength: boolean;
+  hasUppercase: boolean;
+  hasLowercase: boolean;
+  hasNumber: boolean;
+  hasSpecialChar: boolean;
 }
 
 export interface UserProfile {
@@ -24,6 +30,27 @@ export interface UserProfile {
   email: string;
   phone?: string;
   avatar_url?: string;
+}
+
+/**
+ * Validate password strength
+ */
+export function validatePassword(password: string): PasswordValidation {
+  return {
+    minLength: password.length >= 8,
+    hasUppercase: /[A-Z]/.test(password),
+    hasLowercase: /[a-z]/.test(password),
+    hasNumber: /\d/.test(password),
+    hasSpecialChar: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+  };
+}
+
+/**
+ * Check if password meets all requirements
+ */
+export function isPasswordValid(password: string): boolean {
+  const validation = validatePassword(password);
+  return Object.values(validation).every(Boolean);
 }
 
 /**
@@ -132,18 +159,12 @@ export async function signUpWithPassword(
 
     const result = await response.json();
 
-    if (!response.ok) {
+    if (!response.ok || result.success === false) {
       return { success: false, error: result.error || "Signup failed" };
     }
 
-    return {
-      success: true,
-      user: result.user,
-      localConfirmed: result.localConfirmed === true,
-      emailSent: result.emailSent !== false,
-    };
+    return { success: true, user: result.user, emailSent: result.emailSent !== false };
   } catch (err) {
-    console.error("signUpWithPassword failed:", err);
     return { success: false, error: "An unexpected error occurred" };
   }
 }
@@ -175,6 +196,57 @@ export async function sendHybridPasswordReset(
 }
 
 /**
+ * Send password reset email (legacy function)
+ */
+export async function sendPasswordResetEmail(
+  email: string,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = createClient();
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: "Failed to send reset email" };
+  }
+}
+
+/**
+ * Reset password with new password
+ */
+export async function resetPassword(
+  newPassword: string,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    if (!isPasswordValid(newPassword)) {
+      return {
+        success: false,
+        error: "Password does not meet security requirements",
+      };
+    }
+
+    const supabase = createClient();
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: "Failed to reset password" };
+  }
+}
+
+/**
  * Sign out current user
  */
 export async function signOut(): Promise<{ success: boolean; error?: string }> {
@@ -189,6 +261,32 @@ export async function signOut(): Promise<{ success: boolean; error?: string }> {
     return { success: true };
   } catch (err) {
     return { success: false, error: "Failed to sign out" };
+  }
+}
+
+/**
+ * Send OTP for magic-link login (passwordless sign-in for existing, confirmed users).
+ * NOT for signup verification — use resendEmailVerification() for that.
+ */
+export async function sendOTP(
+  email: string,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: false,
+      },
+    });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: "Failed to send OTP" };
   }
 }
 
@@ -218,11 +316,38 @@ export async function verifyOTP(
 }
 
 /**
+ * Verify email using token hash from a Supabase-generated email link.
+ * type: "signup" — for confirming a new account's email address (default)
+ * type: "email"  — for magic-link login tokens
+ */
+export async function verifyEmail(
+  tokenHash: string,
+  type: "signup" | "email" = "signup",
+): Promise<AuthResponse> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase.auth.verifyOtp({
+      token: tokenHash,
+      email: "", // Supabase requires email for verifyOtp, but it's not actually used for token verification in this context
+      type,
+    });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, user: data.user || undefined };
+  } catch (err) {
+    return { success: false, error: "Failed to verify email" };
+  }
+}
+
+/**
  * Resend email verification
  */
 export async function resendEmailVerification(
   email: string,
-): Promise<{ success: boolean; error?: string; localConfirmed?: boolean }> {
+): Promise<{ success: boolean; error?: string }> {
   try {
     const response = await fetch(
       `/api/auth/signup?email=${encodeURIComponent(email.trim().toLowerCase())}`,
@@ -231,9 +356,52 @@ export async function resendEmailVerification(
     if (!response.ok || data.success === false) {
       return { success: false, error: data.error || 'Failed to resend' };
     }
-    return { success: true, localConfirmed: data.localConfirmed === true };
+    return { success: true };
   } catch {
     return { success: false, error: 'Failed to resend verification email' };
+  }
+}
+
+/**
+ * Get redirect URL based on user type
+ */
+export function getRedirectUrl(userType?: string): string {
+  switch (userType) {
+    case "owner":
+    case "agent":
+      return "/onboarding";
+    case "admin":
+      return "/admin";
+    case "user":
+    default:
+      return "/profile";
+  }
+}
+
+/**
+ * Check if user is authenticated
+ */
+export async function isAuthenticated(): Promise<boolean> {
+  const { success, user } = await getCurrentUser();
+  return success && !!user;
+}
+
+/**
+ * Check if user has specific role
+ */
+export async function hasRole(
+  requiredRole: "user" | "owner" | "agent" | "admin",
+): Promise<boolean> {
+  try {
+    const { success, user } = await getCurrentUser();
+    if (!success || !user) return false;
+
+    const { success: profileSuccess, profile } = await getUserProfile(user.id);
+    if (!profileSuccess || !profile) return false;
+
+    return profile.user_type === requiredRole;
+  } catch {
+    return false;
   }
 }
 
@@ -256,31 +424,11 @@ export function formatAuthError(error: string): string {
 }
 
 /**
- * Merge query + hash auth params. Supabase recovery links often put
- * access_token / refresh_token in the URL fragment (#...), which
- * useSearchParams() does not see.
+ * Validate email format
  */
-export function authParamsFromUrl(
-  searchParams: URLSearchParams,
-  hash = "",
-): URLSearchParams {
-  const merged = new URLSearchParams(searchParams.toString());
-  const raw = hash.replace(/^#/, "");
-  if (!raw) return merged;
-  const hashParams = new URLSearchParams(raw);
-  for (const key of [
-    "access_token",
-    "refresh_token",
-    "code",
-    "error",
-    "error_description",
-    "type",
-    "token_hash",
-  ]) {
-    const value = hashParams.get(key);
-    if (value && !merged.get(key)) merged.set(key, value);
-  }
-  return merged;
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
 }
 
 /**
@@ -295,24 +443,17 @@ export async function handlePasswordResetSession(
   redirectDelay?: number;
 }> {
   try {
-    const hash = typeof window !== "undefined" ? window.location.hash : "";
-    const params = authParamsFromUrl(searchParams, hash);
-    const accessToken = params.get("access_token");
-    const refreshToken = params.get("refresh_token");
-    const code = params.get("code");
-    const tokenHash = params.get("token_hash");
-    const type = params.get("type");
-    const error = params.get("error");
-    const errorDescription = params.get("error_description");
+    const accessToken = searchParams.get("access_token");
+    const refreshToken = searchParams.get("refresh_token");
+    const code = searchParams.get("code");
+    const error = searchParams.get("error");
+    const errorDescription = searchParams.get("error_description");
 
     console.log("Reset password params:", {
-      accessToken: accessToken ? "[present]" : null,
-      refreshToken: refreshToken ? "[present]" : null,
-      code: code ? "[present]" : null,
-      tokenHash: tokenHash ? "[present]" : null,
-      type,
+      accessToken,
+      refreshToken,
+      code,
       error,
-      fromHash: Boolean(hash),
     });
 
     // Handle error responses from Supabase
@@ -326,37 +467,6 @@ export async function handlePasswordResetSession(
         redirectTo: "/forgot-password",
         redirectDelay: 5000,
       };
-    }
-
-    // Email / OTP fill links sometimes land with token_hash + type=recovery
-    if (tokenHash && (type === "recovery" || !type)) {
-      try {
-        const supabase = createClient();
-        const { error: verifyError } = await supabase.auth.verifyOtp({
-          token_hash: tokenHash,
-          type: "recovery",
-        });
-
-        if (verifyError) {
-          console.error("token_hash verify error:", verifyError);
-          return {
-            success: false,
-            error:
-              "Invalid or expired reset link. Please request a new password reset.",
-            redirectTo: "/forgot-password",
-            redirectDelay: 5000,
-          };
-        }
-        return { success: true };
-      } catch (err) {
-        console.error("Error verifying token_hash:", err);
-        return {
-          success: false,
-          error: "Failed to initialize password reset. Please try again.",
-          redirectTo: "/forgot-password",
-          redirectDelay: 3000,
-        };
-      }
     }
 
     // Check for PKCE code parameter (modern Supabase flow)
@@ -424,25 +534,27 @@ export async function handlePasswordResetSession(
       }
     }
 
-    // No URL tokens — user likely arrived after OTP verify, which sets session
-    // cookies on the API response. The browser client may not have hydrated
-    // those cookies yet; /api/auth/complete-password-reset reads them from the
-    // request. Allow the form; the server rejects if the recovery session is gone.
+    // No URL tokens — check if there is already an active session (e.g. the
+    // user arrived here after entering their OTP code, which sets session
+    // cookies server-side without adding tokens to the URL).
     try {
       const supabase = createClient();
       const { data: sessionData } = await supabase.auth.getSession();
       if (sessionData?.session) {
         console.log("handlePasswordResetSession: existing session found, allowing reset");
-      } else {
-        console.log(
-          "handlePasswordResetSession: no client session yet; deferring to server cookie check",
-        );
+        return { success: true };
       }
     } catch {
-      // ignore — server route is authoritative
+      // fall through to the error below
     }
 
-    return { success: true };
+    return {
+      success: false,
+      error:
+        "No reset token found. Please check your email link or request a new password reset.",
+      redirectTo: "/forgot-password",
+      redirectDelay: 3000,
+    };
   } catch (err) {
     console.error("Unexpected error in handlePasswordResetSession:", err);
     return {
@@ -452,4 +564,12 @@ export async function handlePasswordResetSession(
       redirectDelay: 3000,
     };
   }
+}
+
+/**
+ * Generate secure session timeout
+ */
+export function getSessionTimeout(): number {
+  // 24 hours in seconds
+  return 24 * 60 * 60;
 }

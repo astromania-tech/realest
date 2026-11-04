@@ -1,265 +1,199 @@
-import Link from "next/link";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { requireStaffPage } from "@/lib/auth/require-staff-page";
-import { staffHomePath } from "@/lib/auth/roles";
-import { caseQueueScope } from "@/lib/trust/case-access";
-import { listCaseQueue, listMyVisits } from "@/lib/trust/load-case-view";
-import { ListPager } from "@/components/realest/ListPager";
-import { pageWindow, parsePage } from "@/lib/ui/page-window";
-import type { CaseQueueFilter } from "@/lib/trust/case-view";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
-import { Building, CheckCircle, Eye, MapPin, Search, Users2, XCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Eye, CheckCircle, XCircle, Clock } from "lucide-react";
+import Link from "next/link";
 
-const PAGE_SIZE = 10;
+export default async function ValidationPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await getAuthUser();
 
-function queueHref(filter: CaseQueueFilter, search: string, page: number) {
-  const params = new URLSearchParams();
-  if (filter !== "all") params.set("filter", filter);
-  if (search) params.set("q", search);
-  if (page > 1) params.set("page", String(page));
-  const query = params.toString();
-  return query ? `/admin/validation?${query}` : "/admin/validation";
-}
-
-const FILTERS: { id: CaseQueueFilter; label: string }[] = [
-  { id: "all", label: "All" },
-  { id: "review", label: "Review" },
-  { id: "field", label: "Field" },
-  { id: "verified", label: "Verified" },
-  { id: "duplicates", label: "Duplicates" },
-];
-
-export default async function ValidationPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ filter?: string; q?: string; page?: string }>;
-}) {
-  const staff = await requireStaffPage();
-  const params = await searchParams;
-  const filter = (FILTERS.some((item) => item.id === params.filter)
-    ? params.filter
-    : "all") as CaseQueueFilter;
-  const search = params.q ?? "";
-  const scope = caseQueueScope(staff.role);
-  if (scope === "none") redirect(staffHomePath(staff.role));
-
-  const requestedPage = parsePage(params.page);
-  const [{ items, metrics, total, page }, myVisits] = await Promise.all([
-    listCaseQueue({
-      filter,
-      search,
-      limit: PAGE_SIZE,
-      page: requestedPage,
-      leaderId: scope === "led" ? staff.userId : undefined,
-    }),
-    listMyVisits(staff.userId),
-  ]);
-  if (params.page && requestedPage !== page) {
-    redirect(queueHref(filter, search, page));
+  if (!user) {
+    redirect("/login");
   }
 
+  // Check if user is an admin
+  const { data: userRow } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (userRow?.role !== "admin") {
+    redirect("/");
+  }
+
+  // Fetch pending properties for validation
+  const { data: pendingProperties } = await supabase
+    .from("properties")
+    .select("*, owners(profiles(full_name, email))")
+    .eq("verification_status", "pending")
+    .order("created_at", { ascending: true });
+
+  // Fetch properties in ML review queue
+  const { data: mlQueue } = await supabase
+    .from("properties")
+    .select("*, owners(profiles(full_name, email))")
+    .eq("verification_status", "ml_review")
+    .order("created_at", { ascending: true });
+
+  // Fetch properties in physical vetting
+  const { data: vettingQueue } = await supabase
+    .from("properties")
+    .select("*, owners(profiles(full_name, email))")
+    .eq("verification_status", "vetting")
+    .order("created_at", { ascending: true });
+
+  // Fetch potential duplicates
+  const { data: duplicates } = await supabase
+    .from("properties")
+    .select("*, owners(profiles(full_name, email))")
+    .eq("verification_status", "duplicate_check")
+    .order("created_at", { ascending: true });
+
   return (
-    <div>
-      <div className="mb-8 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-            Verification
-          </p>
-          <h1 className="mt-1 font-heading text-3xl text-[#07402F] dark:text-foreground">
-            Case queue
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {scope === "led"
-              ? "Cases for the teams you lead. Open one to assign the visit or read the full file."
-              : "Monitor work by evidence state, operational priority, and reviewer readiness."}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {FILTERS.map((item) => {
-            const href =
-              item.id === "all"
-                ? `/admin/validation${search ? `?q=${encodeURIComponent(search)}` : ""}`
-                : `/admin/validation?filter=${item.id}${search ? `&q=${encodeURIComponent(search)}` : ""}`;
-            const active = filter === item.id;
-            return (
-              <Link
-                key={item.id}
-                href={href}
-                className={
-                  active
-                    ? "rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground"
-                    : "rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent"
-                }
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-        </div>
+    <>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold">Property Validation Queue</h1>
+        <p className="text-muted-foreground">
+          Review and validate property submissions
+        </p>
       </div>
 
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        {[
-          ["Needs review", metrics.review, Eye],
-          ["Field visits", metrics.field, MapPin],
-          ["Duplicates", metrics.duplicates, XCircle],
-          ["Verified", metrics.verified, CheckCircle],
-        ].map(([label, value, Icon]) => {
-          const MetricIcon = Icon as typeof CheckCircle;
-          return (
-            <Card key={label as string}>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                  <MetricIcon className="h-8 w-8 text-primary" />
-                  <div>
-                    <p className="text-2xl font-bold">{value as number}</p>
-                    <p className="text-sm text-muted-foreground">{label as string}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-3">
-              <Users2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                  Assign field teams
-                </p>
-                <p className="mt-1 text-sm font-semibold">
-                  Team leaders are assigned on Field ops, not this list
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Only listings in pending vetting appear there. Open a case → Field visit, or use
-                  Field ops for bulk assign.
-                </p>
-              </div>
-            </div>
-            <Link
-              href="/admin/validation/field"
-              className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90"
-            >
-              Open Field ops
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
-
-      {myVisits.length > 0 ? (
-        <Card className="mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <Card>
           <CardContent className="pt-6">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-4">
+              <Clock className="w-8 h-8 text-yellow-600" />
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                  My visits
+                <p className="text-2xl font-bold">
+                  {pendingProperties?.length || 0}
                 </p>
-                <p className="mt-1 text-sm font-semibold">
-                  {myVisits.length} assignment{myVisits.length === 1 ? "" : "s"} on you
-                </p>
+                <p className="text-sm text-muted-foreground">Pending Review</p>
               </div>
-              <Link href="/admin/validation/my-visits" className="text-sm font-semibold text-primary hover:underline">
-                Open my visits
-              </Link>
             </div>
           </CardContent>
         </Card>
-      ) : null}
 
-      <form className="mb-6 flex max-w-lg items-center gap-2 rounded-xl border border-border bg-card px-3 shadow-sm">
-        <Search className="h-4 w-4 text-muted-foreground" />
-        <Input
-          name="q"
-          defaultValue={search}
-          placeholder="Search case, address or property"
-          className="border-0 bg-transparent shadow-none focus-visible:ring-0"
-        />
-        {filter !== "all" ? <input type="hidden" name="filter" value={filter} /> : null}
-      </form>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <Eye className="w-8 h-8 text-blue-600" />
+              <div>
+                <p className="text-2xl font-bold">{mlQueue?.length || 0}</p>
+                <p className="text-sm text-muted-foreground">ML Review</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-        <div className="hidden grid-cols-[1.15fr_1.1fr_0.85fr_0.7fr_auto] gap-4 border-b border-border bg-muted px-5 py-3 text-xs font-bold uppercase tracking-[0.1em] text-muted-foreground md:grid">
-          <span>Case</span>
-          <span>Location</span>
-          <span>Workflow</span>
-          <span>Coverage</span>
-          <span />
-        </div>
-        {items.map((item) => {
-          const needsFieldAssign = item.listingStatus === "pending_vetting" && !item.officerName;
-          return (
-            <Link
-              key={item.id}
-              href={
-                needsFieldAssign
-                  ? `/admin/validation/cases/${item.id}?tab=Field+visit`
-                  : `/admin/validation/cases/${item.id}`
-              }
-              className="grid gap-3 border-b border-border px-5 py-4 transition-colors last:border-b-0 hover:bg-secondary/40 md:grid-cols-[1.15fr_1.1fr_0.85fr_0.7fr_auto] md:items-center md:gap-4"
-              style={{ contentVisibility: "auto", containIntrinsicSize: "auto 92px" }}
-            >
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <CheckCircle className="w-8 h-8 text-green-600" />
               <div>
-                <p className="font-mono text-xs text-muted-foreground">{item.id.slice(0, 8)}…</p>
-                <p className="mt-1 text-sm font-semibold">{item.title}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{item.priority} priority</p>
-              </div>
-              <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <MapPin className="h-4 w-4" />
-                {item.address}
-              </p>
-              <div>
-                <Badge variant="secondary">{item.caseStateLabel}</Badge>
-                <p className="mt-1 text-xs text-muted-foreground">{item.risk} risk</p>
-              </div>
-              <div>
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Evidence</span>
-                  <span>{item.evidenceCoverage}%</span>
-                </div>
-                <Progress value={item.evidenceCoverage} className="mt-2 h-1.5" />
-              </div>
-              <span className="hidden text-xs font-semibold text-primary md:inline">
-                {needsFieldAssign ? "Assign team →" : null}
-              </span>
-            </Link>
-          );
-        })}
-        {items.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 p-12 text-center text-sm text-muted-foreground">
-            <Building className="h-6 w-6" />
-            {filter === "field" ? (
-              <>
-                <p>No pending vetting cases yet.</p>
-                <p className="max-w-sm">
-                  Field assign only appears after a listing clears desk review into pending vetting.
-                  Use Field ops once those cases exist.
+                <p className="text-2xl font-bold">
+                  {vettingQueue?.length || 0}
                 </p>
-                <Link href="/admin/validation/field" className="mt-2 font-semibold text-primary hover:underline">
-                  Open Field ops
-                </Link>
-              </>
-            ) : (
-              <p>No cases match this queue view.</p>
-            )}
-          </div>
-        ) : null}
+                <p className="text-sm text-muted-foreground">
+                  Physical Vetting
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <XCircle className="w-8 h-8 text-red-600" />
+              <div>
+                <p className="text-2xl font-bold">{duplicates?.length || 0}</p>
+                <p className="text-sm text-muted-foreground">Duplicates</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-      <ListPager
-        page={page}
-        pageCount={pageWindow(total, page, PAGE_SIZE).pageCount}
-        from={total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}
-        to={Math.min(page * PAGE_SIZE, total)}
-        total={total}
-        prevHref={page > 1 ? queueHref(filter, search, page - 1) : null}
-        nextHref={page * PAGE_SIZE < total ? queueHref(filter, search, page + 1) : null}
-      />
-    </div>
+
+      <div className="space-y-8">
+        {/* Pending Properties */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Pending Properties</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Property</TableHead>
+                  <TableHead>Owner</TableHead>
+                  <TableHead>Submitted</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pendingProperties?.map((property) => (
+                  <TableRow key={property.id}>
+                    <TableCell className="font-medium">
+                      {property.title}
+                    </TableCell>
+                    <TableCell>{property.owners?.profiles?.full_name}</TableCell>
+                    <TableCell>
+                      {new Date(property.created_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">Pending</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button asChild size="sm">
+                        <Link href={`/admin/validation/ml/${property.id}`}>
+                          Review
+                        </Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                )) || (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      className="text-center text-muted-foreground"
+                    >
+                      No pending properties
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* Quick Links */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Button asChild variant="outline">
+            <Link href="/admin/validation/ml">ML Review Queue</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/admin/validation/vetting">Physical Vetting</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/admin/validation/duplicates">Duplicate Check</Link>
+          </Button>
+        </div>
+      </div>
+    </>
   );
 }

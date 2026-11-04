@@ -25,9 +25,13 @@ import {
   BadgeCheck,
 } from "lucide-react";
 
+type CandidateRole = "user" | "owner" | "agent";
+
 interface WaitlistContextResponse {
   exists?: boolean;
-  status?: string | null;
+  persona?: string;
+  candidateRole?: CandidateRole | null;
+  waitlistReward?: string | null;
 }
 
 export default function SignUpPage() {
@@ -58,7 +62,6 @@ export default function SignUpPage() {
   };
 
   const handleRoleSelect = (userType: string) => {
-    sessionStorage.setItem("realest-signup-role", userType);
     setFormData((prev) => ({ ...prev, userType }));
     setStep(2);
   };
@@ -78,18 +81,9 @@ export default function SignUpPage() {
       return;
     }
 
-    const chosenRole =
-      formData.userType || sessionStorage.getItem("realest-signup-role") || "";
-    if (chosenRole !== "user" && chosenRole !== "owner" && chosenRole !== "agent") {
-      setError("Choose an account type");
-      setStep(1);
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      // Public waitlist GET is existence-only. Role override happens server-side
-      // in POST /api/auth/signup via resolveSignupRoleFromWaitlist.
+      let effectiveUserType = formData.userType as CandidateRole;
+
       const waitlistLookup = await fetch(
         `/api/waitlist?email=${encodeURIComponent(formData.email.trim())}`,
       );
@@ -97,13 +91,16 @@ export default function SignUpPage() {
       if (waitlistLookup.ok) {
         const waitlistData = (await waitlistLookup.json()) as WaitlistContextResponse;
         setWaitlistContext(waitlistData);
+        if (waitlistData.exists && waitlistData.candidateRole) {
+          effectiveUserType = waitlistData.candidateRole;
+        }
       }
 
       const response = await signUpWithPassword(
         formData.email,
         formData.password,
         "", // fullname handled in onboarding
-        chosenRole,
+        effectiveUserType,
       );
 
       if (!response.success) {
@@ -112,7 +109,11 @@ export default function SignUpPage() {
       }
 
       if (response.user) {
-        // Waitlist context is synced inside POST /api/auth/signup (no open client race).
+        fetch('/api/auth/sync-waitlist-context', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: formData.email }),
+        }).catch(() => {});
 
         if (refCode) {
           fetch('/api/auth/attribute-referral', {
@@ -122,13 +123,8 @@ export default function SignUpPage() {
           }).catch(() => {});
           sessionStorage.removeItem('referralCode');
         }
-        const emailQuery = encodeURIComponent(formData.email);
-        if (response.localConfirmed) {
-          router.push(`/login?local=1&email=${emailQuery}`);
-        } else {
-          const sent = response.emailSent === false ? "&sent=0" : "";
-          router.push(`/success?email=${emailQuery}${sent}`);
-        }
+        const sentQuery = response.emailSent === false ? "&sent=0" : "";
+        router.push(`/success?email=${encodeURIComponent(formData.email)}${sentQuery}`);
       }
     } catch (err) {
       setError("An unexpected error occurred");
@@ -216,28 +212,23 @@ export default function SignUpPage() {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
           <CardDescription>
-            {formData.userType === "owner"
-              ? "Property Owner account"
-              : formData.userType === "agent"
-                ? "Agent account"
-                : formData.userType === "user"
-                  ? "Buyer or renter account"
-                  : "Fill in your details to complete registration"}
+            Fill in your details to complete registration
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {waitlistContext?.exists ? (
+          {waitlistContext?.exists && waitlistContext.candidateRole ? (
             <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm text-foreground">
               <div className="mb-1 flex items-center gap-2 font-medium">
                 <BadgeCheck className="h-4 w-4 text-primary" />
-                Waitlist email recognized
+                Waitlist role detected
               </div>
               <p className="text-muted-foreground">
-                This email is on the waitlist. Your waitlist persona will set the
-                account type when signup completes — the choice above is a fallback
-                if no waitlist row applies.
+                Your waitlist persona will activate the <strong>{waitlistContext.candidateRole}</strong> account flow after signup.
               </p>
+              {waitlistContext.waitlistReward ? (
+                <p className="mt-2 text-muted-foreground">{waitlistContext.waitlistReward}</p>
+              ) : null}
             </div>
           ) : null}
 

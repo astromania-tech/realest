@@ -3,7 +3,6 @@ import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { propertyListingSchema } from '@/lib/validations/property'
-import { assertListingKyc } from '@/lib/kyc/store'
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata'
 
 const querySchema = z.object({
@@ -36,7 +35,7 @@ export const openApiGET: OpenApiMetadata = {
 export const openApiPOST: OpenApiMetadata = {
   method: 'post',
   summary: 'Create dashboard property',
-  description: 'Create a new property listing from the owner dashboard. An owner or agent must already have Youverify identity approval.',
+  description: 'Create a new property listing from the owner dashboard and queue it for validation.',
   tags: ['Dashboard'],
   security: [{ bearerAuth: [] }],
   requestBody: {
@@ -51,7 +50,7 @@ export const openApiPOST: OpenApiMetadata = {
     '201': { description: 'Property created successfully' },
     '400': { description: 'Invalid property data' },
     '401': { description: 'Unauthorized' },
-    '403': { description: 'Forbidden. Property owners and agents need an approved Youverify identity before a draft is saved.' },
+    '403': { description: 'Forbidden - Property owners only' },
   },
 }
 
@@ -97,8 +96,7 @@ export async function GET(request: Request) {
       )
     }
 
-    const { page, status, sort } = queryResult.data
-    const limit = Math.min(50, Math.max(1, queryResult.data.limit || 10))
+    const { page, limit, status, sort } = queryResult.data
     const skip = (page - 1) * limit
 
     const where: Record<string, unknown> = {}
@@ -127,31 +125,9 @@ export async function GET(request: Request) {
     const [properties, total] = await Promise.all([
       prisma.properties.findMany({
         where,
-        select: {
-          id: true,
-          title: true,
-          price: true,
-          status: true,
-          verification_status: true,
-          property_type: true,
-          listing_type: true,
-          city: true,
-          state: true,
-          bedrooms: true,
-          bathrooms: true,
-          created_at: true,
-          updated_at: true,
-          property_media: {
-            select: {
-              id: true,
-              media_url: true,
-              is_featured: true,
-              display_order: true,
-            },
-            orderBy: { display_order: 'asc' },
-            take: 1,
-          },
-          _count: { select: { inquiries: true } },
+        include: {
+          property_media: true,
+          inquiries: { select: { id: true } },
         },
         orderBy,
         skip,
@@ -163,10 +139,7 @@ export async function GET(request: Request) {
     const totalPages = Math.ceil(total / limit)
 
     return NextResponse.json({
-      data: properties.map((p) => ({
-        ...p,
-        inquiry_count: p._count.inquiries,
-      })),
+      data: properties,
       pagination: {
         page,
         limit,
@@ -210,11 +183,6 @@ export async function POST(request: Request) {
         { error: 'Forbidden' },
         { status: 403 }
       )
-    }
-
-    const kyc = await assertListingKyc(user.id, userRowPost.role)
-    if (!kyc.ok) {
-      return NextResponse.json({ error: kyc.error }, { status: kyc.status })
     }
 
     // Parse and validate request body

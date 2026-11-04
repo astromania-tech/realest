@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
-import type { PublicPropertyDetail } from "@/lib/listings/load-public-property";
 import {
   Chip,
   Avatar,
@@ -19,7 +18,6 @@ import {
   Textarea,
   Separator,
 } from "@/components/ui";
-import { VisitRecordNote } from "@/components/realest/VisitRecordNote";
 import {
   MapPin,
   Bed,
@@ -35,21 +33,9 @@ import {
   Star,
   Award,
 } from "lucide-react";
-import dynamic from "next/dynamic";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
+import { Header, Footer } from "@/components/layout";
+import { PropertyMap } from "@/components/property/PropertyMap";
 import { formatPrice, formatListingType } from "@/lib/utils/propertyUtils";
-
-const PropertyMap = dynamic(
-  () =>
-    import("@/components/property/PropertyMap").then((mod) => mod.PropertyMap),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="w-full h-[320px] animate-pulse rounded-xl bg-muted" />
-    ),
-  },
-);
 import {
   StatusBadge,
   VerifiedBadge,
@@ -109,7 +95,6 @@ interface AgentListing {
   price_frequency: string | null;
   status: string;
   verification_status: "pending" | "verified" | "rejected";
-  visit_record?: { visitedAt: string | null; checked: string[]; statement: string } | null;
   created_at: string;
   // Nigerian market fields (to be added to schema)
   nepa_status?: "stable" | "intermittent" | "poor" | "none" | "generator_only";
@@ -156,18 +141,11 @@ interface AgentListing {
   };
 }
 
-type ListingDetailsPageProps = {
-  initialProperty: PublicPropertyDetail | null;
-  propertyId: string;
-};
-
-export default function ListingDetailsPage({
-  initialProperty,
-  propertyId,
-}: ListingDetailsPageProps) {
-  const [property] = useState<AgentListing | null>(
-    () => (initialProperty as AgentListing | null) ?? null,
-  );
+export default function ListingDetailsPage() {
+  const params = useParams();
+  const propertyId = params.id as string;
+  const [property, setProperty] = useState<AgentListing | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [inquiryForm, setInquiryForm] = useState({
     name: "",
@@ -178,6 +156,27 @@ export default function ListingDetailsPage({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [inquirySent, setInquirySent] = useState(false);
   const [inquiryError, setInquiryError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProperty = async () => {
+      setIsLoading(true);
+      try {
+        const res = await fetch(`/api/properties/${propertyId}/public?source=agent`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.data) setProperty(json.data as AgentListing);
+        }
+      } catch (err) {
+        console.error("Failed to fetch listing:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (propertyId) {
+      fetchProperty();
+    }
+  }, [propertyId]);
 
   const handleInquirySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -213,6 +212,30 @@ export default function ListingDetailsPage({
       setIsSubmitting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <>
+        <Header />
+        <div className="min-h-screen bg-background">
+          <div className="container mx-auto px-4 py-8">
+            <div className="animate-pulse space-y-8">
+              <div className="h-96 bg-muted rounded-lg" />
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 space-y-6">
+                  <div className="h-8 bg-muted rounded" />
+                  <div className="h-4 bg-muted rounded w-3/4" />
+                  <div className="h-32 bg-muted rounded" />
+                </div>
+                <div className="h-96 bg-muted rounded" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </>
+    );
+  }
 
   if (!property) {
     return (
@@ -251,17 +274,14 @@ export default function ListingDetailsPage({
           {/* Image Gallery */}
           <div className="mb-8">
             <div className="relative h-96 lg:h-[500px] rounded-lg overflow-hidden mb-4">
-              <Image
+              <img
                 src={
                   galleryImages[selectedImage]?.file_url ||
                   primaryImage?.file_url ||
                   "/placeholder.jpg"
                 }
                 alt={property.title}
-                fill
-                sizes="(max-width: 1024px) 100vw, 66vw"
-                className="object-cover"
-                priority
+                className="w-full h-full object-cover"
               />
               {property.verification_status === "verified" && (
                 <div className="absolute top-4 left-4">
@@ -298,12 +318,9 @@ export default function ListingDetailsPage({
                         : "border-transparent"
                     }`}
                   >
-                    <Image
+                    <img
                       src={image.file_url}
                       alt={`Property view ${index + 1}`}
-                      width={80}
-                      height={80}
-                      sizes="80px"
                       className="w-full h-full object-cover"
                     />
                   </button>
@@ -320,7 +337,6 @@ export default function ListingDetailsPage({
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h1 className="text-3xl font-bold mb-2">{property.title}</h1>
-                    <VisitRecordNote propertyId={property.id} record={property.visit_record} />
                     <div className="flex items-center gap-2 text-muted-foreground mb-2">
                       <MapPin className="w-4 h-4" />
                       <span>

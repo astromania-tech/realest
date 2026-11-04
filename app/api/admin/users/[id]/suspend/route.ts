@@ -4,12 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { logAdminAction } from "@/lib/audit";
 import {
   mergeUserMetadataWithModeration,
-  nextDeletedAt,
   nextIsActive,
   nextModerationState,
   shouldUnlistNonLiveProperties,
 } from "@/lib/admin/user-moderation";
-import { releaseOpenVisitsForUser } from "@/lib/trust/field-team-store";
 import { z } from "zod";
 
 const suspensionSchema = z.object({
@@ -78,7 +76,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     const isActive = nextIsActive(action, targetUserRow.is_active);
-    const departed = nextDeletedAt(action);
     const moderation = nextModerationState({
       action,
       reason,
@@ -94,16 +91,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       where: { id },
       data: {
         is_active: isActive,
-        ...(departed === "set" ? { deleted_at: new Date() } : {}),
-        ...(departed === "clear" ? { deleted_at: null } : {}),
         metadata,
         updated_at: new Date(),
       },
     });
-
-    if (shouldUnlistNonLiveProperties(action)) {
-      await releaseOpenVisitsForUser(id);
-    }
 
     if (shouldUnlistNonLiveProperties(action)) {
       // updateMany does not accept nested relation filters — resolve owners.id first

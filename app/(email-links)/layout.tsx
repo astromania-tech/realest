@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { LogoWithText, LoadingLogo, HeaderLogo } from "@/components/ui/RealEstLogo";
-import { MarketingTrackingScripts } from "@/components/marketing/MarketingTrackingScripts";
+import { LogoWithText, LoadingLogo, HeaderLogo, HeroLogo } from "@/components/ui/RealEstLogo";
 
 export default function EmailLinksLayout({
   children,
@@ -9,8 +8,6 @@ export default function EmailLinksLayout({
 }) {
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
-      {/* Waitlist / refer conversion surfaces need HubSpot + Meta */}
-      <MarketingTrackingScripts />
       {/* Header */}
       <header className="border-b border-border/40 bg-background/95 backdrop-blur-sm">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
