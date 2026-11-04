@@ -6,6 +6,8 @@
  * Derived from lib/styles/tokens/colors.css and lib/constants/design-system.ts
  */
 
+import { publicSiteOrigin } from '@/lib/auth/signup-mail';
+
 // ─── Brand Colors ─────────────────────────────────────────────────────────────
 export const colors = {
   // Primary palette (60-30-10 rule)
@@ -92,11 +94,16 @@ export const radius = {
 } as const;
 
 // ─── Base URL ────────────────────────────────────────────────────────────────
-// Falls back to localhost:3000 when neither env var is set (local dev / email preview).
-export const BASE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  process.env.NEXT_PUBLIC_APP_URL ??
-  'http://localhost:3000';
+// Header, logo, and footer in the verification email. Local preview stays on loopback.
+function emailBaseUrl(): string {
+  try {
+    return publicSiteOrigin();
+  } catch {
+    return 'http://localhost:3000';
+  }
+}
+
+export const BASE_URL = emailBaseUrl();
 
 // ─── Shadows (safe for email — avoid box-shadow in Outlook) ───────────────────
 export const shadows = {

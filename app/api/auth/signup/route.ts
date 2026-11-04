@@ -1,23 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from "@/lib/supabase/service";
-import { renderCampaignTemplate } from '@/lib/emailBulkSender';
-import { Resend } from 'resend';
 import { sendVerificationEmail } from '@/lib/emailService';
-
-function mailClient(): Resend | null {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) return null;
-  return new Resend(key);
-}
+import { duplicateSignupMessage, signupVerifyRedirect, verificationEmailLink } from '@/lib/auth/signup-mail';
 
 /**
  * POST /api/auth/signup
- * 
- * Custom signup flow that:
- * 1. Creates user via Supabase Auth Admin API (service_role)
- * 2. Sets email_confirm: false to prevent Supabase's default email
- * 3. Generates a verification link
- * 4. Sends a branded React Email template via Resend
+ *
+ * One signup link creates the unconfirmed Auth user and the mail URL.
+ * A second signup link is rejected, so the mail never sends.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -27,97 +17,120 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
-    const supabaseAdmin = createServiceClient();
-
-    // 1. Create user with email_confirm: false
-    const { data: userData, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: false,
-      user_metadata: {
-        full_name: fullName || '',
-        user_type: userType || 'user',
-      },
-    });
-
-    if (createError) {
-      return NextResponse.json({ error: createError.message }, { status: createError.status || 400 });
+    let redirectTo: string;
+    try {
+      redirectTo = signupVerifyRedirect();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Signup verification link is not configured';
+      return NextResponse.json({ error: message }, { status: 500 });
     }
 
-    // 2. Generate verification link
+    const supabaseAdmin = createServiceClient();
+
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'signup',
       email,
       password,
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/verify`,
+        data: {
+          full_name: fullName || '',
+          user_type: userType || 'user',
+        },
+        redirectTo,
       },
     });
 
-    if (linkError) throw linkError;
+    if (linkError) {
+      const duplicate = duplicateSignupMessage(linkError);
+      if (duplicate) {
+        return NextResponse.json({ error: duplicate }, { status: 409 });
+      }
+      throw linkError;
+    }
 
-    // 3. Render and send custom branded email
-    const verificationUrl = linkData.properties.action_link;
-    const { html } = await renderCampaignTemplate('VerificationEmail', {
+    const actionLink = linkData?.properties?.action_link;
+    const created = linkData?.user;
+    if (!actionLink || !created) {
+      throw new Error('Verification link was not created');
+    }
+
+    const verificationUrl = verificationEmailLink(actionLink);
+    const sent = await sendVerificationEmail({
+      email,
       firstName: fullName?.split(' ')[0] || 'there',
       verificationUrl,
     });
 
-    const from = process.env.FROM_EMAIL_AUTH || process.env.FROM_EMAIL || 'RealEST <noreply@realest.ng>';
-
-    const resend = mailClient();
-    if (!resend) {
-      console.error('Resend signup email skipped: RESEND_API_KEY is not set');
-    } else {
-      const { error: resendError } = await resend.emails.send({
-        from,
-        to: email,
-        subject: 'Verify your RealEST account',
-        html,
-      });
-
-      if (resendError) {
-        console.error('Resend signup email error:', resendError);
-        // Note: User record is created, they can request a resend later if this fails
-      }
+    if (!sent.success) {
+      console.error('Resend signup email error:', sent.error);
+      return NextResponse.json({ success: true, user: created, emailSent: false });
     }
 
-    return NextResponse.json({ success: true, user: userData.user });
-
-  } catch (error: any) {
+    return NextResponse.json({ success: true, user: created, emailSent: true });
+  } catch (error: unknown) {
     console.error('Signup API Route error:', error);
-    return NextResponse.json(
-      { error: error.message || 'An unexpected error occurred during signup' },
-      { status: 500 }
-    );
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred during signup';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
-// Add to app/api/auth/signup/route.ts
+/**
+ * GET /api/auth/signup?email=
+ * Resend. The account already exists, so a second signup link is rejected.
+ * A magic link confirms the address and lands on /verify.
+ */
 export async function GET(request: NextRequest) {
   const email = request.nextUrl.searchParams.get('email');
   if (!email) return NextResponse.json({ error: 'Email required' }, { status: 400 });
 
+  let redirectTo: string;
+  try {
+    redirectTo = signupVerifyRedirect();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Signup verification link is not configured';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+
   const supabaseAdmin = createServiceClient();
+  const normalized = email.trim().toLowerCase();
 
   const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-    type: 'signup',
-    email,
-    password: 'REDACTED_NOT_REQUIRED_FOR_LINK_ONLY',
+    type: 'magiclink',
+    email: normalized,
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/verify`,
+      redirectTo,
     },
   });
 
-  if (linkError) return NextResponse.json({ error: linkError.message }, { status: 400 });
+  if (linkError || !linkData?.properties?.action_link) {
+    console.error('Signup resend link error:', linkError);
+    return NextResponse.json(
+      { success: false, error: 'Verification link was not created' },
+      { status: 400 },
+    );
+  }
 
-  const firstName = email.split('@')[0]; // best we can do without the user object here
+  let verificationUrl: string;
+  try {
+    verificationUrl = verificationEmailLink(linkData.properties.action_link);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Signup verification link is not configured';
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
+  }
 
   const result = await sendVerificationEmail({
-    email,
-    firstName,
-    verificationUrl: linkData.properties.action_link,
+    email: normalized,
+    firstName: normalized.split('@')[0],
+    verificationUrl,
   });
 
-  return NextResponse.json({ success: result.success, error: result.error });
+  if (!result.success) {
+    console.error('Resend signup email error:', result.error);
+    return NextResponse.json(
+      { success: false, error: 'Verification email was not sent.' },
+      { status: 502 },
+    );
+  }
+
+  return NextResponse.json({ success: true });
 }
