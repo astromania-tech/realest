@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums.ts"
-import type * as Prisma from "../internal/prismaNamespace.ts"
+import type * as $Enums from "../enums"
+import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model agents
@@ -284,7 +284,7 @@ export type AgentsGroupByOutputType = {
   _max: AgentsMaxAggregateOutputType | null
 }
 
-type GetAgentsGroupByPayload<T extends agentsGroupByArgs> = Prisma.PrismaPromise<
+export type GetAgentsGroupByPayload<T extends agentsGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<AgentsGroupByOutputType, T['by']> &
       {
@@ -1711,6 +1711,11 @@ export type agentsFindManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Skip the first `n` agents.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of agents.
+   */
   distinct?: Prisma.AgentsScalarFieldEnum | Prisma.AgentsScalarFieldEnum[]
 }
 

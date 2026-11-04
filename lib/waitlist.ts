@@ -34,8 +34,6 @@ export interface WaitlistSubscriptionData {
   utmMedium?: string;
   utmCampaign?: string;
   referrerUrl?: string;
-  /** Cloudflare Turnstile token from the client widget. */
-  turnstileToken?: string;
 }
 
 export interface WaitlistSubscriptionResult {
@@ -169,19 +167,12 @@ export async function subscribeToWaitlist(
 /**
  * Unsubscribe a user from the waitlist
  */
-export async function unsubscribeFromWaitlist(
-  email: string,
-  token: string,
-): Promise<WaitlistSubscriptionResult> {
+export async function unsubscribeFromWaitlist(email: string): Promise<WaitlistSubscriptionResult> {
   try {
     const response = await fetch("/api/waitlist", {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: email.toLowerCase(),
-        token,
-        action: 'unsubscribe',
-      }),
+      body: JSON.stringify({ email: email.toLowerCase(), action: 'unsubscribe' }),
     });
 
     const result = await response.json();

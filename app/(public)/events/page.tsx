@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Card, Chip, Button, Input } from "@heroui/react";
 import Link from "next/link";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
+import { Header, Footer } from "@/components/layout";
 import {
   MapPin,
   Users,
@@ -41,10 +40,8 @@ export default function EventsPage() {
       const supabase = createClient();
       const { data, error } = await supabase
         .from("properties")
-        .select(
-          "id, title, price, address, city, square_feet, listing_type, property_type, verification_status",
-        )
-        .eq("status", "live")
+        .select("*")
+        .eq("status", "active")
         .eq("verification_status", "verified")
         .eq("property_type", "event_space")
         .limit(12);

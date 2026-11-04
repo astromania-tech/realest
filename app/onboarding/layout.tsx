@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getAuthUser } from "@/lib/supabase/server";
-import { prisma } from "@/lib/prisma";
-import { isStaffRole, staffHomePath } from "@/lib/auth/roles";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { AgentOnboarding, OwnerOnboarding } from "@/components/onboarding";
-import { UserSessionBoundary } from "@/components/providers/UserSessionBoundary";
 
 export const metadata: Metadata = {
   title: "Complete Your Profile | RealEST",
@@ -17,7 +14,7 @@ export default async function OnboardingLayout({
 }: {
   children: React.ReactNode;
 }) {
-  void children;
+  const supabase = await createClient();
   const {
     data: { user },
     error: authError,
@@ -27,42 +24,45 @@ export default async function OnboardingLayout({
     redirect("/login");
   }
 
-  const userRow = await prisma.users.findUnique({
-    where: { id: user.id },
-    select: { role: true },
-  });
-  const role = userRow?.role ?? null;
+  const userType =
+    user.app_metadata?.role || user.user_metadata?.user_type || null;
 
-  if (!role) {
+  if (!userType) {
     redirect("/login");
   }
 
-  if (isStaffRole(role)) {
-    redirect(staffHomePath(role));
-  }
+  // Check if user has already completed onboarding
+  if (userType === "agent") {
+    const { data: agent } = await supabase
+      .from("agents")
+      .select("id")
+      .eq("profile_id", user.id)
+      .single();
 
-  if (role === "agent") {
-    const agent = await prisma.agents.findUnique({
-      where: { profile_id: user.id },
-      select: { id: true },
-    });
-    if (agent) redirect("/agent");
-  } else if (role === "owner") {
-    const owner = await prisma.owners.findUnique({
-      where: { profile_id: user.id },
-      select: { id: true },
-    });
-    if (owner) redirect("/owner");
+    if (agent) {
+      redirect("/agent");
+    }
+  } else if (userType === "owner") {
+    const { data: owner } = await supabase
+      .from("owners")
+      .select("id")
+      .eq("profile_id", user.id)
+      .single();
+
+    if (owner) {
+      redirect("/owner");
+    }
+  } else if (userType === "admin") {
+    redirect("/admin");
   } else {
+    // For 'user' type or others, redirect to profile
     redirect("/profile");
   }
 
   return (
-    <UserSessionBoundary>
-      <div className="min-h-screen bg-background">
-        {role === "agent" && <AgentOnboarding />}
-        {role === "owner" && <OwnerOnboarding />}
-      </div>
-    </UserSessionBoundary>
+    <div className="min-h-screen bg-background">
+      {userType === "agent" && <AgentOnboarding />}
+      {userType === "owner" && <OwnerOnboarding />}
+    </div>
   );
 }

@@ -93,8 +93,7 @@ export default async function CategoriesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="w-full min-w-0 overflow-x-auto">
-              <Table>
+            <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
@@ -158,7 +157,6 @@ export default async function CategoriesPage() {
                 ))}
               </TableBody>
             </Table>
-            </div>
           </CardContent>
         </Card>
         </div>

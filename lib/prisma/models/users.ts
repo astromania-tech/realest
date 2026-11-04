@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums.ts"
-import type * as Prisma from "../internal/prismaNamespace.ts"
+import type * as $Enums from "../enums"
+import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model users
@@ -32,9 +32,6 @@ export type UsersMinAggregateOutputType = {
   avatar_url: string | null
   role: $Enums.UserRole | null
   is_active: boolean | null
-  ops_state: string | null
-  ops_lga: string | null
-  ops_state_code: string | null
   created_at: Date | null
   updated_at: Date | null
   deleted_at: Date | null
@@ -48,9 +45,6 @@ export type UsersMaxAggregateOutputType = {
   avatar_url: string | null
   role: $Enums.UserRole | null
   is_active: boolean | null
-  ops_state: string | null
-  ops_lga: string | null
-  ops_state_code: string | null
   created_at: Date | null
   updated_at: Date | null
   deleted_at: Date | null
@@ -65,9 +59,6 @@ export type UsersCountAggregateOutputType = {
   role: number
   is_active: number
   metadata: number
-  ops_state: number
-  ops_lga: number
-  ops_state_code: number
   created_at: number
   updated_at: number
   deleted_at: number
@@ -83,9 +74,6 @@ export type UsersMinAggregateInputType = {
   avatar_url?: true
   role?: true
   is_active?: true
-  ops_state?: true
-  ops_lga?: true
-  ops_state_code?: true
   created_at?: true
   updated_at?: true
   deleted_at?: true
@@ -99,9 +87,6 @@ export type UsersMaxAggregateInputType = {
   avatar_url?: true
   role?: true
   is_active?: true
-  ops_state?: true
-  ops_lga?: true
-  ops_state_code?: true
   created_at?: true
   updated_at?: true
   deleted_at?: true
@@ -116,9 +101,6 @@ export type UsersCountAggregateInputType = {
   role?: true
   is_active?: true
   metadata?: true
-  ops_state?: true
-  ops_lga?: true
-  ops_state_code?: true
   created_at?: true
   updated_at?: true
   deleted_at?: true
@@ -206,9 +188,6 @@ export type UsersGroupByOutputType = {
   role: $Enums.UserRole
   is_active: boolean
   metadata: runtime.JsonValue | null
-  ops_state: string | null
-  ops_lga: string | null
-  ops_state_code: string | null
   created_at: Date | null
   updated_at: Date | null
   deleted_at: Date | null
@@ -217,7 +196,7 @@ export type UsersGroupByOutputType = {
   _max: UsersMaxAggregateOutputType | null
 }
 
-type GetUsersGroupByPayload<T extends usersGroupByArgs> = Prisma.PrismaPromise<
+export type GetUsersGroupByPayload<T extends usersGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<UsersGroupByOutputType, T['by']> &
       {
@@ -244,9 +223,6 @@ export type usersWhereInput = {
   role?: Prisma.EnumUserRoleFilter<"users"> | $Enums.UserRole
   is_active?: Prisma.BoolFilter<"users"> | boolean
   metadata?: Prisma.JsonNullableFilter<"users">
-  ops_state?: Prisma.StringNullableFilter<"users"> | string | null
-  ops_lga?: Prisma.StringNullableFilter<"users"> | string | null
-  ops_state_code?: Prisma.StringNullableFilter<"users"> | string | null
   created_at?: Prisma.DateTimeNullableFilter<"users"> | Date | string | null
   updated_at?: Prisma.DateTimeNullableFilter<"users"> | Date | string | null
   deleted_at?: Prisma.DateTimeNullableFilter<"users"> | Date | string | null
@@ -263,9 +239,6 @@ export type usersOrderByWithRelationInput = {
   role?: Prisma.SortOrder
   is_active?: Prisma.SortOrder
   metadata?: Prisma.SortOrderInput | Prisma.SortOrder
-  ops_state?: Prisma.SortOrderInput | Prisma.SortOrder
-  ops_lga?: Prisma.SortOrderInput | Prisma.SortOrder
-  ops_state_code?: Prisma.SortOrderInput | Prisma.SortOrder
   created_at?: Prisma.SortOrderInput | Prisma.SortOrder
   updated_at?: Prisma.SortOrderInput | Prisma.SortOrder
   deleted_at?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -285,9 +258,6 @@ export type usersWhereUniqueInput = Prisma.AtLeast<{
   role?: Prisma.EnumUserRoleFilter<"users"> | $Enums.UserRole
   is_active?: Prisma.BoolFilter<"users"> | boolean
   metadata?: Prisma.JsonNullableFilter<"users">
-  ops_state?: Prisma.StringNullableFilter<"users"> | string | null
-  ops_lga?: Prisma.StringNullableFilter<"users"> | string | null
-  ops_state_code?: Prisma.StringNullableFilter<"users"> | string | null
   created_at?: Prisma.DateTimeNullableFilter<"users"> | Date | string | null
   updated_at?: Prisma.DateTimeNullableFilter<"users"> | Date | string | null
   deleted_at?: Prisma.DateTimeNullableFilter<"users"> | Date | string | null
@@ -304,9 +274,6 @@ export type usersOrderByWithAggregationInput = {
   role?: Prisma.SortOrder
   is_active?: Prisma.SortOrder
   metadata?: Prisma.SortOrderInput | Prisma.SortOrder
-  ops_state?: Prisma.SortOrderInput | Prisma.SortOrder
-  ops_lga?: Prisma.SortOrderInput | Prisma.SortOrder
-  ops_state_code?: Prisma.SortOrderInput | Prisma.SortOrder
   created_at?: Prisma.SortOrderInput | Prisma.SortOrder
   updated_at?: Prisma.SortOrderInput | Prisma.SortOrder
   deleted_at?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -327,9 +294,6 @@ export type usersScalarWhereWithAggregatesInput = {
   role?: Prisma.EnumUserRoleWithAggregatesFilter<"users"> | $Enums.UserRole
   is_active?: Prisma.BoolWithAggregatesFilter<"users"> | boolean
   metadata?: Prisma.JsonNullableWithAggregatesFilter<"users">
-  ops_state?: Prisma.StringNullableWithAggregatesFilter<"users"> | string | null
-  ops_lga?: Prisma.StringNullableWithAggregatesFilter<"users"> | string | null
-  ops_state_code?: Prisma.StringNullableWithAggregatesFilter<"users"> | string | null
   created_at?: Prisma.DateTimeNullableWithAggregatesFilter<"users"> | Date | string | null
   updated_at?: Prisma.DateTimeNullableWithAggregatesFilter<"users"> | Date | string | null
   deleted_at?: Prisma.DateTimeNullableWithAggregatesFilter<"users"> | Date | string | null
@@ -344,9 +308,6 @@ export type usersCreateInput = {
   role?: $Enums.UserRole
   is_active?: boolean
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  ops_state?: string | null
-  ops_lga?: string | null
-  ops_state_code?: string | null
   created_at?: Date | string | null
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
@@ -363,9 +324,6 @@ export type usersUncheckedCreateInput = {
   role?: $Enums.UserRole
   is_active?: boolean
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  ops_state?: string | null
-  ops_lga?: string | null
-  ops_state_code?: string | null
   created_at?: Date | string | null
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
@@ -382,9 +340,6 @@ export type usersUpdateInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  ops_state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ops_lga?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ops_state_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -401,9 +356,6 @@ export type usersUncheckedUpdateInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  ops_state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ops_lga?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ops_state_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -420,9 +372,6 @@ export type usersCreateManyInput = {
   role?: $Enums.UserRole
   is_active?: boolean
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  ops_state?: string | null
-  ops_lga?: string | null
-  ops_state_code?: string | null
   created_at?: Date | string | null
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
@@ -437,9 +386,6 @@ export type usersUpdateManyMutationInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  ops_state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ops_lga?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ops_state_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -454,9 +400,6 @@ export type usersUncheckedUpdateManyInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  ops_state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ops_lga?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ops_state_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -476,9 +419,6 @@ export type usersCountOrderByAggregateInput = {
   role?: Prisma.SortOrder
   is_active?: Prisma.SortOrder
   metadata?: Prisma.SortOrder
-  ops_state?: Prisma.SortOrder
-  ops_lga?: Prisma.SortOrder
-  ops_state_code?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   deleted_at?: Prisma.SortOrder
@@ -492,9 +432,6 @@ export type usersMaxOrderByAggregateInput = {
   avatar_url?: Prisma.SortOrder
   role?: Prisma.SortOrder
   is_active?: Prisma.SortOrder
-  ops_state?: Prisma.SortOrder
-  ops_lga?: Prisma.SortOrder
-  ops_state_code?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   deleted_at?: Prisma.SortOrder
@@ -508,9 +445,6 @@ export type usersMinOrderByAggregateInput = {
   avatar_url?: Prisma.SortOrder
   role?: Prisma.SortOrder
   is_active?: Prisma.SortOrder
-  ops_state?: Prisma.SortOrder
-  ops_lga?: Prisma.SortOrder
-  ops_state_code?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   deleted_at?: Prisma.SortOrder
@@ -568,9 +502,6 @@ export type usersCreateWithoutProfilesInput = {
   role?: $Enums.UserRole
   is_active?: boolean
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  ops_state?: string | null
-  ops_lga?: string | null
-  ops_state_code?: string | null
   created_at?: Date | string | null
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
@@ -586,9 +517,6 @@ export type usersUncheckedCreateWithoutProfilesInput = {
   role?: $Enums.UserRole
   is_active?: boolean
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  ops_state?: string | null
-  ops_lga?: string | null
-  ops_state_code?: string | null
   created_at?: Date | string | null
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
@@ -620,9 +548,6 @@ export type usersUpdateWithoutProfilesInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  ops_state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ops_lga?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ops_state_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -638,9 +563,6 @@ export type usersUncheckedUpdateWithoutProfilesInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  ops_state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ops_lga?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ops_state_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -656,9 +578,6 @@ export type usersCreateWithoutProperty_validation_jobsInput = {
   role?: $Enums.UserRole
   is_active?: boolean
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  ops_state?: string | null
-  ops_lga?: string | null
-  ops_state_code?: string | null
   created_at?: Date | string | null
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
@@ -674,9 +593,6 @@ export type usersUncheckedCreateWithoutProperty_validation_jobsInput = {
   role?: $Enums.UserRole
   is_active?: boolean
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  ops_state?: string | null
-  ops_lga?: string | null
-  ops_state_code?: string | null
   created_at?: Date | string | null
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
@@ -708,9 +624,6 @@ export type usersUpdateWithoutProperty_validation_jobsInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  ops_state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ops_lga?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ops_state_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -726,9 +639,6 @@ export type usersUncheckedUpdateWithoutProperty_validation_jobsInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  ops_state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ops_lga?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ops_state_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -775,9 +685,6 @@ export type usersSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   role?: boolean
   is_active?: boolean
   metadata?: boolean
-  ops_state?: boolean
-  ops_lga?: boolean
-  ops_state_code?: boolean
   created_at?: boolean
   updated_at?: boolean
   deleted_at?: boolean
@@ -795,9 +702,6 @@ export type usersSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   role?: boolean
   is_active?: boolean
   metadata?: boolean
-  ops_state?: boolean
-  ops_lga?: boolean
-  ops_state_code?: boolean
   created_at?: boolean
   updated_at?: boolean
   deleted_at?: boolean
@@ -812,9 +716,6 @@ export type usersSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   role?: boolean
   is_active?: boolean
   metadata?: boolean
-  ops_state?: boolean
-  ops_lga?: boolean
-  ops_state_code?: boolean
   created_at?: boolean
   updated_at?: boolean
   deleted_at?: boolean
@@ -829,15 +730,12 @@ export type usersSelectScalar = {
   role?: boolean
   is_active?: boolean
   metadata?: boolean
-  ops_state?: boolean
-  ops_lga?: boolean
-  ops_state_code?: boolean
   created_at?: boolean
   updated_at?: boolean
   deleted_at?: boolean
 }
 
-export type usersOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "phone" | "full_name" | "avatar_url" | "role" | "is_active" | "metadata" | "ops_state" | "ops_lga" | "ops_state_code" | "created_at" | "updated_at" | "deleted_at", ExtArgs["result"]["users"]>
+export type usersOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "phone" | "full_name" | "avatar_url" | "role" | "is_active" | "metadata" | "created_at" | "updated_at" | "deleted_at", ExtArgs["result"]["users"]>
 export type usersInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   profiles?: boolean | Prisma.users$profilesArgs<ExtArgs>
   property_validation_jobs?: boolean | Prisma.users$property_validation_jobsArgs<ExtArgs>
@@ -861,18 +759,6 @@ export type $usersPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     role: $Enums.UserRole
     is_active: boolean
     metadata: runtime.JsonValue | null
-    /**
-     * Operating territory for Connect field assignment (Nigerian state name).
-     */
-    ops_state: string | null
-    /**
-     * Operating LGA within ops_state.
-     */
-    ops_lga: string | null
-    /**
-     * Optional state code (e.g. LA for Lagos).
-     */
-    ops_state_code: string | null
     created_at: Date | null
     updated_at: Date | null
     deleted_at: Date | null
@@ -1309,9 +1195,6 @@ export interface usersFieldRefs {
   readonly role: Prisma.FieldRef<"users", 'UserRole'>
   readonly is_active: Prisma.FieldRef<"users", 'Boolean'>
   readonly metadata: Prisma.FieldRef<"users", 'Json'>
-  readonly ops_state: Prisma.FieldRef<"users", 'String'>
-  readonly ops_lga: Prisma.FieldRef<"users", 'String'>
-  readonly ops_state_code: Prisma.FieldRef<"users", 'String'>
   readonly created_at: Prisma.FieldRef<"users", 'DateTime'>
   readonly updated_at: Prisma.FieldRef<"users", 'DateTime'>
   readonly deleted_at: Prisma.FieldRef<"users", 'DateTime'>
@@ -1511,6 +1394,11 @@ export type usersFindManyArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    * Skip the first `n` users.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of users.
+   */
   distinct?: Prisma.UsersScalarFieldEnum | Prisma.UsersScalarFieldEnum[]
 }
 

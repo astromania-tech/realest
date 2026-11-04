@@ -1,6 +1,5 @@
 import { Metadata } from "next";
 import { AnalyticsLayout } from "@/components/layout/AnalyticsLayout";
-import { UserSessionBoundary } from "@/components/providers/UserSessionBoundary";
 
 export const metadata: Metadata = {
   title: "Analytics | RealEST",
@@ -12,9 +11,5 @@ export default function AnalyticsRootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <UserSessionBoundary>
-      <AnalyticsLayout>{children}</AnalyticsLayout>
-    </UserSessionBoundary>
-  );
+  return <AnalyticsLayout>{children}</AnalyticsLayout>;
 }

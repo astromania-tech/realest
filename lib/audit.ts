@@ -3,7 +3,6 @@ import { Prisma } from "@/lib/prisma/client"
 
 export type AuditAction = 
   | "create_subadmin"
-  | "invite_staff"
   | "approve_agent"
   | "reject_agent"
   | "delete_property"

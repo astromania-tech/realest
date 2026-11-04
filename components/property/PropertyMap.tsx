@@ -47,7 +47,8 @@ import {
   EyeOff,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { LatLngExpression } from "leaflet";
+import type { LatLngExpression, LatLngBounds } from "leaflet";
+import { Loader } from "@googlemaps/js-api-loader";
 const EditControl = dynamic(
   () => import("react-leaflet-draw").then((mod) => mod.EditControl),
   { ssr: false },
@@ -84,7 +85,7 @@ import { PropertyMapLegend } from "./PropertyMapLegend";
 import { useMapClustering } from "@/lib/hooks/useMapClustering";
 import { useOfflineCache, offlineTileCache } from "@/lib/utils/offlineCache";
 
-// Dynamic imports for SSR compatibility — no static react-leaflet / Google edge
+// Dynamic imports for SSR compatibility
 const MapContainer = dynamic(
   () => import("react-leaflet").then((mod) => mod.MapContainer),
   { ssr: false },
@@ -104,23 +105,114 @@ const FeatureGroup = dynamic(
   () => import("react-leaflet").then((mod) => mod.FeatureGroup),
   { ssr: false },
 );
-const MapEventHandler = dynamic(
-  () =>
-    import("./PropertyMapLeafletBridge").then((mod) => mod.MapEventHandler),
-  { ssr: false },
-);
-const MapController = dynamic(
-  () => import("./PropertyMapLeafletBridge").then((mod) => mod.MapController),
-  { ssr: false },
-);
-const HeatmapLayer = dynamic(
-  () => import("./PropertyMapLeafletBridge").then((mod) => mod.HeatmapLayer),
-  { ssr: false },
-);
 
+import { useMapEvents, useMap } from "react-leaflet";
+
+// Heatmap Layer Component
+function HeatmapLayer({
+  points,
+  options,
+}: {
+  points: [number, number, number][];
+  options: any;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map || !points.length) return;
+
+    // @ts-ignore
+    const heatLayer = (window as any).L.heatLayer(points, options);
+    map.addLayer(heatLayer);
+
+    return () => {
+      if (map.hasLayer(heatLayer)) {
+        map.removeLayer(heatLayer);
+      }
+    };
+  }, [map, points, options]);
+
+  return null;
+}
+
+// Map bounds handling with event synchronization
 function useMapBounds() {
   const [bounds, setBounds] = useState(getDefaultMapBounds());
+
   return { bounds, setBounds };
+}
+
+// Component to handle map events and update bounds
+function MapEventHandler({
+  onBoundsChange,
+  onZoomChange,
+}: {
+  onBoundsChange: (bounds: {
+    north: number;
+    south: number;
+    east: number;
+    west: number;
+  }) => void;
+  onZoomChange?: (zoom: number) => void;
+}) {
+  useMapEvents({
+    moveend: (e: any) => {
+      const leafletBounds = e.target.getBounds();
+      onBoundsChange(leafletBoundsToBounds(leafletBounds));
+    },
+    zoomend: (e: any) => {
+      const leafletBounds = e.target.getBounds();
+      const currentZoom = e.target.getZoom();
+      onBoundsChange(leafletBoundsToBounds(leafletBounds));
+      onZoomChange?.(currentZoom);
+    },
+  });
+
+  return null;
+}
+
+// Component to control map view programmatically
+function MapController({
+  bounds,
+}: {
+  bounds: { north: number; south: number; east: number; west: number };
+}) {
+  const leafletMap = useMap();
+
+  useEffect(() => {
+    if (!leafletMap) return;
+
+    const leafletBounds = new (window as any).L.LatLngBounds(
+      [bounds.south, bounds.west],
+      [bounds.north, bounds.east],
+    );
+
+    try {
+      const current = leafletMap.getBounds();
+
+      // If current bounds are effectively equal to target bounds, skip fitBounds
+      const almostEqual = (a: number, b: number, eps = 1e-6) =>
+        Math.abs(a - b) <= eps;
+
+      if (
+        current &&
+        almostEqual(current.getNorth(), leafletBounds.getNorth()) &&
+        almostEqual(current.getSouth(), leafletBounds.getSouth()) &&
+        almostEqual(current.getEast(), leafletBounds.getEast()) &&
+        almostEqual(current.getWest(), leafletBounds.getWest())
+      ) {
+        return;
+      }
+
+      // Only animate/fit when bounds meaningfully differ
+      leafletMap.fitBounds(leafletBounds);
+    } catch (err) {
+      // Fallback: call fitBounds if any unexpected error occurs
+      leafletMap.fitBounds(leafletBounds);
+    }
+  }, [bounds, leafletMap]);
+
+  return null;
 }
 
 interface PropertyMapProps {
@@ -278,18 +370,17 @@ export function PropertyMap({
           console.warn("Failed to load state boundaries:", error);
         }
 
-        // Load Google Maps Places only when a key exists (dynamic import)
+        // Load Google Maps API for autocomplete
         const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
         if (googleMapsApiKey) {
-          void import("@googlemaps/js-api-loader")
-            .then(({ Loader }) => {
-              const loader = new Loader({
-                apiKey: googleMapsApiKey,
-                version: "weekly",
-                libraries: ["places"],
-              });
-              return (loader as { load: () => Promise<unknown> }).load();
-            })
+          const loader = new Loader({
+            apiKey: googleMapsApiKey,
+            version: "weekly",
+            libraries: ["places"],
+          });
+
+          (loader as any)
+            .load()
             .then(() => {
               if (searchInputRef.current && (window as any).google) {
                 const autocomplete = new (
@@ -304,18 +395,23 @@ export function PropertyMap({
                   if (place.geometry?.location) {
                     const lat = place.geometry.location.lat();
                     const lng = place.geometry.location.lng();
-                    setBounds({
+
+                    // Center map on selected location with small bounds
+                    const newBounds = {
                       north: lat + 0.01,
                       south: lat - 0.01,
                       east: lng + 0.01,
                       west: lng - 0.01,
-                    });
+                    };
+                    setBounds(newBounds);
+
+                    // Update search query with formatted address
                     setSearchQuery(place.formatted_address || "");
                   }
                 });
               }
             })
-            .catch((error: unknown) => {
+            .catch((error: any) => {
               console.warn("Failed to load Google Maps API:", error);
             });
         }
@@ -582,7 +678,7 @@ export function PropertyMap({
     if (property?.property_media?.length > 0) {
       const currentMedia = property.property_media[currentImageIndex];
       if (currentMedia?.media_type === "image") {
-        return currentMedia.media_url || currentMedia.file_url;
+        return currentMedia.file_url;
       }
     }
     return "/placeholder-property.jpg";

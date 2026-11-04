@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -24,8 +24,6 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [touched, setTouched] = useState(false);
   const [submitError, setSubmitError] = useState("");
-  // Sync guard — React state updates are async; double-click can fire twice.
-  const submitLockRef = useRef(false);
 
   const emailValid = isValidEmailFormat(email);
   const showFormatError = touched && email.trim() !== "" && !emailValid;
@@ -34,9 +32,8 @@ export default function ForgotPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canSubmit || submitLockRef.current) return;
+    if (!canSubmit) return;
 
-    submitLockRef.current = true;
     setIsLoading(true);
     setSubmitError("");
 
@@ -54,7 +51,6 @@ export default function ForgotPasswordPage() {
       setSubmitError("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
-      submitLockRef.current = false;
     }
   };
 

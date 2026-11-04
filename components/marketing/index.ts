@@ -4,4 +4,3 @@
 export { default as HeroSection } from './HeroSection'
 export { default as ComingSoonHero } from './ComingSoonHero'
 export { default as Phase2DemoContent } from './Phase2DemoContent'
-export { MarketingTrackingScripts } from './MarketingTrackingScripts'

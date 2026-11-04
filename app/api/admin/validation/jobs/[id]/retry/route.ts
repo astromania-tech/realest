@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { prisma } from '@/lib/prisma'
-import { requireStaff } from "@/lib/auth/require-staff"
-import { authDeniedResponse } from "@/lib/auth/staff-api"
 
 type RouteParams = {
   params: Promise<{
@@ -21,7 +19,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     const adminRow = await prisma.users.findUnique({ where: { id: user.id }, select: { role: true } })
-    if (!adminRow || adminRow.role !== 'admin' && adminRow.role !== 'reviewer') {
+    if (!adminRow || adminRow.role !== 'admin') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 

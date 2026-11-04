@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums.ts"
-import type * as Prisma from "../internal/prismaNamespace.ts"
+import type * as $Enums from "../enums"
+import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model waitlist_rank_history
@@ -203,7 +203,7 @@ export type Waitlist_rank_historyGroupByOutputType = {
   _max: Waitlist_rank_historyMaxAggregateOutputType | null
 }
 
-type GetWaitlist_rank_historyGroupByPayload<T extends waitlist_rank_historyGroupByArgs> = Prisma.PrismaPromise<
+export type GetWaitlist_rank_historyGroupByPayload<T extends waitlist_rank_historyGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<Waitlist_rank_historyGroupByOutputType, T['by']> &
       {
@@ -1207,6 +1207,11 @@ export type waitlist_rank_historyFindManyArgs<ExtArgs extends runtime.Types.Exte
    * Skip the first `n` waitlist_rank_histories.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of waitlist_rank_histories.
+   */
   distinct?: Prisma.Waitlist_rank_historyScalarFieldEnum | Prisma.Waitlist_rank_historyScalarFieldEnum[]
 }
 

@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums.ts"
-import type * as Prisma from "../internal/prismaNamespace.ts"
+import type * as $Enums from "../enums"
+import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model kyc_requests
@@ -211,7 +211,7 @@ export type Kyc_requestsGroupByOutputType = {
   _max: Kyc_requestsMaxAggregateOutputType | null
 }
 
-type GetKyc_requestsGroupByPayload<T extends kyc_requestsGroupByArgs> = Prisma.PrismaPromise<
+export type GetKyc_requestsGroupByPayload<T extends kyc_requestsGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<Kyc_requestsGroupByOutputType, T['by']> &
       {
@@ -1397,6 +1397,11 @@ export type kyc_requestsFindManyArgs<ExtArgs extends runtime.Types.Extensions.In
    * Skip the first `n` kyc_requests.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of kyc_requests.
+   */
   distinct?: Prisma.Kyc_requestsScalarFieldEnum | Prisma.Kyc_requestsScalarFieldEnum[]
 }
 

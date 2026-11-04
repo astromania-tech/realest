@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse, after } from 'next/server';
 import {
+  checkEmailWithPosition,
   getWaitlistStats,
   getWaitlistPosition,
   createWaitlistEntry,
@@ -25,14 +26,7 @@ import {
   isWaitlistPersona,
 } from '@/lib/referral-system';
 import { REFERRAL_CREDIT_EVENT_TYPES, referralAlreadyCredited } from '@/lib/referral-credit';
-import prisma from '@/lib/prisma';
-import { clientAddress, consumeRateLimit } from '@/lib/http/rate-limit';
-import { verifyTurnstileToken } from '@/lib/http/turnstile';
-import {
-  createWaitlistUnsubscribeToken,
-  verifyWaitlistUnsubscribeToken,
-} from '@/lib/waitlist-unsubscribe-token';
-import { publicWaitlistLookupProjection } from '@/lib/waitlist-public-lookup';
+import prisma from '@/lib/prisma'; // ← replaces createServiceClient
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
 
 export const openApiPOST: OpenApiMetadata = {
@@ -67,15 +61,31 @@ export const openApiPOST: OpenApiMetadata = {
   },
 };
 
-// Shared Postgres limiter. Five posts per address per minute.
+// Rate limiting store (in production, use Redis or database)
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const limit = rateLimitStore.get(ip);
+  if (!limit || now > limit.resetTime) {
+    rateLimitStore.set(ip, { count: 1, resetTime: now + 60000 });
+    return false;
+  }
+  if (limit.count >= 5) return true;
+  limit.count += 1;
+  return false;
+}
 
 export async function POST(request: NextRequest) {
   try {
     console.log('🚀 Waitlist API POST called');
 
-    const ip = clientAddress(request.headers);
+    const ip =
+      request.headers.get('x-forwarded-for') ||
+      request.headers.get('x-real-ip') ||
+      'unknown';
 
-    if (!(await consumeRateLimit({ bucket: "waitlist", subject: ip })).allowed) {
+    if (isRateLimited(ip)) {
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
         { status: 429 },
@@ -87,18 +97,9 @@ export async function POST(request: NextRequest) {
       email, firstName, lastName, phone, source, ref,
       persona, interests, locationPreference,
       propertyTypePreference, budgetRange, personaDetails,
-      turnstileToken,
     } = body;
 
     console.log('📧 Received subscription data:', { email, firstName, lastName, phone, source, persona });
-
-    const botCheck = await verifyTurnstileToken(
-      typeof turnstileToken === 'string' ? turnstileToken : null,
-      { ip },
-    );
-    if (!botCheck.ok) {
-      return NextResponse.json({ error: botCheck.error }, { status: botCheck.status });
-    }
 
     if (!email || typeof email !== 'string') {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
@@ -143,25 +144,21 @@ export async function POST(request: NextRequest) {
 
     console.log(`New waitlist subscriber: ${subscriptionData.email} (${subscriptionData.firstName} ${subscriptionData.lastName || ''})`);
 
-    // Rank/reward recompute is O(n) over the waitlist — do not block join.
     if (result.data) {
-      const joinRecord = {
-        id: result.data.id,
-        email: result.data.email,
-        first_name: result.data.first_name,
-        referral_code: result.data.referral_code,
-        referral_count: result.data.referral_count,
-        persona: result.data.persona,
-        poll_completion_count: result.data.poll_completion_count,
-        subscribed_at: result.data.subscribed_at
-          ? String(result.data.subscribed_at)
-          : null,
-      };
-      after(() =>
-        applyWaitlistJoinRewards(joinRecord, {
-          ensureWaitlistCohortReward,
-          recomputeWaitlistRankings,
-        }),
+      await applyWaitlistJoinRewards(
+        {
+          id: result.data.id,
+          email: result.data.email,
+          first_name: result.data.first_name,
+          referral_code: result.data.referral_code,
+          referral_count: result.data.referral_count,
+          persona: result.data.persona,
+          poll_completion_count: result.data.poll_completion_count,
+          subscribed_at: result.data.subscribed_at
+            ? String(result.data.subscribed_at)
+            : null,
+        },
+        { ensureWaitlistCohortReward, recomputeWaitlistRankings },
       );
     }
 
@@ -288,8 +285,6 @@ export async function POST(request: NextRequest) {
       ).catch((error) => console.error('❌ Resend audience sync failed:', error));
     }
 
-    const unsubscribeToken = createWaitlistUnsubscribeToken(subscriptionData.email);
-
     return NextResponse.json(
       {
         message: 'Successfully added to waitlist!',
@@ -306,7 +301,6 @@ export async function POST(request: NextRequest) {
           : null,
         currentMilestone: getCurrentMilestone(result.data?.referral_count ?? 0),
         waitlistReward: getWaitlistRewardCopy(persona),
-        ...(unsubscribeToken ? { unsubscribeToken } : {}),
         ...(positionData.error && { positionError: positionData.error }),
       },
       { status: 201 },
@@ -328,57 +322,55 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('📋 Waitlist API GET called');
+
     const { searchParams } = new URL(request.url);
     const email = searchParams.get('email');
     const stats = searchParams.get('stats');
-    const ip = clientAddress(request.headers);
 
     if (email) {
-      const limited = await consumeRateLimit({
-        bucket: "waitlist_lookup",
-        subject: `${ip}:${email.trim().toLowerCase()}`,
-      });
-      if (!limited.allowed) {
-        return NextResponse.json(
-          { error: 'Too many requests. Please try again later.' },
-          { status: 429 },
-        );
-      }
+      const emailCheck = await checkEmailWithPosition(email);
+      console.log(`🔍 Email check for ${email}: ${emailCheck.exists}${emailCheck.position ? ` (#${emailCheck.position})` : ''}`);
 
-      const entry = await prisma.waitlist.findUnique({
-        where: { email: email.trim().toLowerCase() },
-        select: { status: true },
+      return NextResponse.json({
+        exists: emailCheck.exists,
+        status: emailCheck.status,
+        firstName: emailCheck.firstName,
+        position: emailCheck.position,
+        totalCount: emailCheck.totalCount,
+        persona: emailCheck.persona,
+        candidateRole: emailCheck.candidateRole,
+        queueScore: emailCheck.queueScore,
+        referralCount: emailCheck.referralCount,
+        referralCode: emailCheck.referralCode,
+        currentMilestone: getCurrentMilestone(emailCheck.referralCount ?? 0),
+        waitlistRewardEligible: emailCheck.waitlistRewardEligible,
+        waitlistReward: emailCheck.persona
+          ? getWaitlistRewardCopy(emailCheck.persona)
+          : null,
       });
-
-      // Boolean + status only — one indexed lookup, no position counts.
-      return NextResponse.json(
-        publicWaitlistLookupProjection({
-          exists: Boolean(entry),
-          status: entry?.status,
-        }),
-      );
     }
 
     if (stats === 'true') {
-      const statsLimited = await consumeRateLimit({
-        bucket: 'waitlist_stats',
-        subject: ip,
-        limit: 30,
-      });
-      if (!statsLimited.allowed) {
-        return NextResponse.json(
-          { error: 'Too many requests. Please try again later.' },
-          { status: 429 },
-        );
-      }
       const waitlistStats = await getWaitlistStats();
+      console.log('📊 Waitlist stats requested:', waitlistStats);
       return NextResponse.json({
         ...waitlistStats,
         message: 'Waitlist statistics from database',
       });
     }
 
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    return NextResponse.json({
+      message: 'Waitlist API is working!',
+      mode: 'Prisma + Supabase PostgreSQL',
+      timestamp: new Date().toISOString(),
+      endpoints: {
+        'POST /': 'Subscribe to waitlist',
+        'GET /?email=user@example.com': 'Check if email exists',
+        'GET /?stats=true': 'Get waitlist statistics',
+        'DELETE /': 'Unsubscribe from waitlist',
+      },
+    });
   } catch (error) {
     console.error('❌ Waitlist GET API error:', error);
     return NextResponse.json(
@@ -396,53 +388,32 @@ export async function GET(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const ip = clientAddress(request.headers);
-    const limited = await consumeRateLimit({
-      bucket: 'waitlist_unsubscribe',
-      subject: ip,
-      limit: 10,
-    });
-    if (!limited.allowed) {
-      return NextResponse.json(
-        { error: 'Too many requests. Please try again later.' },
-        { status: 429 },
-      );
-    }
+    console.log('🗑️  Waitlist API DELETE called');
 
     const body = await request.json();
-    const { email, token } = body;
+    const { email } = body;
 
     if (!email || typeof email !== 'string') {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
-    if (!verifyWaitlistUnsubscribeToken(email, typeof token === 'string' ? token : null)) {
-      return NextResponse.json(
-        { error: 'A valid unsubscribe token is required.' },
-        { status: 403 },
-      );
-    }
-
-    const normalized = email.toLowerCase().trim();
     const entry = await prisma.waitlist.findUnique({
-      where: { email: normalized },
+      where: { email: email.toLowerCase().trim() },
       select: { id: true },
     });
 
-    // Same response whether missing or already gone — no email enumeration via DELETE.
     if (!entry) {
-      return NextResponse.json(
-        { message: 'Successfully unsubscribed from waitlist' },
-        { status: 200 },
-      );
+      return NextResponse.json({ error: 'Email not found on waitlist.' }, { status: 404 });
     }
 
     await prisma.waitlist.update({
-      where: { email: normalized },
+      where: { email: email.toLowerCase().trim() },
       data: { status: 'unsubscribed', unsubscribed_at: new Date() },
     });
 
-    syncWaitlistUnsubscribe(normalized).catch((error) =>
+    console.log(`✅ User unsubscribed from waitlist: ${email}`);
+
+    syncWaitlistUnsubscribe(email.trim()).catch((error) =>
       console.error('❌ Resend audience unsubscribe sync failed:', error),
     );
 

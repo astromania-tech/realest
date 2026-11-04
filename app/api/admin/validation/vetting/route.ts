@@ -3,8 +3,6 @@ import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata'
-import { requireStaff } from "@/lib/auth/require-staff"
-import { authDeniedResponse } from "@/lib/auth/staff-api"
 
 // Query parameters schema
 const vettingQuerySchema = z.object({
@@ -45,11 +43,22 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const supabase = await createClient()
 
     // Verify admin authentication
-    const staff = await requireStaff()
-    if (!staff.ok) {
-      return NextResponse.json({ error: staff.error }, { status: staff.status })
+    const { data: { user }, error: authError } = await getAuthUser()
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
     }
-    const user = { id: staff.userId }
+
+    // Verify user is admin
+    const adminRow = await prisma.users.findUnique({ where: { id: user.id }, select: { role: true } })
+    if (!adminRow || adminRow.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Admin access required' },
+        { status: 403 }
+      )
+    }
 
     // Parse query parameters
     const { searchParams } = new URL(request.url)
@@ -69,8 +78,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     const { page, per_page, sort, state, priority } = queryValidation.data
-    const pageNum = Math.max(1, parseInt(page, 10) || 1)
-    const perPageNum = Math.min(50, Math.max(1, parseInt(per_page, 10) || 20))
+    const pageNum = parseInt(page)
+    const perPageNum = parseInt(per_page)
     const offset = (pageNum - 1) * perPageNum
 
     const where = { status: 'pending_vetting', ...(state ? { state } : {}) }
@@ -79,23 +88,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const [properties, totalCount] = await Promise.all([
       prisma.properties.findMany({
         where,
-        select: {
-          id: true,
-          title: true,
-          property_type: true,
-          address: true,
-          state: true,
-          latitude: true,
-          longitude: true,
-          price: true,
-          price_frequency: true,
-          created_at: true,
-          owners: {
-            select: {
-              profiles: { select: { full_name: true, email: true, phone: true } },
-            },
-          },
-          _count: { select: { property_documents: true, property_media: true } },
+        include: {
+          owners: { include: { profiles: { select: { full_name: true, email: true, phone: true } } } },
+          property_documents: true,
+          property_media: { select: { id: true } },
         },
         orderBy,
         skip: offset,
@@ -106,40 +102,28 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const totalPages = Math.ceil(totalCount / perPageNum)
 
-    const formattedProperties = properties.map((property) => {
-      const documentCount = property._count.property_documents
-      const mediaCount = property._count.property_media
-      const price = Number(property.price)
-      return {
-        id: property.id,
-        title: property.title,
-        property_type: property.property_type,
-        address: property.address,
-        state: property.state,
-        latitude: property.latitude,
-        longitude: property.longitude,
-        price: property.price,
-        price_frequency: property.price_frequency,
-        created_at: property.created_at,
-        owner: property.owners?.profiles ?? null,
-        document_count: documentCount,
-        media_count: mediaCount,
-        vetting_status: 'pending',
-        days_since_created: Math.floor(
-          (Date.now() - new Date(property.created_at!).getTime()) / (1000 * 60 * 60 * 24),
-        ),
-        is_high_value: price > 10000000,
-        has_complete_documents: documentCount >= 3,
-        urgency_level:
-          price > 50000000
-            ? 'urgent'
-            : price > 10000000
-              ? 'high'
-              : documentCount >= 5
-                ? 'medium'
-                : 'low',
-      }
-    })
+    const formattedProperties = properties.map((property: any) => ({
+      id: property.id,
+      title: property.title,
+      property_type: property.property_type,
+      address: property.address,
+      state: property.state,
+      latitude: property.latitude,
+      longitude: property.longitude,
+      price: property.price,
+      price_frequency: property.price_frequency,
+      created_at: property.created_at,
+      owner: property.owners?.profiles ?? null,
+      document_count: property.property_documents?.length || 0,
+      media_count: property.property_media?.length || 0,
+      vetting_status: 'pending',
+      days_since_created: Math.floor((Date.now() - new Date(property.created_at!).getTime()) / (1000 * 60 * 60 * 24)),
+      is_high_value: Number(property.price) > 10000000,
+      has_complete_documents: (property.property_documents?.length || 0) >= 3,
+      urgency_level: Number(property.price) > 50000000 ? 'urgent' :
+                    Number(property.price) > 10000000 ? 'high' :
+                    (property.property_documents?.length || 0) >= 5 ? 'medium' : 'low',
+    }))
 
     let filteredProperties = formattedProperties
     if (priority) {

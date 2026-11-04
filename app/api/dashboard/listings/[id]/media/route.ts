@@ -1,6 +1,5 @@
 import { getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
-import { enqueueTrustRead } from "@/lib/trust/enqueue";
 import { NextResponse } from "next/server";
 import { generateSignedUrl } from "@/lib/utils/upload-utils";
 import { z } from "zod";
@@ -250,12 +249,6 @@ export async function POST(request: Request, { params }: RouteParams) {
         is_featured: isFeatured,
       },
     });
-
-    try {
-      await enqueueTrustRead(propertyId, user.id);
-    } catch (queueError) {
-      console.error("Trust read queue error:", queueError);
-    }
 
     return NextResponse.json(
       { data: mediaRecord, message: "Media uploaded successfully" },

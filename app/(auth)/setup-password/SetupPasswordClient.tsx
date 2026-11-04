@@ -12,13 +12,7 @@ import {
   CardContent,
 } from "@/components/ui";
 import { Input } from "@/components/ui/input";
-import { signOut } from "@/lib/auth";
-import {
-  inviteSetupBlocked,
-  INVITE_SETUP_USED_MESSAGE,
-  readInviteSetupStatus,
-} from "@/lib/auth/invite-setup";
-import { createClient } from "@/lib/supabase/client";
+import { getCurrentUser, resetPassword } from "@/lib/auth";
 import {
   Eye,
   EyeOff,
@@ -61,18 +55,6 @@ function SetupPasswordContent() {
       const result = await handlePasswordResetSession(searchParams);
       if (!result.success) {
         setSessionError(result.error ?? "Your invite link is invalid or has expired.");
-        return;
-      }
-
-      const supabase = createClient();
-      const { data } = await supabase.auth.getUser();
-      const status = readInviteSetupStatus(data.user?.user_metadata);
-      if (inviteSetupBlocked(status)) {
-        await signOut();
-        setSessionError(INVITE_SETUP_USED_MESSAGE);
-        if (typeof window !== "undefined") {
-          window.history.replaceState({}, "", "/setup-password");
-        }
       }
     })();
   }, [searchParams]);
@@ -112,21 +94,18 @@ function SetupPasswordContent() {
     }
 
     try {
-      const response = await fetch("/api/auth/invite-setup-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: formData.password }),
-      });
-      const result = (await response.json()) as { error?: string };
-
-      if (!response.ok) {
-        setFormError(result.error ?? "Failed to set password. Please try again.");
+      const userResponse = await getCurrentUser();
+      if (!userResponse.success || !userResponse.user) {
+        setFormError("Session expired. Please request a new invite link.");
         setIsLoading(false);
         return;
       }
 
-      if (typeof window !== "undefined") {
-        window.history.replaceState({}, "", "/setup-password");
+      const result = await resetPassword(formData.password);
+      if (!result.success) {
+        setFormError(result.error ?? "Failed to set password. Please try again.");
+        setIsLoading(false);
+        return;
       }
 
       setIsSuccess(true);

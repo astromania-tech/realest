@@ -1,7 +1,4 @@
 import { createClient, getAuthUser } from "@/lib/supabase/server";
-import { prisma } from "@/lib/prisma";
-import { readStoredDocuments } from "@/lib/kyc/store";
-import { YOUVERIFY_PROVIDER } from "@/lib/kyc/types";
 import { redirect, notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,9 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Save, User } from "lucide-react";
+import { ArrowLeft, Save, User, Mail, Phone, MapPin } from "lucide-react";
 import Link from "next/link";
-import { AdminBanControl } from "@/components/admin/AdminBanControl";
 
 export default async function UserEditPage({
   params,
@@ -50,13 +46,6 @@ export default async function UserEditPage({
     notFound();
   }
 
-  const latestKyc = await prisma.kyc_requests.findFirst({
-    where: { user_id: params.id, kyc_provider: YOUVERIFY_PROVIDER },
-    orderBy: { created_at: "desc" },
-    select: { id: true, documents: true },
-  });
-  const identityPhotoPath = latestKyc ? readStoredDocuments(latestKyc.documents)?.idImagePath : null;
-
   // Mock additional user data (in a real app, this might be in separate tables)
   const userStats = {
     totalProperties: 5,
@@ -68,7 +57,7 @@ export default async function UserEditPage({
 
   return (
     <>
-      <div className="w-full max-w-7xl mx-auto">
+      <div className="container mx-auto px-4">
         <div className="mb-8">
           <Link
             href="/admin/users"
@@ -83,7 +72,7 @@ export default async function UserEditPage({
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* User Profile */}
           <div className="lg:col-span-2 space-y-6">
             <Card>
@@ -175,7 +164,7 @@ export default async function UserEditPage({
                 <CardTitle>User Statistics</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center">
                     <p className="text-2xl font-bold">{userStats.totalProperties}</p>
                     <p className="text-sm text-muted-foreground">Properties</p>
@@ -213,20 +202,6 @@ export default async function UserEditPage({
                   </Badge>
                 </div>
 
-                {identityPhotoPath && latestKyc ? (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Identity photo</p>
-                    <a
-                      className="text-sm underline"
-                      href={`/api/admin/kyc/${latestKyc.id}/id-image`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Open the photo sent to Youverify
-                    </a>
-                  </div>
-                ) : null}
-
                 <div>
                   <p className="text-sm text-muted-foreground">Verification</p>
                   <Badge variant={userProfile.is_active ? 'default' : 'secondary'}>
@@ -262,13 +237,12 @@ export default async function UserEditPage({
                   Send Verification Email
                 </Button>
 
-                {userRow?.role === "admin" && user.id !== params.id ? (
-                  <AdminBanControl
-                    userId={params.id}
-                    isActive={userProfile.is_active !== false}
-                    fullWidth
-                  />
-                ) : null}
+                <Button
+                  variant={!userProfile.is_active ? 'default' : 'destructive'}
+                  className="w-full"
+                >
+                  {!userProfile.is_active ? 'Unban User' : 'Ban User'}
+                </Button>
 
                 <Button variant="ghost" className="w-full text-red-600 hover:text-red-700">
                   Delete User Account

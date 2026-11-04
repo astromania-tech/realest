@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
-import { publicPersonCard } from "@/lib/listings/public-listing";
 
 // GET /api/agents/[id] - Get agent details
 export async function GET(
@@ -8,29 +8,16 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const supabase = await createClient();
     const { id } = await params;
     const agentId = id;
 
+    // Get agent — joined through agents table (profile_id)
     const agentRow = await prisma.agents.findFirst({
       where: { profile_id: agentId },
-      select: {
-        id: true,
-        verified: true,
-        verification_date: true,
-        bio: true,
-        specialization: true,
-        years_experience: true,
-        total_listings: true,
-        agency_name: true,
-        license_number: true,
-        rating: true,
+      include: {
         profiles: {
-          select: {
-            id: true,
-            full_name: true,
-            avatar_url: true,
-            created_at: true,
-          },
+          select: { id: true, full_name: true, email: true, phone: true, avatar_url: true, created_at: true },
         },
       },
     });
@@ -39,6 +26,7 @@ export async function GET(
       return NextResponse.json({ error: "Agent not found" }, { status: 404 });
     }
 
+    // Only return verified agents publicly
     if (!agentRow.verified) {
       return NextResponse.json(
         { error: "Agent profile not available" },
@@ -46,72 +34,78 @@ export async function GET(
       );
     }
 
-    const [properties, reviews] = await Promise.all([
-      prisma.properties.findMany({
-        where: { agent_id: agentRow.id, status: "live" },
-        select: {
-          id: true,
-          title: true,
-          price: true,
-          price_frequency: true,
-          state: true,
-          bedrooms: true,
-          bathrooms: true,
-          square_feet: true,
-          status: true,
-          created_at: true,
-          property_media: {
-            select: { media_url: true, is_featured: true },
-            take: 1,
-            orderBy: { display_order: "asc" },
-          },
+    // Get agent's properties (live only)
+    const properties = await prisma.properties.findMany({
+      where: { agent_id: agentRow.id, status: "live" },
+      select: {
+        id: true,
+        title: true,
+        price: true,
+        price_frequency: true,
+        state: true,
+        bedrooms: true,
+        bathrooms: true,
+        square_feet: true,
+        status: true,
+        created_at: true,
+        property_media: {
+          select: { media_url: true, is_featured: true },
+          take: 1,
+          orderBy: { display_order: "asc" },
         },
-        orderBy: { created_at: "desc" },
-        take: 6,
-      }),
-      prisma.reviews.findMany({
-        where: { target_type: "agent", properties: { agent_id: agentRow.id } },
-        select: {
-          id: true,
-          rating: true,
-          comment: true,
-          created_at: true,
-          profiles: { select: { id: true, full_name: true, avatar_url: true } },
-        },
-        orderBy: { created_at: "desc" },
-        take: 5,
-      }),
-    ]);
+      },
+      orderBy: { created_at: "desc" },
+      take: 6,
+    });
 
+    // Get agent reviews
+    const reviews = await prisma.reviews.findMany({
+      where: { target_type: "agent", properties: { agent_id: agentRow.id } },
+      select: {
+        id: true,
+        rating: true,
+        comment: true,
+        created_at: true,
+        profiles: { select: { id: true, full_name: true, avatar_url: true } },
+      },
+      orderBy: { created_at: "desc" },
+      take: 5,
+    });
+
+    // Calculate review statistics
     let reviewStats = {
       average_rating: agentRow.rating ? Number(agentRow.rating) : 0,
       total_reviews: 0,
       rating_distribution: {} as Record<string, number>,
     };
 
-    if (reviews.length > 0) {
+    if (reviews && reviews.length > 0) {
+      // Recalculate from actual reviews
       const totalRating = reviews.reduce(
-        (sum, review) => sum + review.rating,
+        (sum: number, review: any) => sum + review.rating,
         0,
       );
       reviewStats.average_rating =
         Math.round((totalRating / reviews.length) * 10) / 10;
       reviewStats.total_reviews = reviews.length;
+
+      // Rating distribution
       reviewStats.rating_distribution = {
-        5: reviews.filter((r) => r.rating === 5).length,
-        4: reviews.filter((r) => r.rating === 4).length,
-        3: reviews.filter((r) => r.rating === 3).length,
-        2: reviews.filter((r) => r.rating === 2).length,
-        1: reviews.filter((r) => r.rating === 1).length,
+        5: reviews.filter((r: any) => r.rating === 5).length,
+        4: reviews.filter((r: any) => r.rating === 4).length,
+        3: reviews.filter((r: any) => r.rating === 3).length,
+        2: reviews.filter((r: any) => r.rating === 2).length,
+        1: reviews.filter((r: any) => r.rating === 1).length,
       };
     }
 
-    const card = publicPersonCard(agentRow.profiles);
-
+    // Format response
     const agentProfile = {
-      id: card?.id ?? agentRow.profiles.id,
-      name: card?.full_name ?? agentRow.profiles.full_name,
-      avatar_url: card?.avatar_url ?? agentRow.profiles.avatar_url,
+      id: agentRow.profiles.id,
+      name: agentRow.profiles.full_name,
+      email: agentRow.profiles.email,
+      phone: agentRow.profiles.phone,
+      avatar_url: agentRow.profiles.avatar_url,
       verified: agentRow.verified,
       verified_at: agentRow.verification_date,
       member_since: agentRow.profiles.created_at,
@@ -127,8 +121,8 @@ export async function GET(
       website: null,
       social_links: null,
       reviews: reviewStats,
-      recent_reviews: reviews,
-      recent_properties: properties,
+      recent_reviews: reviews || [],
+      recent_properties: properties || [],
     };
 
     return NextResponse.json({ data: agentProfile });

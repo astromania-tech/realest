@@ -1,6 +1,5 @@
 import { Metadata } from "next";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { UserSessionBoundary } from "@/components/providers/UserSessionBoundary";
 
 export const metadata: Metadata = {
   title: "Dashboard | RealEST",
@@ -12,9 +11,5 @@ export default function DashboardRootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <UserSessionBoundary>
-      <DashboardLayout>{children}</DashboardLayout>
-    </UserSessionBoundary>
-  );
+  return <DashboardLayout>{children}</DashboardLayout>;
 }
