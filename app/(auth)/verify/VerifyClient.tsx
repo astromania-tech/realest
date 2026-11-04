@@ -15,7 +15,9 @@ import {
   getCurrentUser,
   resendEmailVerification,
 } from "@/lib/auth";
-import { CheckCircle, Mail, AlertCircle, RefreshCw } from "lucide-react";
+import { Mail, AlertCircle, RefreshCw } from "lucide-react";
+import { VerifiedAccountModal } from "@/components/shared/VerifiedAccountModal";
+import { verificationDestination } from "@/lib/auth/verification-destination";
 import { createClient } from "@/lib/supabase/client";
 
 function VerifyEmailContent() {
@@ -28,6 +30,7 @@ function VerifyEmailContent() {
   >("verifying");
   const [error, setError] = useState("");
   const [email, setEmail] = useState("");
+  const [nextPath, setNextPath] = useState("/profile");
 
   useEffect(() => {
     const handleEmailVerification = async () => {
@@ -173,35 +176,10 @@ function VerifyEmailContent() {
   async function redirectToDestination(
     verifiedUser?: Awaited<ReturnType<typeof getCurrentUser>>["user"] | null,
   ) {
+    const path = verificationDestination(verifiedUser);
+    setNextPath(path);
     setVerificationStatus("success");
-
-    if (!verifiedUser?.id) {
-      // Fallback — no user id, go to login
-      setTimeout(() => router.push("/login?verified=true"), 2000);
-      return;
-    }
-
-    const userType =
-      verifiedUser.app_metadata?.role || verifiedUser.user_metadata?.user_type;
-
-    if (!userType) {
-      setTimeout(() => router.push("/login?verified=true"), 2000);
-      return;
-    }
-
-    setTimeout(() => {
-      switch (userType) {
-        case "owner":
-        case "agent":
-          router.push("/onboarding");
-          break;
-        case "admin":
-          router.push("/admin");
-          break;
-        default:
-          router.push("/profile");
-      }
-    }, 2000);
+    setTimeout(() => router.push(path), 2000);
   }
 
   const handleResendVerification = async () => {
@@ -255,50 +233,8 @@ function VerifyEmailContent() {
 
   if (verificationStatus === "success") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <CheckCircle className="w-16 h-16 text-success" />
-            </div>
-            <CardTitle className="text-2xl font-bold">
-              Email Verified!
-            </CardTitle>
-            <CardDescription>
-              Your email has been successfully verified
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent className="space-y-6">
-            <div className="text-center space-y-4">
-              <div className="bg-success-50 border border-success-200 p-4 rounded-lg">
-                <p className="text-sm text-success-700">
-                  Welcome to RealEST! Your account is now active. Redirecting
-                  you to your dashboard…
-                </p>
-              </div>
-
-              <p className="text-sm text-muted-foreground">
-                Taking a moment longer? Click below.
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <Button asChild variant="default" className="w-full">
-                <Link href="/profile">Continue to Dashboard</Link>
-              </Button>
-
-              <div className="text-center">
-                <Link
-                  href="/"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Back to Homepage
-                </Link>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-background">
+        <VerifiedAccountModal continueHref={nextPath} />
       </div>
     );
   }
