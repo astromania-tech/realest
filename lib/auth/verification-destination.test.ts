@@ -12,6 +12,10 @@ test("an owner or agent lands on onboarding", () => {
   assert.equal(verificationDestination({ id: "u1", app_metadata: { role: "agent" } }), "/onboarding");
 });
 
+test("an admin lands on the admin home", () => {
+  assert.equal(verificationDestination({ id: "u1", app_metadata: { role: "admin" } }), "/admin");
+});
+
 test("a missing account goes to login", () => {
   assert.equal(verificationDestination(null), "/login?verified=true");
   assert.equal(verificationDestination({ id: "u1" }), "/login?verified=true");
@@ -26,4 +30,7 @@ test("the verify screen uses the logout modal shell", () => {
   assert.match(logout, /bg-background\/20 backdrop-blur-xs/);
   assert.match(verify, /VerifiedAccountModal/);
   assert.match(verify, /verificationDestination/);
+  assert.match(verify, /exchangeCodeForSession/);
+  assert.match(verify, /session could not be loaded/);
+  assert.match(verify, /No verification token found/);
 });

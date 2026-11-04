@@ -48,7 +48,7 @@ function VerifyEmailContent() {
         const refresh_token = hashParams.get("refresh_token");
 
         if (access_token && refresh_token) {
-          const { error: sessionError } = await supabase.auth.setSession({
+          const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
             access_token,
             refresh_token,
           });
@@ -56,10 +56,17 @@ function VerifyEmailContent() {
           if (sessionError) throw sessionError;
 
           const userResponse = await getCurrentUser();
-          if (userResponse.success && userResponse.user) {
-            await redirectToDestination(userResponse.user);
+          const user = userResponse.success && userResponse.user
+            ? userResponse.user
+            : sessionData.user;
+          if (!user) {
+            setVerificationStatus("error");
+            setError("Your email was verified, but the session could not be loaded. Sign in to continue.");
             return;
           }
+          if (user.email) setEmail(user.email);
+          await redirectToDestination(user);
+          return;
         }
 
         if (tokenFromQuery) {
@@ -84,7 +91,27 @@ function VerifyEmailContent() {
           return;
         }
 
-        // ...keep your existing code for `code` and the fallback
+        if (code) {
+          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          if (exchangeError) {
+            setVerificationStatus("error");
+            setError(exchangeError.message);
+            return;
+          }
+          if (data.user?.email) setEmail(data.user.email);
+          await redirectToDestination(data.user);
+          return;
+        }
+
+        const userResponse = await getCurrentUser();
+        if (userResponse.success && userResponse.user?.email_confirmed_at) {
+          if (userResponse.user.email) setEmail(userResponse.user.email);
+          await redirectToDestination(userResponse.user);
+          return;
+        }
+        if (userResponse.user?.email) setEmail(userResponse.user.email);
+        setVerificationStatus("error");
+        setError("No verification token found. Please check your email for the activation link.");
       } catch {
         setVerificationStatus("error");
         setError("An unexpected error occurred during verification.");
@@ -95,82 +122,6 @@ function VerifyEmailContent() {
 
     handleEmailVerification();
   }, [searchParams]);
-
-  // useEffect(() => {
-  //   const handleEmailVerification = async () => {
-  //     try {
-  //       const supabase = createClient();
-
-  //       // Supabase sends either:
-  //       //   token_hash + type=signup  (direct OTP verification)
-  //       //   code                      (PKCE code exchange flow)
-  //       const tokenHash = searchParams.get("token");
-  //       const code = searchParams.get("code");
-  //       const type = (searchParams.get("type") ?? "signup") as
-  //         | "signup"
-  //         | "email";
-
-  //       if (tokenHash) {
-  //         // Standard Supabase email-link flow
-  //         const { data, error: verifyError } = await supabase.auth.verifyOtp({
-  //           token: tokenHash,
-  //           email: "", // Supabase requires email for verifyOtp, but it's not actually used for token verification in this context
-  //           type,
-  //         });
-
-  //         if (verifyError) {
-  //           if (verifyError.message.toLowerCase().includes("expired")) {
-  //             setVerificationStatus("expired");
-  //           } else {
-  //             setVerificationStatus("error");
-  //             setError(verifyError.message);
-  //           }
-  //           return;
-  //         }
-
-  //         if (data.user?.email) setEmail(data.user.email);
-  //         await redirectToDestination(data.user?.id);
-  //         return;
-  //       }
-
-  //       if (code) {
-  //         // PKCE flow — exchange code for session
-  //         const { data, error: exchangeError } =
-  //           await supabase.auth.exchangeCodeForSession(code);
-
-  //         if (exchangeError) {
-  //           setVerificationStatus("error");
-  //           setError(exchangeError.message);
-  //           return;
-  //         }
-
-  //         if (data.user?.email) setEmail(data.user.email);
-  //         await redirectToDestination(data.user?.id);
-  //         return;
-  //       }
-
-  //       // No token in URL — check if user is already confirmed
-  //       const userResponse = await getCurrentUser();
-  //       if (userResponse.success && userResponse.user?.email_confirmed_at) {
-  //         if (userResponse.user.email) setEmail(userResponse.user.email);
-  //         await redirectToDestination(userResponse.user.id);
-  //       } else {
-  //         if (userResponse.user?.email) setEmail(userResponse.user.email);
-  //         setVerificationStatus("error");
-  //         setError(
-  //           "No verification token found. Please check your email for the activation link.",
-  //         );
-  //       }
-  //     } catch {
-  //       setVerificationStatus("error");
-  //       setError("An unexpected error occurred during verification.");
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
-
-  //   handleEmailVerification();
-  // }, [searchParams, router]);
 
   /** Determine the correct destination after successful email verification */
   async function redirectToDestination(
