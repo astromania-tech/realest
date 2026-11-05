@@ -16,11 +16,12 @@ import { resendEmailVerification } from "@/lib/auth";
 
 function SignUpSuccessContent() {
   const searchParams = useSearchParams();
-  const mailNotSent = searchParams.get("sent") === "0";
   const [email, setEmail] = useState("");
+  const mailMissing = searchParams.get("sent") === "0";
   const [isResending, setIsResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
   const [resendError, setResendError] = useState("");
+  const [localConfirmed, setLocalConfirmed] = useState(false);
   const [cooldown, setCooldown] = useState(0);
 
   useEffect(() => {
@@ -46,6 +47,7 @@ function SignUpSuccessContent() {
       const result = await resendEmailVerification(email);
       if (result.success) {
         setResendSuccess(true);
+        setLocalConfirmed(result.localConfirmed === true);
         setCooldown(60);
       } else {
         setResendError(result.error || "Failed to resend. Please try again.");
@@ -75,8 +77,8 @@ function SignUpSuccessContent() {
         <CardContent className="space-y-6">
           <div className="bg-muted/50 border border-border rounded-lg p-4 space-y-3">
             <p className="text-sm text-center text-muted-foreground">
-              {mailNotSent
-                ? "Your account was created. The verification email was not sent. Use the button below to send it to"
+              {mailMissing
+                ? "The account exists, but the activation email did not send. Use resend below."
                 : "We sent an activation link to"}
             </p>
             {email && (
@@ -84,12 +86,11 @@ function SignUpSuccessContent() {
                 {email}
               </p>
             )}
-            {mailNotSent ? null : (
-              <p className="text-sm text-muted-foreground text-center">
-                Click the link in that email to activate your account and access
-                your dashboard. The link expires in <strong>24 hours</strong>.
-              </p>
-            )}
+            <p className="text-sm text-muted-foreground text-center">
+              {mailMissing
+                ? "Resend sends a new activation link to this address. The link expires in 24 hours."
+                : "Click the link in that email to activate your account and access your dashboard. The link expires in 24 hours."}
+            </p>
           </div>
 
           {/* Resend section */}
@@ -97,8 +98,9 @@ function SignUpSuccessContent() {
             {resendSuccess && (
               <div className="flex items-center gap-2 text-sm text-success bg-success/10 border border-success/20 rounded-md p-3">
                 <CheckCircle className="w-4 h-4 shrink-0" />
-                Activation email resent. Please check your inbox and spam
-                folder.
+                {localConfirmed
+                  ? "This PC confirmed the email. Sign in with your password. No mail was sent."
+                  : "Activation email resent. Please check your inbox and spam folder."}
               </div>
             )}
             {resendError && (

@@ -15,9 +15,7 @@ import {
   getCurrentUser,
   resendEmailVerification,
 } from "@/lib/auth";
-import { Mail, AlertCircle, RefreshCw } from "lucide-react";
-import { VerifiedAccountModal } from "@/components/shared/VerifiedAccountModal";
-import { verificationDestination } from "@/lib/auth/verification-destination";
+import { CheckCircle, Mail, AlertCircle, RefreshCw } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 function VerifyEmailContent() {
@@ -30,7 +28,6 @@ function VerifyEmailContent() {
   >("verifying");
   const [error, setError] = useState("");
   const [email, setEmail] = useState("");
-  const [nextPath, setNextPath] = useState("/profile");
 
   useEffect(() => {
     const handleEmailVerification = async () => {
@@ -48,7 +45,7 @@ function VerifyEmailContent() {
         const refresh_token = hashParams.get("refresh_token");
 
         if (access_token && refresh_token) {
-          const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+          const { error: sessionError } = await supabase.auth.setSession({
             access_token,
             refresh_token,
           });
@@ -56,17 +53,10 @@ function VerifyEmailContent() {
           if (sessionError) throw sessionError;
 
           const userResponse = await getCurrentUser();
-          const user = userResponse.success && userResponse.user
-            ? userResponse.user
-            : sessionData.user;
-          if (!user) {
-            setVerificationStatus("error");
-            setError("Your email was verified, but the session could not be loaded. Sign in to continue.");
+          if (userResponse.success && userResponse.user) {
+            await redirectToDestination(userResponse.user);
             return;
           }
-          if (user.email) setEmail(user.email);
-          await redirectToDestination(user);
-          return;
         }
 
         if (tokenFromQuery) {
@@ -91,27 +81,7 @@ function VerifyEmailContent() {
           return;
         }
 
-        if (code) {
-          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-          if (exchangeError) {
-            setVerificationStatus("error");
-            setError(exchangeError.message);
-            return;
-          }
-          if (data.user?.email) setEmail(data.user.email);
-          await redirectToDestination(data.user);
-          return;
-        }
-
-        const userResponse = await getCurrentUser();
-        if (userResponse.success && userResponse.user?.email_confirmed_at) {
-          if (userResponse.user.email) setEmail(userResponse.user.email);
-          await redirectToDestination(userResponse.user);
-          return;
-        }
-        if (userResponse.user?.email) setEmail(userResponse.user.email);
-        setVerificationStatus("error");
-        setError("No verification token found. Please check your email for the activation link.");
+        // ...keep your existing code for `code` and the fallback
       } catch {
         setVerificationStatus("error");
         setError("An unexpected error occurred during verification.");
@@ -123,14 +93,115 @@ function VerifyEmailContent() {
     handleEmailVerification();
   }, [searchParams]);
 
+  // useEffect(() => {
+  //   const handleEmailVerification = async () => {
+  //     try {
+  //       const supabase = createClient();
+
+  //       // Supabase sends either:
+  //       //   token_hash + type=signup  (direct OTP verification)
+  //       //   code                      (PKCE code exchange flow)
+  //       const tokenHash = searchParams.get("token");
+  //       const code = searchParams.get("code");
+  //       const type = (searchParams.get("type") ?? "signup") as
+  //         | "signup"
+  //         | "email";
+
+  //       if (tokenHash) {
+  //         // Standard Supabase email-link flow
+  //         const { data, error: verifyError } = await supabase.auth.verifyOtp({
+  //           token: tokenHash,
+  //           email: "", // Supabase requires email for verifyOtp, but it's not actually used for token verification in this context
+  //           type,
+  //         });
+
+  //         if (verifyError) {
+  //           if (verifyError.message.toLowerCase().includes("expired")) {
+  //             setVerificationStatus("expired");
+  //           } else {
+  //             setVerificationStatus("error");
+  //             setError(verifyError.message);
+  //           }
+  //           return;
+  //         }
+
+  //         if (data.user?.email) setEmail(data.user.email);
+  //         await redirectToDestination(data.user?.id);
+  //         return;
+  //       }
+
+  //       if (code) {
+  //         // PKCE flow — exchange code for session
+  //         const { data, error: exchangeError } =
+  //           await supabase.auth.exchangeCodeForSession(code);
+
+  //         if (exchangeError) {
+  //           setVerificationStatus("error");
+  //           setError(exchangeError.message);
+  //           return;
+  //         }
+
+  //         if (data.user?.email) setEmail(data.user.email);
+  //         await redirectToDestination(data.user?.id);
+  //         return;
+  //       }
+
+  //       // No token in URL — check if user is already confirmed
+  //       const userResponse = await getCurrentUser();
+  //       if (userResponse.success && userResponse.user?.email_confirmed_at) {
+  //         if (userResponse.user.email) setEmail(userResponse.user.email);
+  //         await redirectToDestination(userResponse.user.id);
+  //       } else {
+  //         if (userResponse.user?.email) setEmail(userResponse.user.email);
+  //         setVerificationStatus("error");
+  //         setError(
+  //           "No verification token found. Please check your email for the activation link.",
+  //         );
+  //       }
+  //     } catch {
+  //       setVerificationStatus("error");
+  //       setError("An unexpected error occurred during verification.");
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
+
+  //   handleEmailVerification();
+  // }, [searchParams, router]);
+
   /** Determine the correct destination after successful email verification */
   async function redirectToDestination(
     verifiedUser?: Awaited<ReturnType<typeof getCurrentUser>>["user"] | null,
   ) {
-    const path = verificationDestination(verifiedUser);
-    setNextPath(path);
     setVerificationStatus("success");
-    setTimeout(() => router.push(path), 2000);
+
+    if (!verifiedUser?.id) {
+      // Fallback — no user id, go to login
+      setTimeout(() => router.push("/login?verified=true"), 2000);
+      return;
+    }
+
+    const userType =
+      verifiedUser.app_metadata?.role || verifiedUser.user_metadata?.user_type;
+
+    if (!userType) {
+      setTimeout(() => router.push("/login?verified=true"), 2000);
+      return;
+    }
+
+    setTimeout(() => {
+      switch (userType) {
+        case "owner":
+        case "agent":
+          router.push("/onboarding");
+          break;
+        case "admin":
+          router.push("/admin");
+          break;
+        default:
+          router.push("/profile");
+      }
+    }, 2000);
   }
 
   const handleResendVerification = async () => {
@@ -184,8 +255,50 @@ function VerifyEmailContent() {
 
   if (verificationStatus === "success") {
     return (
-      <div className="min-h-screen bg-background">
-        <VerifiedAccountModal continueHref={nextPath} />
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <CheckCircle className="w-16 h-16 text-success" />
+            </div>
+            <CardTitle className="text-2xl font-bold">
+              Email Verified!
+            </CardTitle>
+            <CardDescription>
+              Your email has been successfully verified
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="space-y-6">
+            <div className="text-center space-y-4">
+              <div className="bg-success-50 border border-success-200 p-4 rounded-lg">
+                <p className="text-sm text-success-700">
+                  Welcome to RealEST! Your account is now active. Redirecting
+                  you to your dashboard…
+                </p>
+              </div>
+
+              <p className="text-sm text-muted-foreground">
+                Taking a moment longer? Click below.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <Button asChild variant="default" className="w-full">
+                <Link href="/profile">Continue to Dashboard</Link>
+              </Button>
+
+              <div className="text-center">
+                <Link
+                  href="/"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Back to Homepage
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }

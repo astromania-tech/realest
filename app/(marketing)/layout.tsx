@@ -8,8 +8,10 @@
  * /testimonials, /help, /contact, /blog, /careers, /press, /realest-status
  *
  * Note: Header and Footer are imported per-page — do NOT add them here.
+ * Third-party tracking (HubSpot / Meta / Zendesk) mounts here only.
  */
 import type { Metadata } from "next";
+import { MarketingTrackingScripts } from "@/components/marketing/MarketingTrackingScripts";
 
 export const metadata: Metadata = {
   title: {
@@ -30,5 +32,10 @@ export default function MarketingLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return (
+    <>
+      <MarketingTrackingScripts />
+      {children}
+    </>
+  );
 }

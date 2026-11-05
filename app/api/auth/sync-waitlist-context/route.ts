@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { syncWaitlistContextToProfile } from '@/lib/reward-engine';
 import { prisma } from '@/lib/prisma';
+import { getAuthUser } from '@/lib/supabase/server';
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata';
 
 export const openApiPOST: OpenApiMetadata = {
   method: 'post',
   summary: 'Sync waitlist context to profile',
-  description: 'Copy waitlist metadata and referral context to a newly created profile inside the sync window.',
+  description: 'Copy waitlist metadata and referral context to the signed-in profile inside the sync window.',
   tags: ['Auth'],
   security: [{ bearerAuth: [] }],
   requestBody: {
@@ -26,11 +27,20 @@ export const openApiPOST: OpenApiMetadata = {
   responses: {
     '200': { description: 'Waitlist context synced' },
     '400': { description: 'Invalid body or missing email' },
+    '401': { description: 'Unauthorized' },
+    '403': { description: 'Email does not match the session' },
     '404': { description: 'Profile not found or sync window expired' },
   },
 }
 
 export async function POST(request: NextRequest) {
+  const {
+    data: { user },
+  } = await getAuthUser();
+  if (!user?.email) {
+    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
+  }
+
   let email = '';
 
   try {
@@ -44,9 +54,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Email is required' }, { status: 400 });
   }
 
+  const sessionEmail = user.email.trim().toLowerCase();
+  if (email !== sessionEmail) {
+    return NextResponse.json(
+      { ok: false, error: 'Email does not match the signed-in account.' },
+      { status: 403 },
+    );
+  }
+
   const cutoff = new Date(Date.now() - 15 * 60_000);
   const profile = await prisma.profiles.findFirst({
     where: {
+      id: user.id,
       email,
       created_at: { gte: cutoff },
     },

@@ -168,16 +168,61 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || "pending_ml_validation";
+    const takeRaw = Number(searchParams.get("limit") || "50");
+    const take = Number.isFinite(takeRaw)
+      ? Math.max(1, Math.min(Math.trunc(takeRaw), 100))
+      : 50;
 
     const properties = await prisma.properties.findMany({
       where: { status },
-      include: {
-        property_details: true,
-        property_media: true,
-        property_documents: true,
-        owners: { include: { profiles: { select: { full_name: true, avatar_url: true, phone: true } } } },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        verification_status: true,
+        property_type: true,
+        listing_type: true,
+        city: true,
+        state: true,
+        price: true,
+        created_at: true,
+        owner_id: true,
+        agent_id: true,
+        property_details: {
+          select: { amenities: true, metadata: true },
+          take: 1,
+        },
+        property_media: {
+          select: {
+            id: true,
+            media_url: true,
+            media_type: true,
+            is_featured: true,
+            display_order: true,
+          },
+          orderBy: { display_order: "asc" },
+          take: 6,
+        },
+        property_documents: {
+          select: {
+            id: true,
+            document_type: true,
+            file_name: true,
+            document_url: true,
+          },
+          take: 20,
+        },
+        owners: {
+          select: {
+            id: true,
+            profiles: {
+              select: { full_name: true, avatar_url: true },
+            },
+          },
+        },
       },
       orderBy: { created_at: "desc" },
+      take,
     });
 
     return NextResponse.json({ properties });

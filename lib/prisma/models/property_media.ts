@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums"
-import type * as Prisma from "../internal/prismaNamespace"
+import type * as $Enums from "../enums.ts"
+import type * as Prisma from "../internal/prismaNamespace.ts"
 
 /**
  * Model property_media
@@ -43,6 +43,7 @@ export type Property_mediaMinAggregateOutputType = {
   file_name: string | null
   display_order: number | null
   is_featured: boolean | null
+  d_hash: string | null
   created_at: Date | null
 }
 
@@ -54,6 +55,7 @@ export type Property_mediaMaxAggregateOutputType = {
   file_name: string | null
   display_order: number | null
   is_featured: boolean | null
+  d_hash: string | null
   created_at: Date | null
 }
 
@@ -65,6 +67,7 @@ export type Property_mediaCountAggregateOutputType = {
   file_name: number
   display_order: number
   is_featured: number
+  d_hash: number
   created_at: number
   _all: number
 }
@@ -86,6 +89,7 @@ export type Property_mediaMinAggregateInputType = {
   file_name?: true
   display_order?: true
   is_featured?: true
+  d_hash?: true
   created_at?: true
 }
 
@@ -97,6 +101,7 @@ export type Property_mediaMaxAggregateInputType = {
   file_name?: true
   display_order?: true
   is_featured?: true
+  d_hash?: true
   created_at?: true
 }
 
@@ -108,6 +113,7 @@ export type Property_mediaCountAggregateInputType = {
   file_name?: true
   display_order?: true
   is_featured?: true
+  d_hash?: true
   created_at?: true
   _all?: true
 }
@@ -206,6 +212,7 @@ export type Property_mediaGroupByOutputType = {
   file_name: string
   display_order: number | null
   is_featured: boolean | null
+  d_hash: string | null
   created_at: Date | null
   _count: Property_mediaCountAggregateOutputType | null
   _avg: Property_mediaAvgAggregateOutputType | null
@@ -214,7 +221,7 @@ export type Property_mediaGroupByOutputType = {
   _max: Property_mediaMaxAggregateOutputType | null
 }
 
-export type GetProperty_mediaGroupByPayload<T extends property_mediaGroupByArgs> = Prisma.PrismaPromise<
+type GetProperty_mediaGroupByPayload<T extends property_mediaGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<Property_mediaGroupByOutputType, T['by']> &
       {
@@ -240,6 +247,7 @@ export type property_mediaWhereInput = {
   file_name?: Prisma.StringFilter<"property_media"> | string
   display_order?: Prisma.IntNullableFilter<"property_media"> | number | null
   is_featured?: Prisma.BoolNullableFilter<"property_media"> | boolean | null
+  d_hash?: Prisma.StringNullableFilter<"property_media"> | string | null
   created_at?: Prisma.DateTimeNullableFilter<"property_media"> | Date | string | null
   properties?: Prisma.XOR<Prisma.PropertiesScalarRelationFilter, Prisma.propertiesWhereInput>
 }
@@ -252,6 +260,7 @@ export type property_mediaOrderByWithRelationInput = {
   file_name?: Prisma.SortOrder
   display_order?: Prisma.SortOrderInput | Prisma.SortOrder
   is_featured?: Prisma.SortOrderInput | Prisma.SortOrder
+  d_hash?: Prisma.SortOrderInput | Prisma.SortOrder
   created_at?: Prisma.SortOrderInput | Prisma.SortOrder
   properties?: Prisma.propertiesOrderByWithRelationInput
 }
@@ -267,6 +276,7 @@ export type property_mediaWhereUniqueInput = Prisma.AtLeast<{
   file_name?: Prisma.StringFilter<"property_media"> | string
   display_order?: Prisma.IntNullableFilter<"property_media"> | number | null
   is_featured?: Prisma.BoolNullableFilter<"property_media"> | boolean | null
+  d_hash?: Prisma.StringNullableFilter<"property_media"> | string | null
   created_at?: Prisma.DateTimeNullableFilter<"property_media"> | Date | string | null
   properties?: Prisma.XOR<Prisma.PropertiesScalarRelationFilter, Prisma.propertiesWhereInput>
 }, "id">
@@ -279,6 +289,7 @@ export type property_mediaOrderByWithAggregationInput = {
   file_name?: Prisma.SortOrder
   display_order?: Prisma.SortOrderInput | Prisma.SortOrder
   is_featured?: Prisma.SortOrderInput | Prisma.SortOrder
+  d_hash?: Prisma.SortOrderInput | Prisma.SortOrder
   created_at?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.property_mediaCountOrderByAggregateInput
   _avg?: Prisma.property_mediaAvgOrderByAggregateInput
@@ -298,6 +309,7 @@ export type property_mediaScalarWhereWithAggregatesInput = {
   file_name?: Prisma.StringWithAggregatesFilter<"property_media"> | string
   display_order?: Prisma.IntNullableWithAggregatesFilter<"property_media"> | number | null
   is_featured?: Prisma.BoolNullableWithAggregatesFilter<"property_media"> | boolean | null
+  d_hash?: Prisma.StringNullableWithAggregatesFilter<"property_media"> | string | null
   created_at?: Prisma.DateTimeNullableWithAggregatesFilter<"property_media"> | Date | string | null
 }
 
@@ -308,6 +320,7 @@ export type property_mediaCreateInput = {
   file_name: string
   display_order?: number | null
   is_featured?: boolean | null
+  d_hash?: string | null
   created_at?: Date | string | null
   properties: Prisma.propertiesCreateNestedOneWithoutProperty_mediaInput
 }
@@ -320,6 +333,7 @@ export type property_mediaUncheckedCreateInput = {
   file_name: string
   display_order?: number | null
   is_featured?: boolean | null
+  d_hash?: string | null
   created_at?: Date | string | null
 }
 
@@ -330,6 +344,7 @@ export type property_mediaUpdateInput = {
   file_name?: Prisma.StringFieldUpdateOperationsInput | string
   display_order?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   is_featured?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  d_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   properties?: Prisma.propertiesUpdateOneRequiredWithoutProperty_mediaNestedInput
 }
@@ -342,6 +357,7 @@ export type property_mediaUncheckedUpdateInput = {
   file_name?: Prisma.StringFieldUpdateOperationsInput | string
   display_order?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   is_featured?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  d_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
@@ -353,6 +369,7 @@ export type property_mediaCreateManyInput = {
   file_name: string
   display_order?: number | null
   is_featured?: boolean | null
+  d_hash?: string | null
   created_at?: Date | string | null
 }
 
@@ -363,6 +380,7 @@ export type property_mediaUpdateManyMutationInput = {
   file_name?: Prisma.StringFieldUpdateOperationsInput | string
   display_order?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   is_featured?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  d_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
@@ -374,6 +392,7 @@ export type property_mediaUncheckedUpdateManyInput = {
   file_name?: Prisma.StringFieldUpdateOperationsInput | string
   display_order?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   is_featured?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  d_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
@@ -395,6 +414,7 @@ export type property_mediaCountOrderByAggregateInput = {
   file_name?: Prisma.SortOrder
   display_order?: Prisma.SortOrder
   is_featured?: Prisma.SortOrder
+  d_hash?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
 }
 
@@ -410,6 +430,7 @@ export type property_mediaMaxOrderByAggregateInput = {
   file_name?: Prisma.SortOrder
   display_order?: Prisma.SortOrder
   is_featured?: Prisma.SortOrder
+  d_hash?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
 }
 
@@ -421,6 +442,7 @@ export type property_mediaMinOrderByAggregateInput = {
   file_name?: Prisma.SortOrder
   display_order?: Prisma.SortOrder
   is_featured?: Prisma.SortOrder
+  d_hash?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
 }
 
@@ -477,6 +499,7 @@ export type property_mediaCreateWithoutPropertiesInput = {
   file_name: string
   display_order?: number | null
   is_featured?: boolean | null
+  d_hash?: string | null
   created_at?: Date | string | null
 }
 
@@ -487,6 +510,7 @@ export type property_mediaUncheckedCreateWithoutPropertiesInput = {
   file_name: string
   display_order?: number | null
   is_featured?: boolean | null
+  d_hash?: string | null
   created_at?: Date | string | null
 }
 
@@ -527,6 +551,7 @@ export type property_mediaScalarWhereInput = {
   file_name?: Prisma.StringFilter<"property_media"> | string
   display_order?: Prisma.IntNullableFilter<"property_media"> | number | null
   is_featured?: Prisma.BoolNullableFilter<"property_media"> | boolean | null
+  d_hash?: Prisma.StringNullableFilter<"property_media"> | string | null
   created_at?: Prisma.DateTimeNullableFilter<"property_media"> | Date | string | null
 }
 
@@ -537,6 +562,7 @@ export type property_mediaCreateManyPropertiesInput = {
   file_name: string
   display_order?: number | null
   is_featured?: boolean | null
+  d_hash?: string | null
   created_at?: Date | string | null
 }
 
@@ -547,6 +573,7 @@ export type property_mediaUpdateWithoutPropertiesInput = {
   file_name?: Prisma.StringFieldUpdateOperationsInput | string
   display_order?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   is_featured?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  d_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
@@ -557,6 +584,7 @@ export type property_mediaUncheckedUpdateWithoutPropertiesInput = {
   file_name?: Prisma.StringFieldUpdateOperationsInput | string
   display_order?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   is_featured?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  d_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
@@ -567,6 +595,7 @@ export type property_mediaUncheckedUpdateManyWithoutPropertiesInput = {
   file_name?: Prisma.StringFieldUpdateOperationsInput | string
   display_order?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   is_featured?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  d_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
@@ -580,6 +609,7 @@ export type property_mediaSelect<ExtArgs extends runtime.Types.Extensions.Intern
   file_name?: boolean
   display_order?: boolean
   is_featured?: boolean
+  d_hash?: boolean
   created_at?: boolean
   properties?: boolean | Prisma.propertiesDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["property_media"]>
@@ -592,6 +622,7 @@ export type property_mediaSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   file_name?: boolean
   display_order?: boolean
   is_featured?: boolean
+  d_hash?: boolean
   created_at?: boolean
   properties?: boolean | Prisma.propertiesDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["property_media"]>
@@ -604,6 +635,7 @@ export type property_mediaSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   file_name?: boolean
   display_order?: boolean
   is_featured?: boolean
+  d_hash?: boolean
   created_at?: boolean
   properties?: boolean | Prisma.propertiesDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["property_media"]>
@@ -616,10 +648,11 @@ export type property_mediaSelectScalar = {
   file_name?: boolean
   display_order?: boolean
   is_featured?: boolean
+  d_hash?: boolean
   created_at?: boolean
 }
 
-export type property_mediaOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "property_id" | "media_type" | "media_url" | "file_name" | "display_order" | "is_featured" | "created_at", ExtArgs["result"]["property_media"]>
+export type property_mediaOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "property_id" | "media_type" | "media_url" | "file_name" | "display_order" | "is_featured" | "d_hash" | "created_at", ExtArgs["result"]["property_media"]>
 export type property_mediaInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   properties?: boolean | Prisma.propertiesDefaultArgs<ExtArgs>
 }
@@ -643,6 +676,7 @@ export type $property_mediaPayload<ExtArgs extends runtime.Types.Extensions.Inte
     file_name: string
     display_order: number | null
     is_featured: boolean | null
+    d_hash: string | null
     created_at: Date | null
   }, ExtArgs["result"]["property_media"]>
   composites: {}
@@ -1075,6 +1109,7 @@ export interface property_mediaFieldRefs {
   readonly file_name: Prisma.FieldRef<"property_media", 'String'>
   readonly display_order: Prisma.FieldRef<"property_media", 'Int'>
   readonly is_featured: Prisma.FieldRef<"property_media", 'Boolean'>
+  readonly d_hash: Prisma.FieldRef<"property_media", 'String'>
   readonly created_at: Prisma.FieldRef<"property_media", 'DateTime'>
 }
     
@@ -1272,11 +1307,6 @@ export type property_mediaFindManyArgs<ExtArgs extends runtime.Types.Extensions.
    * Skip the first `n` property_medias.
    */
   skip?: number
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-   * 
-   * Filter by unique combinations of property_medias.
-   */
   distinct?: Prisma.Property_mediaScalarFieldEnum | Prisma.Property_mediaScalarFieldEnum[]
 }
 

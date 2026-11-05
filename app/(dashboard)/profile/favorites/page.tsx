@@ -66,7 +66,8 @@ export default function FavoritesPage() {
           `,
           )
           .eq("user_id", user.user.id)
-          .order("created_at", { ascending: false });
+          .order("created_at", { ascending: false })
+          .limit(50);
 
         if (!error && data) {
           setSavedProperties(
@@ -97,7 +98,7 @@ export default function FavoritesPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full max-w-7xl mx-auto py-4 sm:py-6">
         <div className="max-w-6xl mx-auto">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">
@@ -107,7 +108,7 @@ export default function FavoritesPage() {
               Properties you've saved for later.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
             {[...Array(6)].map((_, i) => (
               <div
                 key={i}
@@ -121,7 +122,7 @@ export default function FavoritesPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="w-full max-w-7xl mx-auto py-4 sm:py-6">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
@@ -152,7 +153,7 @@ export default function FavoritesPage() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
             {savedProperties.map((saved) => {
               const property = saved.properties?.[0]; // Take the first (and only) property, if present
               if (!property) {

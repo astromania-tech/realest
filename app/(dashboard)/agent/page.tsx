@@ -11,11 +11,7 @@ import {
   Button, 
   Spinner 
 } from "@/components/ui";
-import {
-  getCurrentUser,
-  getUserProfile,
-  resendEmailVerification,
-} from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/client";
 import { BarChart3, Home, MessageSquare, TrendingUp, Eye, Plus } from "lucide-react";
 
@@ -60,7 +56,6 @@ export default function AgentDashboardPage() {
       try {
         const supabase = await createClient();
 
-        // Get current user
         const { user, error: authError } = await getCurrentUser();
 
         if (authError || !user) {
@@ -68,101 +63,93 @@ export default function AgentDashboardPage() {
           return;
         }
 
-        // Get agent profile
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single();
-
-        // if (!profile || user.app_metadata?.role !== "agent") {
-        //   router.push("/");
-        //   return;
-        // }
-
-        // Get agent details
-        const { data: agentData } = await supabase
-          .from("agents")
-          .select("*")
-          .eq("profile_id", user.id)
-          .single();
+        const [{ data: profile }, { data: agentData }] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select("id, full_name, avatar_url, email, phone")
+            .eq("id", user.id)
+            .single(),
+          supabase
+            .from("agents")
+            .select(
+              "id, agency_name, license_number, verified, verification_date, profile_id",
+            )
+            .eq("profile_id", user.id)
+            .single(),
+        ]);
 
         setAgent({ ...profile, ...agentData });
 
-        // Look up agent's id using the current user's profile id
-        const { data: agentRow } = await supabase
-          .from("agents")
-          .select("id")
-          .eq("profile_id", user.id)
-          .single();
+        const agentId = agentData?.id ?? null;
 
-        let properties: PropertyPreview[] = [];
-        let totalProperties = 0;
-        let activeListings = 0;
-        if (agentRow) {
-          // Get agent's properties
-          const { data: props } = await supabase
-            .from("properties")
-            .select("id, title, price, status")
-            .eq("agent_id", agentRow.id)
-            .order("created_at", { ascending: false })
-            .limit(5);
-          properties = props || [];
-
-          // Calculate stats
-          const { count: totalCount } = await supabase
-            .from("properties")
-            .select("*", { count: "exact", head: true })
-            .eq("agent_id", agentRow.id);
-          totalProperties = totalCount || 0;
-
-          const { count: activeCount } = await supabase
-            .from("properties")
-            .select("*", { count: "exact", head: true })
-            .eq("agent_id", agentRow.id)
-            .eq("status", "live");
-          activeListings = activeCount || 0;
-        }
-
-        setRecentProperties(properties);
-
-        // Inquiries
-        const { count: totalInquiries } = await supabase
-          .from("inquiries")
-          .select("*", { count: "exact", head: true })
-          .eq("receiver_id", user.id);
-
-        setStats({
-          totalProperties,
-          activeListings,
-          totalInquiries: totalInquiries || 0,
-          avgResponseTime: "2.5 hrs",
-        });
-
-        // Get recent inquiries
-        const { data: inquiries } = await supabase
-          .from("inquiries")
-          .select(
-            `
+        const [
+          propsResult,
+          totalCountResult,
+          activeCountResult,
+          inquiryCountResult,
+          inquiriesResult,
+        ] = await Promise.all([
+          agentId
+            ? supabase
+                .from("properties")
+                .select("id, title, price, status")
+                .eq("agent_id", agentId)
+                .order("created_at", { ascending: false })
+                .limit(5)
+            : Promise.resolve({ data: [] as PropertyPreview[] }),
+          agentId
+            ? supabase
+                .from("properties")
+                .select("id", { count: "exact", head: true })
+                .eq("agent_id", agentId)
+            : Promise.resolve({ count: 0 }),
+          agentId
+            ? supabase
+                .from("properties")
+                .select("id", { count: "exact", head: true })
+                .eq("agent_id", agentId)
+                .eq("status", "live")
+            : Promise.resolve({ count: 0 }),
+          supabase
+            .from("inquiries")
+            .select("id", { count: "exact", head: true })
+            .eq("receiver_id", user.id),
+          supabase
+            .from("inquiries")
+            .select(
+              `
             id,
             message,
             created_at,
             sender:sender_id(full_name),
             property:property_id(title)
-          `
-          )
-          .eq("receiver_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(5);
+          `,
+            )
+            .eq("receiver_id", user.id)
+            .order("created_at", { ascending: false })
+            .limit(5),
+        ]);
 
-        if (inquiries) {
-          const formattedInquiries: InquiryData[] = inquiries.map((inq) => ({
-            id: inq.id,
-            message: inq.message,
-            created_at: inq.created_at ?? "",
-            sender: Array.isArray(inq.sender) ? inq.sender[0] : inq.sender,
-            property: Array.isArray(inq.property) ? inq.property[0] : inq.property,
-          }));
+        setRecentProperties(propsResult.data || []);
+        setStats({
+          totalProperties: totalCountResult.count || 0,
+          activeListings: activeCountResult.count || 0,
+          totalInquiries: inquiryCountResult.count || 0,
+          avgResponseTime: "2.5 hrs",
+        });
+
+        if (inquiriesResult.data) {
+          const formattedInquiries: InquiryData[] = inquiriesResult.data.map(
+            (inq) => ({
+              id: inq.id,
+              message: inq.message,
+              created_at: inq.created_at ?? "",
+              sender: Array.isArray(inq.sender) ? inq.sender[0] : inq.sender,
+              property: Array.isArray(inq.property)
+                ? inq.property[0]
+                : inq.property,
+            }),
+          );
           setRecentInquiries(formattedInquiries);
         }
       } catch (err) {
@@ -203,16 +190,16 @@ export default function AgentDashboardPage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="bg-primary-dark">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-4xl font-bold mb-2">Welcome, {agent?.full_name}!</h1>
-              <p className="text-accent text-lg">
+        <div className="w-full max-w-7xl mx-auto py-4 sm:py-6">
+          <div className="mb-0 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold mb-2 sm:text-4xl">Welcome, {agent?.full_name}!</h1>
+              <p className="text-accent text-sm sm:text-lg break-words">
                 {agent?.agency_name} • License: {agent?.license_number}
               </p>
             </div>
-            <Link href="/agent/list-property">
-              <Button variant="accent" className="font-semibold">
+            <Link href="/agent/list-property" className="shrink-0">
+              <Button variant="accent" className="font-semibold w-full sm:w-auto">
                 <Plus className="w-5 h-5" />
                 List Property
               </Button>
@@ -222,10 +209,10 @@ export default function AgentDashboardPage() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full max-w-7xl mx-auto py-4 sm:py-6">
         {/* Stats Grid */}
         {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 mb-6 sm:mb-8">
             {/* Total Properties */}
             <Card className="rounded-xl shadow-md">
               <CardContent className="py-6">
@@ -239,7 +226,7 @@ export default function AgentDashboardPage() {
                       {stats.activeListings} active
                     </p>
                   </div>
-                  <Home className="w-10 h-10 text-primary-accent opacity-50" />
+                  <Home className="hidden h-8 w-8 shrink-0 text-primary-accent opacity-50 sm:block sm:h-10 sm:w-10" />
                 </div>
               </CardContent>
             </Card>
@@ -257,7 +244,7 @@ export default function AgentDashboardPage() {
                       Total received
                     </p>
                   </div>
-                  <MessageSquare className="w-10 h-10 text-primary-accent opacity-50" />
+                  <MessageSquare className="hidden h-8 w-8 shrink-0 text-primary-accent opacity-50 sm:block sm:h-10 sm:w-10" />
                 </div>
               </CardContent>
             </Card>
@@ -275,7 +262,7 @@ export default function AgentDashboardPage() {
                       Great response time!
                     </p>
                   </div>
-                  <TrendingUp className="w-10 h-10 text-primary-accent opacity-50" />
+                  <TrendingUp className="hidden h-8 w-8 shrink-0 text-primary-accent opacity-50 sm:block sm:h-10 sm:w-10" />
                 </div>
               </CardContent>
             </Card>
@@ -329,9 +316,9 @@ export default function AgentDashboardPage() {
                       key={property.id}
                       className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-lg">{property.title}</h4>
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-semibold text-lg break-words">{property.title}</h4>
                           <p className="text-sm text-muted-foreground mt-1">
                             Property ID: {property.id.substring(0, 8)}...
                           </p>
@@ -370,21 +357,21 @@ export default function AgentDashboardPage() {
                         key={inquiry.id}
                         className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
                       >
-                        <div className="flex items-start justify-between">
-                          <div>
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="min-w-0">
                             <h4 className="font-semibold">{inquiry.sender?.full_name || "Anonymous User"}</h4>
-                            <p className="text-sm text-primary-accent font-medium mt-1">
+                            <p className="text-sm text-primary-accent font-medium mt-1 break-words">
                               Re: {inquiry.property?.title || "Unknown Property"}
                             </p>
                             <p className="text-sm text-muted-foreground mt-2 line-clamp-2 italic">
                               "{inquiry.message}"
                             </p>
                           </div>
-                          <div className="text-right">
+                          <div className="shrink-0 sm:text-right">
                             <p className="text-xs text-muted-foreground">
                               {new Date(inquiry.created_at).toLocaleDateString()}
                             </p>
-                            <Button size="sm" variant="outline" className="mt-2">View</Button>
+                            <Button size="sm" variant="outline" className="mt-2 w-full sm:w-auto">View</Button>
                           </div>
                         </div>
                       </div>

@@ -144,10 +144,10 @@ export function ValidationQueuePanel() {
 
   return (
     <Card className="bg-gray-900/50 border-gray-800 p-6">
-      <div className="flex items-center justify-between gap-4 mb-4">
-        <div>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div className="min-w-0">
           <h3 className="text-lg font-semibold font-heading flex items-center gap-2">
-            <RefreshCw className="w-5 h-5 text-brand-accent" />
+            <RefreshCw className="w-5 h-5 shrink-0 text-brand-accent" />
             Live Validation Queue
           </h3>
           <p className="text-sm text-gray-400 mt-1">
@@ -155,7 +155,7 @@ export function ValidationQueuePanel() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Badge variant="secondary">{data?.metrics.queued ?? 0} queued</Badge>
           <Badge variant="outline">{data?.metrics.processing ?? 0} processing</Badge>
           <Badge variant="destructive">{data?.metrics.failed ?? 0} failed</Badge>

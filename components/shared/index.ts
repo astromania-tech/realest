@@ -4,5 +4,4 @@
 
 export { default as WaitlistModal } from './WaitlistModal'
 export { LogoutModal } from './LogoutModal'
-export { VerifiedAccountModal } from './VerifiedAccountModal'
 export { default as CookieBanner } from './CookieBanner'

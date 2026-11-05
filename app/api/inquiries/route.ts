@@ -4,6 +4,7 @@ import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
+import { publicListingWhere } from "@/lib/listings/public-listing";
 
 const createInquirySchema = z.object({
   property_id: z.string().uuid(),
@@ -102,6 +103,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
+    const takeRaw = parseInt(searchParams.get("limit") || "50", 10);
+    const take = Math.min(50, Math.max(1, Number.isFinite(takeRaw) ? takeRaw : 50));
+    const skip = (page - 1) * take;
+
+    const propertySelect = {
+      id: true,
+      title: true,
+      address: true,
+      price: true,
+      property_media: {
+        where: { is_featured: true },
+        select: { media_url: true, is_featured: true },
+        take: 1,
+      },
+    } as const;
+
     let inquiries;
 
     if (userRow.role === "user") {
@@ -109,54 +128,34 @@ export async function GET(request: NextRequest) {
       inquiries = await prisma.inquiries.findMany({
         where: { sender_id: user.id },
         include: {
-          properties: {
-            select: {
-              id: true,
-              title: true,
-              address: true,
-              price: true,
-              property_media: {
-                where: { is_featured: true },
-                select: { media_url: true, is_featured: true },
-                take: 1,
-              },
-            },
-          },
+          properties: { select: propertySelect },
           profiles_inquiries_sender_idToprofiles: {
             select: { full_name: true, avatar_url: true },
           },
         },
         orderBy: { created_at: "desc" },
+        skip,
+        take,
       });
     } else if (userRow.role === "owner") {
       // Owners see inquiries on their properties
       inquiries = await prisma.inquiries.findMany({
         where: { owner_id: user.id },
         include: {
-          properties: {
-            select: {
-              id: true,
-              title: true,
-              address: true,
-              price: true,
-              property_media: {
-                where: { is_featured: true },
-                select: { media_url: true, is_featured: true },
-                take: 1,
-              },
-            },
-          },
+          properties: { select: propertySelect },
           profiles_inquiries_sender_idToprofiles: {
             select: { full_name: true, avatar_url: true, phone: true },
           },
         },
         orderBy: { created_at: "desc" },
+        skip,
+        take,
       });
     } else {
       return NextResponse.json({ error: "Invalid user type" }, { status: 403 });
     }
 
-    return NextResponse.json({ inquiries });
+    return NextResponse.json({ inquiries, pagination: { page, limit: take } });
   } catch (error) {
     console.error("Inquiries API error:", error);
     return NextResponse.json(
@@ -294,7 +293,7 @@ export async function POST(request: NextRequest) {
 
     // Check if property exists and is live
     const property = await prisma.properties.findFirst({
-      where: { id: validatedData.property_id, status: "live" },
+      where: { id: validatedData.property_id, ...publicListingWhere },
       select: { id: true, owner_id: true, status: true, title: true },
     });
 
