@@ -2,35 +2,47 @@
  * Prevents duplicate password-reset emails from double-submits.
  *
  * Two layers:
- * 1. In-flight coalesce — simultaneous POSTs for the same email share one send.
- * 2. Cooldown — a successful send blocks another send for COOLDOWN_MS.
+ * 1. In-flight coalesce — simultaneous POSTs on one instance share one send.
+ * 2. Database cooldown — consumeRateLimit is shared across Vercel instances.
  */
 
+import { consumeRateLimit } from "@/lib/http/rate-limit";
+
 export const FORGOT_PASSWORD_SEND_COOLDOWN_MS = 60_000;
+export const FORGOT_PASSWORD_SEND_BUCKET = "forgot-password";
 
 const inFlight = new Map<string, Promise<unknown>>();
-const lastSentAt = new Map<string, number>();
 
-/** Test helper — clear process-local send state. */
+type RateConsume = (input: {
+  bucket: string;
+  subject: string;
+  limit?: number;
+  windowMs?: number;
+  now?: Date;
+}) => Promise<{ allowed: boolean }>;
+
+/** Test helper — clear process-local in-flight state. */
 export function resetForgotPasswordSendGateForTests(): void {
   inFlight.clear();
-  lastSentAt.clear();
 }
 
-export function isForgotPasswordSendOnCooldown(
+/**
+ * One send per email per window, stored in api_rate_limits.
+ * Returns false when this instance or any other already claimed the window.
+ */
+export async function claimForgotPasswordSend(
   email: string,
-  now = Date.now(),
-  cooldownMs = FORGOT_PASSWORD_SEND_COOLDOWN_MS,
-): boolean {
-  const last = lastSentAt.get(email);
-  return last !== undefined && now - last < cooldownMs;
-}
-
-export function markForgotPasswordSent(
-  email: string,
-  now = Date.now(),
-): void {
-  lastSentAt.set(email, now);
+  now = new Date(),
+  consume: RateConsume = consumeRateLimit,
+): Promise<boolean> {
+  const result = await consume({
+    bucket: FORGOT_PASSWORD_SEND_BUCKET,
+    subject: email,
+    limit: 1,
+    windowMs: FORGOT_PASSWORD_SEND_COOLDOWN_MS,
+    now,
+  });
+  return result.allowed;
 }
 
 /**
