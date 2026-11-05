@@ -93,7 +93,7 @@ export default async function SupportTicketDetailPage({
 
   return (
     <>
-      <div className="min-h-screen bg-background container mx-auto px-4 py-8">
+      <div className="min-h-screen bg-background w-full max-w-7xl mx-auto py-4 sm:py-6">
         <div className="mb-8">
           <Link
             href="/admin/support"
@@ -108,7 +108,7 @@ export default async function SupportTicketDetailPage({
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6">
           {/* Ticket Details */}
           <div className="lg:col-span-2 space-y-6">
             <Card>

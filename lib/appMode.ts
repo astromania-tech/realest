@@ -137,6 +137,7 @@ export function isRouteAccessible(pathname: string): boolean {
       '/api/referral/me',  // Referral details endpoint
       '/api/referral/resolve',  // Referral code resolve endpoint
       '/api/referral/invite',  // Referral invitation endpoint
+      '/api/webhooks/youverify', // Youverify identity callback. Signature is checked in the route.
     ];
     // Allow /api/poll/submission/[id] dynamic routes
     const isPollSubmissionApi = /^\/api\/poll\/submission\/[0-9a-f-]{36}$/i.test(pathname);

@@ -58,54 +58,93 @@ function fromForTemplate(templateName: string): string {
 
 
 
-// ── Waitlist recipient query ───────────────────────────────────────────────────
+// ── Recipient pages (cursor batches — never dump the full audience at once) ───
 
-async function fetchWaitlistRecipients(): Promise<CampaignRecipient[]> {
-  const data = await prisma.waitlist.findMany({
-    where: { status: 'active' },
-    select: { email: true, first_name: true, last_name: true, referral_code: true },
-  });
+const RECIPIENT_PAGE = 500;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://realest.ng';
 
-  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return data
-    .filter((row) => typeof row.email === 'string' && EMAIL_RE.test(row.email.trim()))
-    .map((row) => {
-      const firstName = row.first_name?.trim() || undefined;
-      const lastName = row.last_name?.trim() || undefined;
-      const fullName = [firstName, lastName].filter(Boolean).join(' ') || undefined;
-      const referralCode = row.referral_code?.trim() || undefined;
-      const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://realest.ng';
-      const referralUrl = referralCode ? `${BASE_URL}/refer?ref=${referralCode}` : undefined;
-      return { email: row.email.trim(), firstName, fullName, referralCode, referralUrl };
-    });
+function mapWaitlistRow(row: {
+  email: string;
+  first_name: string;
+  last_name: string | null;
+  referral_code: string | null;
+}): CampaignRecipient | null {
+  if (typeof row.email !== 'string' || !EMAIL_RE.test(row.email.trim())) return null;
+  const firstName = row.first_name?.trim() || undefined;
+  const lastName = row.last_name?.trim() || undefined;
+  const fullName = [firstName, lastName].filter(Boolean).join(' ') || undefined;
+  const referralCode = row.referral_code?.trim() || undefined;
+  const referralUrl = referralCode ? `${BASE_URL}/refer?ref=${referralCode}` : undefined;
+  return { email: row.email.trim(), firstName, fullName, referralCode, referralUrl };
 }
 
-async function fetchDbSegmentRecipients(
+async function* iterateWaitlistRecipients(): AsyncGenerator<CampaignRecipient[]> {
+  let cursor: string | undefined;
+  for (;;) {
+    const batch = await prisma.waitlist.findMany({
+      where: { status: 'active' },
+      select: {
+        id: true,
+        email: true,
+        first_name: true,
+        last_name: true,
+        referral_code: true,
+      },
+      orderBy: { id: 'asc' },
+      take: RECIPIENT_PAGE,
+      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+    });
+    if (batch.length === 0) break;
+    const mapped = batch
+      .map(mapWaitlistRow)
+      .filter((row): row is CampaignRecipient => row !== null);
+    if (mapped.length > 0) yield mapped;
+    if (batch.length < RECIPIENT_PAGE) break;
+    cursor = batch[batch.length - 1].id;
+  }
+}
+
+function usersWhereFromFilter(
   audienceFilter: Record<string, unknown>,
-): Promise<CampaignRecipient[]> {
+): Prisma.usersWhereInput {
   const where: Prisma.usersWhereInput = {
     deleted_at: null,
     email: { not: null },
   };
-
   if (typeof audienceFilter.role === 'string') {
     where.role = audienceFilter.role as Prisma.EnumUserRoleFilter['equals'];
   } else if (Array.isArray(audienceFilter.roles) && audienceFilter.roles.length > 0) {
     where.role = { in: audienceFilter.roles as Prisma.EnumUserRoleFilter['in'] };
   }
+  return where;
+}
 
-  const data = await prisma.users.findMany({
-    where,
-    select: { email: true, full_name: true },
-  });
-
-  return data
-    .filter((row) => !!row.email)
-    .map((row) => ({
-      email: row.email as string,
-      fullName: row.full_name ?? undefined,
-      firstName: row.full_name?.split(' ')[0] ?? undefined,
-    }));
+async function* iterateDbSegmentRecipients(
+  audienceFilter: Record<string, unknown>,
+): AsyncGenerator<CampaignRecipient[]> {
+  const where = usersWhereFromFilter(audienceFilter);
+  let cursor: string | undefined;
+  for (;;) {
+    const batch = await prisma.users.findMany({
+      where,
+      select: { id: true, email: true, full_name: true },
+      orderBy: { id: 'asc' },
+      take: RECIPIENT_PAGE,
+      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+    });
+    if (batch.length === 0) break;
+    const mapped = batch
+      .filter((row) => !!row.email)
+      .map((row) => ({
+        email: row.email as string,
+        fullName: row.full_name ?? undefined,
+        firstName: row.full_name?.split(' ')[0] ?? undefined,
+      }));
+    if (mapped.length > 0) yield mapped;
+    if (batch.length < RECIPIENT_PAGE) break;
+    cursor = batch[batch.length - 1].id;
+  }
 }
 
 // ── POST ──────────────────────────────────────────────────────────────────────
@@ -159,33 +198,55 @@ export async function POST(
         name: campaign.name,
       });
     } else {
-      // db_segment: fetch recipients then render per-person so firstName / email
-      // are injected into the template for each individual email
+      // db_segment: page recipients and send in batches so the full audience
+      // is never loaded into memory as one findMany dump.
       const audienceFilter = (campaign.audience_filter as Record<string, unknown>) ?? {};
-      const recipients =
+      const pages =
         audienceFilter.source === 'waitlist'
-          ? await fetchWaitlistRecipients()
-          : await fetchDbSegmentRecipients(audienceFilter);
+          ? iterateWaitlistRecipients()
+          : iterateDbSegmentRecipients(audienceFilter);
 
-      result = await executeBulkSend({
-        mode: 'batch',
-        recipients,
-        from,
-        subject: campaign.subject,
-        renderFn: async (recipient) => {
-          const mergedProps: Record<string, unknown> = {
-            ...templateProps,
-            // Standard personalisation fields — templates can use any subset
-            email: recipient.email,
-            firstName: recipient.firstName ?? 'there',
-            fullName: recipient.fullName ?? recipient.firstName ?? '',
-            // Referral personalisation — populated for waitlist sends
-            referralCode: recipient.referralCode ?? (templateProps.referralCode as string | undefined) ?? '',
-            referralUrl: recipient.referralUrl ?? (templateProps.referralUrl as string | undefined) ?? '',
-          };
-          return renderCampaignTemplate(campaign.template_name, mergedProps);
-        },
-      });
+      let sent = 0;
+      let failed = 0;
+      let resendId: string | undefined;
+      let sawRecipients = false;
+
+      for await (const recipients of pages) {
+        sawRecipients = true;
+        const pageResult = await executeBulkSend({
+          mode: 'batch',
+          recipients,
+          from,
+          subject: campaign.subject,
+          renderFn: async (recipient) => {
+            const mergedProps: Record<string, unknown> = {
+              ...templateProps,
+              email: recipient.email,
+              firstName: recipient.firstName ?? 'there',
+              fullName: recipient.fullName ?? recipient.firstName ?? '',
+              referralCode:
+                recipient.referralCode ??
+                (templateProps.referralCode as string | undefined) ??
+                '',
+              referralUrl:
+                recipient.referralUrl ??
+                (templateProps.referralUrl as string | undefined) ??
+                '',
+            };
+            return renderCampaignTemplate(campaign.template_name, mergedProps);
+          },
+        });
+        sent += pageResult.sent;
+        failed += pageResult.failed;
+        resendId = pageResult.resendId ?? resendId;
+      }
+
+      result = {
+        success: sawRecipients ? failed === 0 : true,
+        sent,
+        failed,
+        resendId,
+      };
     }
 
     // 4. Update with result

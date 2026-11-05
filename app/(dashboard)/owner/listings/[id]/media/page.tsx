@@ -154,11 +154,11 @@ export default function ListingMediaPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full max-w-7xl mx-auto py-4 sm:py-6">
         <div className="max-w-6xl mx-auto">
           <div className="animate-pulse">
             <div className="h-8 bg-muted rounded-lg mb-6"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="h-64 bg-muted rounded-2xl"></div>
               ))}
@@ -170,10 +170,10 @@ export default function ListingMediaPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="w-full max-w-7xl mx-auto py-4 sm:py-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           <div className="flex items-center gap-4">
             <Link href={`/owner/listings/${propertyId}`}>
               <Button variant="ghost" size="icon-sm" >
@@ -271,7 +271,7 @@ export default function ListingMediaPage() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
             {media.map((item) => (
               <Card
                 key={item.id}

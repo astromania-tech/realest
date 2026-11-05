@@ -4,6 +4,8 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { enqueueValidationJob } from '@/lib/validation/validation-job-worker'
 import { createInlineValidationAsset, uploadValidationAsset } from '@/lib/validation/validation-assets'
+import { requireStaff } from "@/lib/auth/require-staff"
+import { authDeniedResponse } from "@/lib/auth/staff-api"
 
 const documentValidationBodySchema = z.object({
   propertyId: z.string().uuid('Invalid property ID'),
@@ -19,26 +21,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const supabase = await createClient()
 
     // Verify admin authentication
-    const { data: { user }, error: authError } = await getAuthUser()
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+    const staff = await requireStaff()
+    if (!staff.ok) {
+      return NextResponse.json({ error: staff.error }, { status: staff.status })
     }
-
-    // Verify user is admin
-    const adminRow = await prisma.users.findUnique({
-      where: { id: user.id },
-      select: { role: true }
-    })
-    
-    if (!adminRow || adminRow.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
-      )
-    }
+    const user = { id: staff.userId }
 
     // Parse form data
     const formData = await request.formData()

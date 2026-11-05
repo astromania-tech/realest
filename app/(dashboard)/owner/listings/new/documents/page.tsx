@@ -59,10 +59,10 @@ export default function PropertyDocumentsStep() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full max-w-7xl mx-auto py-4 sm:py-6">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
             <div className="flex items-center gap-4">
               <Link href={`/owner/listings/new/media?type=${propertyType}`}>
                 <Button variant="ghost" size="icon-sm" >

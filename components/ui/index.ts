@@ -56,8 +56,6 @@ export { Empty } from './empty'
 // ============================================================================
 export { Alert } from './alert'
 export { AlertDialog } from './alert-dialog'
-export { Toast } from './toast'
-export { Toaster } from './toaster'
 export { Progress } from './progress'
 export { Spinner } from './spinner'
 

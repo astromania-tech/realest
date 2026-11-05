@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { AdminHeader } from "./AdminHeader";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminFooter } from "./AdminFooter";
+import { DashboardMobileNav } from "./DashboardMobileNav";
 import { Card, Button } from "@heroui/react";
 import {
   Breadcrumb,
@@ -14,17 +16,19 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import {
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  Users,
-  Building,
-  BarChart3,
-  Shield,
-  Settings,
-} from "lucide-react";
+import { Shield } from "lucide-react";
 import { useUser } from "@/lib/hooks/useUser";
+import {
+  ADMIN_PAGE_PAD,
+  adminMainOffset,
+  shellBlocksOnUserLoad,
+} from "@/lib/layout/dashboard-shell";
+import {
+  isStaffAllowedPath,
+  isStaffRole,
+  staffHomePath,
+  type StaffRole,
+} from "@/lib/auth/roles";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -32,31 +36,49 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { role: userRole, isLoading } = useUser();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [systemStats] = useState({
-    totalUsers: 1250,
-    pendingVerifications: 23,
-    activeProperties: 456,
-    systemHealth: "healthy" as "healthy" | "warning" | "critical",
+  const stickyStaffRole = useRef<StaffRole | null>(null);
+
+  if (isStaffRole(userRole)) stickyStaffRole.current = userRole as StaffRole;
+  const staffRole = stickyStaffRole.current;
+
+  // Once staff chrome has hydrated, never tear it down on tab clicks
+  const blockShell = shellBlocksOnUserLoad({
+    isLoading,
+    hasRole: Boolean(staffRole),
   });
 
-  // Generate breadcrumbs based on current path
+  useEffect(() => {
+    if (isLoading || !staffRole || staffRole === "admin") return;
+    if (!isStaffAllowedPath(staffRole, pathname)) {
+      router.replace(staffHomePath(staffRole));
+    }
+  }, [isLoading, staffRole, pathname, router]);
+
   const generateBreadcrumbs = () => {
     const pathSegments = pathname.split("/").filter(Boolean);
-    const breadcrumbs = [{ label: "Admin Dashboard", href: "/admin" }];
+    const breadcrumbs = [
+      {
+        label: staffRole && staffRole !== "admin" ? "Verification" : "Admin Dashboard",
+        href: staffRole ? staffHomePath(staffRole) : "/admin",
+      },
+    ];
 
     if (pathSegments.length > 1) {
       const currentPath = `/${pathSegments.join("/")}`;
-
-      // Map paths to breadcrumb labels
       const pathMap: Record<string, string> = {
-        "/admin/validation": "Property Verification",
+        "/admin/validation": "Case queue",
+        "/admin/validation/field": "Field ops",
+        "/admin/validation/my-visits": "My visits",
+        "/admin/validation/inbox": "Inbox",
         "/admin/agents": "Agent Verification",
         "/admin/users": "User Management",
         "/admin/cms": "CMS Dashboard",
         "/admin/cms/analytics": "System Analytics",
         "/admin/settings": "Settings",
+        "/admin/staff": "Staff invites",
         "/admin/subadmins": "Sub-Admin Management",
         "/admin/support": "Support Center",
         "/admin/content": "Content Management",
@@ -66,7 +88,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       if (label) {
         breadcrumbs.push({ label, href: currentPath });
       } else {
-        // For unknown paths, create a generic breadcrumb
         const lastSegment = pathSegments[pathSegments.length - 1];
         breadcrumbs.push({
           label:
@@ -82,36 +103,43 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   const breadcrumbs = generateBreadcrumbs();
 
-  if (isLoading) {
+  if (blockShell) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
-          <Shield className="w-12 h-12 text-primary mx-auto mb-4 animate-pulse" />
-          <div className="text-muted-foreground">Loading admin panel...</div>
+          <Shield className="mx-auto mb-4 h-12 w-12 animate-pulse text-primary" />
+          <div className="text-muted-foreground">Loading staff panel...</div>
         </div>
       </div>
     );
   }
 
-  if (!isLoading && userRole !== "admin") {
+  // Only deny after hydrate when we never had a staff role (not a brief null during revalidate)
+  if (!isLoading && !staffRole && !isStaffRole(userRole)) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="p-8 text-center max-w-md">
-          <Shield className="w-16 h-16 text-danger mx-auto mb-4" />
-          <h2 className="text-xl font-bold mb-2">Access Denied</h2>
-          <p className="text-muted-foreground mb-4">
-            You don't have permission to access the admin panel.
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Card className="max-w-md p-8 text-center">
+          <Shield className="mx-auto mb-4 h-16 w-16 text-danger" />
+          <h2 className="mb-2 text-xl font-bold">Access Denied</h2>
+          <p className="mb-4 text-muted-foreground">
+            You don't have permission to access the staff panel.
           </p>
           <Button>
-            <a href="/profile">Return to Dashboard</a>
+            <Link href="/profile">Return to Dashboard</Link>
           </Button>
         </Card>
       </div>
     );
   }
 
+  const redirecting =
+    !isLoading &&
+    staffRole !== null &&
+    staffRole !== "admin" &&
+    !isStaffAllowedPath(staffRole, pathname);
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen overflow-x-hidden bg-background">
       <AdminHeader />
 
       <div className="flex">
@@ -119,17 +147,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           currentPath={pathname}
           isCollapsed={isCollapsed}
           onToggle={setIsCollapsed}
+          userRole={staffRole ?? "reviewer"}
         />
 
-        {/* Main content */}
-        <main
-          className={`flex-1 transition-all duration-300 ease-out ${
-            isCollapsed ? "ml-15" : "ml-65"
-          }`}
-        >
+        <main className={adminMainOffset(isCollapsed)}>
           <div className="min-h-screen">
-            {/* Breadcrumbs */}
-            <div className="bg-background border-b border-accent/20 px-6 py-3">
+            <div className="border-b border-accent/20 bg-background px-4 py-3 sm:px-6">
               <Breadcrumb>
                 <BreadcrumbList>
                   {breadcrumbs.map((item, index) => (
@@ -139,8 +162,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                         {index === breadcrumbs.length - 1 ? (
                           <BreadcrumbPage>{item.label}</BreadcrumbPage>
                         ) : (
-                          <BreadcrumbLink href={item.href}>
-                            {item.label}
+                          <BreadcrumbLink asChild>
+                            <Link href={item.href} prefetch>
+                              {item.label}
+                            </Link>
                           </BreadcrumbLink>
                         )}
                       </BreadcrumbItem>
@@ -149,12 +174,21 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 </BreadcrumbList>
               </Breadcrumb>
             </div>
-            {/* Page Content */}
-            <div className="p-6">{children}</div>
+            <div className={ADMIN_PAGE_PAD} data-dashboard-main>
+              {redirecting ? (
+                <p className="text-sm text-muted-foreground">Redirecting…</p>
+              ) : (
+                children
+              )}
+            </div>
           </div>
-          <AdminFooter />
+          <div className="hidden md:block">
+            <AdminFooter userRole={staffRole ?? "reviewer"} />
+          </div>
         </main>
       </div>
+
+      <DashboardMobileNav userRole={staffRole ?? "reviewer"} />
     </div>
   );
 }

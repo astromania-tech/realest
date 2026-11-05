@@ -72,7 +72,8 @@ export async function GET(request: Request) {
       )
     }
 
-    const { page, limit, status, sort } = queryResult.data
+    const { page, status, sort } = queryResult.data
+    const limit = Math.min(50, Math.max(1, queryResult.data.limit || 10))
 
     const where: Prisma.inquiriesWhereInput = { owner_id: user.id }
     if (status) where.status = status
@@ -84,7 +85,12 @@ export async function GET(request: Request) {
     const [inquiries, total] = await Promise.all([
       prisma.inquiries.findMany({
         where,
-        include: {
+        select: {
+          id: true,
+          message: true,
+          status: true,
+          created_at: true,
+          property_id: true,
           profiles_inquiries_sender_idToprofiles: {
             select: { full_name: true, email: true, phone: true, avatar_url: true },
           },

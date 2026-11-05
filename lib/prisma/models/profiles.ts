@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums"
-import type * as Prisma from "../internal/prismaNamespace"
+import type * as $Enums from "../enums.ts"
+import type * as Prisma from "../internal/prismaNamespace.ts"
 
 /**
  * Model profiles
@@ -269,7 +269,7 @@ export type ProfilesGroupByOutputType = {
   _max: ProfilesMaxAggregateOutputType | null
 }
 
-export type GetProfilesGroupByPayload<T extends profilesGroupByArgs> = Prisma.PrismaPromise<
+type GetProfilesGroupByPayload<T extends profilesGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<ProfilesGroupByOutputType, T['by']> &
       {
@@ -782,10 +782,12 @@ export type profilesUpdateOneRequiredWithoutInquiries_inquiries_owner_idToprofil
   update?: Prisma.XOR<Prisma.XOR<Prisma.profilesUpdateToOneWithWhereWithoutInquiries_inquiries_owner_idToprofilesInput, Prisma.profilesUpdateWithoutInquiries_inquiries_owner_idToprofilesInput>, Prisma.profilesUncheckedUpdateWithoutInquiries_inquiries_owner_idToprofilesInput>
 }
 
-export type profilesUpdateOneRequiredWithoutInquiries_inquiries_sender_idToprofilesNestedInput = {
+export type profilesUpdateOneWithoutInquiries_inquiries_sender_idToprofilesNestedInput = {
   create?: Prisma.XOR<Prisma.profilesCreateWithoutInquiries_inquiries_sender_idToprofilesInput, Prisma.profilesUncheckedCreateWithoutInquiries_inquiries_sender_idToprofilesInput>
   connectOrCreate?: Prisma.profilesCreateOrConnectWithoutInquiries_inquiries_sender_idToprofilesInput
   upsert?: Prisma.profilesUpsertWithoutInquiries_inquiries_sender_idToprofilesInput
+  disconnect?: Prisma.profilesWhereInput | boolean
+  delete?: Prisma.profilesWhereInput | boolean
   connect?: Prisma.profilesWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.profilesUpdateToOneWithWhereWithoutInquiries_inquiries_sender_idToprofilesInput, Prisma.profilesUpdateWithoutInquiries_inquiries_sender_idToprofilesInput>, Prisma.profilesUncheckedUpdateWithoutInquiries_inquiries_sender_idToprofilesInput>
 }
@@ -5081,11 +5083,6 @@ export type profilesFindManyArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Skip the first `n` profiles.
    */
   skip?: number
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-   * 
-   * Filter by unique combinations of profiles.
-   */
   distinct?: Prisma.ProfilesScalarFieldEnum | Prisma.ProfilesScalarFieldEnum[]
 }
 

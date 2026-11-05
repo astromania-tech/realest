@@ -40,6 +40,13 @@ export function shouldUnlistNonLiveProperties(action: ModerationAction): boolean
   return action === "suspend" || action === "ban";
 }
 
+/** Ban marks the row as departed. Unban clears it. Suspension only flips is_active. */
+export function nextDeletedAt(action: ModerationAction): "set" | "clear" | "keep" {
+  if (action === "ban") return "set";
+  if (action === "unban") return "clear";
+  return "keep";
+}
+
 export function computeSuspensionEndDate(
   action: ModerationAction,
   durationDays: number | undefined,

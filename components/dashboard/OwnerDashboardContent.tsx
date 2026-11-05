@@ -50,16 +50,16 @@ export default function OwnerDashboardContent({
   ).length
 
   return (
-    <main className="container py-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">My Listings</h1>
+    <main className="w-full max-w-7xl mx-auto py-2 sm:py-4">
+      <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold sm:text-3xl">My Listings</h1>
           <p className="text-muted-foreground">
             Manage your properties and inquiries
           </p>
         </div>
-        <Link href="/owner/listings/new">
-          <Button className="gap-2">
+        <Link href="/owner/listings/new" className="shrink-0">
+          <Button className="w-full gap-2 sm:w-auto">
             <Plus className="w-4 h-4" />
             List New Property
           </Button>
@@ -67,7 +67,7 @@ export default function OwnerDashboardContent({
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 mb-6 sm:mb-8">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -129,17 +129,17 @@ export default function OwnerDashboardContent({
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview" className="gap-2">
-            <Home className="w-4 h-4" />
-            My Listings
+        <TabsList className="grid h-auto w-full grid-cols-3 gap-1 p-1">
+          <TabsTrigger value="overview" className="gap-1 px-1 text-xs sm:gap-2 sm:px-3 sm:text-sm">
+            <Home className="hidden h-4 w-4 sm:block" />
+            Listings
           </TabsTrigger>
-          <TabsTrigger value="inquiries" className="gap-2">
-            <MessageSquare className="w-4 h-4" />
+          <TabsTrigger value="inquiries" className="gap-1 px-1 text-xs sm:gap-2 sm:px-3 sm:text-sm">
+            <MessageSquare className="hidden h-4 w-4 sm:block" />
             Inquiries
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="gap-2">
-            <TrendingUp className="w-4 h-4" />
+          <TabsTrigger value="analytics" className="gap-1 px-1 text-xs sm:gap-2 sm:px-3 sm:text-sm">
+            <TrendingUp className="hidden h-4 w-4 sm:block" />
             Analytics
           </TabsTrigger>
         </TabsList>

@@ -100,7 +100,7 @@ export default function Header() {
             <ThemeToggleCompact />
             {user ? (
               <div className="flex items-center h-8 w-8 m-auto justify-center border rounded-full">
-                <ProfileDropdown />
+                <ProfileDropdown fallbackRole={role} />
               </div>
             ) : (
               <>
@@ -128,7 +128,7 @@ export default function Header() {
           {/* Mobile Menu Button */}
           {user ? (
             <div className="md:hidden flex h-8 w-8 border rounded-full">
-              <ProfileDropdown />
+              <ProfileDropdown fallbackRole={role} />
             </div>
           ) : (
             <Button

@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { ListPager } from "@/components/realest/ListPager"
+import { pageWindow } from "@/lib/ui/page-window"
 import { VerifyAgentRow, type AgentItem } from "./VerifyAgentRow"
+
+const PAGE_SIZE = 6
 
 interface VerifyAgentsListProps {
   initialAgents: AgentItem[]
@@ -10,6 +14,9 @@ interface VerifyAgentsListProps {
 
 export function VerifyAgentsList({ initialAgents }: VerifyAgentsListProps) {
   const [agents, setAgents] = useState<AgentItem[]>(initialAgents)
+  const [page, setPage] = useState(1)
+  const window = pageWindow(agents.length, page, PAGE_SIZE)
+  const visible = agents.slice(window.start, window.end)
   const supabase = createClient()
 
   useEffect(() => {
@@ -78,7 +85,7 @@ export function VerifyAgentsList({ initialAgents }: VerifyAgentsListProps) {
       {agents.length === 0 ? (
         <p className="text-muted-foreground">No agents pending verification.</p>
       ) : (
-        agents.map((agent) => (
+        visible.map((agent) => (
           <VerifyAgentRow
             key={agent.id}
             agent={agent}
@@ -86,6 +93,15 @@ export function VerifyAgentsList({ initialAgents }: VerifyAgentsListProps) {
           />
         ))
       )}
+      <ListPager
+        page={window.page}
+        pageCount={window.pageCount}
+        from={window.from}
+        to={window.to}
+        total={agents.length}
+        onPrev={() => setPage(window.page - 1)}
+        onNext={() => setPage(window.page + 1)}
+      />
     </div>
   )
 }

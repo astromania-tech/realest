@@ -12,7 +12,7 @@ import {
   CardContent 
 } from "@/components/ui";
 import { Input } from "@/components/ui/input";
-import { getCurrentUser, resetPassword, signOut } from "@/lib/auth";
+import { validatePassword as checkPasswordRules } from "@/lib/auth/password-rules";
 import {
   Eye,
   EyeOff,
@@ -34,6 +34,7 @@ function ResetPasswordContent() {
   });
   const [error, setError] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
   const [passwordValidation, setPasswordValidation] = useState({
     minLength: false,
     hasUppercase: false,
@@ -49,6 +50,7 @@ function ResetPasswordContent() {
       const result = await handlePasswordResetSession(searchParams);
 
       if (!result.success) {
+        setSessionReady(false);
         setError(result.error || "Failed to initialize password reset");
         if (result.redirectTo && result.redirectDelay) {
           setTimeout(() => {
@@ -56,7 +58,7 @@ function ResetPasswordContent() {
           }, result.redirectDelay);
         }
       } else {
-        // Successfully initialized session, clear any previous errors
+        setSessionReady(true);
         setError("");
       }
     };
@@ -64,14 +66,8 @@ function ResetPasswordContent() {
     initializeSession();
   }, [searchParams, router]);
 
-  const validatePassword = (password: string) => {
-    const validation = {
-      minLength: password.length >= 8,
-      hasUppercase: /[A-Z]/.test(password),
-      hasLowercase: /[a-z]/.test(password),
-      hasNumber: /\d/.test(password),
-      hasSpecialChar: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
-    };
+  const applyPasswordValidation = (password: string) => {
+    const validation = checkPasswordRules(password);
     setPasswordValidation(validation);
     return Object.values(validation).every(Boolean);
   };
@@ -79,7 +75,7 @@ function ResetPasswordContent() {
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (field === "password") {
-      validatePassword(value);
+      applyPasswordValidation(value);
     }
     if (error) setError("");
   };
@@ -95,70 +91,47 @@ function ResetPasswordContent() {
       return;
     }
 
-    if (!validatePassword(formData.password)) {
+    if (!applyPasswordValidation(formData.password)) {
       setError("Password does not meet security requirements");
       setIsLoading(false);
       return;
     }
 
     try {
-      // Verify user is still authenticated before updating password
-      const userResponse = await getCurrentUser();
+      // Server route reads recovery session cookies and calls updateUser.
+      // Client-side updateUser often has no hydrated session after OTP verify.
+      const res = await fetch("/api/auth/complete-password-reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: formData.password }),
+      });
+      const data = (await res.json()) as {
+        success?: boolean;
+        error?: string;
+      };
 
-      if (!userResponse.success || !userResponse.user) {
-        setError("Session expired. Please request a new password reset link.");
-        setTimeout(() => {
-          router.push("/forgot-password");
-        }, 3000);
-        return;
-      }
+      if (!res.ok || !data.success) {
+        const message =
+          data.error || "Failed to update password. Please try again.";
+        console.error("Password update error:", message);
 
-      // Update password
-      const resetResponse = await resetPassword(formData.password);
-
-      if (!resetResponse.success) {
-        console.error("Password update error:", resetResponse.error);
-        // Handle specific error types
         if (
-          resetResponse.error?.includes("session") ||
-          resetResponse.error?.includes("expired") ||
-          resetResponse.error?.includes("unauthorized")
+          res.status === 401 ||
+          /session|expired|unauthorized/i.test(message)
         ) {
           setError(
-            "Your reset session has expired. Please request a new password reset link.",
+            "Your reset session has expired. Please request a new password reset.",
           );
           setTimeout(() => {
             router.push("/forgot-password");
           }, 3000);
-        } else if (
-          resetResponse.error?.includes("same_password") ||
-          resetResponse.error?.includes("password")
-        ) {
-          setError(
-            "Password must be different from current and meet requirements.",
-          );
         } else {
-          setError(
-            resetResponse.error ||
-              "Failed to update password. Please try again.",
-          );
+          setError(message);
         }
         return;
       }
 
-      console.log("Password updated successfully");
       setIsSuccess(true);
-
-      // Fire-and-forget: send security notification email before session ends.
-      // We intentionally do NOT await so the UX is never blocked by email latency.
-      fetch("/api/auth/password-changed", { method: "POST" }).catch((err) =>
-        console.warn("[reset-password] Notification email failed:", err),
-      );
-
-      // Sign out after password reset for security
-      await signOut();
-
-      // Redirect to login after 3 seconds
       setTimeout(() => {
         router.push("/login?reset=true");
       }, 3000);
@@ -172,8 +145,9 @@ function ResetPasswordContent() {
 
   const isPasswordValid = Object.values(passwordValidation).every(Boolean);
   const canSubmit =
-    formData.password &&
-    formData.confirmPassword &&
+    sessionReady &&
+    Boolean(formData.password) &&
+    Boolean(formData.confirmPassword) &&
     isPasswordValid &&
     formData.password === formData.confirmPassword;
 
