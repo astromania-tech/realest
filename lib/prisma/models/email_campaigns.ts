@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums"
-import type * as Prisma from "../internal/prismaNamespace"
+import type * as $Enums from "../enums.ts"
+import type * as Prisma from "../internal/prismaNamespace.ts"
 
 /**
  * Model email_campaigns
@@ -290,7 +290,7 @@ export type Email_campaignsGroupByOutputType = {
   _max: Email_campaignsMaxAggregateOutputType | null
 }
 
-export type GetEmail_campaignsGroupByPayload<T extends email_campaignsGroupByArgs> = Prisma.PrismaPromise<
+type GetEmail_campaignsGroupByPayload<T extends email_campaignsGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<Email_campaignsGroupByOutputType, T['by']> &
       {
@@ -1677,11 +1677,6 @@ export type email_campaignsFindManyArgs<ExtArgs extends runtime.Types.Extensions
    * Skip the first `n` email_campaigns.
    */
   skip?: number
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-   * 
-   * Filter by unique combinations of email_campaigns.
-   */
   distinct?: Prisma.Email_campaignsScalarFieldEnum | Prisma.Email_campaignsScalarFieldEnum[]
 }
 

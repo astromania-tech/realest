@@ -20,6 +20,7 @@ import {
   PasswordChangedEmail,
   InquiryNotificationEmail,
   SubAdminInvitationEmail,
+  StaffInvitationEmail,
   // Listing lifecycle
   ListingSubmissionEmail,
   MLValidationPassedEmail,
@@ -63,6 +64,7 @@ import {
   type PasswordChangedEmailData,
   type InquiryEmailData,
   type SubAdminInvitationData,
+  type StaffInvitationData,
   // Types — listing lifecycle
   type ListingSubmissionEmailData,
   type MLValidationPassedEmailData,
@@ -266,6 +268,16 @@ export async function sendSubAdminInvitationEmail(data: SubAdminInvitationData):
     to: data.email,
     subject: SubAdminInvitationEmail.subject(data),
     component: React.createElement(SubAdminInvitationEmail, data),
+  });
+}
+
+export async function sendStaffInvitationEmail(data: StaffInvitationData): Promise<EmailResult> {
+  console.log(`📧 Sending staff invitation (${data.role}) to ${data.email}`);
+  return sendReactEmail({
+    from: FROM_EMAIL_AUTH,
+    to: data.email,
+    subject: StaffInvitationEmail.subject(data),
+    component: React.createElement(StaffInvitationEmail, data),
   });
 }
 
@@ -588,6 +600,7 @@ export type {
   PasswordChangedEmailData,
   InquiryEmailData,
   SubAdminInvitationData,
+  StaffInvitationData,
   // Listing lifecycle
   ListingSubmissionEmailData,
   MLValidationPassedEmailData,

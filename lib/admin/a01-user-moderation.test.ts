@@ -9,6 +9,7 @@ import {
   computeSuspensionEndDate,
   isTemporarySuspensionExpired,
   mergeUserMetadataWithModeration,
+  nextDeletedAt,
   nextIsActive,
   nextModerationState,
   shouldUnlistNonLiveProperties,
@@ -32,6 +33,13 @@ test("[A-01] suspend/ban on already inactive user stay inactive", () => {
 test("[A-01] unsuspend/unban on already active user stay active", () => {
   assert.equal(nextIsActive("unsuspend", true), true);
   assert.equal(nextIsActive("unban", true), true);
+});
+
+test("[A-01] ban sets deleted_at and unban clears it", () => {
+  assert.equal(nextDeletedAt("ban"), "set");
+  assert.equal(nextDeletedAt("unban"), "clear");
+  assert.equal(nextDeletedAt("suspend"), "keep");
+  assert.equal(nextDeletedAt("unsuspend"), "keep");
 });
 
 test("[A-01] non-live listings are unlisted only on suspend/ban", () => {

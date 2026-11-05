@@ -8,4 +8,7 @@ test("production workflow leaves shipping to the Vercel GitHub app", () => {
   assert.equal(workflow.includes("amondnet/vercel-action"), false);
   assert.equal(workflow.includes("vercel-token"), false);
   assert.match(workflow, /vercel\[bot\]/);
+  assert.equal(workflow.includes("ignoreBuildErrors"), false);
+  const nextConfig = readFileSync("next.config.mjs", "utf8");
+  assert.equal(nextConfig.includes("ignoreBuildErrors"), false);
 });

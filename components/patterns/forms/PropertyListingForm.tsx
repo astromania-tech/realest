@@ -136,7 +136,8 @@ export function PropertyListingForm({
         });
 
         if (!response.ok) {
-          throw new Error('Failed to create draft property');
+          const body = await response.json().catch(() => ({}));
+          throw new Error(typeof body.error === "string" ? body.error : "Failed to create draft property");
         }
 
         const { property } = await response.json();
@@ -148,7 +149,7 @@ export function PropertyListingForm({
         localStorage.setItem('draftPropertyId', property.id);
       } catch (error) {
         console.error('Failed to create draft property:', error);
-        alert('Unable to save property draft. Please check your internet connection and try again.');
+        alert(error instanceof Error ? error.message : "Unable to save property draft. Please check your internet connection and try again.");
       } finally {
         setIsDraftCreating(false);
       }

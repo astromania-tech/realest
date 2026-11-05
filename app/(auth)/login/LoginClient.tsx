@@ -16,6 +16,8 @@ import {
   signInWithPassword,
   formatAuthError,
 } from "@/lib/auth";
+import { accountSignInClosed } from "@/lib/auth/account-closed";
+import { isStaffRole, postLoginHomePath, staffHomePath } from "@/lib/auth/roles";
 import { Eye, EyeOff, Mail, Lock, CheckCircle, AlertCircle } from "lucide-react";
 
 function LoginForm() {
@@ -34,7 +36,15 @@ function LoginForm() {
     const verified = searchParams.get("verified");
     const reset = searchParams.get("reset");
 
-    if (verified === "true") {
+    const emailParam = searchParams.get("email");
+    if (emailParam) {
+      setFormData((prev) => ({ ...prev, email: decodeURIComponent(emailParam) }));
+    }
+    if (searchParams.get("closed") === "1") {
+      setError("This account is closed. An admin has to restore it.");
+    } else if (searchParams.get("local") === "1") {
+      setSuccessMessage("This PC confirmed the email. Sign in with the password you just set.");
+    } else if (verified === "true") {
       setSuccessMessage("Email verification complete! Sign in to continue.");
     } else if (reset === "true") {
       setSuccessMessage(
@@ -68,13 +78,32 @@ function LoginForm() {
       }
 
       if (response.user) {
-        const userType =
-          response.user.app_metadata?.role || response.user.user_metadata?.user_type;
+        const supabase = (await import("@/lib/supabase/client")).createClient();
+        // public.users.role is source of truth (JWT metadata can lag after invite).
+        const { data: roleRow } = await supabase
+          .from("users")
+          .select("role, deleted_at")
+          .eq("id", response.user.id)
+          .single();
+        if (accountSignInClosed(roleRow)) {
+          await supabase.auth.signOut();
+          setError("This account is closed. An admin has to restore it.");
+          return;
+        }
+        const role =
+          roleRow?.role ??
+          response.user.app_metadata?.role ??
+          response.user.user_metadata?.user_type ??
+          "user";
 
-        if (userType === "owner" || userType === "agent") {
-          const supabase = (await import("@/lib/supabase/client")).createClient();
-          const tableName = userType === "owner" ? "owners" : "agents";
+        if (isStaffRole(role)) {
+          router.push(staffHomePath(role));
+          router.refresh();
+          return;
+        }
 
+        if (role === "owner" || role === "agent") {
+          const tableName = role === "owner" ? "owners" : "agents";
           const { data: onboardingComplete } = await supabase
             .from(tableName)
             .select("id")
@@ -88,18 +117,10 @@ function LoginForm() {
           }
         }
 
-        if (userType === "owner") {
-          router.push("/owner");
-        } else if (userType === "admin") {
-          router.push("/admin");
-        } else if (userType === "agent") {
-          router.push("/agent");
-        } else {
-          router.push("/profile");
-        }
+        router.push(postLoginHomePath(role));
         router.refresh();
       }
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred");
     } finally {
       setIsLoading(false);

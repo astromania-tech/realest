@@ -8,6 +8,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import dynamic from "next/dynamic";
 import { Chip } from "@heroui/react";
 import {
   Calendar,
@@ -26,9 +27,15 @@ import { HeroLogo } from "@/components/ui/RealEstLogo";
 import WaitlistModal from "@/components/shared/WaitlistModal";
 import { RealEstButton } from "@/components/heroui/RealEstButton";
 
-// Import the full website components for dynamic reveal
-import { HeroSection } from "@/components/marketing";
-import { FeaturedProperties } from "@/components/property";
+// Full-site reveal only after countdown expiry — keep out of the default chunk.
+const HeroSection = dynamic(
+  () => import("@/components/marketing/HeroSection"),
+  { ssr: false, loading: () => <div className="min-h-[40vh] animate-pulse bg-muted" /> },
+);
+const FeaturedProperties = dynamic(
+  () => import("@/components/property/FeaturedProperties"),
+  { ssr: false, loading: () => <div className="min-h-[20vh] animate-pulse bg-muted" /> },
+);
 
 const ComingSoonHero = () => {
   // Check if release date is actually set (not empty or just whitespace)

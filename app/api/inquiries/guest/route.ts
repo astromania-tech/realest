@@ -1,19 +1,16 @@
 /**
  * POST /api/inquiries/guest
  *
- * Unauthenticated inquiry submission used by the public property/listing detail pages.
- * Because the `inquiries` table requires a non-nullable `sender_id`, guests cannot be
- * stored as a DB row without a schema migration. Instead we send an email notification
- * directly to the property owner or agent via Resend.
- *
- * Upgrade path: once `inquiries` supports nullable sender_id + contact fields, replace
- * the email logic here with a prisma.inquiries.create() call and keep the email as a
- * notification side-effect.
+ * Saves the inquiry first. Email is a later notification. A missing or failed
+ * send still leaves the row in place and does not claim the message was sent.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { sendInquiryEmail } from "@/lib/emailService";
+import { clientAddress, consumeRateLimit } from "@/lib/http/rate-limit";
+import { guestInquiryHttpResult } from "@/lib/inquiries/guest-inquiry";
+import { publicListingWhere } from "@/lib/listings/public-listing";
 
 const guestInquirySchema = z.object({
   property_id: z.string().uuid("Invalid property ID"),
@@ -25,12 +22,19 @@ const guestInquirySchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await consumeRateLimit({
+      bucket: "guest-inquiry",
+      subject: clientAddress(request.headers),
+    });
+    if (!limited.allowed) {
+      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+    }
+
     const body = await request.json();
     const data = guestInquirySchema.parse(body);
 
-    // Resolve property and the right contact (agent or owner)
     const property = await prisma.properties.findFirst({
-      where: { id: data.property_id, status: "live" },
+      where: { id: data.property_id, ...publicListingWhere },
       select: {
         id: true,
         title: true,
@@ -38,12 +42,14 @@ export async function POST(request: NextRequest) {
         listing_type: true,
         listing_source: true,
         owners: {
-          include: {
+          select: {
+            profile_id: true,
             profiles: { select: { full_name: true, email: true } },
           },
         },
         agents: {
           select: {
+            profile_id: true,
             profiles: { select: { full_name: true, email: true } },
           },
         },
@@ -51,24 +57,42 @@ export async function POST(request: NextRequest) {
     });
 
     if (!property) {
-      return NextResponse.json(
-        { error: "Property not found or no longer available" },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: "Property not found" }, { status: 404 });
     }
 
     const isAgentListing = property.listing_source === "agent";
-    const contactEmail = isAgentListing
-      ? property.agents?.profiles?.email
-      : property.owners?.profiles?.email;
-    const contactName = isAgentListing
-      ? property.agents?.profiles?.full_name
-      : property.owners?.profiles?.full_name;
+    const recipient = isAgentListing ? property.agents : property.owners;
+    const recipientProfileId = recipient?.profile_id ?? null;
+    if (!recipientProfileId) {
+      return NextResponse.json({ error: "This listing has no recipient." }, { status: 422 });
+    }
 
-    // Send email if Resend is configured and we have a valid contact address
+    const inserted = await prisma.$queryRaw<Array<{ id: string }>>`
+      insert into public.inquiries (
+        property_id, sender_id, owner_id, message, status, guest_name, guest_email, guest_phone
+      )
+      values (
+        ${property.id}::uuid,
+        null,
+        ${recipientProfileId}::uuid,
+        ${data.message},
+        'new',
+        ${data.name},
+        ${data.email},
+        ${data.phone ?? null}
+      )
+      returning id
+    `;
+    if (!inserted[0]?.id) {
+      const lost = guestInquiryHttpResult({ saved: false, notified: false });
+      return NextResponse.json(lost.body, { status: lost.status });
+    }
+
+    let notified = false;
+    const contactEmail = recipient?.profiles?.email;
     if (contactEmail && process.env.RESEND_API_KEY) {
       const result = await sendInquiryEmail({
-        recipientName: contactName ?? "Property Owner",
+        recipientName: recipient?.profiles?.full_name ?? "Property Owner",
         recipientEmail: contactEmail,
         senderName: data.name,
         senderEmail: data.email,
@@ -79,39 +103,17 @@ export async function POST(request: NextRequest) {
         listingType: property.listing_type ?? "for_sale",
         message: data.message,
       });
-
+      notified = result.success;
       if (!result.success) {
         console.error("[Guest Inquiry] Email delivery failed:", result.error);
-        if (result.quotaExceeded) {
-          return NextResponse.json(
-            { error: "Our email service is temporarily at capacity. Your inquiry was received — please try again in a few hours or contact the owner directly." },
-            { status: 503 },
-          );
-        }
-        return NextResponse.json(
-          { error: "Failed to deliver inquiry email. Please try again.", detail: result.error },
-          { status: 502 },
-        );
       }
-
-      console.log("[Guest Inquiry] Email sent to", contactEmail, "\u2014 Resend id:", result.messageId);
-    } else if (!process.env.RESEND_API_KEY) {
-      // Dev fallback: log the inquiry
-      console.log("[Guest Inquiry] Email not sent (RESEND_API_KEY not set):", data);
-    } else if (!contactEmail) {
-      console.warn("[Guest Inquiry] No contact email found for property", data.property_id);
     }
 
-    return NextResponse.json(
-      { message: "Inquiry sent successfully" },
-      { status: 200 },
-    );
+    const response = guestInquiryHttpResult({ saved: true, notified });
+    return NextResponse.json(response.body, { status: response.status });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid data", details: error.errors },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Invalid data", details: error.errors }, { status: 400 });
     }
     console.error("Guest inquiry error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

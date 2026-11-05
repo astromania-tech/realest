@@ -17,8 +17,8 @@
 
 import * as runtime from "@prisma/client/runtime/index-browser"
 
-export type * from '../models'
-export type * from './prismaNamespace'
+export type * from '../models.ts'
+export type * from './prismaNamespace.ts'
 
 export const Decimal = runtime.Decimal
 
@@ -62,6 +62,11 @@ export const ModelName = {
   properties: 'properties',
   property_details: 'property_details',
   property_documents: 'property_documents',
+  property_visit_checks: 'property_visit_checks',
+  property_verification_cases: 'property_verification_cases',
+  property_field_teams: 'property_field_teams',
+  property_field_team_members: 'property_field_team_members',
+  property_verification_evidence: 'property_verification_evidence',
   property_media: 'property_media',
   reviews: 'reviews',
   saved_properties: 'saved_properties',
@@ -137,6 +142,9 @@ export const InquiriesScalarFieldEnum = {
   property_id: 'property_id',
   sender_id: 'sender_id',
   owner_id: 'owner_id',
+  guest_name: 'guest_name',
+  guest_email: 'guest_email',
+  guest_phone: 'guest_phone',
   message: 'message',
   status: 'status',
   created_at: 'created_at',
@@ -263,7 +271,9 @@ export const PropertiesScalarFieldEnum = {
   updated_at: 'updated_at',
   agent_id: 'agent_id',
   listing_source: 'listing_source',
-  price_frequency: 'price_frequency'
+  price_frequency: 'price_frequency',
+  vetting_officer_id: 'vetting_officer_id',
+  vetting_visit_on: 'vetting_visit_on'
 } as const
 
 export type PropertiesScalarFieldEnum = (typeof PropertiesScalarFieldEnum)[keyof typeof PropertiesScalarFieldEnum]
@@ -309,6 +319,76 @@ export const Property_documentsScalarFieldEnum = {
 export type Property_documentsScalarFieldEnum = (typeof Property_documentsScalarFieldEnum)[keyof typeof Property_documentsScalarFieldEnum]
 
 
+export const Property_visit_checksScalarFieldEnum = {
+  property_id: 'property_id',
+  officer_id: 'officer_id',
+  checked_in_at: 'checked_in_at',
+  latitude: 'latitude',
+  longitude: 'longitude',
+  distance_meters: 'distance_meters',
+  photo_path: 'photo_path',
+  saw_building: 'saw_building',
+  address_matches: 'address_matches',
+  document_matches: 'document_matches',
+  note: 'note',
+  open_issue: 'open_issue',
+  correction_document_id: 'correction_document_id',
+  voided_at: 'voided_at'
+} as const
+
+export type Property_visit_checksScalarFieldEnum = (typeof Property_visit_checksScalarFieldEnum)[keyof typeof Property_visit_checksScalarFieldEnum]
+
+
+export const Property_verification_casesScalarFieldEnum = {
+  property_id: 'property_id',
+  state: 'state',
+  claims: 'claims',
+  opened_at: 'opened_at',
+  registry_reference: 'registry_reference',
+  registry_matches: 'registry_matches',
+  registry_confirmed_at: 'registry_confirmed_at',
+  judgment: 'judgment',
+  state_log: 'state_log'
+} as const
+
+export type Property_verification_casesScalarFieldEnum = (typeof Property_verification_casesScalarFieldEnum)[keyof typeof Property_verification_casesScalarFieldEnum]
+
+
+export const Property_field_teamsScalarFieldEnum = {
+  property_id: 'property_id',
+  team_leader_id: 'team_leader_id',
+  check_in_officer_id: 'check_in_officer_id',
+  visit_day: 'visit_day',
+  assigned_by: 'assigned_by',
+  brief: 'brief',
+  confirmed_at: 'confirmed_at',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+} as const
+
+export type Property_field_teamsScalarFieldEnum = (typeof Property_field_teamsScalarFieldEnum)[keyof typeof Property_field_teamsScalarFieldEnum]
+
+
+export const Property_field_team_membersScalarFieldEnum = {
+  property_id: 'property_id',
+  user_id: 'user_id',
+  created_at: 'created_at'
+} as const
+
+export type Property_field_team_membersScalarFieldEnum = (typeof Property_field_team_membersScalarFieldEnum)[keyof typeof Property_field_team_membersScalarFieldEnum]
+
+
+export const Property_verification_evidenceScalarFieldEnum = {
+  id: 'id',
+  property_id: 'property_id',
+  layer: 'layer',
+  recorded_at: 'recorded_at',
+  body: 'body'
+} as const
+
+export type Property_verification_evidenceScalarFieldEnum = (typeof Property_verification_evidenceScalarFieldEnum)[keyof typeof Property_verification_evidenceScalarFieldEnum]
+
+
 export const Property_mediaScalarFieldEnum = {
   id: 'id',
   property_id: 'property_id',
@@ -317,6 +397,7 @@ export const Property_mediaScalarFieldEnum = {
   file_name: 'file_name',
   display_order: 'display_order',
   is_featured: 'is_featured',
+  d_hash: 'd_hash',
   created_at: 'created_at'
 } as const
 
@@ -355,6 +436,9 @@ export const UsersScalarFieldEnum = {
   role: 'role',
   is_active: 'is_active',
   metadata: 'metadata',
+  ops_state: 'ops_state',
+  ops_lga: 'ops_lga',
+  ops_state_code: 'ops_state_code',
   created_at: 'created_at',
   updated_at: 'updated_at',
   deleted_at: 'deleted_at'

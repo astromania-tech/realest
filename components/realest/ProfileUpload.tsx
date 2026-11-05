@@ -16,7 +16,7 @@ import {
   ZoomOut,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useUser } from '@/lib/hooks/useUser'
+import { useOptionalUser } from '@/lib/hooks/useUser'
 import { RealEstButton } from '@/components/heroui/RealEstButton'
 
 interface ProfileUploadProps {
@@ -109,7 +109,9 @@ export function ProfileUpload({
   onUploadSuccess,
   onUploadError,
 }: ProfileUploadProps) {
-  const { user, profile } = useUser()
+  const session = useOptionalUser()
+  const user = session?.user
+  const profile = session?.profile
   const [isUploading, setIsUploading] = useState(false)
   const [displayUrl, setDisplayUrl] = useState<string | null>(imageUrl || profile?.avatar_url || null)
   const [cropSession, setCropSession] = useState<CropSession | null>(null)

@@ -60,12 +60,12 @@ export default function AdminDashboardContent({
     });
 
   return (
-    <main className="container px-8">
+    <main className="w-full max-w-7xl mx-auto">
 
     {/* System Status Bar */}
-     <div className="bg-background border-b border-accent/20 px-6 py-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+     <div className="bg-background border-b border-accent/20 py-3 sm:py-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
           <div className="flex items-center gap-2">
             <div
               className={`w-2 h-2 rounded-full ${
@@ -89,15 +89,15 @@ export default function AdminDashboardContent({
         </div>
 
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Clock className="w-4 h-4" />
+          <Clock className="w-4 h-4 shrink-0" />
           Last updated: {new Date().toLocaleTimeString()}
         </div>
       </div>
     </div>
 
       {/* Quick Stats */}
-      <div className="px-6 py-4 border-b border-accent/20 bg-muted/20">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="border-b border-accent/20 bg-muted/20 py-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           <div className="flex items-center gap-3 p-3 bg-background rounded-lg border border-accent/10">
             <Users className="w-8 h-8 text-primary" />
             <div>
@@ -144,13 +144,13 @@ export default function AdminDashboardContent({
         </div>
       </div>
 
-      <div className="mb-8 p-6">
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+      <div className="mb-6 py-4 sm:mb-8">
+        <h1 className="text-2xl font-bold sm:text-3xl">Admin Dashboard</h1>
         <p className="text-muted-foreground">Verify and manage property listings</p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 mb-6 sm:mb-8">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">Pending Properties</CardTitle>
