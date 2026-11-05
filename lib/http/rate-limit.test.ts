@@ -12,7 +12,25 @@ test("the window start is stable inside the same minute", () => {
   const start = rateWindowStart(new Date("2026-10-19T07:00:10.000Z"), 60_000);
   const later = rateWindowStart(new Date("2026-10-19T07:00:59.000Z"), 60_000);
   assert.equal(start.toISOString(), later.toISOString());
-  assert.equal(clientAddress(new Headers({ "x-forwarded-for": "1.2.3.4, 5.6.7.8" })), "1.2.3.4");
+  assert.equal(
+    clientAddress(new Headers({ "x-vercel-forwarded-for": "1.2.3.4, 5.6.7.8" })),
+    "1.2.3.4",
+  );
+});
+
+test("caller-supplied forwarding headers do not choose the rate-limit address", () => {
+  assert.equal(
+    clientAddress(new Headers({ "x-forwarded-for": "1.2.3.4", "x-real-ip": "9.9.9.9" })),
+    "unknown",
+  );
+  assert.equal(
+    clientAddress(new Headers({
+      "x-forwarded-for": "9.9.9.9",
+      "x-real-ip": "8.8.8.8",
+      "x-vercel-forwarded-for": "1.2.3.4",
+    })),
+    "1.2.3.4",
+  );
 });
 
 test("public forms use the shared limiter", () => {

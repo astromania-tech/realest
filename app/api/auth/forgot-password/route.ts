@@ -10,9 +10,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import {
+  claimForgotPasswordSend,
   coalesceForgotPasswordSend,
-  isForgotPasswordSendOnCooldown,
-  markForgotPasswordSent,
 } from "@/lib/auth/forgot-password-send-gate";
 import { normalizeResetEmail } from "@/lib/auth/password-reset-otp";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -60,7 +59,8 @@ type SendOutcome =
   | { ok: false; status: number; error: string };
 
 async function sendResetForEmail(email: string): Promise<SendOutcome> {
-  if (isForgotPasswordSendOnCooldown(email)) {
+  const claimed = await claimForgotPasswordSend(email);
+  if (!claimed) {
     // Prior send still valid — do not rotate the token or send again.
     return { ok: true, hashed: null, skippedSend: true };
   }
@@ -74,7 +74,6 @@ async function sendResetForEmail(email: string): Promise<SendOutcome> {
 
   // If no profile exists, return success anyway (no user enumeration)
   if (!profile) {
-    markForgotPasswordSent(email);
     return { ok: true, hashed: null };
   }
 
@@ -132,7 +131,6 @@ async function sendResetForEmail(email: string): Promise<SendOutcome> {
     return { ok: false, status: 502, error: "Failed to send reset email" };
   }
 
-  markForgotPasswordSent(email);
   console.log(
     "[ForgotPassword] Reset email sent to",
     email,

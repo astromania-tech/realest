@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { randomUUID } from 'node:crypto'
@@ -14,7 +13,7 @@ import { registryConfirmationAllowed } from '@/lib/trust/registry'
 import { appendEvidence, markCorrection, openDeskCase, readStoredVisit, saveCheckIn, saveRegistryConfirmation, setCaseState, setOpenIssue } from '@/lib/trust/visit-store'
 import type { OpenApiMetadata } from '@/lib/openapi/route-metadata'
 import { requireStaff } from "@/lib/auth/require-staff"
-import { vettingActionAllowed } from "@/lib/auth/staff-action-gate"
+import { vettingActionAllowed, vettingListingStatus } from "@/lib/auth/staff-action-gate"
 import {
   buildListingRejectFeedback,
   deliverListingRejectFeedback,
@@ -99,7 +98,6 @@ type RouteParams = {
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    const supabase = await createClient()
     const { id } = await params
 
     // Verify admin authentication
@@ -381,13 +379,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       await setCaseState(id, nextCaseState(null, 'reject'))
     }
 
-    // Determine new status (only schema-valid fields: status + updated_at)
-    let finalStatus: string
-    switch (action) {
-      case 'approve': finalStatus = 'live'; break
-      case 'reject': finalStatus = 'rejected'; break
-      case 'schedule': finalStatus = 'pending_vetting'; break
-      default: return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+    const finalStatus = vettingListingStatus(action)
+    if (!finalStatus) {
+      return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
     }
 
     const updatedProperty = await prisma.properties.update({

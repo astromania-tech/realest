@@ -7,6 +7,8 @@ import {
   nextDeletedAt,
   nextIsActive,
   nextModerationState,
+  cannotModerateRole,
+  runSuspendSideEffects,
   shouldUnlistNonLiveProperties,
 } from "@/lib/admin/user-moderation";
 import { releaseOpenVisitsForUser } from "@/lib/trust/field-team-store";
@@ -73,8 +75,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    if (targetUserRow.role === "admin") {
-      console.warn(`Admin ${user.id} is modifying another admin account: ${id}`);
+    if (cannotModerateRole(targetUserRow.role)) {
+      return NextResponse.json(
+        { error: "Cannot modify an admin account" },
+        { status: 403 },
+      );
     }
 
     const isActive = nextIsActive(action, targetUserRow.is_active);
@@ -102,27 +107,27 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     });
 
     if (shouldUnlistNonLiveProperties(action)) {
-      await releaseOpenVisitsForUser(id);
-    }
-
-    if (shouldUnlistNonLiveProperties(action)) {
-      // updateMany does not accept nested relation filters — resolve owners.id first
-      const owner = await prisma.owners.findUnique({
-        where: { profile_id: id },
-        select: { id: true },
+      await runSuspendSideEffects({
+        unlist: async () => {
+          // updateMany does not accept nested relation filters — resolve owners.id first
+          const owner = await prisma.owners.findUnique({
+            where: { profile_id: id },
+            select: { id: true },
+          });
+          if (!owner) return;
+          await prisma.properties.updateMany({
+            where: {
+              owner_id: owner.id,
+              status: { not: "live" },
+            },
+            data: {
+              status: "unlisted",
+              updated_at: new Date(),
+            },
+          });
+        },
+        releaseVisits: () => releaseOpenVisitsForUser(id),
       });
-      if (owner) {
-        await prisma.properties.updateMany({
-          where: {
-            owner_id: owner.id,
-            status: { not: "live" },
-          },
-          data: {
-            status: "unlisted",
-            updated_at: new Date(),
-          },
-        });
-      }
     }
 
     await logAdminAction({
