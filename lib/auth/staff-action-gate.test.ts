@@ -8,6 +8,7 @@ import {
   canAssignFieldVisit,
   canMakeDeskDecision,
   vettingActionAllowed,
+  vettingListingStatus,
 } from "./staff-action-gate.ts";
 
 test("[A-01] desk decisions are admin or reviewer only", () => {
@@ -48,6 +49,17 @@ test("[A-01] ML, vetting, and duplicate routes enforce staff-action gates", () =
   );
   assert.match(ml, /canMakeDeskDecision/);
   assert.match(vetting, /vettingActionAllowed/);
+  assert.match(vetting, /vettingListingStatus/);
+  assert.equal(vetting.includes("createClient("), false);
   assert.match(duplicates, /canMakeDeskDecision/);
+});
+
+test("[A-01] flag_issue keeps the listing in pending vetting", () => {
+  assert.equal(vettingListingStatus("flag_issue"), "pending_vetting");
+  assert.equal(vettingListingStatus("approve"), "live");
+  assert.equal(vettingListingStatus("reject"), "rejected");
+  assert.equal(vettingListingStatus("schedule"), "pending_vetting");
+  assert.equal(vettingListingStatus("assign"), null);
+  assert.equal(vettingListingStatus("check_in"), null);
 });
 

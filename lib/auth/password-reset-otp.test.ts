@@ -54,7 +54,7 @@ test("forgot-password normalizes email and coalesces duplicate sends", () => {
   );
   assert.match(source, /normalizeResetEmail/);
   assert.match(source, /coalesceForgotPasswordSend/);
-  assert.match(source, /isForgotPasswordSendOnCooldown/);
+  assert.match(source, /claimForgotPasswordSend/);
   assert.match(source, /verificationType:\s*"reset"/);
 });
 

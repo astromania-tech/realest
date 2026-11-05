@@ -3,10 +3,15 @@ import { prisma } from "@/lib/prisma";
 export const PUBLIC_RATE_LIMIT = 5;
 export const PUBLIC_RATE_WINDOW_MS = 60_000;
 
+/**
+ * Client IP for rate limits. Only the platform header counts.
+ * x-forwarded-for and x-real-ip are caller-supplied, so rotating them
+ * would open a new bucket on every request.
+ */
 export function clientAddress(headers: Headers): string {
-  const forwarded = headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  const raw = forwarded || headers.get("x-real-ip") || "unknown";
-  return raw.slice(0, 80);
+  const platform = headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim();
+  if (!platform) return "unknown";
+  return platform.slice(0, 80);
 }
 
 export function rateWindowStart(now: Date, windowMs: number): Date {

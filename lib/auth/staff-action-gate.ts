@@ -26,6 +26,24 @@ export type VettingStaffAction =
   | "confirm_registry";
 
 /**
+ * Listing status when a vetting action falls through to the property update.
+ * flag_issue stays pending_vetting. Actions that never publish a status return null.
+ */
+export function vettingListingStatus(action: VettingStaffAction): string | null {
+  switch (action) {
+    case "approve":
+      return "live";
+    case "reject":
+      return "rejected";
+    case "schedule":
+    case "flag_issue":
+      return "pending_vetting";
+    default:
+      return null;
+  }
+}
+
+/**
  * Role gate for vetting actions. check_in is allowed for any staff;
  * the route still requires the caller to be the assigned officer.
  */
