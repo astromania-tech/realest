@@ -67,7 +67,7 @@ export default async function CMSEmailsPage() {
 
   return (
     <>
-      <div className="container mx-auto px-4">
+      <div className="w-full max-w-7xl mx-auto">
         <div className="mb-8">
           <Link
             href="/admin/cms"
@@ -82,7 +82,7 @@ export default async function CMSEmailsPage() {
         </div>
 
         {/* Email Statistics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 mb-6 sm:mb-8">
           <Card>
             <CardContent className="pt-4">
               <div className="text-center">

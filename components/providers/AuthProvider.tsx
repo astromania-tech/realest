@@ -23,9 +23,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const supabase = createClient();
+    let activeUserId: string | null = null;
 
     // Initial fetch
     supabase.auth.getSession().then(({ data: { session } }) => {
+      activeUserId = session?.user?.id ?? null;
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
@@ -33,7 +35,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    } = supabase.auth.onAuthStateChange((event, newSession) => {
+      const nextId = newSession?.user?.id ?? null;
+      // Token refresh keeps the same user — update session cookies only, avoid
+      // remounting dashboard shells that key off user object identity.
+      if (event === "TOKEN_REFRESHED" && nextId && nextId === activeUserId) {
+        setSession(newSession);
+        setIsLoading(false);
+        return;
+      }
+      activeUserId = nextId;
       setSession(newSession);
       setUser(newSession?.user ?? null);
       setIsLoading(false);

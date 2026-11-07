@@ -40,6 +40,30 @@ export function shouldUnlistNonLiveProperties(action: ModerationAction): boolean
   return action === "suspend" || action === "ban";
 }
 
+/** Admin accounts are not a moderation target. */
+export function cannotModerateRole(role: string | null | undefined): boolean {
+  return role === "admin";
+}
+
+/**
+ * Unlist first. A failure while releasing visits must not leave the
+ * suspended user's non-live listings active.
+ */
+export async function runSuspendSideEffects(steps: {
+  unlist: () => Promise<void>;
+  releaseVisits: () => Promise<void>;
+}): Promise<void> {
+  await steps.unlist();
+  await steps.releaseVisits();
+}
+
+/** Ban marks the row as departed. Unban clears it. Suspension only flips is_active. */
+export function nextDeletedAt(action: ModerationAction): "set" | "clear" | "keep" {
+  if (action === "ban") return "set";
+  if (action === "unban") return "clear";
+  return "keep";
+}
+
 export function computeSuspensionEndDate(
   action: ModerationAction,
   durationDays: number | undefined,

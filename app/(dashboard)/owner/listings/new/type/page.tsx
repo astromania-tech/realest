@@ -508,7 +508,7 @@ export default function PropertyTypeStep() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-[var(--primary)]/5">
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full max-w-7xl mx-auto py-4 sm:py-6">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-12">

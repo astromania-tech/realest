@@ -1,0 +1,10 @@
+[Unit]
+Description=RealEST validation worker
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/var/lib/realest
+EnvironmentFile=/etc/realest/validation-worker.env
+Environment=VALIDATION_WORKER_DIRECT=1
+ExecStart=/usr/bin/npm run validation:worker:once

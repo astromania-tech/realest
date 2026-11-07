@@ -12,11 +12,21 @@ import {
   BarChart3,
 } from "lucide-react";
 import { Avatar, Dropdown, Label } from "@heroui/react";
-import { useUser } from "@/lib/hooks/useUser";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { useOptionalUser, type UserRole } from "@/lib/hooks/useUser";
 import { useLogoutModal } from "@/components/providers/LogoutModalProvider";
 
-export function ProfileDropdown() {
-  const { user, profile, role } = useUser();
+type ProfileDropdownProps = {
+  /** Role from Header when UserProvider is not mounted (public pages). */
+  fallbackRole?: string | null;
+};
+
+export function ProfileDropdown({ fallbackRole = null }: ProfileDropdownProps) {
+  const userCtx = useOptionalUser();
+  const { user: authUser } = useAuth();
+  const user = userCtx?.user ?? authUser;
+  const profile = userCtx?.profile ?? null;
+  const role = (userCtx?.role ?? fallbackRole) as UserRole | null;
   const router = useRouter();
   const { openLogoutModal } = useLogoutModal();
 
@@ -105,6 +115,35 @@ export function ProfileDropdown() {
             <div className="flex w-full items-center justify-between gap-2">
               <Label>Settings</Label>
               <Settings className="size-3.5 text-muted-foreground" />
+            </div>
+          </Dropdown.Item>,
+        );
+        break;
+
+      case "reviewer":
+        items.push(
+          <Dropdown.Item
+            key="case-queue"
+            id="case-queue"
+            textValue="Case queue"
+            onPress={() => router.push("/admin/validation")}
+            className="hover:bg-muted px-2 rounded-xs transition-colors"
+          >
+            <div className="flex w-full items-center justify-between gap-2">
+              <Label>Case queue</Label>
+              <Building className="size-3.5 text-muted-foreground" />
+            </div>
+          </Dropdown.Item>,
+          <Dropdown.Item
+            key="field-vetting"
+            id="field-vetting"
+            textValue="Field vetting"
+            onPress={() => router.push("/admin/validation/vetting")}
+            className="hover:bg-muted px-2 rounded-xs transition-colors"
+          >
+            <div className="flex w-full items-center justify-between gap-2">
+              <Label>Field vetting</Label>
+              <Users className="size-3.5 text-muted-foreground" />
             </div>
           </Dropdown.Item>,
         );
@@ -211,7 +250,17 @@ export function ProfileDropdown() {
             {avatarUrl && (
               <Avatar.Image
                 alt={
-                  user?.role === "admin" ? "ADMIN" : profile?.full_name || "User"
+                  user?.role === "admin"
+                    ? "ADMIN"
+                    : user?.role === "reviewer"
+                      ? "REVIEWER"
+                      : user?.role === "supervisor"
+                        ? "SUPERVISOR"
+                        : user?.role === "team_leader"
+                          ? "LEADER"
+                          : user?.role === "team_member"
+                            ? "FIELD"
+                            : profile?.full_name || "User"
                 }
                 className="rounded-full"
                 src={avatarUrl}

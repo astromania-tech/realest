@@ -2,6 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, getAuthUser } from "@/lib/supabase/server"
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
+import { adminApproveAllowed, readTrustDecision } from '@/lib/trust/gate'
+import { openDeskCase } from '@/lib/trust/visit-store'
+import { requireStaff } from "@/lib/auth/require-staff"
+import { canMakeDeskDecision } from "@/lib/auth/staff-action-gate"
+import {
+  buildListingRejectFeedback,
+  deliverListingRejectFeedback,
+  listingRejectRecipientSelect,
+  listingRejectSiteOrigin,
+  resolveListingRejectRecipients,
+} from "@/lib/trust/listing-reject-feedback"
+import { listingRejectNoteAllowed } from "@/lib/trust/listing-reject-note"
 
 // Request body schema for ML validation update
 const mlValidationUpdateSchema = z.object({
@@ -23,22 +35,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const { id: propertyId } = await params
 
     // Verify admin authentication
-    const { data: { user }, error: authError } = await getAuthUser()
-    if (authError || !user) {
+    const staff = await requireStaff()
+    if (!staff.ok) {
+      return NextResponse.json({ error: staff.error }, { status: staff.status })
+    }
+    if (!canMakeDeskDecision(staff.role)) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: "Desk reviewers or admins make this decision." },
+        { status: 403 },
       )
     }
-
-    // Verify user is admin
-    const adminRow = await prisma.users.findUnique({ where: { id: user.id }, select: { role: true } })
-    if (!adminRow || adminRow.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
-      )
-    }
+    const user = { id: staff.userId }
 
     // Parse request body
     const body = await request.json()
@@ -56,7 +63,16 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Verify property exists and is in correct status
     const property = await prisma.properties.findFirst({
       where: { id: propertyId, status: 'pending_ml_validation' },
-      select: { id: true, status: true, owner_id: true, title: true },
+      select: {
+        id: true,
+        status: true,
+        owner_id: true,
+        title: true,
+        address: true,
+        city: true,
+        state: true,
+        ...listingRejectRecipientSelect,
+      },
     })
 
     if (!property) {
@@ -64,6 +80,33 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         { error: 'Property not found or not in ML validation status' },
         { status: 404 }
       )
+    }
+
+    if (action === "reject") {
+      const noteGate = listingRejectNoteAllowed(admin_notes ?? ml_validation_notes, {
+        label: "reject this listing",
+      })
+      if (!noteGate.ok) {
+        return NextResponse.json({ error: noteGate.error }, { status: 409 })
+      }
+    }
+
+    if (action === "approve") {
+      const latestTrustJob = await prisma.property_validation_jobs.findFirst({
+        where: { property_id: propertyId, job_kind: "property", source: "trust-reader", status: "completed" },
+        orderBy: { queued_at: "desc" },
+        select: { result: true },
+      })
+      const gate = adminApproveAllowed({
+        trust: readTrustDecision(latestTrustJob?.result),
+        adminNotes: admin_notes,
+      })
+      if (!gate.ok) {
+        return NextResponse.json(
+          { error: gate.error, hardBlocks: gate.hardBlocks, flags: gate.flags },
+          { status: 409 },
+        )
+      }
     }
 
     // Determine new status based on action (only schema-valid fields)
@@ -75,11 +118,46 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       default: return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
     }
 
+    if (action === 'approve') {
+      await openDeskCase(propertyId)
+    }
+
     const updatedProperty = await prisma.properties.update({
       where: { id: propertyId },
-      data: { status: newStatus, updated_at: new Date() },
+      data: {
+        status: newStatus,
+        verification_status: action === "reject" ? "rejected" : "pending",
+        updated_at: new Date(),
+      },
       select: { id: true, status: true, title: true },
     })
+
+    let rejectAudit: Record<string, unknown> | null = null
+    if (action === "reject") {
+      const recipients = resolveListingRejectRecipients(property)
+      if (recipients.length > 0) {
+        const feedback = buildListingRejectFeedback({
+          propertyId: property.id,
+          propertyTitle: property.title,
+          propertyAddress: property.address,
+          city: property.city,
+          state: property.state,
+          reason: "other",
+          staffNotes: admin_notes ?? ml_validation_notes ?? null,
+          recipients,
+          siteOrigin: listingRejectSiteOrigin(),
+        })
+        const delivery = await deliverListingRejectFeedback(feedback)
+        rejectAudit = {
+          ...feedback.audit,
+          owner_notified: delivery.notified > 0,
+          emails_sent: delivery.emailsSent,
+        }
+        if (delivery.emailErrors.length > 0) {
+          console.error("[validation] ML reject email failed:", delivery.emailErrors)
+        }
+      }
+    }
 
     // Log admin action
     await prisma.admin_audit_log.create({
@@ -87,7 +165,15 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         actor_id: user.id,
         action: 'ml_validation_update',
         target_id: propertyId,
-        metadata: { action, previous_status: 'pending_ml_validation', new_status: newStatus, ml_confidence_score, ml_validation_notes, admin_notes },
+        metadata: {
+          action,
+          previous_status: 'pending_ml_validation',
+          new_status: newStatus,
+          ml_confidence_score,
+          ml_validation_notes,
+          admin_notes,
+          ...(rejectAudit ?? {}),
+        },
       },
     })
 

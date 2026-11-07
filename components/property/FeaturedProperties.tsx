@@ -19,7 +19,7 @@ import {
   PropertyStatusChip,
   AmenityBadgeGroup,
   createAmenityBadges,
-} from "@/components/realest";
+} from "@/components/realest/badges";
 
 interface Property {
   id: string;
@@ -44,7 +44,9 @@ export default function FeaturedProperties() {
       const supabase = createClient();
       const { data, error } = await supabase
         .from("properties")
-        .select("*")
+        .select(
+          "id, title, price, price_frequency, address, city, bedrooms, bathrooms, square_feet, listing_type, property_type",
+        )
         .eq("status", "live")
         .eq("verification_status", "verified")
         .limit(4);

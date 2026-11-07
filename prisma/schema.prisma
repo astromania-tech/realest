@@ -55,15 +55,18 @@ model agents {
 model inquiries {
   id                                     String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   property_id                            String     @db.Uuid
-  sender_id                              String     @db.Uuid
+  sender_id                              String?    @db.Uuid
   owner_id                               String     @db.Uuid
+  guest_name                             String?
+  guest_email                            String?
+  guest_phone                            String?
   message                                String
   status                                 String     @default("new")
   created_at                             DateTime?  @default(now()) @db.Timestamptz(6)
   updated_at                             DateTime?  @default(now()) @db.Timestamptz(6)
   profiles_inquiries_owner_idToprofiles  profiles   @relation("inquiries_owner_idToprofiles", fields: [owner_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   properties                             properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  profiles_inquiries_sender_idToprofiles profiles   @relation("inquiries_sender_idToprofiles", fields: [sender_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  profiles_inquiries_sender_idToprofiles profiles?  @relation("inquiries_sender_idToprofiles", fields: [sender_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([owner_id], map: "idx_inquiries_owner_id")
 }
@@ -224,6 +227,8 @@ model properties {
   agent_id                 String?                    @db.Uuid
   listing_source           String?                    @default("owner")
   price_frequency          String?                    @default("sale")
+  vetting_officer_id       String?                    @db.Uuid
+  vetting_visit_on         DateTime?                  @db.Date
   inquiries                inquiries[]
   payments                 payments[]
   agents                   agents?                    @relation(fields: [agent_id], references: [id], onUpdate: NoAction)
@@ -234,6 +239,10 @@ model properties {
   property_validation_jobs property_validation_jobs[]
   reviews                  reviews[]
   saved_properties         saved_properties[]
+  property_visit_checks    property_visit_checks?
+  property_verification_cases property_verification_cases?
+  property_verification_evidence property_verification_evidence[]
+  property_field_teams        property_field_teams?
 
   @@index([agent_id], map: "idx_properties_agent")
   @@index([description(ops: raw("gin_trgm_ops"))], map: "idx_properties_description_trgm", type: Gin)
@@ -283,8 +292,83 @@ model property_documents {
   updated_at          DateTime?  @default(now()) @db.Timestamptz(6)
   properties          properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   profiles            profiles?  @relation(fields: [verified_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  property_visit_checks property_visit_checks[]
 
   @@index([verified_by], map: "idx_property_documents_verified_by")
+}
+
+model property_visit_checks {
+  property_id            String    @id @db.Uuid
+  officer_id             String?   @db.Uuid
+  checked_in_at          DateTime? @db.Timestamptz(6)
+  latitude               Float?
+  longitude              Float?
+  distance_meters        Float?
+  photo_path             String?
+  saw_building           Boolean?
+  address_matches        Boolean?
+  document_matches       Boolean?
+  note                   String?
+  open_issue             String?
+  correction_document_id String?   @db.Uuid
+  voided_at              DateTime? @db.Timestamptz(6)
+  properties             properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  property_documents     property_documents? @relation(fields: [correction_document_id], references: [id], onUpdate: NoAction)
+
+  @@index([correction_document_id], map: "idx_property_visit_checks_document")
+}
+
+model property_verification_cases {
+  property_id String   @id @db.Uuid
+  state       String
+  claims      Json     @default("[]")
+  opened_at   DateTime @default(now()) @db.Timestamptz(6)
+  registry_reference   String?
+  registry_matches     Boolean?
+  registry_confirmed_at DateTime? @db.Timestamptz(6)
+  judgment             String?
+  state_log            Json     @default("[]")
+  properties  properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// Case-specific field team for physical verification (Connect ops).
+model property_field_teams {
+  property_id         String    @id @db.Uuid
+  team_leader_id      String    @db.Uuid
+  check_in_officer_id String    @db.Uuid
+  visit_day           DateTime  @db.Date
+  assigned_by         String    @db.Uuid
+  brief               String?
+  confirmed_at        DateTime? @db.Timestamptz(6)
+  created_at          DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime  @default(now()) @db.Timestamptz(6)
+  properties          properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  members             property_field_team_members[]
+
+  @@index([team_leader_id], map: "idx_property_field_teams_leader")
+  @@index([check_in_officer_id], map: "idx_property_field_teams_check_in")
+  @@index([visit_day], map: "idx_property_field_teams_visit_day")
+}
+
+model property_field_team_members {
+  property_id String   @db.Uuid
+  user_id     String   @db.Uuid
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  team        property_field_teams @relation(fields: [property_id], references: [property_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([property_id, user_id])
+  @@index([user_id], map: "idx_property_field_team_members_user")
+}
+
+model property_verification_evidence {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  property_id String   @db.Uuid
+  layer       String
+  recorded_at DateTime @default(now()) @db.Timestamptz(6)
+  body        Json
+  properties  properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([property_id, recorded_at], map: "idx_property_verification_evidence_property")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -297,6 +381,7 @@ model property_media {
   file_name     String
   display_order Int?       @default(0)
   is_featured   Boolean?   @default(false)
+  d_hash        String?
   created_at    DateTime?  @default(now()) @db.Timestamptz(6)
   properties    properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
@@ -343,6 +428,12 @@ model users {
   role                     UserRole                   @default(user)
   is_active                Boolean                    @default(true)
   metadata                 Json?                      @default("{}")
+  /// Operating territory for Connect field assignment (Nigerian state name).
+  ops_state                String?
+  /// Operating LGA within ops_state.
+  ops_lga                  String?
+  /// Optional state code (e.g. LA for Lagos).
+  ops_state_code           String?
   created_at               DateTime?                  @default(now()) @db.Timestamptz(6)
   updated_at               DateTime?                  @default(now()) @db.Timestamptz(6)
   deleted_at               DateTime?                  @db.Timestamptz(6)
@@ -352,6 +443,7 @@ model users {
   @@index([deleted_at], map: "idx_users_deleted_at", where: raw("(deleted_at IS NOT NULL)"))
   @@index([email], map: "idx_users_email")
   @@index([role], map: "idx_users_role")
+  @@index([ops_state], map: "idx_users_ops_state", where: raw("(ops_state IS NOT NULL)"))
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -644,6 +736,10 @@ enum UserRole {
   agent
   owner
   admin
+  reviewer
+  supervisor
+  team_leader
+  team_member
 
   @@map("user_role")
 }

@@ -73,7 +73,7 @@ export default async function CMSChatPage() {
 
   return (
     <>
-      <div className="container mx-auto px-4">
+      <div className="w-full max-w-7xl mx-auto">
         <div className="mb-8">
           <Link
             href="/admin/cms"
@@ -88,7 +88,7 @@ export default async function CMSChatPage() {
         </div>
 
         {/* Chat Statistics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
@@ -138,7 +138,7 @@ export default async function CMSChatPage() {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6">
           {/* Active Chats List */}
           <div className="lg:col-span-1">
             <Card className="h-[600px]">

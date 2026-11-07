@@ -79,7 +79,7 @@ export default async function EmailCampaignsPage() {
   return (
     <>
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div>
           <h1 className="text-3xl font-bold">Email Campaigns</h1>
           <p className="text-muted-foreground">
@@ -95,7 +95,7 @@ export default async function EmailCampaignsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">

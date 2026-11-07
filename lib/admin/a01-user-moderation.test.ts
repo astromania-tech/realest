@@ -4,13 +4,17 @@
  */
 /// <reference types="node" />
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import {
   computeSuspensionEndDate,
   isTemporarySuspensionExpired,
   mergeUserMetadataWithModeration,
+  nextDeletedAt,
   nextIsActive,
   nextModerationState,
+  cannotModerateRole,
+  runSuspendSideEffects,
   shouldUnlistNonLiveProperties,
 } from "./user-moderation.ts";
 
@@ -32,6 +36,49 @@ test("[A-01] suspend/ban on already inactive user stay inactive", () => {
 test("[A-01] unsuspend/unban on already active user stay active", () => {
   assert.equal(nextIsActive("unsuspend", true), true);
   assert.equal(nextIsActive("unban", true), true);
+});
+
+test("[A-01] ban sets deleted_at and unban clears it", () => {
+  assert.equal(nextDeletedAt("ban"), "set");
+  assert.equal(nextDeletedAt("unban"), "clear");
+  assert.equal(nextDeletedAt("suspend"), "keep");
+  assert.equal(nextDeletedAt("unsuspend"), "keep");
+});
+
+test("[A-01] an admin account cannot be moderated", () => {
+  assert.equal(cannotModerateRole("admin"), true);
+  assert.equal(cannotModerateRole("owner"), false);
+  assert.equal(cannotModerateRole("agent"), false);
+  assert.equal(cannotModerateRole("user"), false);
+  assert.equal(cannotModerateRole(null), false);
+});
+
+test("[A-01] unlist runs even when releasing visits throws", async () => {
+  const order: string[] = [];
+  await assert.rejects(
+    runSuspendSideEffects({
+      unlist: async () => {
+        order.push("unlist");
+      },
+      releaseVisits: async () => {
+        order.push("release");
+        throw new Error("visit release failed");
+      },
+    }),
+    /visit release failed/,
+  );
+  assert.deepEqual(order, ["unlist", "release"]);
+});
+
+test("[A-01] suspend route refuses admin targets and unlists before visit release", () => {
+  const source = readFileSync("app/api/admin/users/[id]/suspend/route.ts", "utf8");
+  assert.match(source, /cannotModerateRole/);
+  assert.match(source, /status: 403/);
+  assert.equal(source.includes("is modifying another admin account"), false);
+  assert.equal((source.match(/if \(shouldUnlistNonLiveProperties/g) ?? []).length, 1);
+  const unlistAt = source.indexOf("unlist:");
+  const releaseAt = source.indexOf("releaseVisits:");
+  assert.ok(unlistAt > 0 && releaseAt > unlistAt);
 });
 
 test("[A-01] non-live listings are unlisted only on suspend/ban", () => {

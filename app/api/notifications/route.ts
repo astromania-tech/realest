@@ -57,24 +57,28 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get("limit") || "20");
-    const skip = parseInt(searchParams.get("offset") || "0");
+    const limit = Math.min(
+      50,
+      Math.max(1, parseInt(searchParams.get("limit") || "20", 10) || 20),
+    );
+    const skip = Math.max(0, parseInt(searchParams.get("offset") || "0", 10) || 0);
     const unreadOnly = searchParams.get("unread_only") === "true";
 
     const where: Record<string, unknown> = { user_id: user.id };
     if (unreadOnly) where.is_read = false;
 
-    const [notifications, unreadCount] = await Promise.all([
+    const [notifications, unreadCount, total] = await Promise.all([
       prisma.notifications.findMany({
         where,
         orderBy: { created_at: "desc" },
         skip,
         take: limit,
       }),
-      prisma.notifications.count({ where: { user_id: user.id, is_read: false } }),
+      prisma.notifications.count({
+        where: { user_id: user.id, is_read: false },
+      }),
+      prisma.notifications.count({ where }),
     ]);
-
-    const total = await prisma.notifications.count({ where });
 
     return NextResponse.json({
       notifications,

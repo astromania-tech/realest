@@ -67,10 +67,15 @@ export async function GET(
     where.role = { in: audienceFilter.roles };
   }
 
-  const data = await prisma.users.findMany({
-    where: where as any,
-    select: { id: true, email: true, full_name: true },
-  });
+  const [data, total] = await Promise.all([
+    prisma.users.findMany({
+      where: where as any,
+      select: { id: true, email: true, full_name: true },
+      orderBy: { created_at: 'desc' },
+      take: 100,
+    }),
+    prisma.users.count({ where: where as any }),
+  ]);
 
   const recipients = data.map((row) => ({
     email: row.email as string,
@@ -81,7 +86,9 @@ export async function GET(
   return NextResponse.json({
     type: 'db_segment',
     filter: audienceFilter,
-    total: recipients.length,
+    total,
+    preview_limit: 100,
+    truncated: total > recipients.length,
     recipients,
   });
 }

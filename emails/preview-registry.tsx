@@ -25,6 +25,9 @@ import PasswordResetEmail, {
 import SubAdminInvitationEmail, {
   previewProps as subAdminProps,
 } from "./templates/platform/SubAdminInvitationEmail";
+import StaffInvitationEmail, {
+  previewProps as staffInviteProps,
+} from "./templates/platform/StaffInvitationEmail";
 import WaitlistConfirmationEmail, {
   previewProps as waitlistConfirmProps,
 } from "./templates/platform/WaitlistConfirmationEmail";
@@ -256,6 +259,14 @@ export const templateRegistry: TemplateRegistryEntry[] = [
     description: "Invites a new sub-admin to manage the platform",
     subject: SubAdminInvitationEmail.subject(subAdminProps),
     element: <SubAdminInvitationEmail {...subAdminProps} />,
+  },
+  {
+    name: "StaffInvitationEmail",
+    label: "Staff Invitation",
+    category: "platform",
+    description: "Invites a reviewer or field team member",
+    subject: StaffInvitationEmail.subject(staffInviteProps),
+    element: <StaffInvitationEmail {...staffInviteProps} />,
   },
   {
     name: "WaitlistConfirmationEmail",

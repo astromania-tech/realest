@@ -124,7 +124,7 @@ export default function PublicProfilePage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8">
+        <div className="w-full max-w-7xl mx-auto py-4 sm:py-6">
           <div className="flex justify-center items-center py-12">
             <div className="text-muted-foreground">Loading profile...</div>
           </div>
@@ -136,7 +136,7 @@ export default function PublicProfilePage() {
   if (error || !profile) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8">
+        <div className="w-full max-w-7xl mx-auto py-4 sm:py-6">
           <Card className="max-w-2xl mx-auto">
             <CardContent className="py-12 text-center">
               <div className="text-muted-foreground">
@@ -177,7 +177,7 @@ export default function PublicProfilePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full max-w-7xl mx-auto py-4 sm:py-6">
         <div className="max-w-4xl mx-auto">
           {/* Profile Header */}
           <Card className="mb-8">

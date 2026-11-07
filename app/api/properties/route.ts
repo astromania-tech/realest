@@ -3,9 +3,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { prisma, Prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { enqueueTrustRead } from "@/lib/trust/enqueue";
+import { assertListingKyc } from "@/lib/kyc/store";
+import { publicListingWhere } from "@/lib/listings/public-listing";
 import { propertyListingSchema, propertyDraftSchema, propertyDetailsSchema } from "@/lib/validations/property";
 import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
 import { zodToSchema } from "@/lib/openapi/zod-to-schema";
+import { consumeRateLimit } from "@/lib/http/rate-limit";
+import {
+  LISTING_SUBMIT_BUCKET,
+  LISTING_SUBMIT_LIMIT,
+  LISTING_SUBMIT_WINDOW_MS,
+  listingRejectCooldownAllows,
+  listingSubmitRateMessage,
+  rejectCooldownSince,
+} from "@/lib/trust/listing-resubmit-limit";
 
 const searchQuerySchema = z.object({
   query: z.string().optional(),
@@ -191,8 +203,7 @@ export async function GET(request: NextRequest) {
     const validatedSearch = searchQuerySchema.parse(searchData);
     const skip = (validatedSearch.page - 1) * validatedSearch.limit;
 
-    // Build Prisma where clause — only status:live for public search
-    const where: Prisma.propertiesWhereInput = { status: "live" };
+    const where: Prisma.propertiesWhereInput = { ...publicListingWhere };
 
     if (validatedSearch.state) where.state = { contains: validatedSearch.state, mode: "insensitive" };
     if (validatedSearch.city) where.city = { contains: validatedSearch.city, mode: "insensitive" };
@@ -216,10 +227,42 @@ export async function GET(request: NextRequest) {
     const [properties, total] = await Promise.all([
       prisma.properties.findMany({
         where,
-        include: {
-          property_details: true,
-          property_media: { take: 1 },
-          owners: { include: { profiles: { select: { full_name: true, avatar_url: true, phone: true } } } },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          price: true,
+          price_frequency: true,
+          listing_type: true,
+          listing_source: true,
+          property_type: true,
+          address: true,
+          city: true,
+          state: true,
+          country: true,
+          latitude: true,
+          longitude: true,
+          bedrooms: true,
+          bathrooms: true,
+          square_feet: true,
+          status: true,
+          verification_status: true,
+          created_at: true,
+          property_details: {
+            select: { metadata: true },
+            take: 1,
+          },
+          property_media: {
+            select: { media_url: true, media_type: true },
+            take: 1,
+            orderBy: { is_featured: "desc" },
+          },
+          owners: {
+            select: {
+              id: true,
+              profiles: { select: { full_name: true, avatar_url: true } },
+            },
+          },
         },
         orderBy: { created_at: "desc" },
         skip,
@@ -253,7 +296,7 @@ export async function GET(request: NextRequest) {
 export const openApiPOST: OpenApiMetadata = {
   method: 'post',
   summary: 'Create new property listing',
-  description: 'Create a new property listing. Requires owner or agent role. Drafts stay editable; submitted listings are automatically queued for ML validation.',
+    description: 'Create a new property listing. Requires owner or agent role and an approved Youverify kyc_requests row. Drafts stay editable; submitted listings are automatically queued for ML validation.',
   tags: ['Properties'],
   security: [{ bearerAuth: [] }],
   requestBody: {
@@ -300,7 +343,7 @@ export const openApiPOST: OpenApiMetadata = {
       },
     },
     '403': {
-      description: 'Forbidden - user role insufficient',
+      description: 'Forbidden. The caller is not an owner or agent, or Youverify has not approved their identity.',
       content: {
         'application/json': {
           schema: { $ref: '#/components/schemas/Error' },
@@ -344,10 +387,61 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const kyc = await assertListingKyc(user.id, userRow.role);
+    if (!kyc.ok) {
+      return NextResponse.json({ error: kyc.error }, { status: kyc.status });
+    }
+
     const body = await request.json();
     const isDraft = body.status === "draft";
     const validatedData = isDraft ? propertyDraftSchema.parse(body) : propertyListingSchema.parse(body);
     const nextStatus = isDraft ? "draft" : "pending_ml_validation";
+
+    // Non-draft submits: cooldown after repeated rejects + submit rate limit
+    if (!isDraft) {
+      const ownerRec = await prisma.owners.findUnique({
+        where: { profile_id: user.id },
+        select: { id: true },
+      });
+      const agentRec = await prisma.agents.findUnique({
+        where: { profile_id: user.id },
+        select: { id: true },
+      });
+      const ownershipFilters = [
+        ...(ownerRec ? [{ owner_id: ownerRec.id }] : []),
+        ...(agentRec ? [{ agent_id: agentRec.id }] : []),
+      ];
+      const rejectedInWindow =
+        ownershipFilters.length === 0
+          ? 0
+          : await prisma.properties.count({
+              where: {
+                status: "rejected",
+                updated_at: { gte: rejectCooldownSince() },
+                OR: ownershipFilters,
+              },
+            });
+      const cooldown = listingRejectCooldownAllows(rejectedInWindow);
+      if (!cooldown.ok) {
+        return NextResponse.json(
+          { error: cooldown.error, code: cooldown.code },
+          { status: 429 },
+        );
+      }
+
+      const rate = await consumeRateLimit({
+        bucket: LISTING_SUBMIT_BUCKET,
+        subject: user.id,
+        limit: LISTING_SUBMIT_LIMIT,
+        windowMs: LISTING_SUBMIT_WINDOW_MS,
+      });
+      if (!rate.allowed) {
+        return NextResponse.json(
+          { error: listingSubmitRateMessage(), code: "submit_rate" },
+          { status: 429 },
+        );
+      }
+    }
 
     // Duplicate check (skip for drafts)
     if (!isDraft) {
@@ -453,6 +547,14 @@ export async function POST(request: NextRequest) {
       });
     } catch (detailsError) {
       console.error("Property details creation error:", detailsError);
+    }
+
+    if (!isDraft) {
+      try {
+        await enqueueTrustRead(property.id, user.id);
+      } catch (queueError) {
+        console.error("Trust read queue error:", queueError);
+      }
     }
 
     return NextResponse.json(

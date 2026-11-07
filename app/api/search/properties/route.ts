@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma, Prisma } from "@/lib/prisma";
 import { z } from "zod";
 import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
+import { publicListingWhere } from "@/lib/listings/public-listing";
 
 const searchSchema = z.object({
   query: z.string().optional(),
@@ -193,10 +194,7 @@ export async function GET(request: NextRequest) {
 
     const validatedSearch = searchSchema.parse(searchData);
 
-    const where: Prisma.propertiesWhereInput = {
-      verification_status: "verified",
-      status: "live",
-    };
+    const where: Prisma.propertiesWhereInput = { ...publicListingWhere };
 
     if (validatedSearch.state) {
       where.state = { contains: validatedSearch.state, mode: "insensitive" };
@@ -254,11 +252,48 @@ export async function GET(request: NextRequest) {
     const [rawProperties, total] = await Promise.all([
       prisma.properties.findMany({
         where,
-        include: {
-          property_details: true,
-          property_media: { take: 1, orderBy: { is_featured: "desc" } },
-          owners: { include: { profiles: { select: { full_name: true, avatar_url: true, phone: true } } } },
-          agents: { include: { profiles: { select: { full_name: true, avatar_url: true, phone: true } } } },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          price: true,
+          price_frequency: true,
+          listing_type: true,
+          listing_source: true,
+          property_type: true,
+          address: true,
+          city: true,
+          state: true,
+          country: true,
+          latitude: true,
+          longitude: true,
+          bedrooms: true,
+          bathrooms: true,
+          square_feet: true,
+          status: true,
+          verification_status: true,
+          created_at: true,
+          property_details: {
+            select: { metadata: true },
+            take: 1,
+          },
+          property_media: {
+            select: { media_url: true, media_type: true },
+            take: 1,
+            orderBy: { is_featured: "desc" },
+          },
+          owners: {
+            select: {
+              id: true,
+              profiles: { select: { full_name: true, avatar_url: true } },
+            },
+          },
+          agents: {
+            select: {
+              id: true,
+              profiles: { select: { full_name: true, avatar_url: true } },
+            },
+          },
         },
         orderBy,
         skip,
@@ -313,13 +348,11 @@ export async function GET(request: NextRequest) {
           id: p.owners.id,
           full_name: p.owners.profiles?.full_name ?? null,
           avatar_url: p.owners.profiles?.avatar_url ?? null,
-          phone: p.owners.profiles?.phone ?? null,
         } : null,
         agent: p.agents ? {
           id: p.agents.id,
           full_name: p.agents.profiles?.full_name ?? null,
           avatar_url: p.agents.profiles?.avatar_url ?? null,
-          phone: p.agents.profiles?.phone ?? null,
         } : null,
       };
     });

@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums"
-import type * as Prisma from "../internal/prismaNamespace"
+import type * as $Enums from "../enums.ts"
+import type * as Prisma from "../internal/prismaNamespace.ts"
 
 /**
  * Model property_details
@@ -258,7 +258,7 @@ export type Property_detailsGroupByOutputType = {
   _max: Property_detailsMaxAggregateOutputType | null
 }
 
-export type GetProperty_detailsGroupByPayload<T extends property_detailsGroupByArgs> = Prisma.PrismaPromise<
+type GetProperty_detailsGroupByPayload<T extends property_detailsGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<Property_detailsGroupByOutputType, T['by']> &
       {
@@ -1534,11 +1534,6 @@ export type property_detailsFindManyArgs<ExtArgs extends runtime.Types.Extension
    * Skip the first `n` property_details.
    */
   skip?: number
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-   * 
-   * Filter by unique combinations of property_details.
-   */
   distinct?: Prisma.Property_detailsScalarFieldEnum | Prisma.Property_detailsScalarFieldEnum[]
 }
 

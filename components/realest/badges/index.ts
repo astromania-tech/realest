@@ -70,3 +70,5 @@ export {
   type PropertyTypeBadgeProps,
   type PropertyType,
 } from "./PropertyTypeBadge";
+
+export { VerifiedPersonBadge } from "./VerifiedPersonBadge";

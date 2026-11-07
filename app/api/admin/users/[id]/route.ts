@@ -52,65 +52,77 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // Count properties and inquiries separately (no Prisma relation on users)
-    const [propCountResult, sentInqCount, receivedInqCount] = await Promise.all([
+    const [
+      propCount,
+      statusGroups,
+      sentInqCount,
+      receivedInqCount,
+      properties,
+      sentInquiries,
+      receivedInquiries,
+    ] = await Promise.all([
       prisma.properties.count({ where: { owner_id: userId } }),
+      prisma.properties.groupBy({
+        by: ['status'],
+        where: { owner_id: userId },
+        _count: { _all: true },
+      }),
       prisma.inquiries.count({ where: { sender_id: userId } }),
       prisma.inquiries.count({ where: { owner_id: userId } }),
+      prisma.properties.findMany({
+        where: { owner_id: userId },
+        select: {
+          id: true,
+          title: true,
+          property_type: true,
+          status: true,
+          price: true,
+          price_frequency: true,
+          state: true,
+          city: true,
+          created_at: true,
+        },
+        orderBy: { created_at: 'desc' },
+        take: 20,
+      }),
+      prisma.inquiries.findMany({
+        where: { sender_id: userId },
+        select: {
+          id: true,
+          property_id: true,
+          message: true,
+          status: true,
+          created_at: true,
+          properties: { select: { title: true, status: true } },
+        },
+        orderBy: { created_at: 'desc' },
+        take: 10,
+      }),
+      prisma.inquiries.findMany({
+        where: { owner_id: userId },
+        select: {
+          id: true,
+          property_id: true,
+          sender_id: true,
+          message: true,
+          status: true,
+          created_at: true,
+          properties: { select: { title: true } },
+          profiles_inquiries_sender_idToprofiles: { select: { full_name: true, email: true } },
+        },
+        orderBy: { created_at: 'desc' },
+        take: 10,
+      }),
     ])
 
-    // Fetch user's properties
-    const properties = await prisma.properties.findMany({
-      where: { owner_id: userId },
-      select: {
-        id: true,
-        title: true,
-        property_type: true,
-        status: true,
-        price: true,
-        price_frequency: true,
-        state: true,
-        city: true,
-        created_at: true,
-      },
-      orderBy: { created_at: 'desc' },
-    })
-    const sentInquiries = await prisma.inquiries.findMany({
-      where: { sender_id: userId },
-      select: {
-        id: true,
-        property_id: true,
-        message: true,
-        status: true,
-        created_at: true,
-        properties: { select: { title: true, status: true } },
-      },
-      orderBy: { created_at: 'desc' },
-      take: 10,
-    })
+    const countFor = (...statuses: string[]) =>
+      statusGroups
+        .filter((row) => statuses.includes(row.status ?? ''))
+        .reduce((sum, row) => sum + row._count._all, 0)
 
-    // Fetch received inquiries (latest 10)
-    const receivedInquiries = await prisma.inquiries.findMany({
-      where: { owner_id: userId },
-      select: {
-        id: true,
-        property_id: true,
-        sender_id: true,
-        message: true,
-        status: true,
-        created_at: true,
-        properties: { select: { title: true } },
-        profiles_inquiries_sender_idToprofiles: { select: { full_name: true, email: true } },
-      },
-      orderBy: { created_at: 'desc' },
-      take: 10,
-    })
-
-    const liveProps = properties.filter((p: any) => p.status === 'live').length
-    const pendingProps = properties.filter((p: any) =>
-      p.status === 'pending_ml_validation' || p.status === 'pending_vetting'
-    ).length
-    const rejectedProps = properties.filter((p: any) => p.status === 'rejected').length
+    const liveProps = countFor('live')
+    const pendingProps = countFor('pending_ml_validation', 'pending_vetting')
+    const rejectedProps = countFor('rejected')
     const accountCreated = targetUser.created_at ?? targetUser.profiles?.created_at
     const accountAgeDays = accountCreated
       ? Math.floor((Date.now() - new Date(accountCreated).getTime()) / (1000 * 60 * 60 * 24))
@@ -124,7 +136,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         updated_at: targetUser.updated_at,
         profile: targetUser.profiles,
         stats: {
-          total_properties: properties.length,
+          total_properties: propCount,
           live_properties: liveProps,
           pending_properties: pendingProps,
           rejected_properties: rejectedProps,
@@ -138,8 +150,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         recent_inquiries_received: receivedInquiries,
         risk_factors: {
           has_rejected_properties: rejectedProps > 0,
-          high_rejection_rate: properties.length > 0 && (rejectedProps / properties.length) > 0.5,
-          inactive_account: accountAgeDays > 30 && properties.length === 0,
+          high_rejection_rate: propCount > 0 && (rejectedProps / propCount) > 0.5,
+          inactive_account: accountAgeDays > 30 && propCount === 0,
         },
       },
     })
