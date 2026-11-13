@@ -1,0 +1,8 @@
+{
+  "name": "RealEST Dev",
+  "postCreateCommand": "curl -sLf --retry 3 https://cli.doppler.com/install.sh | sh && npm install",
+  "remoteEnv": {
+    "DOPPLER_TOKEN": "${localEnv:DOPPLER_TOKEN}"
+  }
+}
+

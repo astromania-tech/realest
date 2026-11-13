@@ -39,6 +39,13 @@ const ROOT = process.env.START_APP_ROOT
 const ENV_LOCAL_PATH = join(ROOT, ".env.local");
 const ENV_EXAMPLE_PATH = join(ROOT, ".env.example");
 
+/**
+ * When Doppler is active it injects all secrets before this process starts.
+ * DOPPLER_CONFIG is always set by `doppler run`, so we use it as the signal.
+ * In that mode we skip reading .env.local entirely.
+ */
+const DOPPLER_ACTIVE = !!process.env.DOPPLER_CONFIG;
+
 type StartArgs = {
   check: boolean;
   install: boolean;
@@ -93,6 +100,8 @@ function loadEnvFile(path: string): EnvMap {
 }
 
 function currentEnv(): EnvMap {
+  // When running under `doppler run`, secrets are already in process.env.
+  if (DOPPLER_ACTIVE) return process.env as EnvMap;
   return mergeEnvSources(loadEnvFile(ENV_LOCAL_PATH), process.env);
 }
 
