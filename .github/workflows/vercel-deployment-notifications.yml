@@ -1,0 +1,33 @@
+name: Vercel Deployment Notifications
+
+on:
+  repository_dispatch:
+    types:
+      - vercel.deployment.ready
+      - vercel.deployment.success
+      - vercel.deployment.error
+      - vercel.deployment.failed
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout workflow version
+        uses: actions/checkout@v4
+
+      - name: Report Vercel deployment
+        run: node scripts/vercel-deployment-notifications.mjs
+        env:
+          GITHUB_EVENT_ACTION: ${{ github.event.action }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          SLACK_WEBHOOK_RELEASES: ${{ secrets.SLACK_WEBHOOK_RELEASES }}
+          SLACK_WEBHOOK_INCIDENTS: ${{ secrets.SLACK_WEBHOOK_INCIDENTS }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL_INCIDENTS: ${{ secrets.SLACK_CHANNEL_INCIDENTS }}

@@ -1,0 +1,8 @@
+# Doppler CLI local setup file — committed to repo, contains no secrets.
+# Tells `doppler setup` which project and config to use automatically.
+# Developers: run `doppler login` once, then `doppler setup` once per clone.
+# See CONTRIBUTING.md for full onboarding steps.
+setup:
+  - project: realest-ng
+    config: develop
+
