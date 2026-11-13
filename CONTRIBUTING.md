@@ -1,5 +1,41 @@
 # Contributing to RealEST
 
+## Running locally
+
+**Prerequisites:** Node.js 20+, [Doppler CLI](https://docs.doppler.com/docs/install-cli)
+
+No `.env` file is needed. Secrets are managed via Doppler. Ask the team lead for workspace access.
+
+```bash
+# 1. Install Doppler CLI and log in (once per machine)
+brew install dopplerhq/cli/doppler   # macOS
+# Linux: https://docs.doppler.com/docs/install-cli
+doppler login
+
+# 2. Clone, setup, install
+git clone https://github.com/x17green/realest.git
+cd realest
+doppler setup    # auto-selects realest-ng / dev_personal from doppler.yaml
+npm install
+
+# 3. Run
+npm run dev
+```
+
+### Mode shortcuts
+
+```bash
+npm run dev:demo         # full app with auth enabled
+npm run dev:coming-soon  # waitlist-only landing page
+npm run dev:full-site    # complete site
+```
+
+### GitHub Codespaces
+
+Add a Codespace secret named `DOPPLER_TOKEN` (scoped to this repo) in your GitHub settings with a Doppler Service Token for the `dev_personal` config. The devcontainer installs Doppler automatically on creation — no further setup needed.
+
+---
+
 ## Workflow
 
 1. Keep changes focused and commit them in logical batches.
