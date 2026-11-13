@@ -21,7 +21,7 @@ brew install dopplerhq/cli/doppler   # macOS
 # Linux: https://docs.doppler.com/docs/install-cli
 doppler login
 
-# Select the realest-ng / dev_personal config from doppler.yaml
+# Select the realest-ng / develop config from doppler.yaml
 doppler setup
 
 # Doppler-backed equivalent
@@ -40,7 +40,7 @@ Append `:local` to these mode shortcuts to run them with Doppler, for example `n
 
 ### GitHub Codespaces
 
-Add a Codespace secret named `DOPPLER_TOKEN` (scoped to this repo) in your GitHub settings with a Doppler Service Token for the `dev_personal` config. The devcontainer installs Doppler automatically on creation. Use the `:local` script variants to load these secrets.
+Add a Codespace secret named `DOPPLER_TOKEN` (scoped to this repo) in your GitHub settings with a Doppler Service Token for the `develop` config. The devcontainer installs Doppler automatically on creation. Use the `:local` script variants to load these secrets.
 
 ---
 
