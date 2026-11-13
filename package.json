@@ -7,9 +7,9 @@
   },
   "scripts": {
     "build": "next build",
-    "build:local": "doppler run -- next build",
+    "build:local": "doppler run -- npm run build",
     "dev": "next dev",
-    "dev:local": "doppler run -- next dev",
+    "dev:local": "doppler run -- npm run dev",
     "dev:coming-soon": "env NEXT_PUBLIC_APP_MODE=coming-soon next dev",
     "dev:coming-soon:local": "doppler run -- env NEXT_PUBLIC_APP_MODE=coming-soon next dev",
     "dev:demo": "env NEXT_PUBLIC_APP_MODE=development next dev",
