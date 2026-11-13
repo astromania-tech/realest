@@ -34,6 +34,20 @@ test("Vercel notifications report deployment outcome with failure logs", () => {
   assert.equal(deploymentOutcome("vercel.deployment.canceled"), null);
 });
 
+test("Vercel notification workflow installs dependencies and runs its TypeScript handler", () => {
+  const workflow = readFileSync(
+    ".github/workflows/vercel-deployment-notifications.yml",
+    "utf8",
+  );
+  assert.match(workflow, /uses:\s*actions\/setup-node@v4/);
+  assert.match(workflow, /run:\s*npm ci/);
+  assert.match(
+    workflow,
+    /run:\s*npx tsx scripts\/vercel-deployment-notifications\.ts/,
+  );
+  assert.doesNotMatch(workflow, /vercel-deployment-notifications\.mjs/);
+});
+
 test("serialized Vercel build logs retain events and redact credentials", () => {
   const events = [
     { type: "stdout", payload: { text: "build started" } },
