@@ -2,24 +2,30 @@
 
 ## Running locally
 
-**Prerequisites:** Node.js 20+, [Doppler CLI](https://docs.doppler.com/docs/install-cli)
-
-No `.env` file is needed. Secrets are managed via Doppler. Ask the team lead for workspace access.
+**Prerequisites:** Node.js 20+. Most scripts run directly and use environment variables from your shell or local environment files. Scripts ending in `:local` load secrets through [Doppler](https://docs.doppler.com/docs/install-cli).
 
 ```bash
-# 1. Install Doppler CLI and log in (once per machine)
+# 1. Install dependencies
+git clone https://github.com/x17green/realest.git
+cd realest
+npm install
+
+# 2. Run directly with your local environment
+npm run dev
+```
+
+To load the team's Doppler secrets instead, install and log in to Doppler once per machine:
+
+```bash
 brew install dopplerhq/cli/doppler   # macOS
 # Linux: https://docs.doppler.com/docs/install-cli
 doppler login
 
-# 2. Clone, setup, install
-git clone https://github.com/x17green/realest.git
-cd realest
-doppler setup    # auto-selects realest-ng / dev_personal from doppler.yaml
-npm install
+# Select the realest-ng / dev_personal config from doppler.yaml
+doppler setup
 
-# 3. Run
-npm run dev
+# Doppler-backed equivalent
+npm run dev:local
 ```
 
 ### Mode shortcuts
@@ -30,9 +36,11 @@ npm run dev:coming-soon  # waitlist-only landing page
 npm run dev:full-site    # complete site
 ```
 
+Append `:local` to these mode shortcuts to run them with Doppler, for example `npm run dev:demo:local`.
+
 ### GitHub Codespaces
 
-Add a Codespace secret named `DOPPLER_TOKEN` (scoped to this repo) in your GitHub settings with a Doppler Service Token for the `dev_personal` config. The devcontainer installs Doppler automatically on creation — no further setup needed.
+Add a Codespace secret named `DOPPLER_TOKEN` (scoped to this repo) in your GitHub settings with a Doppler Service Token for the `dev_personal` config. The devcontainer installs Doppler automatically on creation. Use the `:local` script variants to load these secrets.
 
 ---
 
