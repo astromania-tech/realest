@@ -1,13 +1,15 @@
 {
-	"servers": {
+	"mcpServers": {
 		"heroui": {
+			"type": "stdio",
 			"command": "npx",
 			"args": [
 				"-y",
 				"@heroui/react-mcp@latest"
 			],
-			"env": {},
-			"type": "stdio"
+			"tools": [
+				"*"
+			]
 		},
 		"supabase": {
 			"type": "http",
