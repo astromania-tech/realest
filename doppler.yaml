@@ -4,5 +4,5 @@
 # See CONTRIBUTING.md for full onboarding steps.
 setup:
   - project: realest-ng
-    config: dev_personal
+    config: develop
 
