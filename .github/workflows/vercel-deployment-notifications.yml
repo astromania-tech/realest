@@ -19,8 +19,17 @@ jobs:
       - name: Checkout workflow version
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
       - name: Report Vercel deployment
-        run: node scripts/vercel-deployment-notifications.mjs
+        run: npx tsx scripts/vercel-deployment-notifications.ts
         env:
           GITHUB_EVENT_ACTION: ${{ github.event.action }}
           GITHUB_EVENT_PATH: ${{ github.event_path }}
