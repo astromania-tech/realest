@@ -167,11 +167,14 @@ async function slackApi(
   if (!isRecord(result)) {
     throw new Error(`Slack ${method} returned an invalid response.`);
   }
-  if (result.ok !== true) {
-    throw new Error(`Slack ${method} failed: ${result.error ?? response.status}.`);
+  if (!isRecord(result)) {
+    throw new Error(`Slack ${method} returned an invalid response.`);
   }
   if (!response.ok) {
     throw new Error(`Slack ${method} failed with HTTP ${response.status}.`);
+  }
+  if (result.ok !== true) {
+    throw new Error(`Slack ${method} failed: ${result.error ?? response.status}.`);
   }
 }
 
