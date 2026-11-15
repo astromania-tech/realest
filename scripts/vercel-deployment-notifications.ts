@@ -12,7 +12,7 @@ type VercelDeploymentPayload = {
 };
 type RepositoryDispatchEvent = {
   action?: string;
-  client_payload?: VercelDeploymentPayload;
+  client_payload?: unknown;
 };
 
 const SUCCESS_EVENTS = new Set([
@@ -37,6 +37,42 @@ export function deploymentOutcome(eventType: string | undefined): DeploymentOutc
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
+}
+
+function stringValue(...values: unknown[]): string | undefined {
+  return values.find((value): value is string => typeof value === "string" && value.length > 0);
+}
+
+function normalizeDeploymentPayload(value: unknown): VercelDeploymentPayload {
+  if (!isRecord(value)) {
+    throw new Error("Vercel deployment event is missing its payload.");
+  }
+
+  const payload = isRecord(value.payload) ? value.payload : value;
+  const deployment = isRecord(payload.deployment) ? payload.deployment : {};
+  const project = isRecord(payload.project) ? payload.project : {};
+  const meta = isRecord(deployment.meta) ? deployment.meta : {};
+  const git = isRecord(payload.git) ? payload.git : {};
+  const id = stringValue(deployment.id, payload.id);
+
+  if (!id) {
+    throw new Error("Vercel deployment event is missing its deployment ID.");
+  }
+
+  return {
+    id,
+    project: {
+      id: stringValue(project.id),
+      name: stringValue(project.name, deployment.name),
+    },
+    environment: stringValue(payload.environment, payload.target, deployment.target),
+    url: stringValue(payload.url, deployment.url),
+    git: {
+      ref: stringValue(git.ref, meta.githubCommitRef, meta.gitlabCommitRef, meta.bitbucketCommitRef),
+      sha: stringValue(git.sha, meta.githubCommitSha, meta.gitlabCommitSha, meta.bitbucketCommitSha),
+      shortSha: stringValue(git.shortSha),
+    },
+  };
 }
 
 function redactValue(
@@ -256,19 +292,16 @@ export async function notifyDeployment(
   const outcome = deploymentOutcome(eventType);
   if (!outcome || !eventType) return;
 
-  const payload = event.client_payload;
   if (!projectId) {
     throw new Error("Missing required environment variable: VERCEL_PROJECT_ID");
   }
-  if (!payload || !payload.project?.id) {
+  const payload = normalizeDeploymentPayload(event.client_payload);
+  if (!payload.project?.id) {
     throw new Error("Vercel deployment event is missing its project ID.");
   }
   if (payload.project.id !== projectId) {
     console.log("Ignoring Vercel dispatch for a project that is not configured.");
     return;
-  }
-  if (typeof payload.id !== "string" || !payload.id) {
-    throw new Error("Vercel deployment event is missing its deployment ID.");
   }
 
   const metadata = deploymentMetadata(payload);
