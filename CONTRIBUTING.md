@@ -53,13 +53,15 @@ To enable notifications:
    - `VERCEL_PROJECT_ID`: ID of the Vercel project to monitor.
    - `VERCEL_TEAM_ID`: Vercel team ID that owns the project.
    - `VERCEL_TOKEN`: Vercel token with access to read this project's deployment build events.
-   - `SLACK_BOT_TOKEN`: Slack bot token with the `files:write` scope.
+   - `SLACK_CLIENT_ID` and `SLACK_CLIENT_SECRET`: Slack app OAuth credentials.
+   - `SLACK_REFRESH_TOKEN`: Rotating bot OAuth refresh token for an installation that grants `files:write`.
+   - `GH_ACTIONS_SECRETS_TOKEN`: Fine-grained GitHub token with Actions secrets read/write access to this repository. The workflow uses it to save Slack's rotated refresh token as the `SLACK_REFRESH_TOKEN` secret.
    - `SLACK_CHANNEL_INCIDENTS`: Slack channel ID for `#realest-incidents`; invite the bot to this channel.
    - `SLACK_WEBHOOK_INCIDENTS`: Existing incident webhook, used if log collection or upload fails.
    - `SLACK_WEBHOOK_RELEASES`: Existing release webhook for concise success notices.
-3. Vercel dispatches the project's `ready`, `success`, `error`, and `failed` events to GitHub. Preview-ready and production-success events send a status notice; failure/error events attach the available build log.
+3. Vercel dispatches the project's `ready`, `success`, `error`, and `failed` events to GitHub. Preview-ready and production-success events send a status notice; failure/error events refresh the Slack OAuth token, persist the rotated refresh token to GitHub Actions secrets, and attach the available build log.
 
-The handler accepts Vercel's webhook-style payload and reads the deployment ID from `payload.deployment.id`. It also supports the earlier flat payload format, where the deployment ID is in `client_payload.id`.
+The handler accepts Vercel's webhook-style payload and reads the deployment ID from `payload.deployment.id`. It also supports the earlier flat payload format, where the deployment ID is in `client_payload.id`. Slack token rotation must be enabled for the app, and the refresh token must belong to the installed bot with `files:write` granted.
 
 Build output can contain sensitive values even after common credential patterns are redacted. Keep the incident channel restricted and review its access before enabling uploads. This workflow covers build/deployment outcomes; it does not collect runtime logs from an already deployed application.
 

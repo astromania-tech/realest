@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import sodium from "libsodium-wrappers";
 import test from "node:test";
 import {
   deploymentOutcome,
@@ -26,6 +27,11 @@ test("Vercel notifications report deployment outcome with failure logs", () => {
   assert.match(workflow, /repository_dispatch/);
   assert.match(workflow, /vercel\.deployment\.ready/);
   assert.match(workflow, /vercel\.deployment\.error/);
+  assert.match(workflow, /SLACK_CLIENT_ID: \$\{\{ secrets\.SLACK_CLIENT_ID \}\}/);
+  assert.match(workflow, /SLACK_CLIENT_SECRET: \$\{\{ secrets\.SLACK_CLIENT_SECRET \}\}/);
+  assert.match(workflow, /SLACK_REFRESH_TOKEN: \$\{\{ secrets\.SLACK_REFRESH_TOKEN \}\}/);
+  assert.match(workflow, /GH_ACTIONS_SECRETS_TOKEN: \$\{\{ secrets\.GH_ACTIONS_SECRETS_TOKEN \}\}/);
+  assert.doesNotMatch(workflow, /SLACK_BOT_TOKEN/);
 
   assert.equal(deploymentOutcome("vercel.deployment.ready"), "success");
   assert.equal(deploymentOutcome("vercel.deployment.success"), "success");
@@ -78,7 +84,11 @@ test("failed deployment fetches complete Vercel logs and uploads a redacted file
   const env = {
     VERCEL_TEAM_ID: "team_test",
     VERCEL_TOKEN: "vercel-token-test",
-    SLACK_BOT_TOKEN: "slack-token-test",
+    SLACK_CLIENT_ID: "slack-client-id",
+    SLACK_CLIENT_SECRET: "slack-client-secret",
+    SLACK_REFRESH_TOKEN: "slack-refresh-token",
+    GH_ACTIONS_SECRETS_TOKEN: "github-actions-token",
+    GITHUB_REPOSITORY: "astromania-tech/realest",
     SLACK_WEBHOOK_INCIDENTS: "https://hooks.slack.invalid/incidents",
     SLACK_WEBHOOK_RELEASES: "https://hooks.slack.invalid/releases",
     SLACK_CHANNEL_INCIDENTS: "C_INCIDENTS",
@@ -88,6 +98,8 @@ test("failed deployment fetches complete Vercel logs and uploads a redacted file
   );
   const originalFetch = globalThis.fetch;
   const requests: { url: URL; init?: RequestInit; body?: string }[] = [];
+  await sodium.ready;
+  const keyPair = sodium.crypto_box_keypair();
 
   for (const [key, value] of Object.entries(env)) process.env[key] = value;
   globalThis.fetch = async (input, init) => {
@@ -96,11 +108,52 @@ test("failed deployment fetches complete Vercel logs and uploads a redacted file
     requests.push(request);
     if (url.hostname === "api.vercel.com") {
       return new Response(
-        JSON.stringify([{ type: "stderr", text: "TOKEN=build-secret-value" }]),
+        JSON.stringify([{
+          type: "stderr",
+          text: "TOKEN=build-secret-value CLIENT_SECRET=slack-client-secret REFRESH_TOKEN=slack-refresh-token ACCESS_TOKEN=slack-access-token GH_ACTIONS_SECRETS_TOKEN=github-actions-token",
+        }]),
         { headers: { "content-type": "application/json" } },
       );
     }
+    if (url.pathname === "/api/oauth.v2.access") {
+      assert.equal(new URLSearchParams(String(init?.body)).get("grant_type"), "refresh_token");
+      assert.equal(new URLSearchParams(String(init?.body)).get("refresh_token"), "slack-refresh-token");
+      assert.match(String(new Headers(init?.headers).get("authorization")), /^Basic /);
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          access_token: "slack-access-token",
+          refresh_token: "slack-refresh-token-rotated",
+          scope: "files:write",
+          token_type: "bot",
+        }),
+        { headers: { "content-type": "application/json" } },
+      );
+    }
+    if (url.pathname.endsWith("/actions/secrets/public-key")) {
+      assert.equal(
+        new Headers(init?.headers).get("authorization"),
+        "Bearer github-actions-token",
+      );
+      return new Response(
+        JSON.stringify({
+          key: sodium.to_base64(keyPair.publicKey, sodium.base64_variants.ORIGINAL),
+          key_id: "github-key-id",
+        }),
+        { headers: { "content-type": "application/json" } },
+      );
+    }
+    if (url.pathname.endsWith("/actions/secrets/SLACK_REFRESH_TOKEN")) {
+      assert.equal(init?.method, "PUT");
+      assert.equal(
+        new Headers(init?.headers).get("authorization"),
+        "Bearer github-actions-token",
+      );
+      request.body = String(init?.body);
+      return new Response(null, { status: 204 });
+    }
     if (url.pathname === "/api/files.getUploadURLExternal") {
+      assert.equal(new Headers(init?.headers).get("authorization"), "Bearer slack-access-token");
       return new Response(
         JSON.stringify({
           ok: true,
@@ -115,6 +168,7 @@ test("failed deployment fetches complete Vercel logs and uploads a redacted file
       return new Response("ok");
     }
     if (url.pathname === "/api/files.completeUploadExternal") {
+      assert.equal(new Headers(init?.headers).get("authorization"), "Bearer slack-access-token");
       request.body = String(init?.body);
       return new Response(JSON.stringify({ ok: true }), {
         headers: { "content-type": "application/json" },
@@ -160,10 +214,23 @@ test("failed deployment fetches complete Vercel logs and uploads a redacted file
   assert.equal(vercelRequest.url.searchParams.get("builds"), "1");
   assert.equal(vercelRequest.url.searchParams.get("teamId"), "team_test");
 
+  const secretUpdate = requests.find((request) => request.url.pathname.endsWith("/actions/secrets/SLACK_REFRESH_TOKEN"));
+  assert.ok(secretUpdate?.body);
+  const secretPayload = JSON.parse(secretUpdate.body);
+  const decryptedRefreshToken = sodium.crypto_box_seal_open(
+    sodium.from_base64(secretPayload.encrypted_value, sodium.base64_variants.ORIGINAL),
+    keyPair.publicKey,
+    keyPair.privateKey,
+  );
+  assert.equal(sodium.to_string(decryptedRefreshToken), "slack-refresh-token-rotated");
+
   const uploaded = requests.find((request) => request.url.hostname === "upload.slack.invalid");
   assert.ok(uploaded?.body);
   assert.match(uploaded.body, /stderr/);
-  assert.doesNotMatch(uploaded.body, /build-secret-value/);
+  assert.doesNotMatch(
+    uploaded.body,
+    /build-secret-value|slack-client-secret|slack-refresh-token|slack-access-token|github-actions-token/,
+  );
   assert.match(uploaded.url.href, /upload\.slack\.invalid/);
 
   const completed = requests.find((request) => request.url.pathname === "/api/files.completeUploadExternal");
