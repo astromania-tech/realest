@@ -59,6 +59,8 @@ To enable notifications:
    - `SLACK_WEBHOOK_RELEASES`: Existing release webhook for concise success notices.
 3. Vercel dispatches the project's `ready`, `success`, `error`, and `failed` events to GitHub. Preview-ready and production-success events send a status notice; failure/error events attach the available build log.
 
+The handler accepts Vercel's webhook-style payload and reads the deployment ID from `payload.deployment.id`. It also supports the earlier flat payload format, where the deployment ID is in `client_payload.id`.
+
 Build output can contain sensitive values even after common credential patterns are redacted. Keep the incident channel restricted and review its access before enabling uploads. This workflow covers build/deployment outcomes; it does not collect runtime logs from an already deployed application.
 
 ---
