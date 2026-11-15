@@ -128,10 +128,18 @@ test("failed deployment fetches complete Vercel logs and uploads a redacted file
       {
         action: "vercel.deployment.error",
         client_payload: {
-          id: "dpl_test",
-          project: { id: "prj_test", name: "realest" },
-          environment: "preview",
-          git: { ref: "feature/test", sha: "abcdef1234567890" },
+          id: "evt_test",
+          payload: {
+            deployment: {
+              id: "dpl_test",
+              target: "preview",
+              meta: {
+                githubCommitRef: "feature/test",
+                githubCommitSha: "abcdef1234567890",
+              },
+            },
+            project: { id: "prj_test", name: "realest" },
+          },
         },
       },
       "prj_test",
@@ -146,6 +154,8 @@ test("failed deployment fetches complete Vercel logs and uploads a redacted file
 
   const vercelRequest = requests.find((request) => request.url.hostname === "api.vercel.com");
   assert.ok(vercelRequest);
+  assert.match(vercelRequest.url.pathname, /\/deployments\/dpl_test\/events$/);
+  assert.doesNotMatch(vercelRequest.url.pathname, /evt_test/);
   assert.equal(vercelRequest.url.searchParams.get("limit"), "-1");
   assert.equal(vercelRequest.url.searchParams.get("builds"), "1");
   assert.equal(vercelRequest.url.searchParams.get("teamId"), "team_test");
