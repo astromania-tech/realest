@@ -36,7 +36,10 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          SLACK_CLIENT_ID: ${{ secrets.SLACK_CLIENT_ID }}
+          SLACK_CLIENT_SECRET: ${{ secrets.SLACK_CLIENT_SECRET }}
+          SLACK_REFRESH_TOKEN: ${{ secrets.SLACK_REFRESH_TOKEN }}
+          GH_ACTIONS_SECRETS_TOKEN: ${{ secrets.GH_ACTIONS_SECRETS_TOKEN }}
+          SLACK_CHANNEL_INCIDENTS: ${{ secrets.SLACK_CHANNEL_INCIDENTS }}
           SLACK_WEBHOOK_RELEASES: ${{ secrets.SLACK_WEBHOOK_RELEASES }}
           SLACK_WEBHOOK_INCIDENTS: ${{ secrets.SLACK_WEBHOOK_INCIDENTS }}
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          SLACK_CHANNEL_INCIDENTS: ${{ secrets.SLACK_CHANNEL_INCIDENTS }}

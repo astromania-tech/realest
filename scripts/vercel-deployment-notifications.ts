@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import { resolve } from "node:path";
+import { updateGitHubActionsSecret } from "../lib/github/actions-secrets";
 
 type DeploymentOutcome = "success" | "failure";
 type VercelDeploymentPayload = {
@@ -190,11 +191,12 @@ async function getBuildEvents(payload: VercelDeploymentPayload): Promise<unknown
 async function slackApi(
   method: string,
   body: Record<string, unknown>,
+  accessToken: string,
 ): Promise<void> {
   const response = await fetch(`https://slack.com/api/${method}`, {
     method: "POST",
     headers: {
-      authorization: `Bearer ${requiredEnv("SLACK_BOT_TOKEN")}`,
+      authorization: `Bearer ${accessToken}`,
       "content-type": "application/json",
     },
     body: JSON.stringify(body),
@@ -206,18 +208,77 @@ async function slackApi(
   if (!response.ok) {
     throw new Error(`Slack ${method} failed with HTTP ${response.status}.`);
   }
-  if (!response.ok) {
-    throw new Error(`Slack ${method} failed with HTTP ${response.status}.`);
-  }
   if (result.ok !== true) {
     throw new Error(`Slack ${method} failed: ${result.error ?? response.status}.`);
   }
+}
+
+async function updateGitHubSecret(name: string, value: string): Promise<void> {
+  const [owner, repository, ...extra] = requiredEnv("GITHUB_REPOSITORY").split("/");
+  if (!owner || !repository || extra.length > 0) {
+    throw new Error("GITHUB_REPOSITORY must contain an owner and repository.");
+  }
+
+  await updateGitHubActionsSecret({
+    owner,
+    repository,
+    name,
+    value,
+    token: requiredEnv("GH_ACTIONS_SECRETS_TOKEN"),
+  });
+}
+
+async function refreshSlackAccessToken(): Promise<{
+  accessToken: string;
+  refreshToken: string;
+}> {
+  const response = await fetch("https://slack.com/api/oauth.v2.access", {
+    method: "POST",
+    headers: {
+      authorization: `Basic ${Buffer.from(
+        `${requiredEnv("SLACK_CLIENT_ID")}:${requiredEnv("SLACK_CLIENT_SECRET")}`,
+      ).toString("base64")}`,
+      "content-type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({
+      grant_type: "refresh_token",
+      refresh_token: requiredEnv("SLACK_REFRESH_TOKEN"),
+    }),
+  });
+  const result: unknown = await response.json();
+  if (!isRecord(result)) {
+    throw new Error("Slack OAuth token refresh returned an invalid response.");
+  }
+  if (!response.ok || result.ok !== true) {
+    throw new Error(`Slack OAuth token refresh failed: ${result.error ?? response.status}.`);
+  }
+  if (typeof result.access_token !== "string" || typeof result.refresh_token !== "string") {
+    throw new Error("Slack OAuth token refresh did not return rotated tokens.");
+  }
+
+  await updateGitHubSecret("SLACK_REFRESH_TOKEN", result.refresh_token);
+  if (result.token_type !== "bot") {
+    throw new Error("Slack OAuth token refresh did not return a bot access token.");
+  }
+  if (
+    typeof result.scope !== "string" ||
+    !result.scope.split(",").some((scope) => scope.trim() === "files:write")
+  ) {
+    throw new Error("Refreshed Slack token is missing the files:write scope.");
+  }
+
+  return {
+    accessToken: result.access_token,
+    refreshToken: result.refresh_token,
+  };
 }
 
 async function uploadBuildLog(
   payload: VercelDeploymentPayload,
   eventType: string,
   events: unknown[],
+  accessToken: string,
+  refreshToken: string,
 ): Promise<void> {
   const filenameParts = [
     payload.project?.name,
@@ -233,7 +294,11 @@ async function uploadBuildLog(
   const file = Buffer.from(
     serializeBuildEvents(events, [
       process.env.VERCEL_TOKEN,
-      process.env.SLACK_BOT_TOKEN,
+      process.env.SLACK_CLIENT_SECRET,
+      process.env.SLACK_REFRESH_TOKEN,
+      process.env.GH_ACTIONS_SECRETS_TOKEN,
+      accessToken,
+      refreshToken,
       process.env.SLACK_WEBHOOK_INCIDENTS,
       process.env.SLACK_WEBHOOK_RELEASES,
     ]),
@@ -243,7 +308,7 @@ async function uploadBuildLog(
   const uploadRequest = await fetch("https://slack.com/api/files.getUploadURLExternal", {
     method: "POST",
     headers: {
-      authorization: `Bearer ${requiredEnv("SLACK_BOT_TOKEN")}`,
+      authorization: `Bearer ${accessToken}`,
       "content-type": "application/x-www-form-urlencoded",
     },
     body: new URLSearchParams({
@@ -281,7 +346,7 @@ async function uploadBuildLog(
       deploymentMetadata(payload),
       "The attached JSON contains the available Vercel build events. Review it in the restricted incident channel; logs can contain sensitive build output.",
     ].join("\n"),
-  });
+  }, accessToken);
 }
 
 export async function notifyDeployment(
@@ -315,7 +380,8 @@ export async function notifyDeployment(
 
   try {
     const events = await getBuildEvents(payload);
-    await uploadBuildLog(payload, eventType, events);
+    const { accessToken, refreshToken } = await refreshSlackAccessToken();
+    await uploadBuildLog(payload, eventType, events, accessToken, refreshToken);
   } catch (error) {
     const details = error instanceof Error ? error.message : "Unknown log collection error.";
     try {
