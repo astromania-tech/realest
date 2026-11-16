@@ -44,7 +44,7 @@ Add a Codespace secret named `DOPPLER_TOKEN` (scoped to this repo) in your GitHu
 
 ### Vercel deployment notifications
 
-The `Vercel Deployment Notifications` workflow reports successful Preview/Production deployments to `#realest-releases`. For failed builds, it retrieves all build events available from Vercel, redacts common credential patterns, and uploads the JSON log to `#realest-incidents`. If log retrieval or upload fails, it sends a fallback incident message. Messages intentionally do not include Vercel deployment URLs.
+The `Vercel Deployment Notifications` workflow reports successful Preview/Production deployments to `#realest-releases`. For failed builds, it retrieves all build events available from Vercel, redacts common credential patterns, and uploads a timestamped text summary plus the complete redacted JSON event data to `#realest-incidents`. The Slack message highlights the deployment, branch, commit, event counts, and first available failure detail. If log retrieval or upload fails, it sends a fallback incident message. Messages intentionally do not include Vercel deployment URLs.
 
 To enable notifications:
 
