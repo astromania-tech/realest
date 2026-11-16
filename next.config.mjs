@@ -1,11 +1,4 @@
 /** @type {import('next').NextConfig} */
-if (
-  process.env.VERCEL_ENV === 'preview' &&
-  process.env.VERCEL_GIT_COMMIT_REF === 'test/vercel-failed-preview-logs-20261115'
-) {
-  throw new Error('Intentional Preview build failure for deployment log forwarding test.');
-}
-
 const nextConfig = {
   allowedDevOrigins: [
     '169.254.207.104'
