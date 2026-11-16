@@ -15,6 +15,10 @@ type RepositoryDispatchEvent = {
   action?: string;
   client_payload?: unknown;
 };
+type SlackWebhookAttachment = {
+  color: string;
+  fields: { title: string; value: string; short: boolean }[];
+};
 
 const SUCCESS_EVENTS = new Set([
   "vercel.deployment.ready",
@@ -297,16 +301,71 @@ function formatSlackFailureComment(
   ].join("\n");
 }
 
-async function postSlackWebhook(webhook: string, text: string): Promise<void> {
+async function postSlackWebhook(
+  webhook: string,
+  text: string,
+  attachments?: SlackWebhookAttachment[],
+): Promise<void> {
   const response = await fetch(webhook, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text, ...(attachments ? { attachments } : {}) }),
   });
   const responseText = await response.text();
   if (!response.ok || responseText !== "ok") {
     throw new Error(`Slack webhook failed with HTTP ${response.status}.`);
   }
+}
+
+function formatSlackSuccessNotice(
+  payload: VercelDeploymentPayload,
+  eventType: string,
+): { text: string; attachments: SlackWebhookAttachment[] } {
+  const git = payload.git ?? {};
+  const environment = payload.environment?.toLowerCase();
+  const environmentLabels: Partial<Record<string, string>> = {
+    production: "Production",
+    preview: "Preview",
+  };
+  const environmentLabel = environment
+    ? environmentLabels[environment] ?? metadataValue(payload.environment)
+    : "Vercel";
+  const status = eventType === "vercel.deployment.success" ? "successful" : "ready";
+  const repository = process.env.GITHUB_REPOSITORY;
+  const sha = git.sha;
+  const commitValue = sha ? slackCode(sha) : "unknown";
+  const serverUrl = process.env.GITHUB_SERVER_URL ?? "https://github.com";
+  const repoPattern = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+  let commitLink: string | undefined;
+
+  if (repository && repoPattern.test(repository) && sha) {
+    const commitUrl = new URL(serverUrl);
+    commitUrl.pathname = [
+      commitUrl.pathname.replace(/\/$/, ""),
+      ...repository.split("/").map(encodeURIComponent),
+      "commit",
+      encodeURIComponent(sha),
+    ].join("/");
+    commitLink = `<${commitUrl.toString()}|${metadataValue(sha.slice(0, 12))}>`;
+  }
+
+  return {
+    text: `:rocket: *${environmentLabel} deployment ${status}*`,
+    attachments: [
+      {
+        color: "#2EB886",
+        fields: [
+          { title: "Project", value: slackCode(payload.project?.name), short: true },
+          { title: "Environment", value: slackCode(payload.environment), short: true },
+          { title: "Branch", value: slackCode(git.ref), short: true },
+          { title: "Commit", value: commitLink ?? commitValue, short: true },
+          ...(repository
+            ? [{ title: "Repository", value: slackCode(repository), short: true }]
+            : []),
+        ],
+      },
+    ],
+  };
 }
 
 async function getBuildEvents(payload: VercelDeploymentPayload): Promise<unknown[]> {
@@ -539,10 +598,8 @@ export async function notifyDeployment(
 
   const metadata = deploymentMetadata(payload);
   if (outcome === "success") {
-    await postSlackWebhook(
-      requiredEnv("SLACK_WEBHOOK_RELEASES"),
-      `Vercel deployment ready\n${metadata}`,
-    );
+    const notice = formatSlackSuccessNotice(payload, eventType);
+    await postSlackWebhook(requiredEnv("SLACK_WEBHOOK_RELEASES"), notice.text, notice.attachments);
     return;
   }
 
