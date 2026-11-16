@@ -4,6 +4,7 @@ import sodium from "libsodium-wrappers";
 import test from "node:test";
 import {
   deploymentOutcome,
+  formatReadableBuildLog,
   notifyDeployment,
   serializeBuildEvents,
 } from "../scripts/vercel-deployment-notifications";
@@ -80,6 +81,53 @@ test("serialized Vercel build logs retain events and redact credentials", () => 
   assert.throws(() => serializeBuildEvents([]), /no build log events/);
 });
 
+test("readable build log includes deployment details, failure summary, and timestamped output", () => {
+  const readable = formatReadableBuildLog(
+    {
+      id: "dpl_readable",
+      project: { name: "realest" },
+      environment: "preview",
+      git: { ref: "feature/readable-logs", sha: "abcdef1234567890" },
+    },
+    "vercel.deployment.failed",
+    [
+      {
+        created: Date.parse("2026-11-16T06:00:00.000Z"),
+        type: "stdout",
+        text: "Cloning github.com/example (Branch: test/failed-preview-logs)",
+      },
+      {
+        created: Date.parse("2026-11-16T06:00:01.000Z"),
+        type: "stderr",
+        level: "error",
+        text: "Error: Missing build module",
+      },
+      {
+        created: Date.parse("2026-11-16T06:00:02.000Z"),
+        type: "stderr",
+        level: "error",
+        text: "    at compile (build.js:10:2)",
+      },
+      {
+        created: Date.parse("2026-11-16T06:00:03.000Z"),
+        type: "stderr",
+        level: "warning",
+        text: "Deprecated build option",
+      },
+    ],
+  );
+
+  assert.match(readable, /VERCEL DEPLOYMENT FAILURE/);
+  assert.match(readable, /Deployment ID: dpl_readable/);
+  assert.match(readable, /Environment: preview/);
+  assert.match(readable, /Build events: 4 \(2 errors, 1 warnings\)/);
+  assert.match(readable, /- Error: Missing build module/);
+  assert.doesNotMatch(readable.split("COMPLETE BUILD OUTPUT")[0], /Cloning/);
+  assert.match(readable, /\[2026-11-16T06:00:00\.000Z\] \[INFO\] \[stdout\] Cloning github\.com/);
+  assert.match(readable, /\[2026-11-16T06:00:01\.000Z\] \[ERROR\] \[stderr\] Error: Missing build module/);
+  assert.match(readable, /    at compile \(build\.js:10:2\)/);
+});
+
 test("failed deployment fetches complete Vercel logs and uploads a redacted file to Slack", async () => {
   const env = {
     VERCEL_TEAM_ID: "team_test",
@@ -98,6 +146,19 @@ test("failed deployment fetches complete Vercel logs and uploads a redacted file
   );
   const originalFetch = globalThis.fetch;
   const requests: { url: URL; init?: RequestInit; body?: string }[] = [];
+  const buildEvents = [
+    {
+      created: Date.parse("2026-11-16T06:00:00.000Z"),
+      type: "stdout",
+      text: "Build started",
+    },
+    {
+      created: Date.parse("2026-11-16T06:00:01.000Z"),
+      type: "stderr",
+      level: "error",
+      text: "Error: TOKEN=build-secret-value CLIENT_SECRET=slack-client-secret REFRESH_TOKEN=slack-refresh-token ACCESS_TOKEN=slack-access-token GH_ACTIONS_SECRETS_TOKEN=github-actions-token",
+    },
+  ];
   await sodium.ready;
   const keyPair = sodium.crypto_box_keypair();
 
@@ -108,10 +169,7 @@ test("failed deployment fetches complete Vercel logs and uploads a redacted file
     requests.push(request);
     if (url.hostname === "api.vercel.com") {
       return new Response(
-        JSON.stringify([{
-          type: "stderr",
-          text: "TOKEN=build-secret-value CLIENT_SECRET=slack-client-secret REFRESH_TOKEN=slack-refresh-token ACCESS_TOKEN=slack-access-token GH_ACTIONS_SECRETS_TOKEN=github-actions-token",
-        }]),
+        JSON.stringify(buildEvents),
         { headers: { "content-type": "application/json" } },
       );
     }
@@ -154,11 +212,14 @@ test("failed deployment fetches complete Vercel logs and uploads a redacted file
     }
     if (url.pathname === "/api/files.getUploadURLExternal") {
       assert.equal(new Headers(init?.headers).get("authorization"), "Bearer slack-access-token");
+      const filename = new URLSearchParams(String(init?.body)).get("filename");
+      assert.ok(filename);
+      const fileId = filename.endsWith("-build-summary.txt") ? "F_SUMMARY" : "F_RAW";
       return new Response(
         JSON.stringify({
           ok: true,
-          upload_url: "https://upload.slack.invalid/file",
-          file_id: "F_TEST",
+          upload_url: `https://upload.slack.invalid/${fileId}`,
+          file_id: fileId,
         }),
         { headers: { "content-type": "application/json" } },
       );
@@ -224,20 +285,29 @@ test("failed deployment fetches complete Vercel logs and uploads a redacted file
   );
   assert.equal(sodium.to_string(decryptedRefreshToken), "slack-refresh-token-rotated");
 
-  const uploaded = requests.find((request) => request.url.hostname === "upload.slack.invalid");
-  assert.ok(uploaded?.body);
-  assert.match(uploaded.body, /stderr/);
+  const uploadedFiles = requests.filter((request) => request.url.hostname === "upload.slack.invalid");
+  assert.equal(uploadedFiles.length, 2);
+  const readableFile = uploadedFiles.find((request) => request.url.pathname === "/F_SUMMARY");
+  assert.ok(readableFile?.body);
+  assert.match(readableFile.body, /VERCEL DEPLOYMENT FAILURE/);
+  assert.match(readableFile.body, /Error: TOKEN="\[REDACTED\]"/);
+  assert.match(readableFile.body, /\[2026-11-16T06:00:00\.000Z\] \[INFO\] \[stdout\] Build started/);
+  const rawFile = uploadedFiles.find((request) => request.url.pathname === "/F_RAW");
+  assert.ok(rawFile?.body);
+  assert.match(rawFile.body, /"type": "stderr"/);
   assert.doesNotMatch(
-    uploaded.body,
+    `${readableFile.body}\n${rawFile.body}`,
     /build-secret-value|slack-client-secret|slack-refresh-token|slack-access-token|github-actions-token/,
   );
-  assert.match(uploaded.url.href, /upload\.slack\.invalid/);
 
   const completed = requests.find((request) => request.url.pathname === "/api/files.completeUploadExternal");
   assert.ok(completed);
   const completionBody = JSON.parse(completed.body ?? "{}");
   assert.equal(completionBody.channel_id, "C_INCIDENTS");
-  assert.match(completionBody.initial_comment, /Environment: preview/);
+  assert.equal(completionBody.files.length, 2);
+  assert.match(completionBody.initial_comment, /:rotating_light: \*Vercel deployment failed\*/);
+  assert.match(completionBody.initial_comment, /\*Failure:\* `Error: TOKEN="\[REDACTED\]"/);
+  assert.match(completionBody.initial_comment, /\*Environment:\* `preview`/);
   assert.doesNotMatch(completionBody.initial_comment, /vercel\.app|vercel\.com/);
 });
 
