@@ -138,6 +138,8 @@ export function isRouteAccessible(pathname: string): boolean {
       '/api/referral/resolve',  // Referral code resolve endpoint
       '/api/referral/invite',  // Referral invitation endpoint
       '/api/webhooks/youverify', // Youverify identity callback. Signature is checked in the route.
+      '/api/slack/oauth/start', // Slack OAuth setup; the route requires a RealEST admin.
+      '/api/slack/oauth/callback', // Slack OAuth callback; the route verifies state and admin access.
     ];
     // Allow /api/poll/submission/[id] dynamic routes
     const isPollSubmissionApi = /^\/api\/poll\/submission\/[0-9a-f-]{36}$/i.test(pathname);

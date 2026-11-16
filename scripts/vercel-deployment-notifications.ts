@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import { resolve } from "node:path";
-import sodium from "libsodium-wrappers";
+import { updateGitHubActionsSecret } from "../lib/github/actions-secrets";
 
 type DeploymentOutcome = "success" | "failure";
 type VercelDeploymentPayload = {
@@ -28,6 +28,8 @@ const SENSITIVE_FIELD =
   /(?:secret|token|password|api[_-]?key|private[_-]?key|service[_-]?role[_-]?key|access[_-]?key)/i;
 const SENSITIVE_ASSIGNMENT =
   /(["']?[\w.-]*(?:secret|token|password|api[_-]?key|private[_-]?key|service[_-]?role[_-]?key|access[_-]?key)["']?\s*[=:]\s*)("[^"]*"|'[^']*'|[^\s,;]+)/gi;
+
+type BuildEventSeverity = "ERROR" | "WARN" | "STDERR" | "INFO";
 
 export function deploymentOutcome(eventType: string | undefined): DeploymentOutcome | null {
   if (typeof eventType !== "string") return null;
@@ -125,6 +127,125 @@ export function serializeBuildEvents(
   return `${JSON.stringify(redactValue(events, undefined, secretValues), null, 2)}\n`;
 }
 
+function getEventText(event: unknown): string | undefined {
+  if (!isRecord(event)) return undefined;
+  return stringValue(event.text, event.message);
+}
+
+function getEventSeverity(event: Record<string, unknown>): BuildEventSeverity {
+  const level = typeof event.level === "string" ? event.level.toLowerCase() : "";
+  if (level === "error" || level === "fatal") return "ERROR";
+  if (level === "warning" || level === "warn") return "WARN";
+  if (typeof event.type === "string" && event.type.toLowerCase() === "stderr") {
+    return "STDERR";
+  }
+  return "INFO";
+}
+
+function getEventTimestamp(event: Record<string, unknown>): string {
+  const value = event.created ?? event.date;
+  if (typeof value !== "number" && typeof value !== "string") return "time unknown";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "time unknown" : date.toISOString();
+}
+
+function getFailureDetails(events: unknown[]): string[] {
+  const records = events.filter(isRecord);
+  const getDetails = (candidates: Record<string, unknown>[]) =>
+    candidates.flatMap((event) => {
+      const text = getEventText(event)?.trim();
+      return text ? [text] : [];
+    });
+  const filterDetails = (candidates: string[]) =>
+    [...new Set(candidates)]
+      .filter((text) =>
+        !/^>?\s*Build error occurred\.?$/i.test(text) &&
+        !/^\s*at\s/.test(text),
+      )
+      .slice(0, 5)
+      .map((text) => text.slice(0, 500));
+
+  const explicitErrors = filterDetails(
+    getDetails(records.filter((event) => getEventSeverity(event) === "ERROR")),
+  );
+  if (explicitErrors.length > 0) return explicitErrors;
+
+  return filterDetails(
+    getDetails(
+      records.filter((event) =>
+        /\b(?:error(?:\s|:)|failed\s+(?:to|with|because)|failure(?:\s|:)|exception|cannot)\b/i.test(
+          getEventText(event) ?? "",
+        ),
+      ),
+    ),
+  );
+}
+
+function getEventCounts(events: unknown[]): { errors: number; warnings: number } {
+  return events.reduce<{ errors: number; warnings: number }>(
+    (counts, event) => {
+      if (!isRecord(event)) return counts;
+      const severity = getEventSeverity(event);
+      if (severity === "ERROR") counts.errors += 1;
+      if (severity === "WARN") counts.warnings += 1;
+      return counts;
+    },
+    { errors: 0, warnings: 0 },
+  );
+}
+
+export function formatReadableBuildLog(
+  payload: VercelDeploymentPayload,
+  eventType: string,
+  events: unknown[],
+  secretValues: readonly (string | undefined)[] = [],
+): string {
+  const redacted = redactValue(events, undefined, secretValues);
+  if (!Array.isArray(redacted)) {
+    throw new Error("Vercel build log events could not be formatted.");
+  }
+
+  const safeEvents: unknown[] = redacted;
+  const git = payload.git ?? {};
+  const counts = getEventCounts(safeEvents);
+  const failures = getFailureDetails(safeEvents);
+  const output = safeEvents.flatMap((event) => {
+    if (!isRecord(event)) return [];
+    const text = getEventText(event);
+    if (!text?.trim()) return [];
+    const stream =
+      typeof event.type === "string" ? ` [${metadataValue(event.type)}]` : "";
+    const lines = text.split(/\r?\n/);
+    return [
+      `[${getEventTimestamp(event)}] [${getEventSeverity(event)}]${stream} ${lines[0]}`,
+      ...lines.slice(1).map((line) => `    ${line}`),
+    ];
+  });
+
+  return [
+    "VERCEL DEPLOYMENT FAILURE",
+    "=========================",
+    `Event: ${metadataValue(eventType)}`,
+    `Deployment ID: ${metadataValue(payload.id)}`,
+    `Project: ${metadataValue(payload.project?.name)}`,
+    `Environment: ${metadataValue(payload.environment)}`,
+    `Branch: ${metadataValue(git.ref)}`,
+    `Commit: ${metadataValue(git.sha)}`,
+    `Build events: ${safeEvents.length} (${counts.errors} errors, ${counts.warnings} warnings)`,
+    "",
+    "FAILURE DETAILS",
+    "---------------",
+    ...(failures.length > 0
+      ? failures.map((failure) => `- ${failure}`)
+      : ["No explicit error message was included in the Vercel event stream."]),
+    "",
+    "COMPLETE BUILD OUTPUT",
+    "---------------------",
+    ...(output.length > 0 ? output : ["No readable event text was returned."]),
+    "",
+  ].join("\n");
+}
+
 function requiredEnv(name: string): string {
   const value = process.env[name];
   if (!value) throw new Error(`Missing required environment variable: ${name}`);
@@ -148,6 +269,31 @@ function deploymentMetadata(payload: VercelDeploymentPayload): string {
     `Environment: ${metadataValue(payload.environment)}`,
     `Branch: ${metadataValue(git.ref)}`,
     `Commit: ${metadataValue(sha)}`,
+  ].join("\n");
+}
+
+function slackCode(value: unknown): string {
+  return `\`${metadataValue(value).replace(/`/g, "'")}\``;
+}
+
+function formatSlackFailureComment(
+  payload: VercelDeploymentPayload,
+  eventType: string,
+  events: unknown[],
+  summaryFilename: string,
+  rawFilename: string,
+): string {
+  const counts = getEventCounts(events);
+  const failure = getFailureDetails(events)[0] ?? "No explicit failure detail in Vercel events.";
+  const git = payload.git ?? {};
+  return [
+    ":rotating_light: *Vercel deployment failed*",
+    `*Project:* ${slackCode(payload.project?.name)}  |  *Environment:* ${slackCode(payload.environment)}`,
+    `*Branch:* ${slackCode(git.ref)}  |  *Commit:* ${slackCode(git.sha?.slice(0, 12))}`,
+    `*Event:* ${slackCode(eventType)}  |  *Deployment:* ${slackCode(payload.id)}`,
+    `*Failure:* ${slackCode(failure.slice(0, 400))}`,
+    `*Build output:* ${events.length} events, ${counts.errors} errors, ${counts.warnings} warnings.`,
+    `_Attached: readable log (\`${summaryFilename}\`) and full redacted event data (\`${rawFilename}\`)._`,
   ].join("\n");
 }
 
@@ -219,38 +365,13 @@ async function updateGitHubSecret(name: string, value: string): Promise<void> {
     throw new Error("GITHUB_REPOSITORY must contain an owner and repository.");
   }
 
-  const apiUrl = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repository)}/actions/secrets`;
-  const headers = {
-    accept: "application/vnd.github+json",
-    authorization: `Bearer ${requiredEnv("GH_ACTIONS_SECRETS_TOKEN")}`,
-    "content-type": "application/json",
-    "x-github-api-version": "2022-11-28",
-  };
-  const keyResponse = await fetch(`${apiUrl}/public-key`, { headers });
-  const keyData: unknown = await keyResponse.json();
-  if (!keyResponse.ok || !isRecord(keyData)) {
-    throw new Error(`Could not get the GitHub Actions secret public key (HTTP ${keyResponse.status}).`);
-  }
-  if (typeof keyData.key !== "string" || typeof keyData.key_id !== "string") {
-    throw new Error("GitHub Actions secret public key response is invalid.");
-  }
-
-  await sodium.ready;
-  const encryptedValue = sodium.crypto_box_seal(
-    sodium.from_string(value),
-    sodium.from_base64(keyData.key, sodium.base64_variants.ORIGINAL),
-  );
-  const response = await fetch(`${apiUrl}/${encodeURIComponent(name)}`, {
-    method: "PUT",
-    headers,
-    body: JSON.stringify({
-      encrypted_value: sodium.to_base64(encryptedValue, sodium.base64_variants.ORIGINAL),
-      key_id: keyData.key_id,
-    }),
+  await updateGitHubActionsSecret({
+    owner,
+    repository,
+    name,
+    value,
+    token: requiredEnv("GH_ACTIONS_SECRETS_TOKEN"),
   });
-  if (!response.ok) {
-    throw new Error(`Could not update GitHub Actions secret ${name} (HTTP ${response.status}).`);
-  }
 }
 
 async function refreshSlackAccessToken(): Promise<{
@@ -309,15 +430,15 @@ async function uploadBuildLog(
     payload.project?.name,
     payload.environment,
     payload.git?.shortSha ?? payload.git?.sha?.slice(0, 7),
-    "vercel-build-logs.json",
   ];
-  const filename = filenameParts
+  const filenameBase = filenameParts
     .filter(Boolean)
     .join("-")
     .replace(/[^a-zA-Z0-9._-]/g, "_")
-    .slice(0, 150);
-  const file = Buffer.from(
-    serializeBuildEvents(events, [
+    .slice(0, 120) || "vercel-deployment";
+  const summaryFilename = `${filenameBase}-build-summary.txt`;
+  const rawFilename = `${filenameBase}-build-events.json`;
+  const secretValues = [
       process.env.VERCEL_TOKEN,
       process.env.SLACK_CLIENT_SECRET,
       process.env.SLACK_REFRESH_TOKEN,
@@ -326,51 +447,73 @@ async function uploadBuildLog(
       refreshToken,
       process.env.SLACK_WEBHOOK_INCIDENTS,
       process.env.SLACK_WEBHOOK_RELEASES,
-    ]),
-    "utf8",
-  );
-
-  const uploadRequest = await fetch("https://slack.com/api/files.getUploadURLExternal", {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${accessToken}`,
-      "content-type": "application/x-www-form-urlencoded",
+    ];
+  const redactedEvents = redactValue(events, undefined, secretValues);
+  if (!Array.isArray(redactedEvents)) {
+    throw new Error("Vercel build log events could not be redacted.");
+  }
+  const safeEvents: unknown[] = redactedEvents;
+  const files = [
+    {
+      filename: summaryFilename,
+      content: Buffer.from(
+        formatReadableBuildLog(payload, eventType, safeEvents),
+        "utf8",
+      ),
     },
-    body: new URLSearchParams({
-      filename,
-      length: String(file.byteLength),
-    }),
-  });
-  const uploadData: unknown = await uploadRequest.json();
-  if (!isRecord(uploadData)) {
-    throw new Error("Slack files.getUploadURLExternal returned an invalid response.");
-  }
-  if (!uploadRequest.ok || uploadData.ok !== true) {
-    throw new Error(
-      `Slack files.getUploadURLExternal failed: ${uploadData.error ?? uploadRequest.status}.`,
-    );
-  }
-  if (typeof uploadData.upload_url !== "string" || typeof uploadData.file_id !== "string") {
-    throw new Error("Slack files.getUploadURLExternal returned an invalid upload response.");
-  }
+    {
+      filename: rawFilename,
+      content: Buffer.from(serializeBuildEvents(safeEvents), "utf8"),
+    },
+  ];
+  const uploadedFiles: { id: string; title: string }[] = [];
 
-  const uploadResponse = await fetch(uploadData.upload_url, {
-    method: "POST",
-    headers: { "content-type": "application/octet-stream" },
-    body: file,
-  });
-  if (!uploadResponse.ok) {
-    throw new Error(`Slack file transfer failed with HTTP ${uploadResponse.status}.`);
+  for (const file of files) {
+    const uploadRequest = await fetch("https://slack.com/api/files.getUploadURLExternal", {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        filename: file.filename,
+        length: String(file.content.byteLength),
+      }),
+    });
+    const uploadData: unknown = await uploadRequest.json();
+    if (!isRecord(uploadData)) {
+      throw new Error("Slack files.getUploadURLExternal returned an invalid response.");
+    }
+    if (!uploadRequest.ok || uploadData.ok !== true) {
+      throw new Error(
+        `Slack files.getUploadURLExternal failed: ${uploadData.error ?? uploadRequest.status}.`,
+      );
+    }
+    if (typeof uploadData.upload_url !== "string" || typeof uploadData.file_id !== "string") {
+      throw new Error("Slack files.getUploadURLExternal returned an invalid upload response.");
+    }
+
+    const uploadResponse = await fetch(uploadData.upload_url, {
+      method: "POST",
+      headers: { "content-type": "application/octet-stream" },
+      body: file.content,
+    });
+    if (!uploadResponse.ok) {
+      throw new Error(`Slack file transfer failed with HTTP ${uploadResponse.status}.`);
+    }
+    uploadedFiles.push({ id: uploadData.file_id, title: file.filename });
   }
 
   await slackApi("files.completeUploadExternal", {
-    files: [{ id: uploadData.file_id, title: filename }],
+    files: uploadedFiles,
     channel_id: requiredEnv("SLACK_CHANNEL_INCIDENTS"),
-    initial_comment: [
-      `Vercel deployment failed (${metadataValue(eventType)}).`,
-      deploymentMetadata(payload),
-      "The attached JSON contains the available Vercel build events. Review it in the restricted incident channel; logs can contain sensitive build output.",
-    ].join("\n"),
+    initial_comment: formatSlackFailureComment(
+      payload,
+      eventType,
+      safeEvents,
+      summaryFilename,
+      rawFilename,
+    ),
   }, accessToken);
 }
 
