@@ -311,15 +311,80 @@ test("failed deployment fetches complete Vercel logs and uploads a redacted file
   assert.doesNotMatch(completionBody.initial_comment, /vercel\.app|vercel\.com/);
 });
 
-test("successful deployment sends a concise Slack release notice without the deployment URL", async () => {
+test("successful production deployment sends a formatted Slack release card", async () => {
+  const webhook = "https://hooks.slack.invalid/releases";
+  const previousEnv = {
+    SLACK_WEBHOOK_RELEASES: process.env.SLACK_WEBHOOK_RELEASES,
+    GITHUB_REPOSITORY: process.env.GITHUB_REPOSITORY,
+    GITHUB_SERVER_URL: process.env.GITHUB_SERVER_URL,
+  };
+  const originalFetch = globalThis.fetch;
+  let message:
+    | {
+        text: string;
+        attachments: {
+          color: string;
+          fields: { title: string; value: string }[];
+        }[];
+      }
+    | undefined;
+  process.env.SLACK_WEBHOOK_RELEASES = webhook;
+  process.env.GITHUB_REPOSITORY = "astromania-tech/realest";
+  process.env.GITHUB_SERVER_URL = "https://github.com";
+  globalThis.fetch = async (input, init) => {
+    assert.equal(String(input), webhook);
+    message = JSON.parse(String(init?.body));
+    return new Response("ok");
+  };
+
+  try {
+    await notifyDeployment(
+      {
+        action: "vercel.deployment.success",
+        client_payload: {
+          id: "dpl_test",
+          project: { id: "prj_test", name: "realest" },
+          environment: "production",
+          git: { ref: "main", sha: "abcdef1234567890" },
+          url: "https://private-preview.vercel.app",
+        },
+      },
+      "prj_test",
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+    for (const [key, value] of Object.entries(previousEnv)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+
+  assert.ok(message);
+  assert.equal(message.text, ":rocket: *Production deployment successful*");
+  assert.equal(message.attachments[0].color, "#2EB886");
+  const fields = Object.fromEntries(
+    message.attachments[0].fields.map(({ title, value }) => [title, value]),
+  );
+  assert.equal(fields.Project, "`realest`");
+  assert.equal(fields.Environment, "`production`");
+  assert.equal(fields.Branch, "`main`");
+  assert.equal(
+    fields.Commit,
+    "<https://github.com/astromania-tech/realest/commit/abcdef1234567890|abcdef123456>",
+  );
+  assert.equal(fields.Repository, "`astromania-tech/realest`");
+  assert.doesNotMatch(JSON.stringify(message), /private-preview\.vercel\.app/);
+});
+
+test("ready Preview deployment uses a distinct status in the release notice", async () => {
   const webhook = "https://hooks.slack.invalid/releases";
   const originalWebhook = process.env.SLACK_WEBHOOK_RELEASES;
   const originalFetch = globalThis.fetch;
-  let message = "";
+  let message: { text: string } | undefined;
   process.env.SLACK_WEBHOOK_RELEASES = webhook;
   globalThis.fetch = async (input, init) => {
     assert.equal(String(input), webhook);
-    message = String(init?.body);
+    message = JSON.parse(String(init?.body));
     return new Response("ok");
   };
 
@@ -332,7 +397,6 @@ test("successful deployment sends a concise Slack release notice without the dep
           project: { id: "prj_test", name: "realest" },
           environment: "preview",
           git: { ref: "feature/test", sha: "abcdef1234567890" },
-          url: "https://private-preview.vercel.app",
         },
       },
       "prj_test",
@@ -343,9 +407,7 @@ test("successful deployment sends a concise Slack release notice without the dep
     else process.env.SLACK_WEBHOOK_RELEASES = originalWebhook;
   }
 
-  assert.match(message, /Vercel deployment ready/);
-  assert.match(message, /Environment: preview/);
-  assert.doesNotMatch(message, /private-preview\.vercel\.app/);
+  assert.equal(message?.text, ":rocket: *Preview deployment ready*");
 });
 
 test("deployment notification fails explicitly when the monitored project ID is missing", async () => {
