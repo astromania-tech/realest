@@ -24,6 +24,7 @@ export function middlewareNeedsSession(pathname: string): boolean {
   if (pathname.startsWith("/api/dashboard")) return true;
   if (pathname.startsWith("/api/auth")) return true;
   if (pathname.startsWith("/api/kyc")) return true;
+  if (pathname.startsWith("/api/slack/oauth")) return true;
 
   // Public APIs and marketing pages: skip Auth round-trip.
   return false;

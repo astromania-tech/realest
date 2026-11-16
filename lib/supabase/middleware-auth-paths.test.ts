@@ -11,6 +11,8 @@ test("middlewareNeedsSession is true for guest and protected shells", () => {
   assert.equal(middlewareNeedsSession("/admin/validation"), true);
   assert.equal(middlewareNeedsSession("/api/auth/signup"), true);
   assert.equal(middlewareNeedsSession("/api/admin/users"), true);
+  assert.equal(middlewareNeedsSession("/api/slack/oauth/start"), true);
+  assert.equal(middlewareNeedsSession("/api/slack/oauth/callback"), true);
 });
 
 test("middlewareNeedsSession is false for public APIs and marketing", () => {

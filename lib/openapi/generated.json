@@ -6420,6 +6420,105 @@
         },
         "operationId": "postKycYouverify"
       }
+    },
+    "/api/slack/oauth/callback": {
+      "get": {
+        "method": "get",
+        "summary": "Complete Slack workspace authorization",
+        "description": "Validates the Slack OAuth state, verifies the configured workspace and files:write scope, then stores the rotated refresh token as a GitHub Actions secret. Requires a signed-in RealEST admin session.",
+        "tags": [
+          "Slack"
+        ],
+        "servers": [
+          {
+            "url": "https://app.realest.ng"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "description": "Short-lived authorization code returned by Slack.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": true,
+            "description": "One-time state value issued by the Slack OAuth start endpoint.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Slack authorization completed and refresh token saved",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Authorization was denied or state/code is invalid"
+          },
+          "401": {
+            "description": "Sign in as a RealEST admin"
+          },
+          "403": {
+            "description": "RealEST admin access required"
+          },
+          "404": {
+            "description": "Available only on the production app domain"
+          },
+          "500": {
+            "description": "Slack OAuth setup is not configured"
+          },
+          "502": {
+            "description": "Slack authorization or GitHub secret update failed"
+          }
+        },
+        "operationId": "getSlackOauthCallback"
+      }
+    },
+    "/api/slack/oauth/start": {
+      "get": {
+        "method": "get",
+        "summary": "Start Slack workspace authorization",
+        "description": "Admin-only setup flow. Redirects to Slack to grant files:write for the configured workspace. This endpoint is enabled only on the production app domain.",
+        "tags": [
+          "Slack"
+        ],
+        "servers": [
+          {
+            "url": "https://app.realest.ng"
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to Slack authorization"
+          },
+          "401": {
+            "description": "Sign in as a RealEST admin"
+          },
+          "403": {
+            "description": "RealEST admin access required"
+          },
+          "404": {
+            "description": "Available only on the production app domain"
+          },
+          "500": {
+            "description": "Slack OAuth setup is not configured"
+          }
+        },
+        "operationId": "getSlackOauthStart"
+      }
     }
   },
   "tags": [
@@ -6537,6 +6636,10 @@
     },
     {
       "name": "Kyc"
+    },
+    {
+      "name": "Slack",
+      "description": "Slack OAuth installation and token management"
     }
   ]
 }

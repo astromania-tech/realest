@@ -114,6 +114,7 @@ const TAG_DESCRIPTIONS: Record<string, string> = {
   Referral: "Referral and invite flows",
   Search: "Search endpoints",
   System: "System status, health, and configuration",
+  Slack: "Slack OAuth installation and token management",
   Utility: "Utility endpoints for uploads and related helpers",
   Upload: "Upload and signed URL operations",
   Waitlist: "Waitlist signup and follow-up",
