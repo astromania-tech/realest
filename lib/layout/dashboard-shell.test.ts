@@ -91,6 +91,22 @@ test("dashboard segments expose instant loading UI", () => {
   assert.match(adminLoading, /DashboardPageSkeleton/);
 });
 
+test("version 2 sample screens stay in the repo and hold outside demo mode", () => {
+  const demo = readFileSync("app/(demo)/layout.tsx", "utf8");
+  const analytics = readFileSync("app/analytics/layout.tsx", "utf8");
+  const owner = readFileSync("app/(dashboard)/owner/analytics/page.tsx", "utf8");
+  const setting = readFileSync("app/setting/page.tsx", "utf8");
+  assert.match(demo, /shouldShowDemoPages/);
+  assert.match(demo, /notFound\(\)/);
+  assert.match(analytics, /shouldShowDemoPages/);
+  assert.match(analytics, /PrototypeHold/);
+  assert.match(owner, /PrototypeHold/);
+  assert.match(setting, /PrototypeHold/);
+  assert.equal(existsSync("app/(demo)/design-test/page.tsx"), true);
+  assert.equal(existsSync("app/analytics/platform/page.tsx"), true);
+  assert.equal(existsSync("app/setting/data-lab/page.tsx"), true);
+});
+
 test("user state is a shared provider under authenticated shells only", () => {
   const userHook = readFileSync("lib/hooks/useUser.tsx", "utf8");
   const root = readFileSync("app/layout.tsx", "utf8");

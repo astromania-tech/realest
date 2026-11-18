@@ -18,7 +18,6 @@ import {
   Clock,
   Star,
   Shield,
-  Users,
 } from "lucide-react";
 
 interface Step {
@@ -287,12 +286,6 @@ export default function NewListingPage() {
                       <Button variant="ghost" className="w-full justify-start">
                         <Home className="w-4 h-4 mr-2" />
                         View My Listings
-                      </Button>
-                    </Link>
-                    <Link href="/owner/analytics">
-                      <Button variant="ghost" className="w-full justify-start">
-                        <Users className="w-4 h-4 mr-2" />
-                        View Analytics
                       </Button>
                     </Link>
                   </div>

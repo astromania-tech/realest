@@ -1,16 +1,13 @@
 import { notFound } from "next/navigation";
 import { shouldShowDemoPages } from "@/lib/appMode";
-import { ComingSoonHero } from "@/components/marketing";
 
 export default function DemoLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Check if demo pages should be accessible in current app mode
   if (!shouldShowDemoPages()) {
-    <ComingSoonHero />;
-    // notFound();
+    notFound();
   }
 
   return (

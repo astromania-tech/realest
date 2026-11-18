@@ -1,6 +1,8 @@
 import { Metadata } from "next";
 import { AnalyticsLayout } from "@/components/layout/AnalyticsLayout";
 import { UserSessionBoundary } from "@/components/providers/UserSessionBoundary";
+import { PrototypeHold } from "@/components/realest/PrototypeHold";
+import { shouldShowDemoPages } from "@/lib/appMode";
 
 export const metadata: Metadata = {
   title: "Analytics | RealEST",
@@ -12,6 +14,10 @@ export default function AnalyticsRootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  if (!shouldShowDemoPages()) {
+    return <PrototypeHold />;
+  }
+
   return (
     <UserSessionBoundary>
       <AnalyticsLayout>{children}</AnalyticsLayout>
