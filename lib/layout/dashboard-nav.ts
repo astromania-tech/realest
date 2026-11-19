@@ -60,7 +60,6 @@ export const ROLE_NAVIGATION: Record<string, RoleNavigation> = {
           { href: "/profile/edit", label: "Edit Profile", description: "Personal details and bio", icon: User },
           { href: "/profile/notifications", label: "Notifications", description: "Delivery and alert settings", icon: Bell },
           { href: "/profile/change-password", label: "Security", description: "Password and login protection", icon: Shield },
-          { href: "/setting", label: "Account Settings", description: "Profile, security, and preferences", icon: Settings },
         ],
       },
     ],
@@ -82,9 +81,7 @@ export const ROLE_NAVIGATION: Record<string, RoleNavigation> = {
         title: "Business",
         items: [
           { href: "/owner/inquiries", label: "Inquiries", description: "Buyer and renter messages", icon: MessageSquare },
-          { href: "/owner/analytics", label: "Analytics", description: "Performance and revenue insights", icon: BarChart3 },
           { href: "/owner/premium", label: "Premium", description: "Upgrade and feature access", icon: Wallet },
-          { href: "/setting", label: "Account Settings", description: "Profile, security, and preferences", icon: Settings },
         ],
       },
     ],
@@ -100,13 +97,6 @@ export const ROLE_NAVIGATION: Record<string, RoleNavigation> = {
           { href: "/agent/properties", label: "My Listings", description: "Properties under your agency", icon: Building },
           { href: "/agent/properties/new", label: "Add Property", description: "Create a new agent listing", icon: Plus },
           { href: "/agent/identity", label: "Identity", description: "Youverify CAC before a draft", icon: Shield },
-        ],
-      },
-      {
-        title: "Account",
-        items: [
-          { href: "/setting", label: "Account Settings", description: "Profile, security, and preferences", icon: Settings },
-          { href: "/setting/security", label: "Security", description: "Password and session controls", icon: Shield },
         ],
       },
     ],

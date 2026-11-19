@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  flattenRoleItems,
   isDashboardNavActive,
   mobileMoreItems,
   mobilePrimaryItems,
@@ -13,8 +14,6 @@ const agentHrefs = [
   "/agent/properties",
   "/agent/properties/new",
   "/agent/identity",
-  "/setting",
-  "/setting/security",
 ];
 
 test("agent dashboard is only active on the workspace root", () => {
@@ -32,6 +31,17 @@ test("identity stays alone on the identity path", () => {
   assert.equal(isDashboardNavActive("/agent/identity", "/agent/identity", agentHrefs), true);
 });
 
+test("version 2 sample screens stay off the live user, owner, and agent menus", () => {
+  for (const role of ["user", "owner", "agent"]) {
+    const hrefs = flattenRoleItems(role).map((item) => item.href);
+    assert.equal(hrefs.some((href) => href === "/setting" || href.startsWith("/setting/")), false);
+    assert.equal(hrefs.includes("/owner/analytics"), false);
+    assert.equal(hrefs.includes("/analytics"), false);
+  }
+  assert.ok(staffNavItems("admin").some((item) => item.href === "/admin/analytics/polls"));
+  assert.ok(staffNavItems("admin").some((item) => item.href === "/admin/settings"));
+});
+
 test("small screens get primary bottom tabs and the rest under More", () => {
   const primary = mobilePrimaryItems("agent").map((item) => item.href);
   const more = mobileMoreItems("agent").map((item) => item.href);
@@ -41,8 +51,7 @@ test("small screens get primary bottom tabs and the rest under More", () => {
     "/agent/properties/new",
     "/agent/identity",
   ]);
-  assert.ok(more.includes("/setting"));
-  assert.ok(more.includes("/setting/security"));
+  assert.deepEqual(more, []);
   assert.equal(primary.some((href) => more.includes(href)), false);
 });
 

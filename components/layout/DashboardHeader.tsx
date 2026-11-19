@@ -7,7 +7,6 @@ import { Avatar } from "@heroui/react";
 import { Button } from "../ui";
 import {
   Bell,
-  Settings,
   LogOut,
   User,
   Home,
@@ -176,18 +175,6 @@ export function DashboardHeader({ userRole }: DashboardHeaderProps) {
             >
               <User className="h-4 w-4" />
               My Profile
-            </Button>
-
-            <Button
-              variant="ghost"
-              className="w-full justify-start gap-3"
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                router.push("/setting");
-              }}
-            >
-              <Settings className="h-4 w-4" />
-              Settings
             </Button>
 
             <Button

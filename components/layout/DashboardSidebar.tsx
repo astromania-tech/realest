@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@heroui/react";
-import { ChevronLeft, ChevronRight, Settings } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   isDashboardNavActive,
   roleNavigation,
@@ -108,23 +108,6 @@ export function DashboardSidebar({
             </div>
           ))}
         </nav>
-
-        <div className="border-t border-accent/20 p-4">
-          <Link
-            href="/setting"
-            prefetch
-            className={`flex h-11 w-full items-center gap-3 rounded-md px-3 text-muted-foreground transition-colors hover:cursor-pointer hover:bg-popover-foreground/20 ${
-              showLabels ? "justify-start" : "justify-center px-2"
-            } ${
-              isDashboardNavActive(currentPath, "/setting", allHrefs)
-                ? "bg-primary text-primary-foreground hover:bg-primary"
-                : ""
-            }`}
-          >
-            <Settings className="h-4 w-4 shrink-0" />
-            {showLabels && <span className="text-sm font-medium">Account Settings</span>}
-          </Link>
-        </div>
       </div>
     </aside>
   );
