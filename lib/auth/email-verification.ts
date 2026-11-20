@@ -32,9 +32,7 @@ export function verificationFailureKind(
   if (
     normalized.includes("invalid") ||
     normalized.includes("wrong") ||
-    normalized.includes("already used") ||
-    normalized.includes("token") ||
-    normalized.includes("code")
+    normalized.includes("already used")
   ) {
     return "invalid";
   }
@@ -141,7 +139,10 @@ export async function verifyEmailLink(
 export function verificationDestinationForUser(user?: User | null): string {
   if (!user?.id) return "/login?verified=true";
 
-  const role = user.app_metadata?.role || user.user_metadata?.user_type;
+  // user_metadata is user-editable; only server-managed metadata may choose a
+  // role-specific destination. Middleware will resolve the database role for
+  // verified users sent through the login fallback.
+  const role = user.app_metadata?.role;
   if (!role) return "/login?verified=true";
   switch (role) {
     case "owner":

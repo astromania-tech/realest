@@ -77,6 +77,8 @@ test("PKCE code link routes the session Supabase established to onboarding", asy
 test("expired and wrong verification inputs have distinct user-facing messages", () => {
   assert.equal(verificationFailureKind("Token has expired"), "expired");
   assert.equal(verificationFailureKind("Invalid code"), "invalid");
+  assert.equal(verificationFailureKind("Token refresh failed"), "unavailable");
+  assert.equal(verificationFailureKind("Code exchange failed"), "unavailable");
   assert.equal(
     verificationFailureMessage("expired", "link"),
     "This verification link has expired. Request a new email to verify your address.",
@@ -94,6 +96,18 @@ test("expired and wrong verification inputs have distinct user-facing messages",
 test("users without a role return to login for the existing verified-account fallback", () => {
   const userWithoutRole = { ...agentUser, app_metadata: {}, user_metadata: {} } as User;
   assert.equal(verificationDestinationForUser(userWithoutRole), "/login?verified=true");
+});
+
+test("client-editable user metadata cannot choose a privileged verification destination", () => {
+  const userWithClientClaim = {
+    ...agentUser,
+    app_metadata: {},
+    user_metadata: { user_type: "admin" },
+  } as User;
+  assert.equal(
+    verificationDestinationForUser(userWithClientClaim),
+    "/login?verified=true",
+  );
 });
 
 test("verification requires a confirmed user and reports missing or invalid links", async () => {
@@ -118,7 +132,7 @@ test("verification requires a confirmed user and reports missing or invalid link
   });
   const missingPkceSession = await verifyEmailLink(auth, {
     token: null,
-    code: "expired-code",
+    code: "pkce-code-without-session",
     type: "signup",
   });
 
