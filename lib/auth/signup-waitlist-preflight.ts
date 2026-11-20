@@ -22,7 +22,7 @@ export async function submitSignupWithBestEffortWaitlist<T>({
 }: SubmitSignupWithBestEffortWaitlistOptions<T>): Promise<T> {
   try {
     const response = await fetcher(
-      `/api/waitlist?email=${encodeURIComponent(email.trim())}`,
+      `/api/waitlist?email=${encodeURIComponent(email.trim().toLowerCase())}`,
     );
 
     if (response.ok) {

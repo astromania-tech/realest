@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFileSync } from "node:fs";
 import { submitSignupWithBestEffortWaitlist } from "./signup-waitlist-preflight.ts";
+import { resolveRoleThenCreate } from "./signup-waitlist-role.ts";
 
 test("a non-2xx waitlist response does not block signup", async () => {
   let signupCalled = false;
@@ -61,7 +61,7 @@ test("a successful lookup provides optional context before signup", async () => 
     fetcher: async (input) => {
       assert.equal(
         String(input),
-        "/api/waitlist?email=Agent%40Example.com",
+        "/api/waitlist?email=agent%40example.com",
       );
       return Response.json({ exists: true, status: "invited" });
     },
@@ -79,18 +79,21 @@ test("a successful lookup provides optional context before signup", async () => 
   assert.deepEqual(events, ["context", "signup"]);
 });
 
-test("the signup API resolves the authoritative role before Auth account creation", () => {
-  const route = readFileSync("app/api/auth/signup/route.ts", "utf8");
-  const roleLookupIndex = route.indexOf(
-    "const signupRole = await resolveSignupRoleFromWaitlist(email, userType)",
-  );
-  const adminClientIndex = route.indexOf("const supabaseAdmin = createServiceClient()");
-  const createUserIndex = route.indexOf("auth.admin.createUser");
-  const catchIndex = route.indexOf("} catch (error: any)");
+test("a failed authoritative role lookup prevents Auth account creation", async () => {
+  let createAccountCalled = false;
 
-  assert.ok(roleLookupIndex >= 0);
-  assert.ok(adminClientIndex > roleLookupIndex);
-  assert.ok(createUserIndex > roleLookupIndex);
-  assert.ok(catchIndex > roleLookupIndex);
-  assert.match(route.slice(catchIndex), /status: 500/);
+  await assert.rejects(
+    resolveRoleThenCreate(
+      async () => {
+        throw new Error("waitlist role lookup failed");
+      },
+      async () => {
+        createAccountCalled = true;
+        return "created";
+      },
+    ),
+    /waitlist role lookup failed/,
+  );
+
+  assert.equal(createAccountCalled, false);
 });
