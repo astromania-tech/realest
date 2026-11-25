@@ -4,7 +4,11 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import { changePasswordWithCurrentPassword } from "./change-password.ts";
+import {
+  changePasswordWithCurrentPassword,
+  missingPasswordRequirements,
+  sendPasswordChangedNotification,
+} from "./change-password.ts";
 
 test("handlePasswordResetSession allows OTP arrival without client session", () => {
   const source = readFileSync(new URL("../auth.ts", import.meta.url), "utf8");
@@ -34,7 +38,7 @@ test("complete-password-reset route signs out after update", () => {
   assert.ok(signOutIdx > notifyIdx, "signOut after notify");
 });
 
-test("profile password change verifies the current password before updating", async () => {
+test("profile password change verifies, updates, then requests the notification", async () => {
   const calls: string[] = [];
   const auth = {
     getUser: async () => ({
@@ -55,13 +59,70 @@ test("profile password change verifies the current password before updating", as
     auth,
     "current-secret",
     "NewSecret1!",
+    async () => {
+      calls.push("notify");
+      return true;
+    },
   );
 
-  assert.deepEqual(result, { success: true });
+  assert.deepEqual(result, { success: true, notificationSent: true });
   assert.deepEqual(calls, [
     "verify:owner@example.com:current-secret",
     "update:NewSecret1!",
+    "notify",
   ]);
+});
+
+test("password-changed notification posts to the authenticated endpoint", async () => {
+  let request: { url: string | URL | Request; init?: RequestInit } | undefined;
+  const notificationSent = await sendPasswordChangedNotification(
+    async (url, init) => {
+      request = { url, init };
+      return new Response(JSON.stringify({ success: true }), { status: 200 });
+    },
+  );
+
+  assert.equal(notificationSent, true);
+  assert.equal(request?.url, "/api/auth/password-changed");
+  assert.equal(request?.init?.method, "POST");
+});
+
+test("password-changed notification reports endpoint delivery failures", async () => {
+  const notificationSent = await sendPasswordChangedNotification(
+    async () => new Response(JSON.stringify({ success: false }), { status: 200 }),
+  );
+
+  assert.equal(notificationSent, false);
+});
+
+test("notification failure does not undo a successful password update", async () => {
+  const auth = {
+    getUser: async () => ({
+      data: { user: { email: "owner@example.com" } },
+      error: null,
+    }),
+    signInWithPassword: async () => ({ error: null }),
+    updateUser: async () => ({ error: null }),
+  };
+
+  const result = await changePasswordWithCurrentPassword(
+    auth,
+    "current-secret",
+    "NewSecret1!",
+    async () => false,
+  );
+
+  assert.deepEqual(result, { success: true, notificationSent: false });
+});
+
+test("missing password requirements are listed individually", () => {
+  assert.deepEqual(missingPasswordRequirements("abc"), [
+    "at least 8 characters",
+    "an uppercase letter",
+    "a number",
+    "a symbol",
+  ]);
+  assert.deepEqual(missingPasswordRequirements("NewSecret1!"), []);
 });
 
 test("profile password change stops when the current password is wrong", async () => {

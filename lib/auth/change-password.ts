@@ -1,3 +1,5 @@
+import { validatePassword } from "./password-rules.ts";
+
 type AuthError = { code?: string; message: string } | null;
 
 export type PasswordChangeAuth = {
@@ -15,13 +17,45 @@ export type PasswordChangeAuth = {
 };
 
 export type PasswordChangeResult =
-  | { success: true }
+  | { success: true; notificationSent: boolean }
   | { success: false; error: string };
+
+export function missingPasswordRequirements(password: string): string[] {
+  const validation = validatePassword(password);
+  const requirements: Array<[keyof typeof validation, string]> = [
+    ["minLength", "at least 8 characters"],
+    ["hasUppercase", "an uppercase letter"],
+    ["hasLowercase", "a lowercase letter"],
+    ["hasNumber", "a number"],
+    ["hasSpecialChar", "a symbol"],
+  ];
+
+  return requirements
+    .filter(([rule]) => !validation[rule])
+    .map(([, message]) => message);
+}
+
+export async function sendPasswordChangedNotification(
+  fetcher: typeof fetch = fetch,
+): Promise<boolean> {
+  try {
+    const response = await fetcher("/api/auth/password-changed", {
+      method: "POST",
+    });
+    if (!response.ok) return false;
+
+    const payload = (await response.json()) as { success?: boolean };
+    return payload.success === true;
+  } catch {
+    return false;
+  }
+}
 
 export async function changePasswordWithCurrentPassword(
   auth: PasswordChangeAuth,
   currentPassword: string,
   newPassword: string,
+  notifyPasswordChanged: () => Promise<boolean> = sendPasswordChangedNotification,
 ): Promise<PasswordChangeResult> {
   if (currentPassword === newPassword) {
     return {
@@ -63,7 +97,12 @@ export async function changePasswordWithCurrentPassword(
 
   const { error: updateError } = await auth.updateUser({ password: newPassword });
 
-  if (!updateError) return { success: true };
+  if (!updateError) {
+    return {
+      success: true,
+      notificationSent: await notifyPasswordChanged(),
+    };
+  }
 
   if (
     updateError.code === "same_password" ||

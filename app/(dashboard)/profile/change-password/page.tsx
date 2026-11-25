@@ -2,8 +2,10 @@
 
 import { Card, Input, Button } from "@heroui/react";
 import { useState } from "react";
-import { changePasswordWithCurrentPassword } from "@/lib/auth/change-password";
-import { isPasswordValid } from "@/lib/auth/password-rules";
+import {
+  changePasswordWithCurrentPassword,
+  missingPasswordRequirements,
+} from "@/lib/auth/change-password";
 import { createClient } from "@/lib/supabase/client";
 
 export default function ChangePasswordPage() {
@@ -35,11 +37,6 @@ export default function ChangePasswordPage() {
     setError("");
     setSuccess("");
 
-    if (formData.newPassword !== formData.confirmPassword) {
-      setError("New passwords do not match");
-      return;
-    }
-
     if (!formData.currentPassword) {
       setError("Enter your current password.");
       return;
@@ -50,9 +47,20 @@ export default function ChangePasswordPage() {
       return;
     }
 
-    if (!isPasswordValid(formData.newPassword)) {
+    if (!formData.confirmPassword) {
+      setError("Confirm your new password.");
+      return;
+    }
+
+    if (formData.newPassword !== formData.confirmPassword) {
+      setError("New passwords do not match.");
+      return;
+    }
+
+    const missingRequirements = missingPasswordRequirements(formData.newPassword);
+    if (missingRequirements.length > 0) {
       setError(
-        "Use at least 8 characters, including uppercase, lowercase, a number, and a symbol.",
+        `Missing password requirements: ${missingRequirements.join(", ")}.`,
       );
       return;
     }
@@ -72,7 +80,11 @@ export default function ChangePasswordPage() {
       }
 
       setFormData({ currentPassword: "", newPassword: "", confirmPassword: "" });
-      setSuccess("Your password has been changed.");
+      setSuccess(
+        result.notificationSent
+          ? "Your password has been changed. A confirmation email has been sent."
+          : "Your password has been changed, but we couldn't send the confirmation email.",
+      );
     } catch {
       setError("We could not change your password. Check your connection and try again.");
     } finally {
@@ -140,7 +152,7 @@ export default function ChangePasswordPage() {
                   disabled={isLoading}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Use at least 8 characters, including uppercase, lowercase, a number, and a symbol.
+                  Include at least 8 characters, an uppercase and lowercase letter, a number, and a symbol.
                 </p>
               </div>
 
