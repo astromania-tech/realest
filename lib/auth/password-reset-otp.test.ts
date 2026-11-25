@@ -9,6 +9,8 @@ import {
   normalizeResetEmail,
   recoveryVerifyOtpParams,
   resetOtpResendSecondsRemaining,
+  resetOtpExpiresAt,
+  resetOtpSecondsRemaining,
   resetOtpMatches,
   RESET_EMAIL_RESEND_COOLDOWN_SECONDS,
   RESET_OTP_TTL_SECONDS,
@@ -43,6 +45,17 @@ test("reset expiry and resend countdown match the server token and send limits",
   assert.equal(resetOtpResendSecondsRemaining(RESET_OTP_TTL_SECONDS - 59), 1);
   assert.equal(resetOtpResendSecondsRemaining(RESET_OTP_TTL_SECONDS - 60), 0);
   assert.equal(resetOtpResendSecondsRemaining(0), 0);
+});
+
+test("reset expiry timestamp is absolute and remaining time does not restart", () => {
+  const requestedAt = 1_000_000;
+  const expiresAt = resetOtpExpiresAt(requestedAt);
+
+  assert.equal(expiresAt, requestedAt + 15 * 60 * 1_000);
+  assert.equal(resetOtpSecondsRemaining(expiresAt, requestedAt), 900);
+  assert.equal(resetOtpSecondsRemaining(expiresAt, requestedAt + 120_500), 780);
+  assert.equal(resetOtpSecondsRemaining(expiresAt, expiresAt), 0);
+  assert.equal(resetOtpSecondsRemaining(Number.NaN, requestedAt), 0);
 });
 
 test("verify-reset-otp route calls recoveryVerifyOtpParams / token_hash", () => {
@@ -114,6 +127,10 @@ test("forgot-password and reset-code screens explain expiry and resend timing", 
   assert.match(forgotClient, /one per minute/);
   assert.match(otpClient, /expires after 15 minutes/);
   assert.match(otpClient, /once a minute/);
+  assert.match(
+    otpClient,
+    /otpType === "reset" && \(\s*<div className="text-center text-sm text-muted-foreground">/,
+  );
   assert.doesNotMatch(otpClient, /Timer paused/);
 });
 

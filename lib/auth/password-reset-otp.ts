@@ -16,6 +16,21 @@ export type RecoveryVerifyOtpParams = {
 
 export const RESET_OTP_TTL_SECONDS = 15 * 60;
 export const RESET_EMAIL_RESEND_COOLDOWN_SECONDS = 60;
+export const RESET_OTP_EXPIRES_AT_STORAGE_KEY = "realest.resetOtpExpiresAt";
+
+/** Absolute expiry time used to keep the reset countdown stable across reloads. */
+export function resetOtpExpiresAt(nowMs: number = Date.now()): number {
+  return nowMs + RESET_OTP_TTL_SECONDS * 1_000;
+}
+
+/** Seconds remaining until a reset code expires. */
+export function resetOtpSecondsRemaining(
+  expiresAtMs: number,
+  nowMs: number = Date.now(),
+): number {
+  if (!Number.isFinite(expiresAtMs)) return 0;
+  return Math.max(0, Math.ceil((expiresAtMs - nowMs) / 1_000));
+}
 
 /** Seconds remaining before the reset email can be requested again. */
 export function resetOtpResendSecondsRemaining(timeLeft: number): number {

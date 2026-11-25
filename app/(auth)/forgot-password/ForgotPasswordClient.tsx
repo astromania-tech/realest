@@ -14,6 +14,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { sendHybridPasswordReset } from "@/lib/auth";
 import { cn, isValidEmailFormat } from "@/lib/utils";
+import {
+  resetOtpExpiresAt,
+  RESET_OTP_EXPIRES_AT_STORAGE_KEY,
+} from "@/lib/auth/password-reset-otp";
 import { Mail, ArrowLeft, AlertCircle, Loader2 } from "lucide-react";
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -46,6 +50,15 @@ export default function ForgotPasswordPage() {
       if (!response.success) {
         setSubmitError(response.error || "Failed to send reset email");
         return;
+      }
+
+      try {
+        window.localStorage.setItem(
+          RESET_OTP_EXPIRES_AT_STORAGE_KEY,
+          String(resetOtpExpiresAt()),
+        );
+      } catch {
+        // Storage can be disabled; the OTP page falls back to a fresh display timer.
       }
 
       // Redirect to OTP page for code entry
