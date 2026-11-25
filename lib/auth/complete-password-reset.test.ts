@@ -4,6 +4,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
+import { changePasswordWithCurrentPassword } from "./change-password.ts";
 
 test("handlePasswordResetSession allows OTP arrival without client session", () => {
   const source = readFileSync(new URL("../auth.ts", import.meta.url), "utf8");
@@ -31,4 +32,98 @@ test("complete-password-reset route signs out after update", () => {
   assert.ok(updateIdx > 0);
   assert.ok(notifyIdx > updateIdx, "notify after update");
   assert.ok(signOutIdx > notifyIdx, "signOut after notify");
+});
+
+test("profile password change verifies the current password before updating", async () => {
+  const calls: string[] = [];
+  const auth = {
+    getUser: async () => ({
+      data: { user: { email: "owner@example.com" } },
+      error: null,
+    }),
+    signInWithPassword: async (credentials: { email: string; password: string }) => {
+      calls.push(`verify:${credentials.email}:${credentials.password}`);
+      return { error: null };
+    },
+    updateUser: async (attributes: { password: string }) => {
+      calls.push(`update:${attributes.password}`);
+      return { error: null };
+    },
+  };
+
+  const result = await changePasswordWithCurrentPassword(
+    auth,
+    "current-secret",
+    "NewSecret1!",
+  );
+
+  assert.deepEqual(result, { success: true });
+  assert.deepEqual(calls, [
+    "verify:owner@example.com:current-secret",
+    "update:NewSecret1!",
+  ]);
+});
+
+test("profile password change stops when the current password is wrong", async () => {
+  let updateCalled = false;
+  const auth = {
+    getUser: async () => ({
+      data: { user: { email: "owner@example.com" } },
+      error: null,
+    }),
+    signInWithPassword: async () => ({
+      error: { code: "invalid_credentials", message: "Invalid login credentials" },
+    }),
+    updateUser: async () => {
+      updateCalled = true;
+      return { error: null };
+    },
+  };
+
+  const result = await changePasswordWithCurrentPassword(
+    auth,
+    "wrong-secret",
+    "NewSecret1!",
+  );
+
+  assert.deepEqual(result, {
+    success: false,
+    error: "Your current password is incorrect.",
+  });
+  assert.equal(updateCalled, false);
+});
+
+test("profile password change reports a missing session without updating", async () => {
+  let updateCalled = false;
+  const auth = {
+    getUser: async () => ({ data: { user: null }, error: null }),
+    signInWithPassword: async () => ({ error: null }),
+    updateUser: async () => {
+      updateCalled = true;
+      return { error: null };
+    },
+  };
+
+  const result = await changePasswordWithCurrentPassword(
+    auth,
+    "current-secret",
+    "NewSecret1!",
+  );
+
+  assert.equal(result.success, false);
+  assert.equal(updateCalled, false);
+});
+
+test("profile change-password UI calls the auth helper and has real result states", () => {
+  const source = readFileSync(
+    new URL(
+      "../../app/(dashboard)/profile/change-password/page.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(source, /changePasswordWithCurrentPassword/);
+  assert.match(source, /role="status"/);
+  assert.match(source, /role="alert"/);
+  assert.doesNotMatch(source, /TODO: Implement password change|setTimeout\(|alert\(/);
 });

@@ -2,6 +2,9 @@
 
 import { Card, Input, Button } from "@heroui/react";
 import { useState } from "react";
+import { changePasswordWithCurrentPassword } from "@/lib/auth/change-password";
+import { isPasswordValid } from "@/lib/auth/password-rules";
+import { createClient } from "@/lib/supabase/client";
 
 export default function ChangePasswordPage() {
   const [formData, setFormData] = useState({
@@ -11,40 +14,67 @@ export default function ChangePasswordPage() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (
+    field: keyof typeof formData,
+    value: string,
+  ) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
     setError("");
+    setSuccess("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    if (isLoading) return;
+
     setError("");
+    setSuccess("");
 
     if (formData.newPassword !== formData.confirmPassword) {
       setError("New passwords do not match");
-      setIsLoading(false);
       return;
     }
 
-    if (formData.newPassword.length < 8) {
-      setError("New password must be at least 8 characters long");
-      setIsLoading(false);
+    if (!formData.currentPassword) {
+      setError("Enter your current password.");
       return;
     }
 
+    if (!formData.newPassword) {
+      setError("Enter a new password.");
+      return;
+    }
+
+    if (!isPasswordValid(formData.newPassword)) {
+      setError(
+        "Use at least 8 characters, including uppercase, lowercase, a number, and a symbol.",
+      );
+      return;
+    }
+
+    setIsLoading(true);
     try {
-      // TODO: Implement password change with Supabase
-      console.log("Changing password:", formData);
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      alert("Password changed successfully!");
-    } catch (err) {
-      setError("Failed to change password. Please try again.");
+      const supabase = createClient();
+      const result = await changePasswordWithCurrentPassword(
+        supabase.auth,
+        formData.currentPassword,
+        formData.newPassword,
+      );
+
+      if (!result.success) {
+        setError(result.error);
+        return;
+      }
+
+      setFormData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setSuccess("Your password has been changed.");
+    } catch {
+      setError("We could not change your password. Check your connection and try again.");
     } finally {
       setIsLoading(false);
     }
@@ -87,7 +117,9 @@ export default function ChangePasswordPage() {
                   onChange={(e) =>
                     handleInputChange("currentPassword", e.target.value)
                   }
+                  autoComplete="current-password"
                   required
+                  disabled={isLoading}
                 />
               </div>
 
@@ -103,8 +135,13 @@ export default function ChangePasswordPage() {
                   onChange={(e) =>
                     handleInputChange("newPassword", e.target.value)
                   }
+                  autoComplete="new-password"
                   required
+                  disabled={isLoading}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Use at least 8 characters, including uppercase, lowercase, a number, and a symbol.
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -122,12 +159,28 @@ export default function ChangePasswordPage() {
                   onChange={(e) =>
                     handleInputChange("confirmPassword", e.target.value)
                   }
+                  autoComplete="new-password"
                   required
+                  disabled={isLoading}
                 />
               </div>
 
+              {success && (
+                <div
+                  className="text-sm text-success bg-success/10 border border-success/20 rounded-md p-3"
+                  role="status"
+                  aria-live="polite"
+                >
+                  {success}
+                </div>
+              )}
+
               {error && (
-                <div className="text-sm text-danger bg-danger-50 border border-danger-200 rounded-md p-3">
+                <div
+                  className="text-sm text-danger bg-danger-50 border border-danger-200 rounded-md p-3"
+                  role="alert"
+                  aria-live="assertive"
+                >
                   {error}
                 </div>
               )}
