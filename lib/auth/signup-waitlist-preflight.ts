@@ -8,7 +8,10 @@ interface SubmitSignupWithBestEffortWaitlistOptions<T> {
   signup: () => Promise<T>;
   onWaitlistContext?: (context: WaitlistContextResponse) => void;
   fetcher?: typeof fetch;
+  timeoutMs?: number;
 }
+
+const WAITLIST_PREFLIGHT_TIMEOUT_MS = 2_000;
 
 /**
  * The public waitlist lookup only supplies optional UI context. Signup role
@@ -19,21 +22,48 @@ export async function submitSignupWithBestEffortWaitlist<T>({
   signup,
   onWaitlistContext,
   fetcher = fetch,
+  timeoutMs = WAITLIST_PREFLIGHT_TIMEOUT_MS,
 }: SubmitSignupWithBestEffortWaitlistOptions<T>): Promise<T> {
-  try {
-    const response = await fetcher(
-      `/api/waitlist?email=${encodeURIComponent(email.trim().toLowerCase())}`,
-    );
+  const controller = new AbortController();
+  let timedOut = false;
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
-    if (response.ok) {
-      const context: unknown = await response.json();
-      if (context && typeof context === "object" && !Array.isArray(context)) {
-        onWaitlistContext?.(context as WaitlistContextResponse);
+  try {
+    const lookup = (async () => {
+      const response = await fetcher(
+        `/api/waitlist?email=${encodeURIComponent(email.trim().toLowerCase())}`,
+        { signal: controller.signal },
+      );
+
+      if (!timedOut && response.ok) {
+        const context: unknown = await response.json();
+        if (
+          !timedOut &&
+          context &&
+          typeof context === "object" &&
+          !Array.isArray(context)
+        ) {
+          onWaitlistContext?.(context as WaitlistContextResponse);
+        }
       }
-    }
+
+    })();
+
+    await Promise.race([
+      lookup,
+      new Promise<void>((resolve) => {
+        timeoutId = setTimeout(() => {
+          timedOut = true;
+          controller.abort();
+          resolve();
+        }, timeoutMs);
+      }),
+    ]);
   } catch {
     // A failed preflight must not block registration. The signup API performs
     // the authoritative role lookup before creating an Auth account.
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
   }
 
   return signup();

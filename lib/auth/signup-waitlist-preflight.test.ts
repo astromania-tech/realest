@@ -35,6 +35,31 @@ test("a network failure during the waitlist lookup does not block signup", async
   assert.equal(signupCalled, true);
 });
 
+test("a waitlist lookup that never responds times out and does not block signup", async () => {
+  let signupCalled = false;
+  let requestWasAborted = false;
+  const result = await submitSignupWithBestEffortWaitlist({
+    email: "agent@example.com",
+    timeoutMs: 5,
+    fetcher: async (_input, init) => {
+      return new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => {
+          requestWasAborted = true;
+          reject(new DOMException("Aborted", "AbortError"));
+        });
+      });
+    },
+    signup: async () => {
+      signupCalled = true;
+      return "signup-result";
+    },
+  });
+
+  assert.equal(result, "signup-result");
+  assert.equal(signupCalled, true);
+  assert.equal(requestWasAborted, true);
+});
+
 test("malformed optional lookup data does not block signup", async () => {
   let signupCalled = false;
   const result = await submitSignupWithBestEffortWaitlist({
