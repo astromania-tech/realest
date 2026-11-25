@@ -65,6 +65,9 @@ export default function ForgotPasswordPage() {
           <CardTitle className="text-2xl font-bold">Forgot Password?</CardTitle>
           <CardDescription>
             Enter your email address and we'll send a reset code if an account with that address exists.
+            <span className="mt-2 block text-xs text-muted-foreground">
+              Reset codes expire after 15 minutes. Requests are limited to one per minute; if you just requested a code, use the latest one in your inbox.
+            </span>
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">

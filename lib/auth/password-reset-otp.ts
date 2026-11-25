@@ -14,6 +14,16 @@ export type RecoveryVerifyOtpParams = {
   type: "recovery";
 };
 
+export const RESET_OTP_TTL_SECONDS = 15 * 60;
+export const RESET_EMAIL_RESEND_COOLDOWN_SECONDS = 60;
+
+/** Seconds remaining before the reset email can be requested again. */
+export function resetOtpResendSecondsRemaining(timeLeft: number): number {
+  const resendAvailableAt =
+    RESET_OTP_TTL_SECONDS - RESET_EMAIL_RESEND_COOLDOWN_SECONDS;
+  return Math.max(0, timeLeft - resendAvailableAt);
+}
+
 /** Normalize emails the same way signup and waitlist do. */
 export function normalizeResetEmail(email: string): string {
   return email.trim().toLowerCase();
