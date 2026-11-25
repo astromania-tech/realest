@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { signUpWithPassword } from "@/lib/auth";
 import {
+  normalizeSignupEmail,
   signupApiFieldError,
   validateSignupFields,
   type SignupFieldErrors,
@@ -90,7 +91,8 @@ export default function SignUpPage() {
     setError("");
     setFieldErrors({});
 
-    const validationErrors = validateSignupFields(formData);
+    const email = normalizeSignupEmail(formData.email);
+    const validationErrors = validateSignupFields({ ...formData, email });
     if (Object.keys(validationErrors).length > 0) {
       setFieldErrors(validationErrors);
       return;
@@ -109,7 +111,7 @@ export default function SignUpPage() {
       // Public waitlist GET is existence-only. Role override happens server-side
       // in POST /api/auth/signup via resolveSignupRoleFromWaitlist.
       const waitlistLookup = await fetch(
-        `/api/waitlist?email=${encodeURIComponent(formData.email.trim())}`,
+        `/api/waitlist?email=${encodeURIComponent(email)}`,
       );
 
       if (waitlistLookup.ok) {
@@ -118,7 +120,7 @@ export default function SignUpPage() {
       }
 
       const response = await signUpWithPassword(
-        formData.email,
+        email,
         formData.password,
         "", // fullname handled in onboarding
         chosenRole,
@@ -149,11 +151,11 @@ export default function SignUpPage() {
           fetch('/api/auth/attribute-referral', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: formData.email, refCode }),
+            body: JSON.stringify({ email, refCode }),
           }).catch(() => {});
           sessionStorage.removeItem('referralCode');
         }
-        const emailQuery = encodeURIComponent(formData.email);
+        const emailQuery = encodeURIComponent(email);
         if (response.localConfirmed) {
           router.push(`/login?local=1&email=${emailQuery}`);
         } else {

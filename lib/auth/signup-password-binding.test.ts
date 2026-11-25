@@ -8,6 +8,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { signUpWithPassword } from "@/lib/auth";
 import {
+  normalizeSignupEmail,
   signupApiFieldError,
   validateSignupFields,
 } from "./signup-form-validation.ts";
@@ -116,6 +117,7 @@ test("registration validation identifies email, password, and confirmation error
 });
 
 test("registration validation accepts normalized valid input", () => {
+  assert.equal(normalizeSignupEmail("  Seeker@Example.com "), "seeker@example.com");
   assert.deepEqual(
     validateSignupFields({
       email: "  seeker@example.com ",

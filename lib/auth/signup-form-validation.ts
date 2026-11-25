@@ -9,13 +9,17 @@ export type SignupFieldValues = {
   confirmPassword: string;
 };
 
+export function normalizeSignupEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
 export function validateSignupFields({
   email,
   password,
   confirmPassword,
 }: SignupFieldValues): SignupFieldErrors {
   const errors: SignupFieldErrors = {};
-  const normalizedEmail = email.trim();
+  const normalizedEmail = normalizeSignupEmail(email);
 
   if (!normalizedEmail) {
     errors.email = "Enter your email address.";
