@@ -51,7 +51,7 @@ test("small screens get primary bottom tabs and the rest under More", () => {
     "/agent/properties/new",
     "/agent/identity",
   ]);
-  assert.deepEqual(more, []);
+  assert.equal(more.length, 0);
   assert.equal(primary.some((href) => more.includes(href)), false);
 });
 
