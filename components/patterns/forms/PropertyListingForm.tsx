@@ -31,6 +31,8 @@ export function PropertyListingForm({
   const totalSteps = 6;
   const [draftPropertyId, setDraftPropertyId] = useState<string | undefined>(propertyId);
   const [isDraftCreating, setIsDraftCreating] = useState(false);
+  const [nipostLgas, setNipostLgas] = useState<Array<{ code: string; name: string | null }>>([]);
+  const [nipostState, setNipostState] = useState<{ stateCode: string; stateName: string | null } | null>(null);
 
   // Use custom form hook with validation
   const {
@@ -84,6 +86,38 @@ export function PropertyListingForm({
       handleInputChange('documents', docUrls);
     }
   }, [documentUpload.files, handleInputChange]);
+
+  React.useEffect(() => {
+    const state = formData.state;
+    if (!state) {
+      setNipostLgas([]);
+      setNipostState(null);
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/postcode/lgas?state=${encodeURIComponent(state)}`)
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (cancelled || !response.ok) {
+          if (!cancelled) {
+            setNipostLgas([]);
+            setNipostState(null);
+          }
+          return;
+        }
+        setNipostState({ stateCode: body.stateCode, stateName: body.stateName });
+        setNipostLgas(Array.isArray(body.lgas) ? body.lgas : []);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setNipostLgas([]);
+          setNipostState(null);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [formData.state]);
 
   // Create draft property when user reaches Step 5 (images) or Step 6 (documents)
   React.useEffect(() => {
@@ -517,7 +551,8 @@ export function PropertyListingForm({
           </div>
         );
 
-      case 2:
+      case 2: {
+        const selectedLga = nipostLgas.find((lga) => lga.name === formData.lga);
         return (
           <div className="space-y-6">
             <h3 className="text-xl font-heading font-semibold">
@@ -531,7 +566,10 @@ export function PropertyListingForm({
                 </label>
                 <select
                   value={formData.state}
-                  onChange={(e) => handleInputChange("state", e.target.value)}
+                  onChange={(e) => {
+                    handleInputChange("state", e.target.value);
+                    handleInputChange("lga", "");
+                  }}
                   className="w-full p-3 border border-input rounded-lg bg-background"
                   required
                 >
@@ -546,14 +584,35 @@ export function PropertyListingForm({
 
               <div>
                 <label className="block text-sm font-medium mb-2">LGA *</label>
-                <input
-                  type="text"
-                  value={formData.lga}
-                  onChange={(e) => handleInputChange("lga", e.target.value)}
-                  placeholder="Local Government Area"
-                  className="w-full p-3 border border-input rounded-lg bg-background focus:ring-2 focus:ring-ring"
-                  required
-                />
+                {nipostLgas.length > 0 ? (
+                  <select
+                    value={formData.lga}
+                    onChange={(e) => handleInputChange("lga", e.target.value)}
+                    className="w-full p-3 border border-input rounded-lg bg-background"
+                    required
+                  >
+                    <option value="">Select the local government</option>
+                    {nipostLgas.map((lga) => (
+                      <option key={lga.code} value={lga.name ?? lga.code}>
+                        {lga.name ?? lga.code}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={formData.lga}
+                    onChange={(e) => handleInputChange("lga", e.target.value)}
+                    placeholder="Local Government Area"
+                    className="w-full p-3 border border-input rounded-lg bg-background focus:ring-2 focus:ring-ring"
+                    required
+                  />
+                )}
+                {nipostState && selectedLga?.code && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    NIPOST register: {nipostState.stateName} · {selectedLga.name} · {nipostState.stateCode}-{selectedLga.code}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -620,6 +679,7 @@ export function PropertyListingForm({
             </div>
           </div>
         );
+      }
 
       case 3:
         return (
