@@ -7,11 +7,27 @@ const STATE_ALIASES: Record<string, string> = {
   "FEDERAL CAPITAL TERRITORY": "FC",
 };
 
+export const NIPOST_STATES_CACHE_MS = 60 * 60 * 1000;
+
+type StatesCache = { value: { at: number; states: NipostPlace[] } | null };
+
+const moduleStatesCache: StatesCache = { value: null };
+
 type ReferenceDeps = {
   fetchImpl?: typeof fetch;
   apiKey?: string;
   baseUrl?: string;
+  cache?: StatesCache;
+  now?: number;
 };
+
+export function nipostPlaceValue(place: NipostPlace): string {
+  return place.name ?? place.code;
+}
+
+export function findNipostPlace(places: NipostPlace[], value: string): NipostPlace | undefined {
+  return places.find((place) => nipostPlaceValue(place) === value);
+}
 
 function places(value: unknown): NipostPlace[] {
   if (!Array.isArray(value)) return [];
@@ -55,10 +71,16 @@ async function nipostGet(path: string, deps: ReferenceDeps): Promise<{ ok: true;
 export async function listNipostStates(deps: ReferenceDeps = {}): Promise<
   { ok: true; states: NipostPlace[] } | { ok: false; status: number; message: string }
 > {
+  const cache = deps.cache ?? (deps.fetchImpl || deps.apiKey || deps.baseUrl ? undefined : moduleStatesCache);
+  const now = deps.now ?? Date.now();
+  if (cache?.value && now - cache.value.at < NIPOST_STATES_CACHE_MS) {
+    return { ok: true, states: cache.value.states };
+  }
   const result = await nipostGet("/v1/reference/states", deps);
   if (!result.ok) return result;
   const states = places((result.body as { data?: { states?: unknown } })?.data?.states);
   if (states.length === 0) return { ok: false, status: 502, message: "NIPOST lookup failed" };
+  if (cache) cache.value = { at: now, states };
   return { ok: true, states };
 }
 

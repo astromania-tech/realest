@@ -14,6 +14,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { isListingIdentityBlock } from "@/lib/kyc/gate";
+import { propertyIdFromSaveResponse } from "@/lib/listings/form-error";
+import { findNipostPlace, nipostAreaLabel, nipostPlaceValue } from "@/lib/postcode/reference";
 import { StatusBadge } from "@/components/ui/status-badge";
 import {
   LoadingSpinner,
@@ -396,8 +398,10 @@ export function PropertyListingForm({
         throw new Error(message);
       }
 
-      const { data: createdProperty } = await propertyResponse.json();
-      const newPropertyId = draftPropertyId || createdProperty.id;
+      const newPropertyId = propertyIdFromSaveResponse(await propertyResponse.json(), draftPropertyId);
+      if (!newPropertyId) {
+        throw new Error("Failed to publish property");
+      }
 
       // Step 3: Record uploaded images in property_media table
       const mediaInsertErrors: string[] = [];
@@ -582,7 +586,7 @@ export function PropertyListingForm({
         );
 
       case 2: {
-        const selectedLga = nipostLgas.find((lga) => lga.name === formData.lga);
+        const selectedLga = findNipostPlace(nipostLgas, formData.lga);
         return (
           <div className="space-y-6">
             <h3 className="text-xl font-heading font-semibold">
@@ -623,8 +627,8 @@ export function PropertyListingForm({
                   >
                     <option value="">Select the local government</option>
                     {nipostLgas.map((lga) => (
-                      <option key={lga.code} value={lga.name ?? lga.code}>
-                        {lga.name ?? lga.code}
+                      <option key={lga.code} value={nipostPlaceValue(lga)}>
+                        {nipostPlaceValue(lga)}
                       </option>
                     ))}
                   </select>
@@ -640,7 +644,7 @@ export function PropertyListingForm({
                 )}
                 {nipostState && selectedLga?.code && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    NIPOST register: {nipostState.stateName} · {selectedLga.name} · {nipostState.stateCode}-{selectedLga.code}
+                    NIPOST register: {nipostAreaLabel({ code: nipostState.stateCode, name: nipostState.stateName }, selectedLga)}
                   </p>
                 )}
               </div>
