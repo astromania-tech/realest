@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 import { LISTING_KYC_ERROR } from "@/lib/kyc/gate";
-import { listingFormError, listingFormErrorTitle } from "@/lib/listings/form-error";
+import { listingFormError, listingFormErrorTitle, propertyIdFromSaveResponse } from "@/lib/listings/form-error";
 
 test("a refused listing shows the server message instead of throwing", () => {
   assert.equal(
@@ -12,6 +12,12 @@ test("a refused listing shows the server message instead of throwing", () => {
   assert.equal(listingFormErrorTitle(LISTING_KYC_ERROR), "Identity approval required");
   assert.equal(listingFormError(false, {}, "Failed to save property"), "Failed to save property");
   assert.equal(listingFormError(true, { error: LISTING_KYC_ERROR }, "Failed to save property"), null);
+});
+
+test("a saved listing id comes from property, and a data wrapper does not count", () => {
+  assert.equal(propertyIdFromSaveResponse({ property: { id: "prop_1" } }), "prop_1");
+  assert.equal(propertyIdFromSaveResponse({ data: { id: "prop_1" } }), null);
+  assert.equal(propertyIdFromSaveResponse({ data: { id: "prop_1" } }, "draft_1"), "draft_1");
 });
 
 test("the property form opens an error dialog and does not throw the save response", () => {

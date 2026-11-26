@@ -1,8 +1,21 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { RealEstButton } from "@/components/heroui/RealEstButton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { isListingIdentityBlock } from "@/lib/kyc/gate";
+import { propertyIdFromSaveResponse } from "@/lib/listings/form-error";
+import { findNipostPlace, nipostAreaLabel, nipostPlaceValue } from "@/lib/postcode/reference";
 import { StatusBadge } from "@/components/ui/status-badge";
 import {
   LoadingSpinner,
@@ -31,6 +44,12 @@ export function PropertyListingForm({
   const totalSteps = 6;
   const [draftPropertyId, setDraftPropertyId] = useState<string | undefined>(propertyId);
   const [isDraftCreating, setIsDraftCreating] = useState(false);
+  const [nipostLgas, setNipostLgas] = useState<Array<{ code: string; name: string | null }>>([]);
+  const [nipostState, setNipostState] = useState<{ stateCode: string; stateName: string | null } | null>(null);
+  const [identityOpen, setIdentityOpen] = useState(false);
+  const draftCreateStarted = React.useRef(false);
+  const pathname = usePathname();
+  const identityHref = pathname.startsWith("/agent") ? "/agent/identity" : "/owner/identity";
 
   // Use custom form hook with validation
   const {
@@ -85,12 +104,52 @@ export function PropertyListingForm({
     }
   }, [documentUpload.files, handleInputChange]);
 
+  React.useEffect(() => {
+    const state = formData.state;
+    if (!state) {
+      setNipostLgas([]);
+      setNipostState(null);
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/postcode/lgas?state=${encodeURIComponent(state)}`)
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (cancelled || !response.ok) {
+          if (!cancelled) {
+            setNipostLgas([]);
+            setNipostState(null);
+          }
+          return;
+        }
+        setNipostState({ stateCode: body.stateCode, stateName: body.stateName });
+        setNipostLgas(Array.isArray(body.lgas) ? body.lgas : []);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setNipostLgas([]);
+          setNipostState(null);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [formData.state]);
+
+  const showListingSaveFailure = (status: number, message: string) => {
+    if (isListingIdentityBlock(status, message)) {
+      setIdentityOpen(true);
+      return;
+    }
+    alert(message);
+  };
+
   // Create draft property when user reaches Step 5 (images) or Step 6 (documents)
   React.useEffect(() => {
-    async function createDraftProperty() {
-      if (draftPropertyId || isDraftCreating || propertyId) return; // Already have draft or editing existing
-      if (currentStep < 5) return; // Only create when reaching file upload steps
+    if (draftPropertyId || propertyId || currentStep < 5 || draftCreateStarted.current) return;
+    draftCreateStarted.current = true;
 
+    async function createDraftProperty() {
       setIsDraftCreating(true);
       try {
         // Use transform function to map property type correctly
@@ -137,7 +196,9 @@ export function PropertyListingForm({
 
         if (!response.ok) {
           const body = await response.json().catch(() => ({}));
-          throw new Error(typeof body.error === "string" ? body.error : "Failed to create draft property");
+          const message = typeof body.error === "string" ? body.error : "Failed to create draft property";
+          showListingSaveFailure(response.status, message);
+          return;
         }
 
         const { property } = await response.json();
@@ -156,7 +217,7 @@ export function PropertyListingForm({
     }
 
     createDraftProperty();
-    }, [currentStep, draftPropertyId, isDraftCreating, propertyId]);
+    }, [currentStep, draftPropertyId, propertyId]);
   // Recover draft property ID from localStorage on mount
   React.useEffect(() => {
     if (!propertyId && !draftPropertyId) {
@@ -328,12 +389,19 @@ export function PropertyListingForm({
       );
 
       if (!propertyResponse.ok) {
-        const errorData = await propertyResponse.json();
-        throw new Error(errorData.error || 'Failed to publish property');
+        const errorData = await propertyResponse.json().catch(() => ({}));
+        const message = typeof errorData.error === "string" ? errorData.error : "Failed to publish property";
+        if (isListingIdentityBlock(propertyResponse.status, message)) {
+          setIdentityOpen(true);
+          return;
+        }
+        throw new Error(message);
       }
 
-      const { data: createdProperty } = await propertyResponse.json();
-      const newPropertyId = draftPropertyId || createdProperty.id;
+      const newPropertyId = propertyIdFromSaveResponse(await propertyResponse.json(), draftPropertyId);
+      if (!newPropertyId) {
+        throw new Error("Failed to publish property");
+      }
 
       // Step 3: Record uploaded images in property_media table
       const mediaInsertErrors: string[] = [];
@@ -517,7 +585,8 @@ export function PropertyListingForm({
           </div>
         );
 
-      case 2:
+      case 2: {
+        const selectedLga = findNipostPlace(nipostLgas, formData.lga);
         return (
           <div className="space-y-6">
             <h3 className="text-xl font-heading font-semibold">
@@ -531,7 +600,10 @@ export function PropertyListingForm({
                 </label>
                 <select
                   value={formData.state}
-                  onChange={(e) => handleInputChange("state", e.target.value)}
+                  onChange={(e) => {
+                    handleInputChange("state", e.target.value);
+                    handleInputChange("lga", "");
+                  }}
                   className="w-full p-3 border border-input rounded-lg bg-background"
                   required
                 >
@@ -546,14 +618,35 @@ export function PropertyListingForm({
 
               <div>
                 <label className="block text-sm font-medium mb-2">LGA *</label>
-                <input
-                  type="text"
-                  value={formData.lga}
-                  onChange={(e) => handleInputChange("lga", e.target.value)}
-                  placeholder="Local Government Area"
-                  className="w-full p-3 border border-input rounded-lg bg-background focus:ring-2 focus:ring-ring"
-                  required
-                />
+                {nipostLgas.length > 0 ? (
+                  <select
+                    value={formData.lga}
+                    onChange={(e) => handleInputChange("lga", e.target.value)}
+                    className="w-full p-3 border border-input rounded-lg bg-background"
+                    required
+                  >
+                    <option value="">Select the local government</option>
+                    {nipostLgas.map((lga) => (
+                      <option key={lga.code} value={nipostPlaceValue(lga)}>
+                        {nipostPlaceValue(lga)}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={formData.lga}
+                    onChange={(e) => handleInputChange("lga", e.target.value)}
+                    placeholder="Local Government Area"
+                    className="w-full p-3 border border-input rounded-lg bg-background focus:ring-2 focus:ring-ring"
+                    required
+                  />
+                )}
+                {nipostState && selectedLga?.code && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    NIPOST register: {nipostAreaLabel({ code: nipostState.stateCode, name: nipostState.stateName }, selectedLga)}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -620,6 +713,7 @@ export function PropertyListingForm({
             </div>
           </div>
         );
+      }
 
       case 3:
         return (
@@ -1565,6 +1659,25 @@ export function PropertyListingForm({
           )}
         </div>
       </div>
+
+      <Dialog open={identityOpen} onOpenChange={setIdentityOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Your identity is not verified yet</DialogTitle>
+            <DialogDescription>
+              Youverify has to approve your identity before a listing can be saved. This form is still here. Verify your identity, then come back and continue.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <RealEstButton variant="tertiary" className="w-full sm:w-auto" onClick={() => setIdentityOpen(false)}>
+              Stay on this form
+            </RealEstButton>
+            <Link href={identityHref} className="w-full sm:w-auto">
+              <RealEstButton variant="neon" className="w-full">Verify identity</RealEstButton>
+            </Link>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

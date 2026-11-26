@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { listingCreateAllowed, LISTING_KYC_ERROR } from "@/lib/kyc/gate";
+import { isListingIdentityBlock, listingCreateAllowed, LISTING_KYC_ERROR } from "@/lib/kyc/gate";
 
 const approved = (userType: string, provider = "youverify", status = "approved") => ({
   user_type: userType,
@@ -45,4 +45,10 @@ test("admin is not an identity subject and can still save a dashboard draft", ()
 
 test("a plain user cannot save a draft", () => {
   assert.equal(listingCreateAllowed({ role: "user", rows: [approved("owner")] }).ok, false);
+});
+
+test("only the identity 403 opens the listing modal", () => {
+  assert.equal(isListingIdentityBlock(403, LISTING_KYC_ERROR), true);
+  assert.equal(isListingIdentityBlock(403, "Forbidden"), false);
+  assert.equal(isListingIdentityBlock(422, LISTING_KYC_ERROR), false);
 });

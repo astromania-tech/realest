@@ -26,3 +26,7 @@ export function listingCreateAllowed(input: {
   if (!approved) return { ok: false, status: 403, error: LISTING_KYC_ERROR };
   return { ok: true };
 }
+
+export function isListingIdentityBlock(status: number, error: unknown): boolean {
+  return status === 403 && error === LISTING_KYC_ERROR;
+}

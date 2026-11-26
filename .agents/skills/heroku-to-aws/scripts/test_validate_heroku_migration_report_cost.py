@@ -1,0 +1,517 @@
+"""Cost-figure cross-check regressions for the skill-local Heroku validator."""
+
+from __future__ import annotations
+
+import json
+# Tests invoke only the committed validator using list arguments without a shell.
+import re
+import subprocess  # nosec B404
+import sys
+import tempfile
+from pathlib import Path
+
+SCRIPT = Path(__file__).resolve().parent / "validate-heroku-migration-report.py"
+_APPENDIX_SECTION = re.compile(r'<section\s+id="appendix-[^"]*"[^>]*>.*?</section>\s*', re.DOTALL)
+
+
+def _decision_html(html: str) -> str:
+    """Decision mode rejects rendered appendices, so drop them with the terminal swap."""
+    return _APPENDIX_SECTION.sub("", html).replace('id="next-steps"', 'id="decision-cta"')
+
+GOOD = """<!DOCTYPE html>
+<html lang="en"><style>
+  body { margin: 0; background: #f6f8fa; color: #1f2328; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 15px; line-height: 1.55; }
+  .report { max-width: 1040px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+  section { background: #fff; border: 1px solid #d0d7de; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; scroll-margin-top: 1rem; }
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; }
+  .metric { background: #fff; border: 1px solid #d0d7de; border-radius: 8px; padding: 0.85rem 1rem; }
+  .verdict { background: #e6f4ea; border: 1px solid #137333; padding: 0.75rem 1rem; }
+  .savings { color: #137333; font-weight: 650; }
+  .share-card { background: #f0f6fc; border: 1px solid #d0d7de; border-left: 4px solid #0969da; padding: 0.85rem 1rem; }
+  .appendix-header { background: #232f3e; color: #fff; padding: 1rem 1.5rem; }
+  a:focus-visible { outline: 2px solid #0969da; outline-offset: 2px; }
+  @media (max-width: 700px) { .report { padding: 1rem; } }
+  @media print { body { background: #fff; } }
+</style><body><div class="report">
+<section id="decision-summary"><p class="verdict-headline">Go</p></section>
+<section id="exec-share"><p>The one-paragraph version, ready to forward:</p><div class="share-card"><p>Go, with conditions, at medium confidence. The estimated AWS balanced rate is higher than the Heroku rate card, the shape is phased, and the planning band for this complexity tier is the duration to quote. Confirm the open conditions before treating the monthly figure as final.</p></div></section>
+<section id="exec-timeline"><h2>Timeline</h2><p>Phased migration. Planning band: 2-6 weeks for a small estate. This planning band is the complexity-tier range, not a staffed schedule.</p></section>
+<section id="exec-costs"><p>Balanced <span data-cost-key="aws_monthly_balanced">$112/mo</span></p></section>
+<section id="cost-optimization"><p>No 1-year/3-year commitment product applies to this architecture.</p></section>
+<section id="next-steps"><ol><li>See MIGRATION_GUIDE.md</li></ol></section>
+<section id="appendix-services"><p>One designed service.</p></section>
+<section id="appendix-costs"><p>Balanced estimated monthly cost.</p></section>
+<section id="appendix-config"><p>Region and availability choices.</p></section>
+<section id="appendix-security"><table><thead><tr><th scope="col">Control</th><th scope="col">Setting</th><th scope="col">What it does</th><th scope="col">Threat mitigated</th></tr></thead><tbody><tr><td>GuardDuty</td><td>Enabled</td><td>Detects unusual API activity</td><td>Credential theft</td></tr></tbody></table></section>
+<section id="appendix-assumptions"><p>Measured, assumed, and unknown inputs.</p></section>
+<footer>draft for review</footer>
+</div></body></html>
+"""
+
+
+def run(html: str, migration_dir: Path | None, mode: str | None = None) -> tuple[int, str]:
+    with tempfile.TemporaryDirectory() as tmp:
+        report = Path(tmp) / "migration-report.html"
+        report.write_text(html, encoding="utf-8")
+        cmd = [sys.executable, str(SCRIPT), str(report)]
+        if migration_dir is not None:
+            cmd += ["--migration-dir", str(migration_dir)]
+        if mode is not None:
+            cmd += ["--mode", mode]
+        result = subprocess.run(cmd, capture_output=True, text=True)  # nosec B603
+        return result.returncode, result.stdout + result.stderr
+
+
+def _est_dir(tmp: str, balanced: int) -> Path:
+    d = Path(tmp)
+    (d / "estimation-infra.json").write_text(
+        json.dumps({"projected_costs": {"aws_monthly_balanced": balanced}}),
+        encoding="utf-8",
+    )
+    return d
+
+
+def test_cost_figure_match_passes() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        code, out = run(GOOD, migration_dir=_est_dir(tmp, 112))
+    assert code == 0, out
+    assert "cost figure mismatch" not in out
+
+
+def test_decision_report_checks_cost_figures() -> None:
+    html = _decision_html(GOOD)
+    with tempfile.TemporaryDirectory() as tmp:
+        migration_dir = _est_dir(tmp, 112)
+        code, out = run(html, migration_dir, mode="decision")
+        assert code == 0, out
+        code, out = run(html.replace("$112/mo", "$999/mo"), migration_dir, mode="decision")
+    assert code == 1, out
+    assert "cost figure mismatch" in out
+
+
+def test_cost_figure_mismatch_fails() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        code, out = run(GOOD, migration_dir=_est_dir(tmp, 999))
+    assert code == 1, out
+    assert "cost figure mismatch" in out
+    assert "aws_monthly_balanced" in out
+
+
+def test_cost_figure_skipped_without_estimation() -> None:
+    # No --migration-dir -> no estimation-infra.json -> the cost check is skipped entirely,
+    # so the otherwise-valid report passes.
+    code, out = run(GOOD, migration_dir=None)
+    assert code == 0, out
+    assert "cost figure mismatch" not in out
+    assert "missing data-cost-key" not in out
+
+
+def test_missing_required_balanced_anchor_fails() -> None:
+    # The core P1-C guarantee: an un-anchored balanced figure must FAIL, not pass —
+    # otherwise a wrong un-anchored number reaches the reader unchecked.
+    html = GOOD.replace(
+        '<span data-cost-key="aws_monthly_balanced">$112/mo</span>',
+        "$999/mo",
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        code, out = run(html, migration_dir=_est_dir(tmp, 112))
+    assert code == 1, out
+    assert 'missing data-cost-key="aws_monthly_balanced"' in out
+
+
+# --- scope-matched Heroku anchor (heroku_monthly_like_for_like) -------------
+
+LFL_ANCHOR = '<span data-cost-key="heroku_monthly_like_for_like">$140/mo</span>'
+GOOD_LFL = GOOD.replace(
+    '<span data-cost-key="aws_monthly_balanced">$112/mo</span></p>',
+    '<span data-cost-key="aws_monthly_balanced">$112/mo</span></p>'
+    f"<p>Scope-matched: Heroku {LFL_ANCHOR} vs AWS Balanced $112/mo</p>",
+)
+
+
+def _est_dir_lfl(tmp: str, balanced: int, like_for_like: int | None) -> Path:
+    """Estimate with (like_for_like is not None) or without a like_for_like_comparison block."""
+    est: dict = {"projected_costs": {"aws_monthly_balanced": balanced}}
+    if like_for_like is not None:
+        est["cost_comparison"] = {
+            "heroku_monthly_baseline": 740,
+            "heroku_monthly_like_for_like": like_for_like,
+            "like_for_like_comparison": {
+                "aws_monthly_balanced": balanced,
+                "heroku_monthly_like_for_like": like_for_like,
+                "monthly_difference": balanced - like_for_like,
+            },
+        }
+    d = Path(tmp)
+    (d / "estimation-infra.json").write_text(json.dumps(est), encoding="utf-8")
+    return d
+
+
+def _mode_variants(html: str) -> list[tuple[str, str]]:
+    return [("full", html), ("decision", _decision_html(html))]
+
+
+def test_like_for_like_anchor_match_passes_both_modes() -> None:
+    for mode, html in _mode_variants(GOOD_LFL):
+        with tempfile.TemporaryDirectory() as tmp:
+            code, out = run(html, _est_dir_lfl(tmp, 112, 140), mode=mode)
+        assert code == 0, (mode, out)
+        assert "heroku_monthly_like_for_like" not in out
+
+
+def test_like_for_like_anchor_mismatch_fails_both_modes() -> None:
+    # The reviewer's probe: JSON says $140, the anchored report figure says $740 (the
+    # FULL baseline) — the validator must reject it instead of skipping an unknown key.
+    for mode, html in _mode_variants(GOOD_LFL.replace("$140/mo", "$740/mo")):
+        with tempfile.TemporaryDirectory() as tmp:
+            code, out = run(html, _est_dir_lfl(tmp, 112, 140), mode=mode)
+        assert code == 1, (mode, out)
+        assert 'cost figure mismatch: data-cost-key="heroku_monthly_like_for_like"' in out
+        assert 'renders "$740"' in out and "= $140" in out
+
+
+def test_missing_like_for_like_anchor_fails_when_comparison_exists_both_modes() -> None:
+    # like_for_like_comparison exists in the estimate -> the scope-matched row block is
+    # mandatory in exec-costs, so an un-anchored (or missing) Heroku figure FAILs.
+    for mode, html in _mode_variants(GOOD):
+        with tempfile.TemporaryDirectory() as tmp:
+            code, out = run(html, _est_dir_lfl(tmp, 112, 140), mode=mode)
+        assert code == 1, (mode, out)
+        assert 'missing data-cost-key="heroku_monthly_like_for_like" anchor inside' in out
+        assert "cost_comparison.heroku_monthly_like_for_like" in out
+
+
+def test_like_for_like_anchor_optional_without_comparison_both_modes() -> None:
+    # No like_for_like_comparison in the estimate (no Deferred add-ons) -> the anchor is
+    # not required; the report without it passes and the balanced check still runs.
+    for mode, html in _mode_variants(GOOD):
+        with tempfile.TemporaryDirectory() as tmp:
+            code, out = run(html, _est_dir_lfl(tmp, 112, None), mode=mode)
+        assert code == 0, (mode, out)
+        assert "heroku_monthly_like_for_like" not in out
+
+
+def test_like_for_like_anchor_outside_exec_costs_does_not_satisfy_requirement() -> None:
+    html = GOOD_LFL.replace(f"<p>Scope-matched: Heroku {LFL_ANCHOR} vs AWS Balanced $112/mo</p>", "").replace(
+        '<p class="verdict-headline">Go</p>',
+        f'<p class="verdict-headline">Go</p><p>{LFL_ANCHOR}</p>',
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        code, out = run(html, _est_dir_lfl(tmp, 112, 140))
+    assert code == 1, out
+    assert 'missing data-cost-key="heroku_monthly_like_for_like" anchor inside' in out
+
+
+def test_nested_markup_reads() -> None:
+    html = GOOD.replace(
+        '<span data-cost-key="aws_monthly_balanced">$112/mo</span>',
+        '<span data-cost-key="aws_monthly_balanced"><strong>$112/mo</strong></span>',
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        code, out = run(html, migration_dir=_est_dir(tmp, 112))
+    assert code == 0, out
+    assert "cost figure mismatch" not in out
+
+
+def test_nested_section_anchor_is_preserved() -> None:
+    html = GOOD.replace(
+        '<span data-cost-key="aws_monthly_balanced">$112/mo</span>',
+        '<section data-cost-key="aws_monthly_balanced">$112/mo</section>',
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        migration_dir = _est_dir(tmp, 112)
+        for mode in ("full", "decision"):
+            report = html if mode == "full" else _decision_html(html)
+            code, out = run(report, migration_dir, mode=mode)
+            assert code == 0, out
+
+
+def test_hidden_nested_section_does_not_supply_required_anchor() -> None:
+    html = GOOD.replace(
+        '<span data-cost-key="aws_monthly_balanced">$112/mo</span>',
+        '<section hidden><span data-cost-key="aws_monthly_balanced">$112/mo</span></section>$999/mo',
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        migration_dir = _est_dir(tmp, 112)
+        for mode in ("full", "decision"):
+            report = html if mode == "full" else _decision_html(html)
+            code, out = run(report, migration_dir, mode=mode)
+            assert code == 1, out
+            assert 'missing data-cost-key="aws_monthly_balanced"' in out
+
+
+def test_non_numeric_json_value_fails_not_crash() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "estimation-infra.json").write_text(
+            json.dumps({"projected_costs": {"aws_monthly_balanced": "$112"}}),
+            encoding="utf-8",
+        )
+        code, out = run(GOOD, migration_dir=d)
+    assert code == 1, out
+    assert "not a numeric dollar amount" in out
+
+
+def test_cost_anchor_inside_html_comment_does_not_satisfy_requirement() -> None:
+    # A commented-out anchor is not rendered content — it must not satisfy the
+    # required-anchor check, even if the (invisible) figure would have matched.
+    html = GOOD.replace(
+        '<span data-cost-key="aws_monthly_balanced">$112/mo</span>',
+        '<!-- <span data-cost-key="aws_monthly_balanced">$112/mo</span> -->$999/mo',
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        code, out = run(html, migration_dir=_est_dir(tmp, 112))
+    assert code == 1, out
+    assert 'missing data-cost-key="aws_monthly_balanced"' in out
+
+
+def test_cost_anchor_outside_exec_costs_does_not_satisfy_requirement() -> None:
+    # A correct anchor placed in decision-summary (not exec-costs) must not let an
+    # unanchored, wrong figure inside exec-costs itself pass silently.
+    html = GOOD.replace(
+        '<span data-cost-key="aws_monthly_balanced">$112/mo</span>',
+        "$999/mo",
+    ).replace(
+        '<p class="verdict-headline">Go</p>',
+        '<p class="verdict-headline">Go</p>'
+        '<p><span data-cost-key="aws_monthly_balanced">$112/mo</span></p>',
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        code, out = run(html, migration_dir=_est_dir(tmp, 112))
+    assert code == 1, out
+    assert 'missing data-cost-key="aws_monthly_balanced" anchor inside' in out
+    assert "exec-costs" in out
+
+
+def test_cost_anchor_inside_template_does_not_satisfy_requirement() -> None:
+    # <template> content is inert (never rendered) even though the parser still
+    # walks its tags — an anchor placed there must not stand in for the visible
+    # (wrong) figure sitting right next to it.
+    html = GOOD.replace(
+        '<span data-cost-key="aws_monthly_balanced">$112/mo</span>',
+        '<template><span data-cost-key="aws_monthly_balanced">$112/mo</span></template>$999/mo',
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        code, out = run(html, migration_dir=_est_dir(tmp, 112))
+    assert code == 1, out
+    assert 'missing data-cost-key="aws_monthly_balanced"' in out
+
+
+def test_split_nested_markup_reads_full_text() -> None:
+    # A figure split across nested markup within the SAME anchored element
+    # (<span data-cost-key="x"><span>$</span>112/mo</span>) must be read as one
+    # value through the anchor's own matching close tag, not truncated at the
+    # first inner </span>.
+    html = GOOD.replace(
+        '<span data-cost-key="aws_monthly_balanced">$112/mo</span>',
+        '<span data-cost-key="aws_monthly_balanced"><span>$</span>112/mo</span>',
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        code, out = run(html, migration_dir=_est_dir(tmp, 112))
+    assert code == 0, out
+    assert "cost figure mismatch" not in out
+    assert "renders no dollar amount" not in out
+
+
+def test_trailing_text_outside_inner_tag_is_included() -> None:
+    # Text sitting after a nested child tag, but still inside the anchor's own
+    # close tag, must be included — not dropped at the child's </strong>. Here
+    # the anchor's full rendered text is "$1120", which must NOT be truncated
+    # to "$112" (that would silently accept a wrong ten-times-off figure).
+    html = GOOD.replace(
+        '<span data-cost-key="aws_monthly_balanced">$112/mo</span>',
+        '<span data-cost-key="aws_monthly_balanced"><strong>$112</strong>0/mo</span>',
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        code, out = run(html, migration_dir=_est_dir(tmp, 112))
+    assert code == 1, out
+    assert "cost figure mismatch" in out
+    assert '"$1120"' in out
+
+
+# exec-costs deliberately placed LAST among the <section> elements (only <footer>
+# follows) so a non-greedy `.*?</section>` regex has no LATER </section> to fall
+# through to — this is what makes the closing-tag-spelling bug observable as a
+# clean `_section_html(...) is None` skip, rather than the regex silently
+# matching through to some other section's close tag and returning overrun
+# (but still exec-costs-containing) content that coincidentally still fails.
+GOOD_EXEC_COSTS_LAST = """<!DOCTYPE html>
+<html lang="en"><style>
+  body { margin: 0; background: #f6f8fa; color: #1f2328; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 15px; line-height: 1.55; }
+  .report { max-width: 1040px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+  section { background: #fff; border: 1px solid #d0d7de; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; scroll-margin-top: 1rem; }
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; }
+  .metric { background: #fff; border: 1px solid #d0d7de; border-radius: 8px; padding: 0.85rem 1rem; }
+  .verdict { background: #e6f4ea; border: 1px solid #137333; padding: 0.75rem 1rem; }
+  .savings { color: #137333; font-weight: 650; }
+  .share-card { background: #f0f6fc; border: 1px solid #d0d7de; border-left: 4px solid #0969da; padding: 0.85rem 1rem; }
+  .appendix-header { background: #232f3e; color: #fff; padding: 1rem 1.5rem; }
+  a:focus-visible { outline: 2px solid #0969da; outline-offset: 2px; }
+  @media (max-width: 700px) { .report { padding: 1rem; } }
+  @media print { body { background: #fff; } }
+</style><body><div class="report">
+<section id="decision-summary"><p class="verdict-headline">Go</p></section>
+<section id="exec-share"><p>The one-paragraph version, ready to forward:</p><div class="share-card"><p>Go, with conditions, at medium confidence. The estimated AWS balanced rate is higher than the Heroku rate card, the shape is phased, and the planning band for this complexity tier is the duration to quote. Confirm the open conditions before treating the monthly figure as final.</p></div></section>
+<section id="exec-timeline"><h2>Timeline</h2><p>Phased migration. Planning band: 2-6 weeks for a small estate. This planning band is the complexity-tier range, not a staffed schedule.</p></section>
+<section id="cost-optimization"><p>No 1-year/3-year commitment product applies to this architecture.</p></section>
+<section id="next-steps"><ol><li>See MIGRATION_GUIDE.md</li></ol></section>
+<section id="appendix-services"><p>One designed service.</p></section>
+<section id="appendix-costs"><p>Balanced estimated monthly cost.</p></section>
+<section id="appendix-config"><p>Region and availability choices.</p></section>
+<section id="appendix-security"><table><thead><tr><th scope="col">Control</th><th scope="col">Setting</th><th scope="col">What it does</th><th scope="col">Threat mitigated</th></tr></thead><tbody><tr><td>GuardDuty</td><td>Enabled</td><td>Detects unusual API activity</td><td>Credential theft</td></tr></tbody></table></section>
+<section id="appendix-assumptions"><p>Measured, assumed, and unknown inputs.</p></section>
+<section id="exec-costs"><p>Balanced <span data-cost-key="aws_monthly_balanced">$112/mo</span></p></section>
+<footer>draft for review</footer>
+</div></body></html>
+"""
+
+
+def test_whitespace_before_exec_costs_closing_angle_bracket_still_gates_required_anchor() -> None:
+    # Regression: _section_html previously matched only the literal string
+    # `</section>`. `</section >` (whitespace before `>`) is equally valid
+    # HTML, but the old regex returned None for it, and the required-anchor
+    # check was gated behind `if exec_costs_html is not None:` — so a
+    # recognized exec-costs section silently skipped the required-anchor
+    # requirement entirely. Remove the Balanced anchor, keep an unanchored
+    # wrong figure, and serialize exec-costs' closing tag with a trailing
+    # space: this must still FAIL.
+    html = GOOD_EXEC_COSTS_LAST.replace(
+        '<span data-cost-key="aws_monthly_balanced">$112/mo</span>',
+        "$999/mo",
+    ).replace(
+        "</section>\n<footer>",
+        "</section >\n<footer>",
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        code, out = run(html, migration_dir=_est_dir(tmp, 112))
+    assert code == 1, out
+    assert 'missing data-cost-key="aws_monthly_balanced" anchor inside' in out
+
+
+def test_newline_before_exec_costs_closing_angle_bracket_still_gates_required_anchor() -> None:
+    # Same bypass, different whitespace: a newline before the closing `>` is
+    # also valid HTML and must not defeat the required-anchor check either.
+    html = GOOD_EXEC_COSTS_LAST.replace(
+        '<span data-cost-key="aws_monthly_balanced">$112/mo</span>',
+        "$999/mo",
+    ).replace(
+        "</section>\n<footer>",
+        "</section\n>\n<footer>",
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        code, out = run(html, migration_dir=_est_dir(tmp, 112))
+    assert code == 1, out
+    assert 'missing data-cost-key="aws_monthly_balanced" anchor inside' in out
+
+
+def test_escaped_anchor_example_inside_section_does_not_satisfy_requirement() -> None:
+    # Regression: _SectionScopeParser decodes character references before
+    # appending text into the returned section HTML. An escaped code example
+    # like `<code>&lt;span data-cost-key="x"&gt;$112&lt;/span&gt;</code>`
+    # decodes to the literal text `<span data-cost-key="x">$112</span>` —
+    # reparsing that string then finds a "real" anchor that never actually
+    # existed in the source. Remove the real anchor, leave a visible wrong
+    # figure, and add an escaped example with the correct anchor+value: this
+    # must still FAIL.
+    html = GOOD.replace(
+        '<span data-cost-key="aws_monthly_balanced">$112/mo</span>',
+        "$999/mo "
+        '<code>&lt;span data-cost-key="aws_monthly_balanced"&gt;$112/mo&lt;/span&gt;</code>',
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        code, out = run(html, migration_dir=_est_dir(tmp, 112))
+    assert code == 1, out
+    assert 'missing data-cost-key="aws_monthly_balanced"' in out
+
+
+# --- Rendered-reality regressions (parity with the GCP validator): inert/hidden
+# anchors do not count, nested anchors are collected independently, and the display
+# precision rounds rather than truncates. ---
+
+
+def test_nested_inner_anchor_is_collected_not_dropped() -> None:
+    # An inner data-cost-key nested in an outer one must be read as its own anchor,
+    # not swallowed by the outer element. Inner $999 != estimate 112 -> FAIL.
+    html = GOOD.replace(
+        '<span data-cost-key="aws_monthly_balanced">$112/mo</span>',
+        '<span data-cost-key="aws_monthly_balanced">$112/mo '
+        '<strong data-cost-key="aws_monthly_balanced">$999</strong></span>',
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        code, out = run(html, migration_dir=_est_dir(tmp, 112))
+    assert code == 1, out
+    assert "999" in out and "mismatch" in out.lower()
+
+
+def test_hidden_anchor_does_not_satisfy_requirement() -> None:
+    # A hidden anchor is not rendered; a visible $999 stands instead. estimate 112.
+    html = GOOD.replace(
+        '<span data-cost-key="aws_monthly_balanced">$112/mo</span>',
+        '<span hidden data-cost-key="aws_monthly_balanced">$112/mo</span>$999',
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        code, out = run(html, migration_dir=_est_dir(tmp, 112))
+    assert code == 1, out
+    assert 'missing data-cost-key="aws_monthly_balanced"' in out
+
+
+def test_hidden_false_is_still_hidden() -> None:
+    # In HTML `hidden="false"` is still the Hidden state (invalid-value default),
+    # so the anchor is not rendered and must not satisfy the requirement.
+    html = GOOD.replace(
+        '<span data-cost-key="aws_monthly_balanced">$112/mo</span>',
+        '<span hidden="false" data-cost-key="aws_monthly_balanced">$112/mo</span>$999',
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        code, out = run(html, migration_dir=_est_dir(tmp, 112))
+    assert code == 1, out
+    assert 'missing data-cost-key="aws_monthly_balanced"' in out
+
+
+def test_script_anchor_does_not_satisfy_requirement() -> None:
+    # An anchor inside an inert <script> subtree is never rendered.
+    html = GOOD.replace(
+        '<span data-cost-key="aws_monthly_balanced">$112/mo</span>',
+        '<script type="application/json">'
+        '<span data-cost-key="aws_monthly_balanced">$112</span></script>$999',
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        code, out = run(html, migration_dir=_est_dir(tmp, 112))
+    assert code == 1, out
+    assert 'missing data-cost-key="aws_monthly_balanced"' in out
+
+
+def test_rounded_cents_figure_matches_not_truncated() -> None:
+    # estimate 112.90 renders as $113 (nearest dollar); the validator must accept
+    # it, not reject it because int(112.90) == 112.
+    html = GOOD.replace(
+        '<span data-cost-key="aws_monthly_balanced">$112/mo</span>',
+        '<span data-cost-key="aws_monthly_balanced">$113/mo</span>',
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "estimation-infra.json").write_text(
+            json.dumps({"projected_costs": {"aws_monthly_balanced": 112.90}}),
+            encoding="utf-8",
+        )
+        code, out = run(html, migration_dir=d)
+    assert code == 0, out
+    assert "REPORT_OK" in out
+
+
+def test_two_dollar_boundary_canonicalizes_consistently() -> None:
+    # estimate 1.999 canonicalizes to "2" and a displayed $2 canonicalizes to "2",
+    # so they match — the $2 rounding-threshold boundary must not spuriously fail.
+    html = GOOD.replace(
+        '<span data-cost-key="aws_monthly_balanced">$112/mo</span>',
+        '<span data-cost-key="aws_monthly_balanced">$2/mo</span>',
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "estimation-infra.json").write_text(
+            json.dumps({"projected_costs": {"aws_monthly_balanced": 1.999}}),
+            encoding="utf-8",
+        )
+        code, out = run(html, migration_dir=d)
+    assert code == 0, out
+    assert "REPORT_OK" in out
