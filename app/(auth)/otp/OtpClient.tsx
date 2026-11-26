@@ -18,6 +18,13 @@ import {
   resendEmailVerification,
   sendHybridPasswordReset,
 } from "@/lib/auth";
+import {
+  resetOtpExpiresAt,
+  resetOtpResendSecondsRemaining,
+  resetOtpSecondsRemaining,
+  RESET_OTP_EXPIRES_AT_STORAGE_KEY,
+  RESET_OTP_TTL_SECONDS,
+} from "@/lib/auth/password-reset-otp";
 import { CheckCircle, Shield, RefreshCw, AlertTriangle, Clock, AlertCircle } from "lucide-react";
 
 function OTPContent() {
@@ -32,10 +39,10 @@ function OTPContent() {
   const [email, setEmail] = useState("");
   // "reset" = password-reset OTP; anything else = signup email OTP (legacy)
   const otpType = (searchParams.get("type") ?? "email") as "email" | "reset";
-  const [timeLeft, setTimeLeft] = useState(900); // 15 minutes in seconds — matches server-side token expiry
-  const [isPaused, setIsPaused] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(RESET_OTP_TTL_SECONDS);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const resendLockRef = useRef(false);
+  const expiresAtRef = useRef<number | null>(null);
 
   // Initialize from URL params
   useEffect(() => {
@@ -69,27 +76,65 @@ function OTPContent() {
     }
   }, []); // run once on mount — searchParams is stable
 
-  // Pause timer when the user switches tabs or minimises the window
+  // Keep reset expiry aligned with the request across reloads and backgrounding.
+  // Signup email OTP lifetime is configured by Supabase and isn't the reset TTL.
   useEffect(() => {
-    const handleVisibility = () => setIsPaused(document.hidden);
-    document.addEventListener("visibilitychange", handleVisibility);
-    return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, []);
+    if (otpType !== "reset") {
+      expiresAtRef.current = null;
+      return;
+    }
 
-  // Countdown timer — does not run while tab is hidden
-  useEffect(() => {
-    if (timeLeft <= 0 || isPaused) return;
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => Math.max(0, prev - 1));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [timeLeft, isPaused]);
+    let expiresAt: number | null = null;
+    try {
+      const storedExpiry = Number(
+        window.localStorage.getItem(RESET_OTP_EXPIRES_AT_STORAGE_KEY),
+      );
+      if (Number.isFinite(storedExpiry) && storedExpiry > 0) {
+        expiresAt = storedExpiry;
+      }
+    } catch {
+      // Storage can be disabled; use a local display fallback for this page view.
+    }
+
+    if (expiresAt === null) {
+      expiresAt = resetOtpExpiresAt();
+      try {
+        window.localStorage.setItem(
+          RESET_OTP_EXPIRES_AT_STORAGE_KEY,
+          String(expiresAt),
+        );
+      } catch {
+        // The countdown still works until this page is closed.
+      }
+    }
+
+    expiresAtRef.current = expiresAt;
+    const syncTimeLeft = () => {
+      if (expiresAtRef.current === null) return;
+      const remaining = resetOtpSecondsRemaining(expiresAtRef.current);
+      setTimeLeft(remaining);
+      if (remaining === 0) setIsExpired(true);
+    };
+
+    syncTimeLeft();
+    const timer = window.setInterval(syncTimeLeft, 1_000);
+    document.addEventListener("visibilitychange", syncTimeLeft);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", syncTimeLeft);
+    };
+  }, [otpType]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
+
+  const resendCountdown =
+    otpType === "reset"
+      ? resetOtpResendSecondsRemaining(timeLeft)
+      : Math.max(0, timeLeft - 240);
 
   const handleOtpChange = (index: number, value: string) => {
     // Only allow digits
@@ -158,6 +203,11 @@ function OTPContent() {
         }
 
         // Session cookies are now set — go to reset-password
+        try {
+          window.localStorage.removeItem(RESET_OTP_EXPIRES_AT_STORAGE_KEY);
+        } catch {
+          // The verified session is authoritative; stale display state is harmless.
+        }
         setIsSuccess(true);
         setTimeout(() => router.push("/reset-password"), 1500);
         return;
@@ -201,7 +251,7 @@ function OTPContent() {
           router.replace("/profile");
         }
       }
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred. Please try again.");
       setOtp(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
@@ -230,7 +280,19 @@ function OTPContent() {
       if (!resendResponse.success) {
         setError(resendResponse.error || "Failed to resend code");
       } else {
-        setTimeLeft(900);
+        if (otpType === "reset") {
+          const expiresAt = resetOtpExpiresAt();
+          expiresAtRef.current = expiresAt;
+          try {
+            window.localStorage.setItem(
+              RESET_OTP_EXPIRES_AT_STORAGE_KEY,
+              String(expiresAt),
+            );
+          } catch {
+            // The countdown still works until this page is closed.
+          }
+        }
+        setTimeLeft(RESET_OTP_TTL_SECONDS);
         setIsExpired(false);
         setOtp(["", "", "", "", "", ""]);
         inputRefs.current[0]?.focus();
@@ -300,7 +362,7 @@ function OTPContent() {
               </CardTitle>
               <CardDescription>
                 {otpType === "reset"
-                  ? "Enter the 6-digit code from your password reset email"
+                  ? "Enter the 6-digit code from your reset email. It expires after 15 minutes; you can request a new code once a minute."
                   : "Enter the 6-digit code sent to"}{" "}
                 {otpType !== "reset" && <span className="font-medium">{email}</span>}
               </CardDescription>
@@ -373,18 +435,18 @@ function OTPContent() {
                 ))}
               </div>
 
-              <div className="text-center text-sm text-muted-foreground">
-                {timeLeft > 0 ? (
-                  <span className={isPaused ? "text-muted-foreground/50" : ""}>
-                    {isPaused ? "⏸ Timer paused" : `Code expires in ${formatTime(timeLeft)}`}
-                  </span>
-                ) : (
-                  <span className="text-danger flex items-center justify-center gap-1">
-                    <AlertTriangle className="w-4 h-4" />
-                    Code expired
-                  </span>
-                )}
-              </div>
+              {otpType === "reset" && (
+                <div className="text-center text-sm text-muted-foreground">
+                  {timeLeft > 0 ? (
+                    <span>Code expires in {formatTime(timeLeft)}</span>
+                  ) : (
+                    <span className="text-danger flex items-center justify-center gap-1">
+                      <AlertTriangle className="w-4 h-4" />
+                      Code expired
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             {error && (
@@ -420,15 +482,15 @@ function OTPContent() {
               variant="ghost"
               size="sm"
               className="text-primary hover:bg-primary/10"
-              disabled={isResending || timeLeft > 240} // Can resend after 1 minute
+              disabled={isResending || resendCountdown > 0}
             >
               {isResending ? (
                 <>
                   <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
                   Sending...
                 </>
-              ) : timeLeft > 240 ? (
-                `Resend in ${formatTime(timeLeft - 240)}`
+              ) : resendCountdown > 0 ? (
+                `Resend in ${formatTime(resendCountdown)}`
               ) : (
                 "Resend Code"
               )}
