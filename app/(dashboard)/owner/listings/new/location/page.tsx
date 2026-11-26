@@ -58,6 +58,9 @@ export default function PropertyLocationStep() {
   const searchParams = useSearchParams();
   const propertyType = searchParams.get("type") || "";
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingPostcode, setIsCheckingPostcode] = useState(false);
+  const [postcodeNote, setPostcodeNote] = useState("");
+  const [postcodeChecked, setPostcodeChecked] = useState("");
   const [formData, setFormData] = useState({
     address: "",
     city: "",
@@ -74,10 +77,45 @@ export default function PropertyLocationStep() {
   }, [propertyType, router]);
 
   const handleInputChange = (field: string, value: string) => {
+    if (field === "postalCode") {
+      setPostcodeChecked("");
+      setPostcodeNote("");
+    }
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
+  };
+
+  const checkPostcode = async () => {
+    const code = formData.postalCode.trim();
+    if (!code) {
+      setPostcodeNote("");
+      setPostcodeChecked("");
+      return true;
+    }
+    setIsCheckingPostcode(true);
+    setPostcodeNote("");
+    try {
+      const response = await fetch(`/api/postcode/lookup?code=${encodeURIComponent(code)}`);
+      const body = await response.json();
+      if (!response.ok) {
+        setPostcodeChecked("");
+        setPostcodeNote(body.error || "NIPOST lookup failed");
+        return false;
+      }
+      const place = [body.recentHouseAddress, body.lgaName, body.stateName].filter(Boolean).join(", ");
+      setPostcodeChecked(body.postcode);
+      setFormData((prev) => ({ ...prev, postalCode: body.postcode }));
+      setPostcodeNote(place ? `NIPOST verified ${body.postcode}. ${place}` : `NIPOST verified ${body.postcode}`);
+      return true;
+    } catch {
+      setPostcodeChecked("");
+      setPostcodeNote("NIPOST lookup failed");
+      return false;
+    } finally {
+      setIsCheckingPostcode(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -85,13 +123,12 @@ export default function PropertyLocationStep() {
     setIsLoading(true);
 
     try {
-      // TODO: Save location data
-      console.log("Location data:", formData);
+      const code = formData.postalCode.trim();
+      if (code && postcodeChecked !== code) {
+        const verified = await checkPostcode();
+        if (!verified) return;
+      }
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Navigate to next step
       router.push(`/owner/listings/new/media?type=${propertyType}`);
     } catch (error) {
       console.error("Failed to save location:", error);
@@ -202,16 +239,32 @@ export default function PropertyLocationStep() {
 
                       <div>
                         <label className="block text-sm font-medium mb-2">
-                          Postal Code (Optional)
+                          NIPOST postcode (optional)
                         </label>
-                        <Input
-                          type="text"
-                          placeholder="Enter postal code"
-                          value={formData.postalCode}
-                          onChange={(e) =>
-                            handleInputChange("postalCode", e.target.value)
-                          }
-                        />
+                        <div className="flex gap-2">
+                          <Input
+                            type="text"
+                            placeholder="LA-11-W06-TC-10"
+                            value={formData.postalCode}
+                            onChange={(e) =>
+                              handleInputChange("postalCode", e.target.value)
+                            }
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            disabled={isCheckingPostcode || !formData.postalCode.trim()}
+                            onClick={() => {
+                              void checkPostcode();
+                            }}
+                          >
+                            {isCheckingPostcode ? "Checking" : "Check"}
+                          </Button>
+                        </div>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          {postcodeNote || "Five parts, for example LA-11-W06-TC-10. A check uses one NIPOST credit."}
+                        </p>
                       </div>
 
                       <div className="pt-4 border-t border-border">

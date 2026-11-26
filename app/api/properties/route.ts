@@ -10,6 +10,7 @@ import { propertyListingSchema, propertyDraftSchema, propertyDetailsSchema } fro
 import type { OpenApiMetadata } from "@/lib/openapi/route-metadata";
 import { zodToSchema } from "@/lib/openapi/zod-to-schema";
 import { consumeRateLimit } from "@/lib/http/rate-limit";
+import { lookupNipostPostcode } from "@/lib/postcode/nipost";
 import {
   LISTING_SUBMIT_BUCKET,
   LISTING_SUBMIT_LIMIT,
@@ -397,6 +398,18 @@ export async function POST(request: NextRequest) {
     const validatedData = isDraft ? propertyDraftSchema.parse(body) : propertyListingSchema.parse(body);
     const nextStatus = isDraft ? "draft" : "pending_ml_validation";
 
+    let postalCode = validatedData.postal_code;
+    if (postalCode) {
+      const lookedUp = await lookupNipostPostcode(postalCode);
+      if (!lookedUp.ok) {
+        return NextResponse.json({ error: lookedUp.message }, { status: lookedUp.status });
+      }
+      if (!lookedUp.lookup.valid) {
+        return NextResponse.json({ error: "NIPOST does not recognise this postcode" }, { status: 422 });
+      }
+      postalCode = lookedUp.lookup.postcode;
+    }
+
     // Non-draft submits: cooldown after repeated rejects + submit rate limit
     if (!isDraft) {
       const ownerRec = await prisma.owners.findUnique({
@@ -513,7 +526,7 @@ export async function POST(request: NextRequest) {
         address: validatedData.address,
         city: validatedData.city,
         state: validatedData.state,
-        postal_code: validatedData.postal_code,
+        postal_code: postalCode,
         country: validatedData.country,
         latitude: validatedData.latitude as any,
         longitude: validatedData.longitude as any,

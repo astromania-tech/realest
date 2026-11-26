@@ -1,4 +1,24 @@
 import { z } from "zod";
+import { parseNipostPostcode } from "@/lib/postcode/format";
+
+export const optionalNipostPostalCode = z
+  .string()
+  .trim()
+  .max(20)
+  .optional()
+  .or(z.literal(""))
+  .transform((value, ctx) => {
+    if (!value) return undefined;
+    const parsed = parseNipostPostcode(value);
+    if (!parsed) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Enter a NIPOST postcode, for example LA-11-W06-TC-10",
+      });
+      return z.NEVER;
+    }
+    return parsed.canonical;
+  });
 
 // Regex for Nigerian phone numbers (+234 or 080...)
 const phoneRegex = /^(\+234|0)[789][01]\d{8}$/;
@@ -85,7 +105,7 @@ export const propertyListingSchema = z.object({
   address: z.string().min(5, "Full address is required"),
   city: z.string().min(2, "City is required"),
   state: z.string().min(2, "Select a valid state"), 
-  postal_code: z.string().min(4).max(10).optional(),
+  postal_code: optionalNipostPostalCode,
   country: z.string().default("NG"),
   latitude: z.coerce.number().min(-90).max(90), 
   longitude: z.coerce.number().min(-180).max(180),
@@ -155,7 +175,7 @@ export const propertyDraftSchema = z.object({
   // Optional fields that may be empty in draft
   description: z.string().optional(),
   state: z.string().optional(),
-  postal_code: z.string().optional(),
+  postal_code: optionalNipostPostalCode,
   country: z.string().default("NG"),
   latitude: z.coerce.number().min(-90).max(90).optional(),
   longitude: z.coerce.number().min(-180).max(180).optional(),
