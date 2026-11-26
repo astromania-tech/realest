@@ -21,6 +21,7 @@ test("middlewareNeedsSession is false for public APIs and marketing", () => {
   assert.equal(middlewareNeedsSession("/"), false);
   assert.equal(middlewareNeedsSession("/search"), false);
   assert.equal(middlewareNeedsSession("/property/abc"), false);
+  assert.equal(middlewareNeedsSession("/verify"), false);
 });
 
 test("middleware uses its own getUser and skips when session not needed", () => {
@@ -36,4 +37,15 @@ test("middleware uses its own getUser and skips when session not needed", () => 
   const skipIdx = source.indexOf("if (!middlewareNeedsSession");
   const clientIdx = source.indexOf("const supabase = createServerClient");
   assert.ok(skipIdx >= 0 && clientIdx > skipIdx);
+});
+
+
+test("unconfirmed users are redirected from protected routes to the success page", () => {
+  const source = readFileSync(new URL("./middleware.ts", import.meta.url), "utf8");
+  assert.match(
+    source,
+    /user &&\s*!user\.email_confirmed_at &&\s*isProtectedRoute &&\s*shouldEnableAuthentication\(\)/,
+  );
+  assert.match(source, /url\.pathname = ['"]\/success['"]/);
+  assert.match(source, /url\.searchParams\.set\(['"]email['"], user\.email\)/);
 });

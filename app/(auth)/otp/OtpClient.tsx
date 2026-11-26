@@ -19,6 +19,10 @@ import {
   sendHybridPasswordReset,
 } from "@/lib/auth";
 import {
+  verificationFailureKind,
+  verificationFailureMessage,
+} from "@/lib/auth/email-verification";
+import {
   resetOtpExpiresAt,
   resetOtpResendSecondsRemaining,
   resetOtpSecondsRemaining,
@@ -189,14 +193,12 @@ function OTPContent() {
         const data = await res.json();
 
         if (!data.success) {
-          const isExpiredError =
-            data.error?.toLowerCase().includes("expired") ||
-            data.error?.toLowerCase().includes("not found");
-          if (isExpiredError) {
+          const failureKind = verificationFailureKind(data.error);
+          if (failureKind === "expired") {
             setIsExpired(true);
             setTimeLeft(0); // unlock the resend button immediately
           }
-          setError(data.error || "Invalid code. Please try again.");
+          setError(verificationFailureMessage(failureKind, "code"));
           setOtp(["", "", "", "", "", ""]);
           inputRefs.current[0]?.focus();
           return;
@@ -217,7 +219,12 @@ function OTPContent() {
       const verifyResponse = await verifyOTP(email, otpCode);
 
       if (!verifyResponse.success) {
-        setError(verifyResponse.error || "Invalid OTP code");
+        const failureKind = verificationFailureKind(verifyResponse.error);
+        if (failureKind === "expired") {
+          setIsExpired(true);
+          setTimeLeft(0);
+        }
+        setError(verificationFailureMessage(failureKind, "code"));
         setOtp(["", "", "", "", "", ""]);
         inputRefs.current[0]?.focus();
         return;
@@ -252,7 +259,7 @@ function OTPContent() {
         }
       }
     } catch {
-      setError("An unexpected error occurred. Please try again.");
+      setError(verificationFailureMessage("unavailable", "code"));
       setOtp(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
     } finally {
