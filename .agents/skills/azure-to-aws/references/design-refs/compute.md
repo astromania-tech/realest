@@ -1,0 +1,184 @@
+# Compute
+
+Pass-2 rubric for every compute type `index.md` routes here. Loaded only when the
+inventory contains one.
+
+**Outcome is `confidence: inferred`**, or `measured` when observed utilization backed the
+sizing. Never `deterministic` — that tier is reserved for `fast-path-services.json` rows,
+and no compute decision is architecture-invariant.
+
+## 1. Eliminators — hard technical blockers
+
+Checked first, before any preference. An eliminator is physics or a product boundary, not
+a judgement, so it removes a candidate outright.
+
+| Candidate          | Eliminated when                                                                                                                                                                                                                                                           |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **AWS App Runner** | **ALWAYS. It is not a candidate for anything.** No longer accepting new customers as of April 2026. Do not offer it, do not mention it as a forward-look, do not put it in a candidate list. ECS Express Mode is the default shape for HTTP web services on the Fargate path (§ 7) |
+| Lambda             | the workload runs longer than **15 minutes** per invocation — a hard ceiling, not a quota                                                                                                                                                                                 |
+| Lambda             | the function is a **Durable Function** (an orchestrator, entity, or activity binding). Durable's state machine has no Lambda equivalent; it maps to Step Functions plus Lambda, which is a re-architecture and therefore a rubric decision, not a like-for-like           |
+| Lambda             | the plan is **not** a consumption plan and `always_on` is true — a warm always-on process is not what Lambda is                                                                                                                                                           |
+| Lambda             | the app needs a **writable local filesystem** beyond `/tmp`, or persistent local state                                                                                                                                                                                    |
+| Elastic Beanstalk  | the workload is **Windows Containers**. EB supports Windows Server platforms and Linux Docker, not Windows containers                                                                                                                                                     |
+| Elastic Beanstalk  | more than one **distinct process type** must scale independently. EB scales an environment, not a process within it — this is heroku-to-aws's non-web-formation finding, and it applies identically here                                                                  |
+| Fargate            | the workload needs **GPU**. Fargate has none — route to EC2 and `gpu-hpc.md`                                                                                                                                                                                              |
+| Fargate            | the workload needs a **privileged container**, a kernel module, or a custom kernel                                                                                                                                                                                        |
+| EKS                | never eliminated, but never selected without a signal — see criterion 2                                                                                                                                                                                                   |
+| EC2                | never eliminated. It is the floor: anything can run on EC2                                                                                                                                                                                                                |
+
+## 2. The six criteria, in order, first match wins
+
+Do not weigh these. Apply them in sequence and stop at the first that fires. Adding a
+seventh, or reordering, breaks the property that makes the outcome reproducible.
+
+### 2.1 Eliminators
+
+Section 1. Whatever survives is the candidate set.
+
+### 2.2 Operational model
+
+What the source workload _is_ decides more than anything the customer could tell us.
+
+| Source                                                                                                   | Target                                                                   |
+| -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `Microsoft.ContainerService/managedClusters`                                                             | **EKS** — fast-path row, never reaches this file                         |
+| `Microsoft.Web/serverfarms` whose hosted sites are all functions on a **consumption** plan (`Y1`, `FC1`) | **Lambda**                                                               |
+| `Microsoft.Web/serverfarms` hosting web apps                                                             | **Elastic Beanstalk**                                                    |
+| `Microsoft.App/containerApps` / `managedEnvironments`                                                    | **Fargate**                                                              |
+| `Microsoft.ContainerInstance/containerGroups`                                                            | **Fargate** — a one-shot task becomes a Fargate task, not a service      |
+| `Microsoft.Compute/virtualMachines`                                                                      | **EC2**, MGN-based cutover                                               |
+| `Microsoft.Compute/virtualMachineScaleSets`                                                              | **EC2 Auto Scaling group**                                               |
+| `Microsoft.Web/staticSites`                                                                              | **S3 + CloudFront**, plus Lambda + API Gateway for its managed functions |
+
+**Elastic Beanstalk is the App Service Plan default, and the reason is posture not
+preference.** App Service is a managed platform the customer already pays for: AWS
+manages deployments, scaling, patching, and health. Fargate hands them a container
+lifecycle they did not previously own. Moving a PaaS workload to containers _during_ a
+cloud migration changes two variables at once, and when it goes wrong there is no way to
+tell which one caused it.
+
+### 2.3 User preference
+
+`preferences.json` → `design_constraints.compute_target` **overrides 2.2**, per-resource
+overrides beating the global default. This is the criterion the customer's own answer
+lives in, and it sits above feature parity deliberately: a team that has decided to run
+containers has decided, and re-deriving Elastic Beanstalk from the source shape would be
+overruling them.
+
+Recognised values: `elastic_beanstalk`, `ecs-fargate`, `eks-managed`, `ec2`, `lambda`.
+An absent preference is not a preference — fall through, do not default here.
+
+### 2.4 Feature parity
+
+Only reached when 2.2 and 2.3 disagree with what the workload can actually do.
+
+| Signal                                                                   | Consequence                                                                                                 |
+| ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| the plan runs **containers** (`linux_fx_version` is a `DOCKER\|…` image) | Fargate over Elastic Beanstalk — the app is already a container, so the PaaS argument in 2.2 does not apply |
+| **VNet integration** is configured on the site                           | any target, but the design must place it in private subnets and say so                                      |
+| an app runs `WEBSITE_RUN_FROM_PACKAGE`                                   | EB source bundles are equivalent; no target change, worth a note                                            |
+| a **deployment slot** exists                                             | EB blue-green via swap URL, or a weighted target group on Fargate                                           |
+| `always_on = false` on a non-consumption plan                            | the customer is tolerating cold starts; Lambda becomes viable if 2.2 pointed at EB                          |
+
+### 2.5 Cluster context
+
+Read the cluster's other members via `azure-resource-clusters.json` and its
+`pattern_id`. **A pattern may narrow the candidate set; it may never override a
+`deterministic` mapping** — and it never reaches this file for one, because a fast-path
+row does not run a rubric.
+
+The useful case is homogeneity: a function app inside a cluster whose primary is a
+Fargate-bound container workload probably belongs on Fargate rather than Lambda, because
+one runtime is cheaper to operate than two. When the cluster's `pattern_status` is
+`catalog_absent` or `unclassified`, this criterion has nothing to say — skip it rather
+than inventing an architecture.
+
+### 2.6 Simplicity
+
+The tiebreak, and it has a direction: **prefer the target with fewer moving parts the
+customer has to operate.** EB over Fargate over EKS, all else equal. If two candidates
+survive to here, they are genuinely equivalent for this workload and the operational
+burden is the only remaining difference.
+
+## 3. The App Service Plan fan-in
+
+Enforced in `design-infra.md`; restated here only as the thing that makes sizing
+correct. **The plan is the compute unit. Its apps are deployments onto it.** Five web
+apps on one S1 plan cost one S1. Size from the plan's `sku_name` and `worker_count`,
+never from the app count, and emit exactly one compute entry per plan carrying
+`hosted_app_azure_ids` and `sizing_source`.
+
+## 4. CPU architecture
+
+**Default `x86_64`. This diverges from the rest of the repo deliberately.** Graviton is
+the default in gcp-to-aws and heroku-to-aws; here it is an offered optimization with its
+own savings line.
+
+The reason is base rates, not capability: Azure fleets carry Windows and .NET far more
+often than GCP or Heroku fleets, and `references/shared/graviton.md`'s escape path
+(Windows, .NET Framework, GPU/CUDA, RDS SQL Server) fires routinely. Defaulting to
+Graviton would mean walking the recommendation back on a large fraction of real estates,
+and a recommendation that gets withdrawn costs more trust than one that was never made.
+
+Offer Graviton when **all** hold: Linux, no .NET Framework (modern .NET on Linux is
+fine), no GPU requirement, and no x86-only binary dependency in the app-code signals.
+
+## 5. Right-sizing — post-selection, not a criterion
+
+Runs **after** a service is chosen. It is not a seventh criterion, because the six select
+a service and never touch capacity; adding one would break first-match-wins.
+
+- **No utilization data** → dev-tier default from `knowledge/design/appservice-eb-sizing.json`
+  (or `vm-ec2-sizing.json` for VMs), `confidence: inferred`.
+- **Eligible P95 utilization available** (`metric_error: false`, `sample_count > 0`, and
+  numeric `window_days >= min_window_days`) → apply the bands and aggressiveness slider
+  and stamp `confidence: measured`, citing all evidence. A sampled P95 of zero is valid.
+- **Error, zero samples, short window, or unknown/null window** → do not apply measured
+  bands; use the declared/table path with `confidence: inferred` and state why.
+
+Sizing never revisits the service choice. If the right size for the chosen service does
+not exist, that is a finding for the report, not a reason to re-run the rubric.
+
+## 6. Output
+
+Per `schema-design-aws.md` § `services[]`: `aws_service`, `aws_config` (instance type or
+task size, count, scaling bounds, platform), `confidence`, `rubric_applied: "compute.md"`,
+and a `rationale` naming **which criterion fired**. "Elastic Beanstalk, because the source
+is a managed App Service Plan (criterion 2.2) and no compute-target preference was
+recorded" is auditable. "Elastic Beanstalk is a good fit" is not.
+
+## 7. ECS mode — Express vs standard (Fargate entries only)
+
+**ECS Express Mode is the default shape for an HTTP(S) web service on Fargate.** Express Mode is a standard ECS service that AWS provisions for you — Fargate cluster, task definition, Application Load Balancer with an HTTPS listener and ACM certificate, security groups, target-tracking auto scaling, CloudWatch log group, canary deployments, and an AWS-provided HTTPS endpoint — with no additional charge beyond the resources ([Express Mode](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/express-service-work.html); it is also AWS's named replacement for App Runner). Up to 25 Express services share one ALB per VPC and scheme. **Express Mode derives the ALB scheme from the task subnets** ([network defaults](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/express-service-work.html#express-service-network-defaults)): public subnets give an internet-facing ALB and public task IPs; private subnets give an internal ALB. So an Express service's placement follows its ingress — a public HTTP service is generated in the **public** subnets (the one accepted exception to the `tf-best-practices` private-subnet rule, recorded in the generator's warnings) and an internal-only service in the private subnets. Record the decision on every Fargate entry as `aws_config.ecs_mode` (`"express"` or `"standard"`), a one-line `aws_config.ecs_mode_reason`, and for `express` the `aws_config.placement` (`"public_subnets"` for a public service, `"private_subnets"` for an internal one) so Estimate groups the shared ALB by scheme and Generate picks the matching subnets.
+
+Select `"standard"` (a hand-written `aws_ecs_service` + ALB/NLB) when **any** of these holds; otherwise select `"express"`:
+
+| Eliminator                                                                                                                    | Source                                                                                              |
+| ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Not an HTTP(S) web service — a worker, scheduled job, queue consumer, or anything with no inbound HTTP listener               | `compute_shape != "http_service"` (derived from inventory; Clarify asks only when it cannot be derived) |
+| Needs TCP/UDP passthrough, gRPC without HTTP/2 termination, an NLB, or no load balancer at all                                 | `compute_shape == "tcp_or_grpc_passthrough"`                                                        |
+| Release process requires rolling or blue/green deployments (Express Mode deploys canary only)                                  | `design_constraints.release_strategy` is `"rolling"` or `"blue_green"`                               |
+| Task size outside Express limits: CPU > 4096 units or memory > 8192 MiB                                                        | sizing table / `aws_config.task_cpu`, `aws_config.task_memory`                                      |
+| Generated Terraform must own a custom-domain ALB (Route 53 alias to the ALB, customer certificate on the listener)             | skill-specific DNS/cutover preference (heroku: `dns_strategy == "route53"`)                          |
+| Sidecars or a custom task definition the generator must author (Express Mode accepts a custom task definition only via the API/CLI, not the Terraform resource) | detected multi-container task                                                 |
+| Public HTTP service whose tasks must stay in **private** subnets (a recorded network-isolation requirement, restricted-CIDR ingress, or tasks that must not carry public IPs) — Express cannot give a public ALB to private tasks | public edge with private tasks: Container App in an internal managed environment (`vnetConfiguration.internal: true`) fronted by Application Gateway / Front Door, or `ipSecurityRestrictions` on the ingress (`ecs_mode_reason: "private_tasks"`) |
+
+Express Mode is a shape of Fargate, not a new service: `aws_service` stays `"Fargate"`, sizing and cost come from the same tables, and the entry is still priced as Fargate tasks plus a share of an ALB (`ceil(count / 25)` per VPC and scheme — see the Estimate phase). A design saved before this section existed has no `ecs_mode`; Estimate and Generate read that as `"standard"`. It does **not** displace Elastic Beanstalk for PaaS sources (App Engine, App Service, Heroku web dynos); it applies once Fargate is the selected target or the source is already a container.
+
+Derive `compute_shape` from the inventory: `Microsoft.App/containerApps` with `ingress.external` or `ingress.targetPort` → `http_service`, without ingress → `worker`; `Microsoft.ContainerInstance/containerGroups` with no public port → `worker`; a `DOCKER|` App Service site → `http_service`; `transport: tcp` ingress → `tcp_or_grpc_passthrough`. A `Microsoft.Web/sites/slots` child on a plan routed to Fargate is a blue/green signal (Q-C7). Read `design_constraints.release_strategy` (default `canary`) and, when present, `design_constraints.compute_shape[<service>]`.
+
+## Status — build step 5
+
+Implemented for App Service Plans, VMs, VMSS, container apps, container instances, and
+static sites. The sizing tables now exist: `knowledge/design/appservice-eb-sizing.json`
+for App Service plans and `knowledge/design/vm-ec2-sizing.json` for VMs and scale sets,
+with `knowledge/estimate/rightsizing-thresholds.json` for the measured path. Look the size
+up and stamp `sizing_provenance: "table"`.
+
+If a SKU is not in the table, stamp **`sizing_provenance: "model_prior"`**, add a
+`warnings[]` entry naming the SKU, and say in the rationale that the number is not sourced.
+Do not write `table` for a row you did not find. The earlier instruction here — "state the
+dev-tier default and say the table is absent rather than inventing a number" — was
+unsatisfiable: with no table, the default WAS the invented number, and every size in the
+committed golden turned out to be a pretrained association. `gpu-hpc.md` is still to land;
+GPU sizes are decisions with named options in `vm-ec2-sizing.json`, not lookups.

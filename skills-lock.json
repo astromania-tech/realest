@@ -1,0 +1,163 @@
+{
+  "version": 2,
+  "skills": {
+    "agent-advisor": {
+      "source": "aws/agent-toolkit-for-aws",
+      "ref": "main",
+      "commit": "e62ada690e3adf340a4cccb3b20204721e4b54d2",
+      "sourceType": "github",
+      "skillPath": "plugins/aws-startup-advisor/skills/agent-advisor/SKILL.md",
+      "computedHash": "1e27d5015abda91413cf08c70a108d0cc0b96bb538ad2d69f819b0cb88cacd32"
+    },
+    "architect-for-startups": {
+      "source": "aws/agent-toolkit-for-aws",
+      "ref": "main",
+      "commit": "e62ada690e3adf340a4cccb3b20204721e4b54d2",
+      "sourceType": "github",
+      "skillPath": "plugins/aws-startup-advisor/skills/architect-for-startups/SKILL.md",
+      "computedHash": "37fad639ee74a7269a0b2113826e0b611445c7323b329039726b1269136b7912"
+    },
+    "azure-to-aws": {
+      "source": "aws/agent-toolkit-for-aws",
+      "ref": "main",
+      "commit": "e62ada690e3adf340a4cccb3b20204721e4b54d2",
+      "sourceType": "github",
+      "skillPath": "plugins/aws-startup-advisor/skills/azure-to-aws/SKILL.md",
+      "computedHash": "d28f505a2a6ceaedf5f257f004bd73e7a1699dac3641196a37404a881c28d47d"
+    },
+    "bedrock-migration-assessment": {
+      "source": "aws/agent-toolkit-for-aws",
+      "ref": "main",
+      "commit": "e62ada690e3adf340a4cccb3b20204721e4b54d2",
+      "sourceType": "github",
+      "skillPath": "plugins/aws-startup-advisor/skills/bedrock-migration-assessment/SKILL.md",
+      "computedHash": "894ac988fefc2a7d03f237afe84902517b2ff0afe53059567d2f0269db57c8b5"
+    },
+    "claude-apps-to-bedrock": {
+      "source": "aws/agent-toolkit-for-aws",
+      "ref": "main",
+      "commit": "e62ada690e3adf340a4cccb3b20204721e4b54d2",
+      "sourceType": "github",
+      "skillPath": "plugins/aws-startup-advisor/skills/claude-apps-to-bedrock/SKILL.md",
+      "computedHash": "1465b08d06982351417cd3d28d8a3519749f546f9bc78dd0ab016864cd675cd1"
+    },
+    "contextual-offers-for-startups": {
+      "source": "aws/agent-toolkit-for-aws",
+      "ref": "main",
+      "commit": "e62ada690e3adf340a4cccb3b20204721e4b54d2",
+      "sourceType": "github",
+      "skillPath": "plugins/aws-startup-advisor/skills/contextual-offers-for-startups/SKILL.md",
+      "computedHash": "2947d41040abec3a2d48fbe5df0e44515ce42929be172cd20012ba62e0b6d1c4"
+    },
+    "cost-regression-check": {
+      "source": "aws/agent-toolkit-for-aws",
+      "ref": "main",
+      "commit": "e62ada690e3adf340a4cccb3b20204721e4b54d2",
+      "sourceType": "github",
+      "skillPath": "plugins/aws-startup-advisor/skills/cost-regression-check/SKILL.md",
+      "computedHash": "df021896d75d9fd9280faf7a704e6a90f104aca77a4180077d91324e7adcd686"
+    },
+    "gcp-to-aws": {
+      "source": "aws/agent-toolkit-for-aws",
+      "ref": "main",
+      "commit": "e62ada690e3adf340a4cccb3b20204721e4b54d2",
+      "sourceType": "github",
+      "skillPath": "plugins/aws-startup-advisor/skills/gcp-to-aws/SKILL.md",
+      "computedHash": "424234e52289f1e944a2ffa21481bd2dfd6c8d1e6539fac1a01cc53bfdf9e3e2"
+    },
+    "heroku-to-aws": {
+      "source": "aws/agent-toolkit-for-aws",
+      "ref": "main",
+      "commit": "e62ada690e3adf340a4cccb3b20204721e4b54d2",
+      "sourceType": "github",
+      "skillPath": "plugins/aws-startup-advisor/skills/heroku-to-aws/SKILL.md",
+      "computedHash": "f29f4195720634f2cfa3c5d10cfc9dd916d4dcfbe6a0006a6159978a5bad1f0c"
+    },
+    "knowledge-base-for-startups": {
+      "source": "aws/agent-toolkit-for-aws",
+      "ref": "main",
+      "commit": "e62ada690e3adf340a4cccb3b20204721e4b54d2",
+      "sourceType": "github",
+      "skillPath": "plugins/aws-startup-advisor/skills/knowledge-base-for-startups/SKILL.md",
+      "computedHash": "edd08f671cedcf48cc72018645fa03b5dbed1eb0271a4b67aa2d35a695623167"
+    },
+    "llm-to-bedrock": {
+      "source": "aws/agent-toolkit-for-aws",
+      "ref": "main",
+      "commit": "e62ada690e3adf340a4cccb3b20204721e4b54d2",
+      "sourceType": "github",
+      "skillPath": "plugins/aws-startup-advisor/skills/llm-to-bedrock/SKILL.md",
+      "computedHash": "4a5f478af89bd72e51babdf37b988b790dee6c644667580fc68b9efb32259909"
+    },
+    "operate-on-aws": {
+      "source": "aws/agent-toolkit-for-aws",
+      "ref": "main",
+      "commit": "e62ada690e3adf340a4cccb3b20204721e4b54d2",
+      "sourceType": "github",
+      "skillPath": "plugins/aws-startup-advisor/skills/operate-on-aws/SKILL.md",
+      "computedHash": "7ff5047c8cd9efed95682016638458ea5a9099352255e258964e576e967891e8"
+    },
+    "prefill-aws-activate-credits-application": {
+      "source": "aws/agent-toolkit-for-aws",
+      "ref": "main",
+      "commit": "e62ada690e3adf340a4cccb3b20204721e4b54d2",
+      "sourceType": "github",
+      "skillPath": "plugins/aws-startup-advisor/skills/prefill-aws-activate-credits-application/SKILL.md",
+      "computedHash": "a3ede40dea583e6702044f0aa950db2b741a9f44add8ad9dfc5687d753e4307a"
+    },
+    "prompt-library-for-startups": {
+      "source": "aws/agent-toolkit-for-aws",
+      "ref": "main",
+      "commit": "e62ada690e3adf340a4cccb3b20204721e4b54d2",
+      "sourceType": "github",
+      "skillPath": "plugins/aws-startup-advisor/skills/prompt-library-for-startups/SKILL.md",
+      "computedHash": "59c595384614a0de8271c7489f3a3b1d53bb048f258c6fa7ea9600592d255202"
+    },
+    "render-to-aws": {
+      "source": "aws/agent-toolkit-for-aws",
+      "ref": "main",
+      "commit": "e62ada690e3adf340a4cccb3b20204721e4b54d2",
+      "sourceType": "github",
+      "skillPath": "plugins/aws-startup-advisor/skills/render-to-aws/SKILL.md",
+      "computedHash": "029b7969db9b117d2c92addf3e7b1e70e27e99bef60a470e9e603f049abe9212"
+    },
+    "self-hosted-llm-batch-inference": {
+      "source": "aws/agent-toolkit-for-aws",
+      "ref": "main",
+      "commit": "e62ada690e3adf340a4cccb3b20204721e4b54d2",
+      "sourceType": "github",
+      "skillPath": "plugins/aws-startup-advisor/skills/self-hosted-llm-batch-inference/SKILL.md",
+      "computedHash": "22e6739b6e247acd0809f9ff42f65b4c6eea222f3d48c71a2267032ce55de3e7"
+    },
+    "start-building-for-startups": {
+      "source": "aws/agent-toolkit-for-aws",
+      "ref": "main",
+      "commit": "e62ada690e3adf340a4cccb3b20204721e4b54d2",
+      "sourceType": "github",
+      "skillPath": "plugins/aws-startup-advisor/skills/start-building-for-startups/SKILL.md",
+      "computedHash": "98e63b4c1c358768af40598e9ac833ca0f14f3b327349a784b5f40fe5741a710"
+    },
+    "supabase": {
+      "source": "supabase/agent-skills",
+      "commit": "c9be0e931b7930f7d02126d04774d904c381e7d7",
+      "sourceType": "github",
+      "skillPath": "skills/supabase/SKILL.md",
+      "computedHash": "2fbff32fd63b7d31585cacf0ed43e5bf8d05dd20d6c0c751d256cb967a00eec1"
+    },
+    "supabase-postgres-best-practices": {
+      "source": "supabase/agent-skills",
+      "commit": "c9be0e931b7930f7d02126d04774d904c381e7d7",
+      "sourceType": "github",
+      "skillPath": "skills/supabase-postgres-best-practices/SKILL.md",
+      "computedHash": "3eb972c2d7c818e544e35cc33ea8d7147d4d78ae08142ef40037b0fbac7a2505"
+    },
+    "tf-best-practices": {
+      "source": "aws/agent-toolkit-for-aws",
+      "ref": "main",
+      "commit": "e62ada690e3adf340a4cccb3b20204721e4b54d2",
+      "sourceType": "github",
+      "skillPath": "plugins/aws-startup-advisor/skills/tf-best-practices/SKILL.md",
+      "computedHash": "3be0e001b84a0fd0261f484f6a2cfc0332ca7b6be286462c14b9037053bf0e46"
+    }
+  }
+}
