@@ -15,7 +15,12 @@ import {
   getCurrentUser,
   resendEmailVerification,
 } from "@/lib/auth";
-import { CheckCircle, Mail, AlertCircle, RefreshCw } from "lucide-react";
+import {
+  verificationDestinationForUser,
+  verificationFailureMessage,
+  verifyEmailLink,
+} from "@/lib/auth/email-verification";
+import { CheckCircle, AlertCircle, RefreshCw } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 function VerifyEmailContent() {
@@ -37,7 +42,9 @@ function VerifyEmailContent() {
 
         const tokenFromQuery = searchParams.get("token");
         const code = searchParams.get("code");
-        const type = (searchParams.get("type") ?? "signup") as "signup" | "email";
+        const type = searchParams.get("type") === "email" ? "email" : "signup";
+        const emailFromQuery = searchParams.get("email");
+        if (emailFromQuery) setEmail(emailFromQuery);
 
         // ✅ NEW: read tokens from the fragment (#...)
         const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
@@ -59,32 +66,22 @@ function VerifyEmailContent() {
           }
         }
 
-        if (tokenFromQuery) {
-          const { data, error: verifyError } = await supabase.auth.verifyOtp({
-            token: tokenFromQuery,
-            email: "",
-            type,
-          });
-
-          if (verifyError) {
-            if (verifyError.message.toLowerCase().includes("expired")) {
-              setVerificationStatus("expired");
-            } else {
-              setVerificationStatus("error");
-              setError(verifyError.message);
-            }
-            return;
-          }
-
-          if (data.user?.email) setEmail(data.user.email);
-          await redirectToDestination(data.user);
+        const result = await verifyEmailLink(supabase.auth, {
+          token: tokenFromQuery,
+          code,
+          type,
+        });
+        if (result.status === "failed") {
+          setVerificationStatus(result.kind === "expired" ? "expired" : "error");
+          setError(verificationFailureMessage(result.kind, "link"));
           return;
         }
 
-        // ...keep your existing code for `code` and the fallback
+        if (result.user.email) setEmail(result.user.email);
+        await redirectToDestination(result.user);
       } catch {
         setVerificationStatus("error");
-        setError("An unexpected error occurred during verification.");
+        setError(verificationFailureMessage("unavailable", "link"));
       } finally {
         setIsLoading(false);
       }
@@ -93,81 +90,6 @@ function VerifyEmailContent() {
     handleEmailVerification();
   }, [searchParams]);
 
-  // useEffect(() => {
-  //   const handleEmailVerification = async () => {
-  //     try {
-  //       const supabase = createClient();
-
-  //       // Supabase sends either:
-  //       //   token_hash + type=signup  (direct OTP verification)
-  //       //   code                      (PKCE code exchange flow)
-  //       const tokenHash = searchParams.get("token");
-  //       const code = searchParams.get("code");
-  //       const type = (searchParams.get("type") ?? "signup") as
-  //         | "signup"
-  //         | "email";
-
-  //       if (tokenHash) {
-  //         // Standard Supabase email-link flow
-  //         const { data, error: verifyError } = await supabase.auth.verifyOtp({
-  //           token: tokenHash,
-  //           email: "", // Supabase requires email for verifyOtp, but it's not actually used for token verification in this context
-  //           type,
-  //         });
-
-  //         if (verifyError) {
-  //           if (verifyError.message.toLowerCase().includes("expired")) {
-  //             setVerificationStatus("expired");
-  //           } else {
-  //             setVerificationStatus("error");
-  //             setError(verifyError.message);
-  //           }
-  //           return;
-  //         }
-
-  //         if (data.user?.email) setEmail(data.user.email);
-  //         await redirectToDestination(data.user?.id);
-  //         return;
-  //       }
-
-  //       if (code) {
-  //         // PKCE flow — exchange code for session
-  //         const { data, error: exchangeError } =
-  //           await supabase.auth.exchangeCodeForSession(code);
-
-  //         if (exchangeError) {
-  //           setVerificationStatus("error");
-  //           setError(exchangeError.message);
-  //           return;
-  //         }
-
-  //         if (data.user?.email) setEmail(data.user.email);
-  //         await redirectToDestination(data.user?.id);
-  //         return;
-  //       }
-
-  //       // No token in URL — check if user is already confirmed
-  //       const userResponse = await getCurrentUser();
-  //       if (userResponse.success && userResponse.user?.email_confirmed_at) {
-  //         if (userResponse.user.email) setEmail(userResponse.user.email);
-  //         await redirectToDestination(userResponse.user.id);
-  //       } else {
-  //         if (userResponse.user?.email) setEmail(userResponse.user.email);
-  //         setVerificationStatus("error");
-  //         setError(
-  //           "No verification token found. Please check your email for the activation link.",
-  //         );
-  //       }
-  //     } catch {
-  //       setVerificationStatus("error");
-  //       setError("An unexpected error occurred during verification.");
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
-
-  //   handleEmailVerification();
-  // }, [searchParams, router]);
 
   /** Determine the correct destination after successful email verification */
   async function redirectToDestination(
@@ -181,26 +103,9 @@ function VerifyEmailContent() {
       return;
     }
 
-    const userType =
-      verifiedUser.app_metadata?.role || verifiedUser.user_metadata?.user_type;
-
-    if (!userType) {
-      setTimeout(() => router.push("/login?verified=true"), 2000);
-      return;
-    }
-
+    const destination = verificationDestinationForUser(verifiedUser);
     setTimeout(() => {
-      switch (userType) {
-        case "owner":
-        case "agent":
-          router.push("/onboarding");
-          break;
-        case "admin":
-          router.push("/admin");
-          break;
-        default:
-          router.push("/profile");
-      }
+      router.push(destination);
     }, 2000);
   }
 

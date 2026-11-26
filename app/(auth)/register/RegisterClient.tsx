@@ -20,6 +20,10 @@ import {
   type SignupFieldErrors,
 } from "@/lib/auth/signup-form-validation";
 import {
+  submitSignupWithBestEffortWaitlist,
+  type WaitlistContextResponse,
+} from "@/lib/auth/signup-waitlist-preflight";
+import {
   Eye,
   EyeOff,
   Mail,
@@ -30,11 +34,6 @@ import {
   AlertCircle,
   BadgeCheck,
 } from "lucide-react";
-
-interface WaitlistContextResponse {
-  exists?: boolean;
-  status?: string | null;
-}
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -108,23 +107,19 @@ export default function SignUpPage() {
 
     setIsLoading(true);
     try {
-      // Public waitlist GET is existence-only. Role override happens server-side
-      // in POST /api/auth/signup via resolveSignupRoleFromWaitlist.
-      const waitlistLookup = await fetch(
-        `/api/waitlist?email=${encodeURIComponent(email)}`,
-      );
-
-      if (waitlistLookup.ok) {
-        const waitlistData = (await waitlistLookup.json()) as WaitlistContextResponse;
-        setWaitlistContext(waitlistData);
-      }
-
-      const response = await signUpWithPassword(
+      // This public lookup only decorates the form. The signup API resolves
+      // candidate_role server-side before creating the Auth account.
+      const response = await submitSignupWithBestEffortWaitlist({
         email,
-        formData.password,
-        "", // fullname handled in onboarding
-        chosenRole,
-      );
+        onWaitlistContext: setWaitlistContext,
+        signup: () =>
+          signUpWithPassword(
+            email,
+            formData.password,
+            "", // fullname handled in onboarding
+            chosenRole,
+          ),
+      });
 
       if (!response.success) {
         const fieldError = signupApiFieldError(response.error);
@@ -144,24 +139,21 @@ export default function SignUpPage() {
         return;
       }
 
-      if (response.user) {
-        // Waitlist context is synced inside POST /api/auth/signup (no open client race).
-
-        if (refCode) {
-          fetch('/api/auth/attribute-referral', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, refCode }),
-          }).catch(() => {});
-          sessionStorage.removeItem('referralCode');
-        }
-        const emailQuery = encodeURIComponent(email);
-        if (response.localConfirmed) {
-          router.push(`/login?local=1&email=${emailQuery}`);
-        } else {
-          const sent = response.emailSent === false ? "&sent=0" : "";
-          router.push(`/success?email=${emailQuery}${sent}`);
-        }
+      // Waitlist context is synced inside POST /api/auth/signup (no open client race).
+      if (refCode) {
+        fetch('/api/auth/attribute-referral', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, refCode }),
+        }).catch(() => {});
+        sessionStorage.removeItem('referralCode');
+      }
+      const emailQuery = encodeURIComponent(email);
+      if (response.localConfirmed) {
+        router.push(`/login?local=1&email=${emailQuery}`);
+      } else {
+        const sent = response.emailSent === false ? "&sent=0" : "";
+        router.push(`/success?email=${emailQuery}${sent}`);
       }
     } catch {
       setError("An unexpected error occurred");

@@ -3,7 +3,10 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { sendVerificationEmail } from '@/lib/emailService';
 import { duplicateSignupError, localEmailConfirmAllowed } from '@/lib/auth/local-email-confirm';
 import { signupVerifyRedirect } from '@/lib/auth/signup-mail';
-import { resolveSignupRoleFromWaitlist } from '@/lib/auth/signup-waitlist-role';
+import {
+  resolveRoleThenCreate,
+  resolveSignupRoleFromWaitlist,
+} from '@/lib/auth/signup-waitlist-role';
 import { clientAddress, consumeRateLimit } from '@/lib/http/rate-limit';
 import { syncWaitlistContextToProfile } from '@/lib/reward-engine';
 import { prisma } from '@/lib/prisma';
@@ -56,21 +59,43 @@ export async function POST(request: NextRequest) {
 
     // Never accept staff/admin from the client. Waitlist candidate_role may
     // override the UI choice — resolved server-side so public GET cannot leak it.
-    const signupRole = await resolveSignupRoleFromWaitlist(email, userType);
-
-    const supabaseAdmin = createServiceClient();
     const confirmLocally = localEmailConfirmAllowed();
+    const { signupRole, account: accountCreation } = await resolveRoleThenCreate(
+      () => resolveSignupRoleFromWaitlist(email, userType),
+      async (signupRole) => {
+        const supabaseAdmin = createServiceClient();
 
-    if (confirmLocally) {
-      const { data: userData, error: createError } = await supabaseAdmin.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: {
-          full_name: fullName || '',
-          user_type: signupRole,
-        },
-      });
+        if (confirmLocally) {
+          const result = await supabaseAdmin.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: true,
+            user_metadata: {
+              full_name: fullName || '',
+              user_type: signupRole,
+            },
+          });
+          return { kind: 'local' as const, result };
+        }
+
+        const result = await supabaseAdmin.auth.admin.generateLink({
+          type: 'signup',
+          email,
+          password,
+          options: {
+            data: {
+              full_name: fullName || '',
+              user_type: signupRole,
+            },
+            redirectTo: signupVerifyRedirect(),
+          },
+        });
+        return { kind: 'hosted' as const, result };
+      },
+    );
+
+    if (accountCreation.kind === 'local') {
+      const { data: userData, error: createError } = accountCreation.result;
 
       if (createError) {
         const duplicate = duplicateSignupError(createError);
@@ -99,18 +124,7 @@ export async function POST(request: NextRequest) {
 
     // Hosted Auth: this signup link creates the unconfirmed user and the mail URL.
     // Creating the Auth user first makes a second signup link fail with email_exists.
-    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'signup',
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName || '',
-          user_type: signupRole,
-        },
-        redirectTo: signupVerifyRedirect(),
-      },
-    });
+    const { data: linkData, error: linkError } = accountCreation.result;
 
     if (linkError) {
       const duplicate = duplicateSignupError(linkError);

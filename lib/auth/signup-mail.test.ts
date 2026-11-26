@@ -27,16 +27,11 @@ test("signup mail uses the public URL from the environment", () => {
 test("production signup creates the user with the signup link, then sends it", () => {
   const route = readFileSync("app/api/auth/signup/route.ts", "utf8");
   const post = route.slice(0, route.indexOf("export async function GET"));
-  const hosted = post.split("localConfirmed: true")[1] ?? "";
-  const beforeHosted = post.split("localConfirmed: true")[0] ?? "";
-  const localStart = beforeHosted.indexOf("if (confirmLocally)");
-  assert.ok(localStart >= 0);
-  assert.match(beforeHosted.slice(localStart), /createUser/);
-  assert.doesNotMatch(beforeHosted.slice(0, localStart), /createUser/);
-  assert.match(hosted, /type: 'signup'/);
-  assert.match(hosted, /sendVerificationEmail/);
-  assert.match(hosted, /emailSent: sent\.success/);
-  assert.doesNotMatch(hosted, /auth\.admin\.createUser/);
+  assert.match(post, /resolveRoleThenCreate\(/);
+  assert.match(post, /if \(confirmLocally\)[\s\S]*auth\.admin\.createUser/);
+  assert.match(post, /auth\.admin\.generateLink\([\s\S]*type: 'signup'/);
+  assert.ok(post.indexOf("type: 'signup'") < post.indexOf("await sendVerificationEmail("));
+  assert.match(post, /emailSent: sent\.success/);
   assert.doesNotMatch(route, /REDACTED_NOT_REQUIRED/);
   assert.match(route, /type: 'magiclink'/);
   assert.match(route, /signupVerifyRedirect/);
