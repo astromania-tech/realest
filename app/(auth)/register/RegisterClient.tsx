@@ -14,6 +14,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { signUpWithPassword } from "@/lib/auth";
 import {
+  normalizeSignupEmail,
+  signupApiFieldError,
+  validateSignupFields,
+  type SignupFieldErrors,
+} from "@/lib/auth/signup-form-validation";
+import {
   submitSignupWithBestEffortWaitlist,
   type WaitlistContextResponse,
 } from "@/lib/auth/signup-waitlist-preflight";
@@ -41,6 +47,7 @@ export default function SignUpPage() {
     confirmPassword: "",
   });
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<SignupFieldErrors>({});
   const [refCode, setRefCode] = useState<string | undefined>();
   const [waitlistContext, setWaitlistContext] = useState<WaitlistContextResponse | null>(null);
 
@@ -51,8 +58,18 @@ export default function SignUpPage() {
     if (code) setRefCode(code);
   }, []);
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (
+    field: "email" | "password" | "confirmPassword",
+    value: string,
+  ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    setFieldErrors((prev) => ({
+      ...prev,
+      [field]: undefined,
+      ...(field === "password" || field === "confirmPassword"
+        ? { confirmPassword: undefined }
+        : {}),
+    }));
     if (error) setError("");
   };
 
@@ -68,12 +85,15 @@ export default function SignUpPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError("");
+    if (isLoading) return;
 
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
-      setIsLoading(false);
+    setError("");
+    setFieldErrors({});
+
+    const email = normalizeSignupEmail(formData.email);
+    const validationErrors = validateSignupFields({ ...formData, email });
+    if (Object.keys(validationErrors).length > 0) {
+      setFieldErrors(validationErrors);
       return;
     }
 
@@ -82,19 +102,19 @@ export default function SignUpPage() {
     if (chosenRole !== "user" && chosenRole !== "owner" && chosenRole !== "agent") {
       setError("Choose an account type");
       setStep(1);
-      setIsLoading(false);
       return;
     }
 
+    setIsLoading(true);
     try {
       // This public lookup only decorates the form. The signup API resolves
       // candidate_role server-side before creating the Auth account.
       const response = await submitSignupWithBestEffortWaitlist({
-        email: formData.email,
+        email,
         onWaitlistContext: setWaitlistContext,
         signup: () =>
           signUpWithPassword(
-            formData.email,
+            email,
             formData.password,
             "", // fullname handled in onboarding
             chosenRole,
@@ -102,28 +122,38 @@ export default function SignUpPage() {
       });
 
       if (!response.success) {
-        setError(response.error || "An unexpected error occurred");
+        const fieldError = signupApiFieldError(response.error);
+        if (fieldError) {
+          setFieldErrors((prev) => ({
+            ...prev,
+            [fieldError.field]: fieldError.message,
+          }));
+        } else {
+          setError(response.error || "An unexpected error occurred");
+        }
         return;
       }
 
-      if (response.user) {
-        // Waitlist context is synced inside POST /api/auth/signup (no open client race).
+      if (!response.user) {
+        setError("We could not finish creating your account. Please try again.");
+        return;
+      }
 
-        if (refCode) {
-          fetch('/api/auth/attribute-referral', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: formData.email, refCode }),
-          }).catch(() => {});
-          sessionStorage.removeItem('referralCode');
-        }
-        const emailQuery = encodeURIComponent(formData.email);
-        if (response.localConfirmed) {
-          router.push(`/login?local=1&email=${emailQuery}`);
-        } else {
-          const sent = response.emailSent === false ? "&sent=0" : "";
-          router.push(`/success?email=${emailQuery}${sent}`);
-        }
+      // Waitlist context is synced inside POST /api/auth/signup (no open client race).
+      if (refCode) {
+        fetch('/api/auth/attribute-referral', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, refCode }),
+        }).catch(() => {});
+        sessionStorage.removeItem('referralCode');
+      }
+      const emailQuery = encodeURIComponent(email);
+      if (response.localConfirmed) {
+        router.push(`/login?local=1&email=${emailQuery}`);
+      } else {
+        const sent = response.emailSent === false ? "&sent=0" : "";
+        router.push(`/success?email=${emailQuery}${sent}`);
       }
     } catch {
       setError("An unexpected error occurred");
@@ -236,7 +266,12 @@ export default function SignUpPage() {
             </div>
           ) : null}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-4"
+            noValidate
+            aria-busy={isLoading}
+          >
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium">
                 Email
@@ -249,10 +284,24 @@ export default function SignUpPage() {
                   placeholder="Enter your email"
                   value={formData.email}
                   onChange={(e) => handleInputChange("email", e.target.value)}
-                  className="pl-10"
+                  className={
+                    fieldErrors.email
+                      ? "pl-10 border-destructive focus-visible:ring-destructive/25"
+                      : "pl-10"
+                  }
                   required
+                  autoComplete="email"
+                  autoCapitalize="none"
+                  aria-invalid={Boolean(fieldErrors.email)}
+                  aria-describedby={fieldErrors.email ? "email-error" : undefined}
+                  disabled={isLoading}
                 />
               </div>
+              {fieldErrors.email && (
+                <p id="email-error" className="text-sm text-destructive" role="alert">
+                  {fieldErrors.email}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -269,13 +318,26 @@ export default function SignUpPage() {
                   onChange={(e) =>
                     handleInputChange("password", e.target.value)
                   }
-                  className="pl-10 pr-10"
+                  className={
+                    fieldErrors.password
+                      ? "pl-10 pr-10 border-destructive focus-visible:ring-destructive/25"
+                      : "pl-10 pr-10"
+                  }
                   required
+                  autoComplete="new-password"
+                  aria-invalid={Boolean(fieldErrors.password)}
+                  aria-describedby={
+                    fieldErrors.password ? "password-error" : "password-help"
+                  }
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                  disabled={isLoading}
                 >
                   {showPassword ? (
                     <EyeOff className="w-4 h-4" />
@@ -284,6 +346,15 @@ export default function SignUpPage() {
                   )}
                 </button>
               </div>
+              {fieldErrors.password ? (
+                <p id="password-error" className="text-sm text-destructive" role="alert">
+                  {fieldErrors.password}
+                </p>
+              ) : (
+                <p id="password-help" className="text-xs text-muted-foreground">
+                  Use at least 8 characters, including uppercase, lowercase, a number, and a symbol.
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -300,14 +371,39 @@ export default function SignUpPage() {
                   onChange={(e) =>
                     handleInputChange("confirmPassword", e.target.value)
                   }
-                  className="pl-10"
+                  className={
+                    fieldErrors.confirmPassword
+                      ? "pl-10 border-destructive focus-visible:ring-destructive/25"
+                      : "pl-10"
+                  }
                   required
+                  autoComplete="new-password"
+                  aria-invalid={Boolean(fieldErrors.confirmPassword)}
+                  aria-describedby={
+                    fieldErrors.confirmPassword
+                      ? "confirm-password-error"
+                      : undefined
+                  }
+                  disabled={isLoading}
                 />
               </div>
+              {fieldErrors.confirmPassword && (
+                <p
+                  id="confirm-password-error"
+                  className="text-sm text-destructive"
+                  role="alert"
+                >
+                  {fieldErrors.confirmPassword}
+                </p>
+              )}
             </div>
 
             {error && (
-              <div className="flex justify-center items-center gap-2 mt-2 p-3 ">
+              <div
+                className="flex justify-center items-center gap-2 mt-2 p-3"
+                role="alert"
+                aria-live="assertive"
+              >
                 <AlertCircle className="w-4 h-4 text-orange-600 dark:text-orange-400 mt-0.5 shrink-0" />
                 <div className="text-xs text-orange-800 dark:text-orange-200">
                   <p className="font-medium">
@@ -323,6 +419,7 @@ export default function SignUpPage() {
                 variant="outline"
                 onClick={handleBack}
                 className="flex-1"
+                disabled={isLoading}
               >
                 Back
               </Button>

@@ -7,6 +7,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { signUpWithPassword } from "@/lib/auth";
+import {
+  normalizeSignupEmail,
+  signupApiFieldError,
+  validateSignupFields,
+} from "./signup-form-validation.ts";
 
 const validPassword = "Abcdef1!";
 
@@ -93,4 +98,57 @@ test("weak signup returns the password rule and does not fetch", async () => {
   } finally {
     globalThis.fetch = original;
   }
+});
+
+test("registration validation identifies email, password, and confirmation errors", () => {
+  assert.deepEqual(
+    validateSignupFields({
+      email: "bad-email",
+      password: "short",
+      confirmPassword: "different",
+    }),
+    {
+      email: "Enter a valid email address.",
+      password:
+        "Use at least 8 characters, including uppercase, lowercase, a number, and a symbol.",
+      confirmPassword: "Passwords do not match.",
+    },
+  );
+});
+
+test("registration validation accepts normalized valid input", () => {
+  assert.equal(normalizeSignupEmail("  Seeker@Example.com "), "seeker@example.com");
+  assert.deepEqual(
+    validateSignupFields({
+      email: "  seeker@example.com ",
+      password: validPassword,
+      confirmPassword: validPassword,
+    }),
+    {},
+  );
+});
+
+test("signup API validation errors map to the relevant form field", () => {
+  assert.deepEqual(signupApiFieldError("User already registered"), {
+    field: "email",
+    message: "An account with this email already exists. Sign in or use another email.",
+  });
+  assert.deepEqual(signupApiFieldError("Password is too weak"), {
+    field: "password",
+    message:
+      "Use at least 8 characters, including uppercase, lowercase, a number, and a symbol.",
+  });
+  assert.deepEqual(
+    signupApiFieldError("Password does not meet security requirements."),
+    {
+      field: "password",
+      message:
+        "Use at least 8 characters, including uppercase, lowercase, a number, and a symbol.",
+    },
+  );
+  assert.deepEqual(signupApiFieldError("Email address is invalid"), {
+    field: "email",
+    message: "Enter a valid email address.",
+  });
+  assert.equal(signupApiFieldError("Signup service unavailable"), null);
 });
