@@ -6519,6 +6519,55 @@
         },
         "operationId": "getSlackOauthStart"
       }
+    },
+    "/api/postcode/lookup": {
+      "get": {
+        "method": "get",
+        "summary": "Look up a NIPOST postcode",
+        "description": "Checks one national postcode with the server-side NIPOST key. Each call can spend one credit.",
+        "tags": [
+          "Postcode"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "NIPOST lookup result"
+          },
+          "400": {
+            "description": "The code is not a NIPOST postcode"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "402": {
+            "description": "NIPOST credits are used up"
+          },
+          "422": {
+            "description": "NIPOST does not recognise this postcode"
+          },
+          "429": {
+            "description": "Too many lookups"
+          },
+          "503": {
+            "description": "NIPOST is not configured"
+          }
+        },
+        "operationId": "getPostcodeLookup"
+      }
     }
   },
   "tags": [
@@ -6636,6 +6685,9 @@
     },
     {
       "name": "Kyc"
+    },
+    {
+      "name": "Postcode"
     },
     {
       "name": "Slack",
