@@ -13,7 +13,10 @@ import {
   claimForgotPasswordSend,
   coalesceForgotPasswordSend,
 } from "@/lib/auth/forgot-password-send-gate";
-import { normalizeResetEmail } from "@/lib/auth/password-reset-otp";
+import {
+  normalizeResetEmail,
+  RESET_OTP_TTL_SECONDS,
+} from "@/lib/auth/password-reset-otp";
 import { createServiceClient } from "@/lib/supabase/service";
 import { prisma } from "@/lib/prisma";
 import { deriveNumericOtp } from "@/lib/utils/otp";
@@ -168,7 +171,7 @@ export async function POST(request: NextRequest) {
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         path: "/api/auth",
-        maxAge: 900,
+        maxAge: RESET_OTP_TTL_SECONDS,
       });
     }
 
