@@ -14,6 +14,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { signUpWithPassword } from "@/lib/auth";
 import {
+  submitSignupWithBestEffortWaitlist,
+  type WaitlistContextResponse,
+} from "@/lib/auth/signup-waitlist-preflight";
+import {
   Eye,
   EyeOff,
   Mail,
@@ -24,11 +28,6 @@ import {
   AlertCircle,
   BadgeCheck,
 } from "lucide-react";
-
-interface WaitlistContextResponse {
-  exists?: boolean;
-  status?: string | null;
-}
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -88,23 +87,19 @@ export default function SignUpPage() {
     }
 
     try {
-      // Public waitlist GET is existence-only. Role override happens server-side
-      // in POST /api/auth/signup via resolveSignupRoleFromWaitlist.
-      const waitlistLookup = await fetch(
-        `/api/waitlist?email=${encodeURIComponent(formData.email.trim())}`,
-      );
-
-      if (waitlistLookup.ok) {
-        const waitlistData = (await waitlistLookup.json()) as WaitlistContextResponse;
-        setWaitlistContext(waitlistData);
-      }
-
-      const response = await signUpWithPassword(
-        formData.email,
-        formData.password,
-        "", // fullname handled in onboarding
-        chosenRole,
-      );
+      // This public lookup only decorates the form. The signup API resolves
+      // candidate_role server-side before creating the Auth account.
+      const response = await submitSignupWithBestEffortWaitlist({
+        email: formData.email,
+        onWaitlistContext: setWaitlistContext,
+        signup: () =>
+          signUpWithPassword(
+            formData.email,
+            formData.password,
+            "", // fullname handled in onboarding
+            chosenRole,
+          ),
+      });
 
       if (!response.success) {
         setError(response.error || "An unexpected error occurred");
@@ -130,7 +125,7 @@ export default function SignUpPage() {
           router.push(`/success?email=${emailQuery}${sent}`);
         }
       }
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred");
     } finally {
       setIsLoading(false);

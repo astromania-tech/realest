@@ -35,3 +35,13 @@ export async function resolveSignupRoleFromWaitlist(
 
   return signupRoleFromChoices(clientUserType, entry?.candidate_role);
 }
+
+/** Resolve the trusted role before running any Auth account creation callback. */
+export async function resolveRoleThenCreate<T>(
+  resolveRole: () => Promise<MarketplaceSignupRole>,
+  createAccount: (role: MarketplaceSignupRole) => Promise<T>,
+): Promise<{ signupRole: MarketplaceSignupRole; account: T }> {
+  const signupRole = await resolveRole();
+  const account = await createAccount(signupRole);
+  return { signupRole, account };
+}

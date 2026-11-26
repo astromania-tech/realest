@@ -7,8 +7,10 @@
  */
 
 import { consumeRateLimit } from "@/lib/http/rate-limit";
+import { RESET_EMAIL_RESEND_COOLDOWN_SECONDS } from "./password-reset-otp";
 
-export const FORGOT_PASSWORD_SEND_COOLDOWN_MS = 60_000;
+export const FORGOT_PASSWORD_SEND_COOLDOWN_MS =
+  RESET_EMAIL_RESEND_COOLDOWN_SECONDS * 1_000;
 export const FORGOT_PASSWORD_SEND_BUCKET = "forgot-password";
 
 const inFlight = new Map<string, Promise<unknown>>();
